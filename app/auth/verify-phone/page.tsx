@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import OTPSection from "./otp-section";
 
+export const dynamic = "force-dynamic";
+
 export default async function PageWrapper() {
   const supabase = await createClient();
   const {
