@@ -84,7 +84,7 @@ export default function HeaderIcons() {
       </Button>
 
       <Button variant="ghost" size="icon" asChild>
-        <Link href={"/app"}>
+        <Link href={"/app/settings"}>
           <Settings />
         </Link>
       </Button>
