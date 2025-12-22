@@ -1,0 +1,147 @@
+"use client"
+
+import * as React from "react"
+import { cn } from "@/lib/utils"
+
+type DropzoneProps = {
+  accept?: Record<string, string[]>
+  multiple?: boolean
+  maxFiles?: number
+  onDrop?: (files: File[]) => void
+  onDropRejected?: (files: File[]) => void
+  onError?: (error: unknown) => void
+  src?: File[] | undefined
+  children: React.ReactNode
+}
+
+export function Dropzone({
+  accept,
+  multiple = true,
+  maxFiles = 3,
+  onDrop,
+  onDropRejected,
+  onError,
+  children,
+}: DropzoneProps) {
+  const inputRef = React.useRef<HTMLInputElement | null>(null)
+
+  const handleFiles = (list: FileList | null) => {
+    if (!list) return
+    const files = Array.from(list)
+
+    const limited = files.slice(0, maxFiles)
+
+    // naive accept check
+    if (accept) {
+      const allowedMimeTypes = Object.keys(accept)
+      const accepted: File[] = []
+      const rejected: File[] = []
+
+      limited.forEach((file) => {
+        if (
+          allowedMimeTypes.length === 0 ||
+          allowedMimeTypes.includes(file.type)
+        ) {
+          accepted.push(file)
+        } else {
+          rejected.push(file)
+        }
+      })
+
+      if (rejected.length && onDropRejected) {
+        onDropRejected(rejected)
+      }
+      if (accepted.length && onDrop) {
+        onDrop(accepted)
+      }
+      return
+    }
+
+    onDrop?.(limited)
+  }
+
+  const handleChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
+    try {
+      handleFiles(event.target.files)
+    } catch (error) {
+      onError?.(error)
+    } finally {
+      // allow selecting the same file again
+      event.target.value = ""
+    }
+  }
+
+  const handleClick = () => {
+    inputRef.current?.click()
+  }
+
+  const handleDrop: React.DragEventHandler<HTMLDivElement> = (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    try {
+      handleFiles(event.dataTransfer.files)
+    } catch (error) {
+      onError?.(error)
+    }
+  }
+
+  const handleDragOver: React.DragEventHandler<HTMLDivElement> = (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
+  return (
+    <div
+      className={cn(
+        "relative flex min-h-[120px] w-full cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-muted/30 p-4 text-center text-sm text-muted-foreground",
+      )}
+      onClick={handleClick}
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        className="hidden"
+        multiple={multiple}
+        onChange={handleChange}
+      />
+      {children}
+    </div>
+  )
+}
+
+type DropzoneContentProps = React.HTMLAttributes<HTMLDivElement>
+
+export function DropzoneContent({
+  className,
+  ...props
+}: DropzoneContentProps) {
+  return (
+    <div
+      className={cn("mt-3 flex w-full flex-col items-stretch", className)}
+      {...props}
+    />
+  )
+}
+
+type DropzoneEmptyStateProps = React.HTMLAttributes<HTMLDivElement>
+
+export function DropzoneEmptyState({
+  className,
+  ...props
+}: DropzoneEmptyStateProps) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center gap-1 text-xs text-muted-foreground",
+        className,
+      )}
+      {...props}
+    >
+      <p>גררו קבצים לכאן או לחצו כדי לבחור קבצים</p>
+    </div>
+  )
+}
+
+
