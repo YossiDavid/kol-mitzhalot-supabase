@@ -1,10 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import OTPSection from "./otp-section";
+import { Suspense } from "react";
 
-export const dynamic = "force-dynamic";
-
-export default async function PageWrapper() {
+async function VerifyPhoneContent() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -19,5 +18,21 @@ export default async function PageWrapper() {
         <OTPSection />
       </div>
     </div>
+  );
+}
+
+export default function PageWrapper() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+          <div className="w-full max-w-sm">
+            <div>Loading...</div>
+          </div>
+        </div>
+      }
+    >
+      <VerifyPhoneContent />
+    </Suspense>
   );
 }
