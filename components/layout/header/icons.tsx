@@ -78,13 +78,13 @@ export default function HeaderIcons() {
         )}
 
       <Button variant="ghost" size="icon" asChild>
-        <Link href={"/app/notifications"}>
+        <Link href={"/app"}>
           <BellRing />
         </Link>
       </Button>
 
       <Button variant="ghost" size="icon" asChild>
-        <Link href={"/app/settings"}>
+        <Link href={"/app"}>
           <Settings />
         </Link>
       </Button>
