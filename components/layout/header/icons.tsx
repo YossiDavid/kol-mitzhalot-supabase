@@ -2,7 +2,14 @@
 
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Button } from "@/components/ui/button";
-import { BellRing, Crown, Home, Settings, Share2 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { BellRing, Crown, Eye, Home, Settings, Share2, X } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -19,28 +26,66 @@ type MenuItem =
     };
 
 export default function HeaderIcons() {
-  const menu: MenuItem[] = [
+  // const menu: MenuItem[] = [
+  //   {
+  //     type: "link",
+  //     href: "/",
+  //     icon: <Home />,
+  //   },
+  //   {
+  //     type: "action",
+  //     onClick: () => {
+  //       console.log("Clicked share button");
+  //     },
+  //     icon: <Share2 />,
+  //   },
+  //   {
+  //     type: "link",
+  //     href: "/",
+  //     icon: <BellRing />,
+  //   },
+  //   {
+  //     type: "link",
+  //     href: "/",
+  //     icon: <Settings />,
+  //   },
+  // ];
+
+  const notifications = [
     {
-      type: "link",
-      href: "/",
-      icon: <Home />,
+      id: 1,
+      title: "התראות 1",
+      content: "התראות 1",
+      created_at: new Date(),
+      link: "/notifications/1", // קישור להתראה
     },
     {
-      type: "action",
-      onClick: () => {
-        console.log("Clicked share button");
-      },
-      icon: <Share2 />,
+      id: 2,
+      title: "התראות 2",
+      content: "התראות 2",
+      created_at: new Date(),
+      link: "/notifications/2",
     },
     {
-      type: "link",
-      href: "/",
-      icon: <BellRing />,
+      id: 3,
+      title: "התראות 3",
+      content: "התראות 3",
+      created_at: new Date(),
+      link: "/notifications/3",
     },
     {
-      type: "link",
-      href: "/",
-      icon: <Settings />,
+      id: 4,
+      title: "התראות 4",
+      content: "התראות 4",
+      created_at: new Date(),
+      link: "/notifications/4",
+    },
+    {
+      id: 5,
+      title: "התראות 5",
+      content: "התראות 5",
+      created_at: new Date(),
+      link: "/notifications/5",
     },
   ];
 
@@ -62,26 +107,43 @@ export default function HeaderIcons() {
         </Link>
       </Button>
 
-      {/* כפתור שיתוף - מוצג רק בעמוד פרופיל סטודנט (לא עמוד יצירה/עריכה) */}
-      {typeof window !== "undefined" &&
-        /^\/app\/students\/[^/]+$/.test(window.location.pathname) &&
-        !/^\/app\/students\/create+$/.test(window.location.pathname) && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              console.log("Clicked share button");
-            }}
-          >
-            <Share2 />
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="ghost" size="icon" className="relative">
+            <BellRing />
           </Button>
-        )}
-
-      <Button variant="ghost" size="icon" asChild>
-        <Link href={"/app"}>
-          <BellRing />
-        </Link>
-      </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <h1 className="text-lg font-bold">התראות</h1>
+            </div>
+            <ScrollArea className="h-[300px]">
+              <div className="flex flex-col gap-2 **:data-[slot=separator]:last:hidden">
+                {notifications.map((notification) => (
+                  <>
+                    <div
+                      key={notification.id}
+                      className="flex items-center justify-between"
+                    >
+                      <h2 className="text-sm font-bold">
+                        {notification.title}
+                      </h2>
+                      <Button variant="link">
+                        <Link href={notification.link as any}>קרא עוד</Link>
+                      </Button>
+                    </div>
+                    <p className="text-muted-foreground text-sm">
+                      {notification.content}
+                    </p>
+                    <Separator />
+                  </>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        </PopoverContent>
+      </Popover>
 
       <Button variant="ghost" size="icon" asChild>
         <Link href={"/app/settings"}>

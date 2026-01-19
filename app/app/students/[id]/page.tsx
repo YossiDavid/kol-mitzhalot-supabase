@@ -21,8 +21,13 @@ import {
   Building2,
   Home,
   UserCircle,
+  Share2,
 } from "lucide-react";
 import Link from "next/link";
+import ShareButton from "./share-button";
+import MessageButton from "./message-button";
+import { getJewishDate, getJewishDay } from "jewish-dates-core";
+import { jewishDateHebrew } from "@/lib/jewishDatte";
 
 export default async function StudentPage({
   params,
@@ -46,6 +51,14 @@ export default async function StudentPage({
     )
     .eq("id", id)
     .single();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const isShadchan =
+    user?.user_metadata?.role === "shadchan" ||
+    user?.user_metadata?.role === "admin";
 
   if (error) {
     return <div>Error: {error.message}</div>;
@@ -275,6 +288,10 @@ export default async function StudentPage({
     }
   };
 
+  function formatJewishDateHebrew(arg0: any) {
+    throw new Error("Function not implemented.");
+  }
+
   return (
     <div className="min-h-screen space-y-6 text-right">
       {/* Header */}
@@ -290,13 +307,14 @@ export default async function StudentPage({
         <div className="space-y-6 lg:col-span-3">
           {/* Basic Information */}
           <Section title="פרטים אישיים" icon={User}>
-            <div className="flex flex-col gap-2">
-              {/* <p className="text-muted-foreground text-xs font-bold uppercase">
-                שם המיועד
-              </p> */}
+            <div className="flex justify-between gap-2">
               <h1>
                 {student.first_name} {student.last_name}
               </h1>
+              <div className="flex gap-2">
+                <ShareButton />
+                {isShadchan && <MessageButton authorId={student.user_id} />}
+              </div>
             </div>
 
             {student.about && (
@@ -465,7 +483,8 @@ export default async function StudentPage({
                   {student.parents_info?.deadParent === "mother" &&
                     student.parents_info?.motherDeathDate && (
                       <p className="text-destructive mt-2 text-xs">
-                        נפטרה ב-{student.parents_info.motherDeathDate}
+                        נפטרה ב-
+                        {jewishDateHebrew(student.parents_info.motherDeathDate)}
                       </p>
                     )}
                   {/* Grandfather */}
@@ -671,7 +690,7 @@ export default async function StudentPage({
                               )}
                             {p.separation_type === "death" && p.death_date && (
                               <p className="text-muted-foreground text-xs">
-                                נפטר/ה ב: {p.death_date}
+                                נפטר/ה ב: {jewishDateHebrew(p.death_date)}
                               </p>
                             )}
                             {p.divorce_details?.reason && (

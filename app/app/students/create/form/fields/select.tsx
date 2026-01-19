@@ -81,7 +81,6 @@ export function SelectField(props: SelectFieldProps) {
         value={value}
         onChange={onChange}
         className={className}
-        endpoint={endpoint}
       />
     );
   }
@@ -115,18 +114,18 @@ export function SelectField(props: SelectFieldProps) {
             >
               <Checkbox
                 id={inputId}
-                // checked={!!checked}
-                // onCheckedChange={(checked) => {
-                // 	if (!onChange) return
-                // 	onChange(
-                // 		checked
-                // 			? [...value, option.value]
-                // 			: value.filter(
-                // 					(v: string) =>
-                // 						v !== option.value
-                // 			  )
-                // 	)
-                // }}
+              // checked={!!checked}
+              // onCheckedChange={(checked) => {
+              // 	if (!onChange) return
+              // 	onChange(
+              // 		checked
+              // 			? [...value, option.value]
+              // 			: value.filter(
+              // 					(v: string) =>
+              // 						v !== option.value
+              // 			  )
+              // 	)
+              // }}
               />
               <Label htmlFor={inputId}>{option.label}</Label>
             </div>

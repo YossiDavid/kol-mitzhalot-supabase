@@ -146,13 +146,13 @@ export const DropzoneContent = ({
 				{src.length > maxLabelItems
 					? `${new Intl.ListFormat("he").format(
 							src.slice(0, maxLabelItems).map((file) => file.name)
-					  )} and ${src.length - maxLabelItems} more`
+					  )} ועוד ${src.length - maxLabelItems}`
 					: new Intl.ListFormat("he").format(
 							src.map((file) => file.name)
 					  )}
 			</p>
 			<p className="w-full text-wrap text-muted-foreground text-xs">
-				Drag and drop or click to replace
+				גררו לכאן או לחצו להחלפה
 			</p>
 		</div>
 	)
@@ -191,13 +191,13 @@ export const DropzoneEmptyState = ({
 	}
 
 	if (minSize && maxSize) {
-		caption += ` between ${renderBytes(minSize)} and ${renderBytes(
+		caption += ` בין ${renderBytes(minSize)} ל-${renderBytes(
 			maxSize
 		)}`
 	} else if (minSize) {
-		caption += ` at least ${renderBytes(minSize)}`
+		caption += ` לפחות ${renderBytes(minSize)}`
 	} else if (maxSize) {
-		caption += ` less than ${renderBytes(maxSize)}`
+		caption += ` פחות מ-${renderBytes(maxSize)}`
 	}
 
 	return (

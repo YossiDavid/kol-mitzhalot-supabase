@@ -62,6 +62,12 @@ export interface SelectField extends BaseField {
   empty?: string;
   vertical?: boolean;
   endpoint?: string;
+  table?: string;
+  valueColumn?: string;
+  labelColumn?: string;
+  searchColumn?: string;
+  filters?: Record<string, any>;
+  params?: Record<string, any>;
 }
 
 export interface TextAndSelectField extends BaseField {
@@ -1184,7 +1190,11 @@ export const studentFields: FormSteps[] = [
                 type: "select2",
                 label: "לבחירה מתוך המאגר",
                 options: [{ value: "", label: "" }],
-                endpoint: "/users/rabanim-option",
+                table: "user_profiles",
+                valueColumn: "id",
+                labelColumn: "first_name,last_name",
+                searchColumn: "first_name,last_name",
+                // filters: { role: "rabbi" },
                 columns: 3,
               },
               {

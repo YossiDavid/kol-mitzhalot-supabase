@@ -1,10 +1,11 @@
+"use client";
+
+import Link from "next/link";
 import {
-  Calendar,
   Home,
-  Inbox,
+  MessageCircle,
   Network,
   Plus,
-  Search,
   Settings,
   Users,
 } from "lucide-react";
@@ -18,40 +19,26 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 import { SidebarLogo } from "./sidebar/logo";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
-// Menu items.
 const items = [
-  {
-    title: "ראשי",
-    url: "/app",
-    icon: Home,
-  },
-  {
-    title: "מיועדים",
-    url: "/app/students",
-    icon: Users,
-  },
-  {
-    title: "הוספת מיועד",
-    url: "/app/students/create",
-    icon: Plus,
-  },
-  {
-    title: "לוח העבודה",
-    url: "/app/canvas",
-    icon: Network,
-  },
-  {
-    title: "הגדרות",
-    url: "/app/settings",
-    icon: Settings,
-  },
-];
+  { title: "ראשי", url: "/app", icon: Home },
+  { title: "מיועדים", url: "/app/students", icon: Users },
+  { title: "הוספת מיועד", url: "/app/students/create", icon: Plus },
+  { title: "צ'אטים", url: "/app/chats", icon: MessageCircle },
+  { title: "לוח העבודה", url: "/app/canvas", icon: Network },
+  { title: "הגדרות", url: "/app/settings", icon: Settings },
+] as const;
 
 export function AppSidebar() {
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
+
   return (
     <Sidebar variant="floating" side="right" collapsible="icon">
       <SidebarLogo />
@@ -59,22 +46,40 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>שדכנים</SidebarGroupLabel>
+
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
+              {items.map((item) => {
+                const Icon = item.icon;
+
+                const button = (
                   <SidebarMenuButton asChild>
-                    <a href={item.url}>
-                      <item.icon />
+                    <Link href={item.url} prefetch={false}>
+                      <Icon />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                );
+
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    {isCollapsed ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>{button}</TooltipTrigger>
+                        <TooltipContent side="right">{item.title}</TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      button
+                    )}
+                  </SidebarMenuItem>
+                );
+              })}
+
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarRail />
     </Sidebar>
   );
 }

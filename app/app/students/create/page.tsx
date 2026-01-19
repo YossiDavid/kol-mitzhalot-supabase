@@ -228,13 +228,17 @@ export default function CreateStudentPage() {
     return true;
   };
 
-  const handleNextStep = () => {
+  const handleNextStep = (e?: React.MouseEvent<HTMLButtonElement>) => {
+    e?.preventDefault();
+    e?.stopPropagation();
     if (!canProceedFromCurrentStep()) return;
     if (currentStepIndex === steps.length - 1) return;
     setCurrentStepIndex((prev) => prev + 1);
   };
 
-  const handlePreviousStep = () => {
+  const handlePreviousStep = (e?: React.MouseEvent<HTMLButtonElement>) => {
+    e?.preventDefault();
+    e?.stopPropagation();
     if (currentStepIndex === 0) return;
     setCurrentStepIndex((prev) => prev - 1);
   };
@@ -937,6 +941,12 @@ export default function CreateStudentPage() {
                       <Button
                         type="button"
                         onClick={handleNextStep}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }
+                        }}
                         className="flex items-center gap-2"
                       >
                         <span>המשך לשלב הבא</span>

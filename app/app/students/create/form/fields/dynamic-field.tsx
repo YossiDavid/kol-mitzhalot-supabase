@@ -11,15 +11,12 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select"
+	NativeSelect,
+	NativeSelectOption,
+} from "@/components/ui/native-select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
-import { Combobox } from "@/components/ui/combobox"
+import { SearchSelectField } from "./search-select-field"
 import Upload from "./upload"
 import { Control, useFieldArray } from "react-hook-form"
 import { cn } from "@/lib/utils"
@@ -102,6 +99,22 @@ function AtomicFieldRenderer({
 	const emptyLabel: string | undefined = rawField.empty
 	const endpoint: string | undefined =
 		typeof rawField.endpoint === "string" ? rawField.endpoint : undefined
+	const table: string | undefined =
+		typeof rawField.table === "string" ? rawField.table : undefined
+	const valueColumn: string | undefined =
+		typeof rawField.valueColumn === "string" ? rawField.valueColumn : undefined
+	const labelColumn: string | undefined =
+		typeof rawField.labelColumn === "string" ? rawField.labelColumn : undefined
+	const searchColumn: string | undefined =
+		typeof rawField.searchColumn === "string" ? rawField.searchColumn : undefined
+	const filters: Record<string, any> | undefined =
+		typeof rawField.filters === "object" && rawField.filters !== null
+			? rawField.filters
+			: undefined
+	const params: Record<string, any> | undefined =
+		typeof rawField.params === "object" && rawField.params !== null
+			? rawField.params
+			: undefined
 	const label = getLabel(field, gender)
 	const fieldId = toFieldId(name)
 
@@ -142,83 +155,82 @@ function AtomicFieldRenderer({
 										</span>
 									)}
 								</FormLabel>
-								<div className="flex flex-col gap-2 md:flex-row">
-									{prefixOptions.length > 0 && (
-										<Select
-											value={value.prefix}
-											onValueChange={(nextValue) =>
-												updateFieldValue(
-													"prefix",
-													nextValue
-												)
-											}
-											disabled={disableBecauseLinkedId}
-										>
-											<FormControl>
-												<SelectTrigger className="w-full md:w-[140px]">
-													<SelectValue
-														placeholder={
-															prefixPlaceholder
-														}
-													/>
-												</SelectTrigger>
-											</FormControl>
-											<SelectContent>
-												{prefixOptions.map((option) => (
-													<SelectItem
+								<FormControl>
+									<div className="group/text-and-select flex flex-col md:flex-row rounded-md border border-input bg-transparent shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px] ">
+										{prefixOptions.length > 0 && (
+											<div className="relative shrink-0">
+												<NativeSelect
+													value={value.prefix}
+													onChange={(e) =>
+														updateFieldValue(
+															"prefix",
+															e.target.value
+														)
+													}
+													disabled={disableBecauseLinkedId}
+													className="w-full md:w-[100px] text-xs border-0 rounded-none rounded-r-md md:rounded-l-md md:rounded-r-none shadow-none focus-visible:ring-0 focus-visible:border-0 [&_select]:rounded-r-md md:[&_select]:rounded-l-md md:[&_select]:rounded-r-none"
+												>
+													{!value.prefix && (
+														<NativeSelectOption value="" disabled>
+															{prefixPlaceholder}
+														</NativeSelectOption>
+													)}
+													{prefixOptions.map((option) => (
+														<NativeSelectOption
+															key={option.value}
+															value={option.value}
+														>
+															{option.label}
+														</NativeSelectOption>
+													))}
+												</NativeSelect>
+											</div>
+										)}
+										<div className="relative flex-1">
+											<Input
+												id={fieldId}
+												value={value.name}
+												onChange={(event) =>
+													updateFieldValue(
+														"name",
+														event.target.value
+													)
+												}
+												onBlur={rhfField.onBlur}
+												ref={rhfField.ref}
+												disabled={disableBecauseLinkedId}
+												className="border-0 rounded-none shadow-none focus-visible:ring-0 focus-visible:border-0"
+											/>
+										</div>
+										<div className="relative shrink-0">
+											<NativeSelect
+												value={value.suffix}
+												onChange={(e) =>
+													updateFieldValue(
+														"suffix",
+														e.target.value
+													)
+												}
+												disabled={disableBecauseLinkedId}
+												className="w-full md:w-[100px] text-xs border-0 rounded-none rounded-l-md md:rounded-r-md md:rounded-l-none shadow-none focus-visible:ring-0 focus-visible:border-0 [&_select]:rounded-l-md md:[&_select]:rounded-r-md md:[&_select]:rounded-l-none"
+											>
+												{!value.suffix && (
+													<NativeSelectOption value="" disabled>
+														{placeholder ?? "תואר"}
+													</NativeSelectOption>
+												)}
+												{options.map((option) => (
+													<NativeSelectOption
 														key={option.value}
 														value={option.value}
 													>
 														{option.label}
-													</SelectItem>
+													</NativeSelectOption>
 												))}
-											</SelectContent>
-										</Select>
-									)}
-									<Input
-										id={fieldId}
-										value={value.name}
-										onChange={(event) =>
-											updateFieldValue(
-												"name",
-												event.target.value
-											)
-										}
-										onBlur={rhfField.onBlur}
-										ref={rhfField.ref}
-										disabled={disableBecauseLinkedId}
-									/>
-									<Select
-										value={value.suffix}
-										onValueChange={(nextValue) =>
-											updateFieldValue(
-												"suffix",
-												nextValue
-											)
-										}
-										disabled={disableBecauseLinkedId}
-									>
-										<FormControl>
-											<SelectTrigger className="w-full md:w-[160px]">
-												<SelectValue
-													placeholder={
-														placeholder ?? "תואר"
-													}
-												/>
-											</SelectTrigger>
-										</FormControl>
-										<SelectContent>
-											{options.map((option) => (
-												<SelectItem
-													key={option.value}
-													value={option.value}
-												>
-													{option.label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
+											</NativeSelect>
+										</div>
+									</div>
+								</FormControl>
 								<FormMessage />
 							</FormItem>
 						)
@@ -383,7 +395,7 @@ function AtomicFieldRenderer({
 									)}
 								</FormLabel>
 								<FormControl>
-									<Combobox
+									<SearchSelectField
 										placeholder={
 											placeholder ?? "חיפוש במאגר..."
 										}
@@ -394,6 +406,12 @@ function AtomicFieldRenderer({
 										)}
 										onChange={rhfField.onChange}
 										endpoint={endpoint}
+										table={table}
+										valueColumn={valueColumn}
+										labelColumn={labelColumn}
+										searchColumn={searchColumn}
+										filters={filters}
+										params={params}
 										disabled={disableBecauseLinkedId}
 									/>
 								</FormControl>
@@ -447,7 +465,7 @@ function AtomicFieldRenderer({
 											className={cn(
 												"flex flex-wrap gap-3",
 												isVertical &&
-													"flex-col flex-nowrap"
+												"flex-col flex-nowrap"
 											)}
 										>
 											{options.map((option) => (
@@ -641,42 +659,44 @@ function AtomicFieldRenderer({
 				<FormField
 					control={control}
 					name={name as any}
-					render={({ field: rhfField }) => (
-						<FormItem>
-							<FormLabel>
-								{label}
-								{isRequired && (
-									<span className="text-destructive">*</span>
-								)}
-							</FormLabel>
-							<Select
-								value={ensureStringValue(rhfField.value)}
-								onValueChange={rhfField.onChange}
-								disabled={disableBecauseLinkedId}
-							>
+					render={({ field: rhfField }) => {
+						const currentValue = ensureStringValue(rhfField.value)
+						const placeholderText = placeholder ?? "בחרו מהרשימה"
+
+						return (
+							<FormItem>
+								<FormLabel>
+									{label}
+									{isRequired && (
+										<span className="text-destructive">*</span>
+									)}
+								</FormLabel>
 								<FormControl>
-									<SelectTrigger>
-										<SelectValue
-											placeholder={
-												placeholder ?? "בחרו מהרשימה"
-											}
-										/>
-									</SelectTrigger>
+									<NativeSelect
+										value={currentValue}
+										onChange={(e) => rhfField.onChange(e.target.value)}
+										onBlur={rhfField.onBlur}
+										disabled={disableBecauseLinkedId}
+									>
+										{!currentValue && (
+											<NativeSelectOption value="" disabled>
+												{placeholderText}
+											</NativeSelectOption>
+										)}
+										{options.map((option) => (
+											<NativeSelectOption
+												key={option.value}
+												value={option.value}
+											>
+												{option.label}
+											</NativeSelectOption>
+										))}
+									</NativeSelect>
 								</FormControl>
-								<SelectContent>
-									{options.map((option) => (
-										<SelectItem
-											key={option.value}
-											value={option.value}
-										>
-											{option.label}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-							<FormMessage />
-						</FormItem>
-					)}
+								<FormMessage />
+							</FormItem>
+						)
+					}}
 				/>
 			</Fragment>
 		)
@@ -789,9 +809,9 @@ function AtomicFieldRenderer({
 							} else {
 								const base = isRecord(rhfField.value)
 									? (rhfField.value as Record<
-											string,
-											unknown
-									  >)
+										string,
+										unknown
+									>)
 									: {}
 								rhfField.onChange({
 									...base,
@@ -1062,7 +1082,7 @@ function shouldDisplayField(field: FieldMetadata, values: Record<string, any>) {
 				return Array.isArray(compareValue)
 					? compareValue.includes(condition.value)
 					: typeof compareValue === "string" &&
-							compareValue.includes(condition.value)
+					compareValue.includes(condition.value)
 			default:
 				return true
 		}

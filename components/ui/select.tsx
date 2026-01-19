@@ -99,9 +99,10 @@ SelectTrigger.displayName = "SelectTrigger"
 type SelectValueProps = {
   placeholder?: string
   className?: string
+  children?: React.ReactNode
 }
 
-const SelectValue = ({ placeholder, className }: SelectValueProps) => {
+const SelectValue = ({ placeholder, className, children }: SelectValueProps) => {
   const { value } = useSelectContext("SelectValue")
 
   return (
@@ -113,7 +114,7 @@ const SelectValue = ({ placeholder, className }: SelectValueProps) => {
         className,
       )}
     >
-      {value || placeholder}
+      {children !== undefined ? children : (value || placeholder)}
     </span>
   )
 }

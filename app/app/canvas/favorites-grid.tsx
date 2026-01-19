@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import StudentBox from "./student-box";
 import calculateAge from "@/lib/calculateAge";
 import { cn } from "@/lib/utils";
@@ -13,89 +14,87 @@ type Student = {
   last_name: string;
   birth_date: string | Date;
   city: string;
-  parents_info?: {
-    father?: {
-      self?: {
-        name?: string;
-        suffix?: string;
-      };
-      job?: string;
-    };
-    mother?: {
-      self?: {
-        name?: string;
-        suffix?: string;
-      };
-      job?: string;
-      maidenName?: string;
-    };
-  };
-  employment_history?: Array<{
-    category: string;
-  }>;
+  parents_info?: any;
+  employment_history?: { category: string }[];
 };
 
 type Props = {
   initialFavorites: Student[];
   onAddMale: (student: Student) => void;
   onAddFemale: (student: Student) => void;
+  onDragGenderChange: (gender: "male" | "female" | null) => void;
+  onFavoritesChanged?: () => void;
+
 };
 
 export default function FavoritesGrid({
   initialFavorites,
   onAddMale,
   onAddFemale,
+  onDragGenderChange,
+  onFavoritesChanged,
+
 }: Props) {
-  const [favorites, setFavorites] = useState(initialFavorites);
+  const supabase = createClient();
+  const router = useRouter();
+
+  const [favorites, setFavorites] = useState<Student[]>(initialFavorites);
   const [activeTab, setActiveTab] = useState<"male" | "female">("male");
 
-  const supabase = createClient();
+  // חשוב: סנכרון כשה־props משתנים (אחרי router.refresh)
+  useEffect(() => {
+    setFavorites(initialFavorites);
+  }, [initialFavorites]);
 
   const toggleTab = () =>
-    setActiveTab(activeTab === "male" ? "female" : "male");
+    setActiveTab((prev) => (prev === "male" ? "female" : "male"));
 
   const handleAddToDesk = (student: Student) => {
-    if (student.gender === "male") {
-      onAddMale(student);
-    } else {
-      onAddFemale(student);
-    }
+    student.gender === "male" ? onAddMale(student) : onAddFemale(student);
   };
 
+  // ===== הסרה ממועדפים =====
   const handleRemoveFromFavorites = async (student: Student) => {
-    const { data, error } = await supabase.auth.updateUser({
+    const nextFavorites = favorites.filter((s) => s.id !== student.id);
+
+    const { error } = await supabase.auth.updateUser({
       data: {
-        favorites: favorites.filter((item) => item.id !== student.id),
+        favorites: nextFavorites.map((s) => s.id), // ← רק IDs
       },
     });
-    setFavorites(favorites.filter((item) => item.id !== student.id));
+
+    if (error) {
+      console.warn(error);
+      return;
+    }
+
+    // UI מיידי
+    setFavorites(nextFavorites);
+
+    // רענון Server Components (כולל CanvasPage)
+    router.refresh();
+    onFavoritesChanged?.();
   };
 
   return (
     <div className="mt-8">
+      {/* טאבים */}
       <div
         className={cn(
           "before:bg-primary relative mx-auto flex w-fit cursor-pointer gap-2 rounded-full bg-white p-2 select-none before:absolute before:top-0 before:left-0 before:h-full before:w-1/2 before:rounded-full before:border-4 before:border-white before:transition-all before:duration-300",
-          activeTab === "male" ? "before:translate-x-full" : "",
+          activeTab === "male" ? "before:translate-x-full" : ""
         )}
         onClick={toggleTab}
       >
-        <div
-          className={`z-10 min-w-32 p-2 text-center transition-colors ${
-            activeTab === "male" ? "text-white" : "text-gray-500"
-          }`}
-        >
+        <div className={`z-10 min-w-32 p-2 text-center ${activeTab === "male" ? "text-white" : "text-gray-500"}`}>
           מיועדים
         </div>
-        <div
-          className={`z-10 min-w-32 p-2 text-center transition-colors ${
-            activeTab === "female" ? "text-white" : "text-gray-500"
-          }`}
-        >
+        <div className={`z-10 min-w-32 p-2 text-center ${activeTab === "female" ? "text-white" : "text-gray-500"}`}>
           מיועדות
         </div>
       </div>
 
+      {/* גריד */}
       <div className="mt-4 grid grid-cols-4 gap-4">
         {favorites
           .filter((item) => item.gender === activeTab)
@@ -120,9 +119,7 @@ export default function FavoritesGrid({
                   case "kolel":
                     return "כולל";
                   case "profession":
-                    return item.gender === "male"
-                      ? "לומד מקצוע"
-                      : "לומדת מקצוע";
+                    return item.gender === "male" ? "לומד מקצוע" : "לומדת מקצוע";
                   case "working":
                     return item.gender === "male" ? "עובד" : "עובדת";
                   default:
@@ -140,6 +137,8 @@ export default function FavoritesGrid({
               }}
               item={item}
               draggable
+              onDragEnter={() => onDragGenderChange(item.gender)}
+              onDragEnd={() => onDragGenderChange(null)}
               onAddToDesk={handleAddToDesk}
               onRemoveFromFavorites={handleRemoveFromFavorites}
               favorites

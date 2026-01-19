@@ -11,12 +11,7 @@ export default async function CanvasPage() {
 
   const favorites = await supabase
     .from("students")
-    .select(
-      `
-      *,
-      employment_history(*)
-    `,
-    )
+    .select(`*,employment_history(*)`)
     .in("id", user?.user_metadata?.favorites || []);
 
   return (
@@ -28,7 +23,9 @@ export default async function CanvasPage() {
         בתחתית הכרטיס
       </p>
       {/* שולחן העבודה עצמו (client) */}
-      <ShiduchDesk favorites={favorites.data || []} />
+      <ShiduchDesk
+        initialFavorites={favorites.data || []}
+      />
     </Section>
   );
 }
