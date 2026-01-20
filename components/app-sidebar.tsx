@@ -25,6 +25,7 @@ import {
 
 import { SidebarLogo } from "./sidebar/logo";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { usePathname } from "next/navigation";
 
 const items = [
   { title: "ראשי", url: "/app", icon: Home },
@@ -38,7 +39,7 @@ const items = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
-
+  const pathname = usePathname();
   return (
     <Sidebar variant="floating" side="right" collapsible="icon">
       <SidebarLogo />
@@ -53,7 +54,7 @@ export function AppSidebar() {
                 const Icon = item.icon;
 
                 const button = (
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild isActive={pathname === item.url}>
                     <Link href={item.url} prefetch={false}>
                       <Icon />
                       <span>{item.title}</span>

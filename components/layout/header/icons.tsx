@@ -12,18 +12,18 @@ import { Separator } from "@/components/ui/separator";
 import { BellRing, Crown, Eye, Home, Settings, Share2, X } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
-
+import React from "react";
 type MenuItem =
   | {
-      type: "link";
-      href: string;
-      icon: ReactNode;
-    }
+    type: "link";
+    href: string;
+    icon: ReactNode;
+  }
   | {
-      type: "action";
-      onClick: () => void;
-      icon: ReactNode;
-    };
+    type: "action";
+    onClick: () => void;
+    icon: ReactNode;
+  };
 
 export default function HeaderIcons() {
   // const menu: MenuItem[] = [
@@ -121,7 +121,7 @@ export default function HeaderIcons() {
             <ScrollArea className="h-[300px]">
               <div className="flex flex-col gap-2 **:data-[slot=separator]:last:hidden">
                 {notifications.map((notification) => (
-                  <>
+                  <React.Fragment key={notification.id}>
                     <div
                       key={notification.id}
                       className="flex items-center justify-between"
@@ -137,7 +137,7 @@ export default function HeaderIcons() {
                       {notification.content}
                     </p>
                     <Separator />
-                  </>
+                  </React.Fragment>
                 ))}
               </div>
             </ScrollArea>

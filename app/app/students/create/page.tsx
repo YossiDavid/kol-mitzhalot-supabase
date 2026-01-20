@@ -350,6 +350,22 @@ export default function CreateStudentPage() {
         return;
       }
 
+      // בדיקת שדות חובה (NOT NULL בדאטאבייס)
+      const missingFields = [];
+      if (!values.firstName) missingFields.push("שם פרטי");
+      if (!values.lastName) missingFields.push("שם משפחה");
+      if (!values.birthDate) missingFields.push("תאריך לידה");
+      if (!values.gender) missingFields.push("מין");
+      if (!values.personalStatus) missingFields.push("סטטוס אישי");
+      if (!values.country) missingFields.push("ארץ");
+      if (!values.city) missingFields.push("עיר");
+      
+      if (missingFields.length > 0) {
+        alert(`שגיאה: יש למלא את השדות החובה הבאים:\n${missingFields.join(", ")}`);
+        setIsSubmitting(false);
+        return;
+      }
+
       // 1. בניית ה-payload לפי הסכמה (ללא URLs - נשלח null)
       // מיפוי ערכים מהטופס ל-enum types במסד הנתונים
       // Enum Types במסד הנתונים:
@@ -640,6 +656,8 @@ export default function CreateStudentPage() {
 
       // 2. יצירת הסטודנט (ללא URLs)
       // הערה: ודא/י שהשם של הפונקציה ב-Supabase תואם (ייתכן שצריך לשנות ל-"create_full_student_profile" או שם אחר)
+      console.log("Calling RPC with payload:", JSON.stringify(payload, null, 2));
+      
       const { data: studentData, error: createError } = await supabase.rpc(
         "create_full_student_profile",
         {
@@ -647,9 +665,17 @@ export default function CreateStudentPage() {
         },
       );
 
+      console.log("RPC Response:", { data: studentData, error: createError });
+
       if (createError) {
         console.error("Failed creating student:", createError);
-        alert(`שגיאה בשמירת הקו״ח: ${createError.message}`);
+        console.error("Error details:", {
+          message: createError.message,
+          details: createError.details,
+          hint: createError.hint,
+          code: createError.code,
+        });
+        alert(`שגיאה בשמירת הקו״ח: ${createError.message}\n\nפרטים: ${JSON.stringify(createError)}`);
         setIsSubmitting(false);
         return;
       }
