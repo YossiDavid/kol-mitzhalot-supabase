@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { unstable_noStore as noStore } from 'next/cache';
 
 /**
  * Generic endpoint for fetching options from database tables
@@ -12,6 +13,7 @@ import { createClient } from "@/lib/supabase/server";
  * - filters: JSON stringified filters object (optional)
  */
 export async function GET(req: NextRequest) {
+  noStore();
   try {
     const supabase = await createClient();
     const {

@@ -33,8 +33,8 @@ export function UpdatePasswordForm({
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push("/protected");
+      // Redirect to the main app dashboard after password update
+      router.push("/app");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
@@ -59,7 +59,7 @@ export function UpdatePasswordForm({
                 <Input
                   id="password"
                   type="password"
-                    placeholder="סיסמה חדשה"
+                  placeholder="סיסמה חדשה"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -67,7 +67,7 @@ export function UpdatePasswordForm({
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "שומר..." : "שמור סיסמה חדשה"}
+                {isLoading ? "שומר..." : "שמור סיסמה חדשה"}
               </Button>
             </div>
           </form>

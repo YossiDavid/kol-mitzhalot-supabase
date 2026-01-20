@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { unstable_noStore as noStore } from 'next/cache';
 
 /**
  * Get user information by user ID
@@ -10,6 +11,7 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ userId: string }> },
 ) {
+  noStore();
   try {
     const { userId } = await params;
 

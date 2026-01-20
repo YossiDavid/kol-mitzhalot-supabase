@@ -2,8 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "./profile-form";
 import { PasswordForm } from "./password-form";
 import { redirect } from "next/navigation";
+import { unstable_noStore as noStore } from 'next/cache';
 
 export default async function SettingsPage() {
+  noStore();
   const supabase = await createClient();
 
   const {

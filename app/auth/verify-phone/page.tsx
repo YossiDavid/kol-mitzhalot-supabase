@@ -2,8 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import OTPSection from "./otp-section";
 import { Suspense } from "react";
+import { unstable_noStore as noStore } from 'next/cache';
 
 async function VerifyPhoneContent() {
+  noStore();
   const supabase = await createClient();
   const {
     data: { user },

@@ -1,13 +1,14 @@
 import Section from "@/components/layout/section";
 import ShiduchDesk from "./shiduch-desk";
 import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/user";
+import { unstable_noStore as noStore } from 'next/cache';
 
 export default async function CanvasPage() {
+  noStore();
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
 
   const favorites = await supabase
     .from("students")

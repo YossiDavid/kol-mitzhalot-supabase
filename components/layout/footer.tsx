@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 
-export default function Footer() {
+export default async function Footer() {
+  // Access cookies first to satisfy Next.js requirement for using new Date()
+  await cookies();
+
   return (
     <footer className="border-t-foreground/10 container flex min-h-16 items-center justify-between border-t">
       <nav>
@@ -9,13 +13,13 @@ export default function Footer() {
             <Link href="/pricing">מסלולים</Link>
           </li>
           <li>
-            <Link href="/terms-of-use">תנאי שימוש</Link>
+            <Link href="/legal/terms-of-service">תנאי שימוש</Link>
           </li>
           <li>
-            <Link href="/privacy-policy">פרטיות</Link>
+            <Link href="/legal/privacy-policy">פרטיות</Link>
           </li>
           <li>
-            <Link href="/accessibility">הצהרת נגישות</Link>
+            <Link href="/legal/accessibility">הצהרת נגישות</Link>
           </li>
           <li>
             <Link href="/support">שירות ותמיכה</Link>

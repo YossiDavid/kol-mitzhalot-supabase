@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { callMicropay } from "@/lib/micropay";
 import { isValidILPhone, maskPhone, normalizePhoneKey } from "@/lib/phone";
 import { createClient } from "@/lib/supabase/server";
+import { unstable_noStore as noStore } from 'next/cache';
 
 type Counter = { count: number; resetAt: number };
 const sendCounters = new Map<string, Counter>();
@@ -28,6 +29,7 @@ function getBucket(key: string) {
 }
 
 export async function POST(req: NextRequest) {
+  noStore();
   const supabase = await createClient();
 
   const {

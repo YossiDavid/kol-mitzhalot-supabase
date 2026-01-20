@@ -19,6 +19,11 @@ async function SidebarLayout({ children }: { children: React.ReactNode }) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // בדיקת אימות - אם המשתמש לא מחובר, הפנה להתחברות
+  if (!user) {
+    redirect("/auth/login");
+  }
+
   // בדיקה האם המשתמש מאומת טלפונית
   const isPhoneVerified = user?.user_metadata?.phone_verified === true;
 
@@ -33,7 +38,7 @@ async function SidebarLayout({ children }: { children: React.ReactNode }) {
       <AppSidebar />
       <SidebarInset>
         <div className="flex flex-1 flex-col">
-          <Header />
+          <Header variant="app" />
           <main className="container flex-1 py-5">{children}</main>
           <Footer />
         </div>
