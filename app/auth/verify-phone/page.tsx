@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import OTPSection from "./otp-section";
 import { Suspense } from "react";
-import { unstable_noStore as noStore } from 'next/cache';
+import { unstable_noStore as noStore } from "next/cache";
 
 async function VerifyPhoneContent() {
   noStore();
@@ -10,17 +10,13 @@ async function VerifyPhoneContent() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (user?.user_metadata.phone_verified === true) {
+  if (user?.user_metadata?.phone_verified === true) {
     redirect("/app");
   }
 
-  return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm">
-        <OTPSection />
-      </div>
-    </div>
-  );
+  const hasPhone = !!(user?.phone || user?.user_metadata?.phone);
+
+  return <OTPSection hasPhone={hasPhone} />;
 }
 
 export default function PageWrapper() {

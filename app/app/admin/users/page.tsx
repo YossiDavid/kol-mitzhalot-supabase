@@ -4,7 +4,7 @@ import { DashboardSection } from "@/components/layout";
 import { Box } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { unstable_noStore as noStore } from 'next/cache';
+import { unstable_noStore as noStore } from "next/cache";
 
 type UserStats = {
   id: string;
@@ -29,7 +29,8 @@ async function getUsersStats(): Promise<UserStats[]> {
   }
 
   // שליפת כל המשתמשים
-  const { data: users, error: usersError } = await adminClient.auth.admin.listUsers();
+  const { data: users, error: usersError } =
+    await adminClient.auth.admin.listUsers();
 
   if (usersError || !users) {
     console.error("Error fetching users:", usersError);
@@ -78,12 +79,12 @@ async function getUsersStats(): Promise<UserStats[]> {
         ...(brideShidduchim || []),
       ];
       const uniqueShidduchim = allShidduchim.filter(
-        (s, index, self) => index === self.findIndex((t) => t.id === s.id)
+        (s, index, self) => index === self.findIndex((t) => t.id === s.id),
       );
 
       shidduchimOfferedCount = uniqueShidduchim.length;
       shidduchimCompletedCount = uniqueShidduchim.filter(
-        (s) => s.status === "completed"
+        (s) => s.status === "completed",
       ).length;
     }
 
@@ -103,7 +104,7 @@ async function getUsersStats(): Promise<UserStats[]> {
 
   // מיון לפי תאריך הצטרפות (הכי חדש ראשון)
   return stats.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 }
 
@@ -145,29 +146,50 @@ export default async function UsersPage() {
   }
 
   if (error) {
-    const isServiceRoleKeyError = error.message.includes("SUPABASE_SERVICE_ROLE_KEY");
+    const isServiceRoleKeyError = error.message.includes(
+      "SUPABASE_SERVICE_ROLE_KEY",
+    );
 
     return (
       <div className="space-y-10 py-4">
         <DashboardSection
           title="שגיאה"
           subTitle="אירעה שגיאה בטעינת המשתמשים"
-          button={<Button asChild><Link href="/app/admin">חזרה לדף הבית</Link></Button>}
+          button={
+            <Button asChild>
+              <Link href="/app/admin">חזרה לדף הבית</Link>
+            </Button>
+          }
         >
-          <div className="mt-6 p-6 border border-destructive rounded-lg bg-destructive/10">
-            <h3 className="text-lg font-semibold text-destructive mb-2">
+          <div className="border-destructive bg-destructive/10 mt-6 rounded-lg border p-6">
+            <h3 className="text-destructive mb-2 text-lg font-semibold">
               שגיאה בהגדרת האדמין
             </h3>
             {isServiceRoleKeyError ? (
               <div className="space-y-4">
                 <p className="text-sm">
-                  המשתנה <code className="bg-muted px-2 py-1 rounded">SUPABASE_SERVICE_ROLE_KEY</code> לא מוגדר.
+                  המשתנה{" "}
+                  <code className="bg-muted rounded px-2 py-1">
+                    SUPABASE_SERVICE_ROLE_KEY
+                  </code>{" "}
+                  לא מוגדר.
                 </p>
-                <div className="bg-muted p-4 rounded-lg space-y-2">
+                <div className="bg-muted space-y-2 rounded-lg p-4">
                   <p className="font-semibold">הוראות התקנה:</p>
-                  <ol className="list-decimal list-inside space-y-1 text-sm">
-                    <li>פתח את קובץ <code className="bg-background px-1 rounded">.env.local</code> בתיקיית הפרויקט</li>
-                    <li>הוסף את השורה: <code className="bg-background px-1 rounded">SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here</code></li>
+                  <ol className="list-inside list-decimal space-y-1 text-sm">
+                    <li>
+                      פתח את קובץ{" "}
+                      <code className="bg-background rounded px-1">
+                        .env.local
+                      </code>{" "}
+                      בתיקיית הפרויקט
+                    </li>
+                    <li>
+                      הוסף את השורה:{" "}
+                      <code className="bg-background rounded px-1">
+                        SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+                      </code>
+                    </li>
                     <li>
                       מצא את ה-Service Role Key ב-{" "}
                       <a
@@ -179,11 +201,18 @@ export default async function UsersPage() {
                         Supabase Dashboard → Settings → API
                       </a>
                     </li>
-                    <li>הפעל מחדש את שרת הפיתוח (<code className="bg-background px-1 rounded">npm run dev</code>)</li>
+                    <li>
+                      הפעל מחדש את שרת הפיתוח (
+                      <code className="bg-background rounded px-1">
+                        npm run dev
+                      </code>
+                      )
+                    </li>
                   </ol>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  ⚠️ ה-Service Role Key רגיש מאוד - אל תחלוק אותו או תעלה אותו ל-Git
+                <p className="text-muted-foreground text-xs">
+                  ⚠️ ה-Service Role Key רגיש מאוד - אל תחלוק אותו או תעלה אותו
+                  ל-Git
                 </p>
               </div>
             ) : (
@@ -201,10 +230,14 @@ export default async function UsersPage() {
         title="כל המשתמשים"
         titleNumber={stats.length}
         subTitle="רשימת כל המשתמשים במערכת"
-        button={<Button asChild><Link href="/app/admin">חזרה לדף הבית</Link></Button>}
+        button={
+          <Button asChild>
+            <Link href="/app/admin">חזרה לדף הבית</Link>
+          </Button>
+        }
       >
         {stats.length === 0 ? (
-          <div className="text-center py-10 text-muted-foreground">
+          <div className="text-muted-foreground py-10 text-center">
             לא נמצאו משתמשים במערכת
           </div>
         ) : (
@@ -234,7 +267,9 @@ export default async function UsersPage() {
                 <div>{getRoleLabel(user.role)}</div>
                 <div className="text-center">{user.childrenCount}</div>
                 <div className="text-center">{user.shidduchimOfferedCount}</div>
-                <div className="text-center">{user.shidduchimCompletedCount}</div>
+                <div className="text-center">
+                  {user.shidduchimCompletedCount}
+                </div>
                 <div className="text-sm">{formatDate(user.createdAt)}</div>
                 <div>
                   <Button asChild variant="outline" size="sm">

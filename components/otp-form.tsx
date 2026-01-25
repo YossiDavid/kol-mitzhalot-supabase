@@ -18,25 +18,49 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 
+const copy = {
+  email: {
+    title: "הזן קוד אימות",
+    description: "הקוד נשלח אליך באימייל.",
+    fieldDesc: "הקש את הקוד שנשלח לאימייל.",
+    resend: "לא קיבלת? שלח שוב",
+  },
+  phone: {
+    title: "הזן קוד אימות",
+    description: "הקוד נשלח למספר הטלפון שלך.",
+    fieldDesc: "הקש את הקוד שנשלח לטלפון.",
+    resend: "לא קיבלת? שלח שוב",
+  },
+};
+
 export function OTPForm({
   handleSubmit,
+  channel = "email",
+  error,
   ...props
 }: React.ComponentProps<typeof Card> & {
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  channel?: "email" | "phone";
+  error?: string | null;
 }) {
+  const c = copy[channel];
+
   return (
     <Card {...props}>
       <CardHeader>
-        <CardTitle>Enter verification code</CardTitle>
-        <CardDescription>We sent a 6-digit code to your email.</CardDescription>
+        <CardTitle>{c.title}</CardTitle>
+        <CardDescription>{c.description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <form
-          onSubmit={(e: React.FormEvent<HTMLFormElement>) => handleSubmit(e)}
-        >
+        <form onSubmit={(e: React.FormEvent<HTMLFormElement>) => handleSubmit(e)}>
           <FieldGroup>
+            {error && (
+              <p className="text-sm text-destructive" role="alert">
+                {error}
+              </p>
+            )}
             <Field>
-              <FieldLabel htmlFor="otp">Verification code</FieldLabel>
+              <FieldLabel htmlFor="otp">קוד אימות</FieldLabel>
               <InputOTP maxLength={5} id="otp" name="otp" required>
                 <InputOTPGroup className="gap-2.5 *:data-[slot=input-otp-slot]:rounded-md *:data-[slot=input-otp-slot]:border">
                   <InputOTPSlot index={0} />
@@ -46,14 +70,12 @@ export function OTPForm({
                   <InputOTPSlot index={4} />
                 </InputOTPGroup>
               </InputOTP>
-              <FieldDescription>
-                Enter the 6-digit code sent to your email.
-              </FieldDescription>
+              <FieldDescription>{c.fieldDesc}</FieldDescription>
             </Field>
             <FieldGroup>
               <Button type="submit">אימות</Button>
               <FieldDescription className="text-center">
-                לא קיבלת הקוד? <a href="#">שלח שוב</a>
+                {c.resend}
               </FieldDescription>
             </FieldGroup>
           </FieldGroup>

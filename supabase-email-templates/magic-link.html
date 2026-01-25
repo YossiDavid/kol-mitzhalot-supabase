@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>התחברות – קול מצהלות</title>
+  <!-- צבעים ועיצוב תואמים ל־globals.css ו־לוגו: primary #3899a3, dark #254c49, background #ecf0f2, radius 10px -->
+</head>
+<body style="margin:0; padding:0; font-family: Heebo, Arial, Helvetica, sans-serif; font-size: 16px; line-height: 1.6; color: #374151; background-color: #ecf0f2;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #ecf0f2;">
+    <tr>
+      <td style="padding: 40px 20px;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 480px; margin: 0 auto; background: #ffffff; border-radius: 10px; border: 1px solid #e5e7eb; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+          <!-- לוגו -->
+          <tr>
+            <td style="padding: 32px 32px 20px; text-align: center;">
+              <img src="{{ .SiteURL }}/logo-email.png" alt="קול מצהלות" width="120" height="120" style="display: block; margin: 0 auto; max-width: 120px; height: auto;" />
+            </td>
+          </tr>
+          <!-- כותרת -->
+          <tr>
+            <td style="padding: 0 32px 8px; text-align: center;">
+              <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #254c49;">התחברות למערכת</h1>
+            </td>
+          </tr>
+          <!-- טקסט וכפתור -->
+          <tr>
+            <td style="padding: 8px 32px 32px; text-align: center;">
+              <p style="margin: 0 0 24px; color: #4b5563;">לחץ על הכפתור כדי להתחבר לחשבון שלך:</p>
+              <p style="margin: 0 0 24px;">
+                <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&next=/app" style="display: inline-block; padding: 14px 32px; background: #3899a3; color: #ffffff; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 16px;">התחברות</a>
+              </p>
+              <p style="margin: 0; font-size: 14px; color: #6b7280;">אם לא ביקשת קישור זה, אפשר להתעלם מהמייל. הקישור בתוקף לשעה.</p>
+            </td>
+          </tr>
+          <!-- פוטר -->
+          <tr>
+            <td style="padding: 16px 32px 24px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 12px; color: #6b7280;">
+              קול מצהלות – המערכת לניהול שידוכים
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

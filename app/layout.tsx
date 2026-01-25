@@ -2,11 +2,8 @@ import type { Metadata } from "next";
 import { Heebo } from "next/font/google";
 import localFont from "next/font/local";
 import { ThemeProvider } from "next-themes";
+import { getAppOrigin } from "@/lib/app-url";
 import "./globals.css";
-
-const defaultUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
 
 const ploni = localFont({
   src: [
@@ -18,7 +15,7 @@ const ploni = localFont({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(defaultUrl),
+  metadataBase: new URL(getAppOrigin()),
   title: "קול מצהלות",
   description: "המערכת הגדולה לניהול שידוכים במגזר החסידי",
 };

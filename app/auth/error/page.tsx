@@ -1,24 +1,34 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Suspense } from "react";
+import Link from "next/link";
+
+function decodeError(raw: string | undefined): string {
+  if (!raw) return "אירעה שגיאה לא צוינה.";
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
 
 async function ErrorContent({
   searchParams,
 }: {
-  searchParams: Promise<{ error: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const params = await searchParams;
+  const message = decodeError(params?.error);
 
   return (
     <>
-      {params?.error ? (
-        <p className="text-sm text-muted-foreground">
-          שגיאת קוד: {params.error}
-        </p>
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          אירעה שגיאה לא צויינה.
-        </p>
-      )}
+      <p className="text-muted-foreground text-sm" dir="rtl">
+        {message}
+      </p>
+      <p className="mt-4 text-sm">
+        <Link href="/auth/login" className="underline underline-offset-4">
+          בקשת קישור חדש / התחברות
+        </Link>
+      </p>
     </>
   );
 }
@@ -26,7 +36,7 @@ async function ErrorContent({
 export default function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ error: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">

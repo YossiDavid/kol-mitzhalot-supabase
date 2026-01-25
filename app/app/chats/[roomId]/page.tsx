@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { unstable_noStore as noStore } from 'next/cache';
+import { unstable_noStore as noStore } from "next/cache";
 
 export default async function ChatPage({
   params,

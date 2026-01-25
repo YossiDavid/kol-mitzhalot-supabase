@@ -4,7 +4,7 @@ import { DashboardSection } from "@/components/layout";
 import { Box } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { unstable_noStore as noStore } from 'next/cache';
+import { unstable_noStore as noStore } from "next/cache";
 
 type ShadchanStats = {
   id: string;
@@ -29,7 +29,8 @@ async function getShadchanimStats(): Promise<ShadchanStats[]> {
   }
 
   // שליפת כל המשתמשים עם role shadchan
-  const { data: users, error: usersError } = await adminClient.auth.admin.listUsers();
+  const { data: users, error: usersError } =
+    await adminClient.auth.admin.listUsers();
 
   if (usersError || !users) {
     console.error("Error fetching users:", usersError);
@@ -38,7 +39,7 @@ async function getShadchanimStats(): Promise<ShadchanStats[]> {
 
   // סינון רק שדכנים (לא אדמינים)
   const shadchanim = users.users.filter(
-    (user) => user.user_metadata?.role === "shadchan"
+    (user) => user.user_metadata?.role === "shadchan",
   );
 
   const supabase = await createClient();
@@ -53,12 +54,15 @@ async function getShadchanimStats(): Promise<ShadchanStats[]> {
       .order("created_at", { ascending: false });
 
     if (shidduchimError) {
-      console.error(`Error fetching shidduchim for user ${user.id}:`, shidduchimError);
+      console.error(
+        `Error fetching shidduchim for user ${user.id}:`,
+        shidduchimError,
+      );
     }
 
     const shidduchimData = shidduchim || [];
     const completedShidduchim = shidduchimData.filter(
-      (s) => s.status === "completed"
+      (s) => s.status === "completed",
     );
 
     const lastShidduch = shidduchimData[0] || null;
@@ -80,7 +84,7 @@ async function getShadchanimStats(): Promise<ShadchanStats[]> {
 
   // מיון לפי תאריך הצטרפות (הכי חדש ראשון)
   return stats.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 }
 
@@ -109,29 +113,50 @@ export default async function ShadchanimPage() {
   }
 
   if (error) {
-    const isServiceRoleKeyError = error.message.includes("SUPABASE_SERVICE_ROLE_KEY");
+    const isServiceRoleKeyError = error.message.includes(
+      "SUPABASE_SERVICE_ROLE_KEY",
+    );
 
     return (
       <div className="space-y-10 py-4">
         <DashboardSection
           title="שגיאה"
           subTitle="אירעה שגיאה בטעינת השדכנים"
-          button={<Button asChild><Link href="/app/admin">חזרה לדף הבית</Link></Button>}
+          button={
+            <Button asChild>
+              <Link href="/app/admin">חזרה לדף הבית</Link>
+            </Button>
+          }
         >
-          <div className="mt-6 p-6 border border-destructive rounded-lg bg-destructive/10">
-            <h3 className="text-lg font-semibold text-destructive mb-2">
+          <div className="border-destructive bg-destructive/10 mt-6 rounded-lg border p-6">
+            <h3 className="text-destructive mb-2 text-lg font-semibold">
               שגיאה בהגדרת האדמין
             </h3>
             {isServiceRoleKeyError ? (
               <div className="space-y-4">
                 <p className="text-sm">
-                  המשתנה <code className="bg-muted px-2 py-1 rounded">SUPABASE_SERVICE_ROLE_KEY</code> לא מוגדר.
+                  המשתנה{" "}
+                  <code className="bg-muted rounded px-2 py-1">
+                    SUPABASE_SERVICE_ROLE_KEY
+                  </code>{" "}
+                  לא מוגדר.
                 </p>
-                <div className="bg-muted p-4 rounded-lg space-y-2">
+                <div className="bg-muted space-y-2 rounded-lg p-4">
                   <p className="font-semibold">הוראות התקנה:</p>
-                  <ol className="list-decimal list-inside space-y-1 text-sm">
-                    <li>פתח את קובץ <code className="bg-background px-1 rounded">.env.local</code> בתיקיית הפרויקט</li>
-                    <li>הוסף את השורה: <code className="bg-background px-1 rounded">SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here</code></li>
+                  <ol className="list-inside list-decimal space-y-1 text-sm">
+                    <li>
+                      פתח את קובץ{" "}
+                      <code className="bg-background rounded px-1">
+                        .env.local
+                      </code>{" "}
+                      בתיקיית הפרויקט
+                    </li>
+                    <li>
+                      הוסף את השורה:{" "}
+                      <code className="bg-background rounded px-1">
+                        SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+                      </code>
+                    </li>
                     <li>
                       מצא את ה-Service Role Key ב-{" "}
                       <a
@@ -143,11 +168,18 @@ export default async function ShadchanimPage() {
                         Supabase Dashboard → Settings → API
                       </a>
                     </li>
-                    <li>הפעל מחדש את שרת הפיתוח (<code className="bg-background px-1 rounded">npm run dev</code>)</li>
+                    <li>
+                      הפעל מחדש את שרת הפיתוח (
+                      <code className="bg-background rounded px-1">
+                        npm run dev
+                      </code>
+                      )
+                    </li>
                   </ol>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  ⚠️ ה-Service Role Key רגיש מאוד - אל תחלוק אותו או תעלה אותו ל-Git
+                <p className="text-muted-foreground text-xs">
+                  ⚠️ ה-Service Role Key רגיש מאוד - אל תחלוק אותו או תעלה אותו
+                  ל-Git
                 </p>
               </div>
             ) : (
@@ -165,10 +197,14 @@ export default async function ShadchanimPage() {
         title="כל השדכנים"
         titleNumber={stats.length}
         subTitle="רשימת כל השדכנים במערכת עם סטטיסטיקות"
-        button={<Button asChild><Link href="/app/admin">חזרה לדף הבית</Link></Button>}
+        button={
+          <Button asChild>
+            <Link href="/app/admin">חזרה לדף הבית</Link>
+          </Button>
+        }
       >
         {stats.length === 0 ? (
-          <div className="text-center py-10 text-muted-foreground">
+          <div className="text-muted-foreground py-10 text-center">
             לא נמצאו שדכנים במערכת
           </div>
         ) : (
@@ -197,7 +233,9 @@ export default async function ShadchanimPage() {
                 <div className="text-sm">{shadchan.email || "לא זמין"}</div>
                 <div className="text-sm">{formatDate(shadchan.createdAt)}</div>
                 <div className="text-center">{shadchan.totalShidduchim}</div>
-                <div className="text-center">{shadchan.completedShidduchim}</div>
+                <div className="text-center">
+                  {shadchan.completedShidduchim}
+                </div>
                 <div className="text-sm">
                   {formatDate(shadchan.lastShidduchCreatedAt)}
                 </div>

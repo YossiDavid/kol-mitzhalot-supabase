@@ -28,7 +28,7 @@ import ShareButton from "./share-button";
 import MessageButton from "./message-button";
 import { getJewishDate, getJewishDay } from "jewish-dates-core";
 import { jewishDateHebrew } from "@/lib/jewishDatte";
-import { unstable_noStore as noStore } from 'next/cache';
+import { unstable_noStore as noStore } from "next/cache";
 
 export default async function StudentPage({
   params,

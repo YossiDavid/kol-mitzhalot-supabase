@@ -2,7 +2,7 @@ import Section from "@/components/layout/section";
 import ShiduchDesk from "./shiduch-desk";
 import { createClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/user";
-import { unstable_noStore as noStore } from 'next/cache';
+import { unstable_noStore as noStore } from "next/cache";
 
 export default async function CanvasPage() {
   noStore();
@@ -24,9 +24,7 @@ export default async function CanvasPage() {
         בתחתית הכרטיס
       </p>
       {/* שולחן העבודה עצמו (client) */}
-      <ShiduchDesk
-        initialFavorites={favorites.data || []}
-      />
+      <ShiduchDesk initialFavorites={favorites.data || []} />
     </Section>
   );
 }

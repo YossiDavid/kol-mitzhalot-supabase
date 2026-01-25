@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "./profile-form";
 import { PasswordForm } from "./password-form";
 import { redirect } from "next/navigation";
-import { unstable_noStore as noStore } from 'next/cache';
+import { unstable_noStore as noStore } from "next/cache";
 
 export default async function SettingsPage() {
   noStore();
@@ -22,6 +22,7 @@ export default async function SettingsPage() {
     firstName: userMetadata.firstName || null,
     lastName: userMetadata.lastName || null,
     email: user.email || null,
+    phone: (user.phone || userMetadata.phone) ?? null,
   };
 
   return (

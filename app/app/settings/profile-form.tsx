@@ -22,11 +22,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { isValidILPhone, normalizePhoneKey } from "@/lib/phone";
 
 interface ProfileFormData {
   firstName: string;
   lastName: string;
   email: string;
+  phone: string;
 }
 
 interface ProfileFormProps {
@@ -34,6 +36,7 @@ interface ProfileFormProps {
     firstName: string | null;
     lastName: string | null;
     email: string | null;
+    phone: string | null;
   };
 }
 
@@ -46,6 +49,7 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
       firstName: initialData.firstName || "",
       lastName: initialData.lastName || "",
       email: initialData.email || "",
+      phone: initialData.phone || "",
     },
   });
 
@@ -53,13 +57,30 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
     setIsLoading(true);
     const supabase = createClient();
 
+    const phoneChanged =
+      normalizePhoneKey(initialData.phone || "") !==
+      normalizePhoneKey(data.phone || "");
+
+    if (phoneChanged && !isValidILPhone(data.phone.trim())) {
+      toast.error("מספר טלפון לא תקין. השתמש בפורמט 05XXXXXXXX או 9725XXXXXXXX");
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      // Update user metadata
+      const updateData: Record<string, unknown> = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+      };
+
+      if (phoneChanged) {
+        updateData.phone = data.phone.trim();
+        updateData.phone_verified = false;
+        updateData.phone_confirmed_at = null;
+      }
+
       const { error } = await supabase.auth.updateUser({
-        data: {
-          firstName: data.firstName,
-          lastName: data.lastName,
-        },
+        data: updateData,
         email: data.email !== initialData.email ? data.email : undefined,
       });
 
@@ -67,6 +88,12 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
 
       toast.success("הפרופיל עודכן בהצלחה");
       router.refresh();
+
+      if (phoneChanged) {
+        toast.info("הטלפון שונה – נדרש אימות מחדש");
+        router.push("/auth/verify-phone");
+        return;
+      }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "אירעה שגיאה בעדכון הפרופיל";
@@ -143,6 +170,33 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
                       type="email"
                       placeholder="הכנס אימייל"
                       disabled={isLoading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control as any}
+              name="phone"
+              rules={{
+                validate: (v) =>
+                  !v?.trim() ||
+                  isValidILPhone(v.trim()) ||
+                  "פורמט: 05XXXXXXXX או 9725XXXXXXXX",
+              }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>מספר טלפון</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="tel"
+                      placeholder="05XXXXXXXX"
+                      disabled={isLoading}
+                      dir="ltr"
+                      className="text-left"
                     />
                   </FormControl>
                   <FormMessage />

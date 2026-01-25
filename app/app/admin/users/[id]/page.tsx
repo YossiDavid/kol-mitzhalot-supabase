@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import calculateAge from "@/lib/calculateAge";
-import { unstable_noStore as noStore } from 'next/cache';
+import { unstable_noStore as noStore } from "next/cache";
 
 type UserDetails = {
   id: string;
@@ -62,7 +62,9 @@ async function getUserDetails(userId: string): Promise<UserDetails | null> {
   // שליפת ילדים
   const { data: children, error: childrenError } = await supabase
     .from("students")
-    .select("id, first_name, last_name, gender, birth_date, city, in_shidduchim")
+    .select(
+      "id, first_name, last_name, gender, birth_date, city, in_shidduchim",
+    )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
@@ -104,24 +106,25 @@ async function getUserDetails(userId: string): Promise<UserDetails | null> {
       ...(brideShidduchim || []),
     ];
     const uniqueShidduchim = allShidduchim.filter(
-      (s, index, self) => index === self.findIndex((t) => t.id === s.id)
+      (s, index, self) => index === self.findIndex((t) => t.id === s.id),
     );
 
     shidduchimStats.totalOffered = uniqueShidduchim.length;
     shidduchimStats.totalCompleted = uniqueShidduchim.filter(
-      (s) => s.status === "completed"
+      (s) => s.status === "completed",
     ).length;
 
     // חישוב לפי ילד
     for (const child of childrenData) {
       const childShidduchim = uniqueShidduchim.filter(
-        (s) => s.groom_id === child.id || s.bride_id === child.id
+        (s) => s.groom_id === child.id || s.bride_id === child.id,
       );
       shidduchimStats.byChild.push({
         childId: child.id,
         childName: `${child.first_name} ${child.last_name}`,
         offered: childShidduchim.length,
-        completed: childShidduchim.filter((s) => s.status === "completed").length,
+        completed: childShidduchim.filter((s) => s.status === "completed")
+          .length,
       });
     }
   }
@@ -191,7 +194,9 @@ export default async function UserDetailsPage({
   }
 
   if (error) {
-    const isServiceRoleKeyError = error.message.includes("SUPABASE_SERVICE_ROLE_KEY");
+    const isServiceRoleKeyError = error.message.includes(
+      "SUPABASE_SERVICE_ROLE_KEY",
+    );
 
     return (
       <div className="space-y-10 py-4">
@@ -204,20 +209,35 @@ export default async function UserDetailsPage({
             </Button>
           }
         >
-          <div className="mt-6 p-6 border border-destructive rounded-lg bg-destructive/10">
-            <h3 className="text-lg font-semibold text-destructive mb-2">
+          <div className="border-destructive bg-destructive/10 mt-6 rounded-lg border p-6">
+            <h3 className="text-destructive mb-2 text-lg font-semibold">
               שגיאה בהגדרת האדמין
             </h3>
             {isServiceRoleKeyError ? (
               <div className="space-y-4">
                 <p className="text-sm">
-                  המשתנה <code className="bg-muted px-2 py-1 rounded">SUPABASE_SERVICE_ROLE_KEY</code> לא מוגדר.
+                  המשתנה{" "}
+                  <code className="bg-muted rounded px-2 py-1">
+                    SUPABASE_SERVICE_ROLE_KEY
+                  </code>{" "}
+                  לא מוגדר.
                 </p>
-                <div className="bg-muted p-4 rounded-lg space-y-2">
+                <div className="bg-muted space-y-2 rounded-lg p-4">
                   <p className="font-semibold">הוראות התקנה:</p>
-                  <ol className="list-decimal list-inside space-y-1 text-sm">
-                    <li>פתח את קובץ <code className="bg-background px-1 rounded">.env.local</code> בתיקיית הפרויקט</li>
-                    <li>הוסף את השורה: <code className="bg-background px-1 rounded">SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here</code></li>
+                  <ol className="list-inside list-decimal space-y-1 text-sm">
+                    <li>
+                      פתח את קובץ{" "}
+                      <code className="bg-background rounded px-1">
+                        .env.local
+                      </code>{" "}
+                      בתיקיית הפרויקט
+                    </li>
+                    <li>
+                      הוסף את השורה:{" "}
+                      <code className="bg-background rounded px-1">
+                        SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+                      </code>
+                    </li>
                     <li>
                       מצא את ה-Service Role Key ב-{" "}
                       <a
@@ -229,11 +249,18 @@ export default async function UserDetailsPage({
                         Supabase Dashboard → Settings → API
                       </a>
                     </li>
-                    <li>הפעל מחדש את שרת הפיתוח (<code className="bg-background px-1 rounded">npm run dev</code>)</li>
+                    <li>
+                      הפעל מחדש את שרת הפיתוח (
+                      <code className="bg-background rounded px-1">
+                        npm run dev
+                      </code>
+                      )
+                    </li>
                   </ol>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  ⚠️ ה-Service Role Key רגיש מאוד - אל תחלוק אותו או תעלה אותו ל-Git
+                <p className="text-muted-foreground text-xs">
+                  ⚠️ ה-Service Role Key רגיש מאוד - אל תחלוק אותו או תעלה אותו
+                  ל-Git
                 </p>
               </div>
             ) : (
@@ -260,10 +287,10 @@ export default async function UserDetailsPage({
           </Button>
         }
       >
-        <div className="space-y-6 mt-6">
+        <div className="mt-6 space-y-6">
           {/* מידע בסיסי */}
           <Box>
-            <h3 className="text-lg font-semibold mb-4">מידע בסיסי</h3>
+            <h3 className="mb-4 text-lg font-semibold">מידע בסיסי</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <span className="text-muted-foreground">שם פרטי:</span>{" "}
@@ -298,14 +325,18 @@ export default async function UserDetailsPage({
 
           {/* סטטיסטיקות שידוכים */}
           <Box>
-            <h3 className="text-lg font-semibold mb-4">סטטיסטיקות שידוכים</h3>
+            <h3 className="mb-4 text-lg font-semibold">סטטיסטיקות שידוכים</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <span className="text-muted-foreground">סה"כ שידוכים שהוצעו:</span>{" "}
+                <span className="text-muted-foreground">
+                  סה"כ שידוכים שהוצעו:
+                </span>{" "}
                 <strong>{userDetails.shidduchimStats.totalOffered}</strong>
               </div>
               <div>
-                <span className="text-muted-foreground">סה"כ שידוכים שנסגרו:</span>{" "}
+                <span className="text-muted-foreground">
+                  סה"כ שידוכים שנסגרו:
+                </span>{" "}
                 <strong>{userDetails.shidduchimStats.totalCompleted}</strong>
               </div>
             </div>
@@ -313,7 +344,7 @@ export default async function UserDetailsPage({
 
           {/* ילדים */}
           <Box>
-            <h3 className="text-lg font-semibold mb-4">
+            <h3 className="mb-4 text-lg font-semibold">
               ילדים במערכת ({userDetails.children.length})
             </h3>
             {userDetails.children.length === 0 ? (
@@ -333,12 +364,12 @@ export default async function UserDetailsPage({
                 </div>
                 {userDetails.children.map((child) => {
                   const stats = userDetails.shidduchimStats.byChild.find(
-                    (s) => s.childId === child.id
+                    (s) => s.childId === child.id,
                   ) || { offered: 0, completed: 0 };
                   return (
                     <div
                       key={child.id}
-                      className="col-span-full grid grid-cols-subgrid items-center p-2 border-b"
+                      className="col-span-full grid grid-cols-subgrid items-center border-b p-2"
                     >
                       <div>
                         <Link

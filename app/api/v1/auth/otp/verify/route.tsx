@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callMicropay } from "@/lib/micropay";
 import { createClient } from "@/lib/supabase/server";
-import { unstable_noStore as noStore } from 'next/cache';
+import { unstable_noStore as noStore } from "next/cache";
 
 export async function POST(req: NextRequest) {
   noStore();
@@ -17,14 +17,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (user.phone_confirmed_at) {
+  const alreadyVerified =
+    user.phone_confirmed_at || user.user_metadata?.phone_verified === true;
+  if (alreadyVerified) {
     return NextResponse.json(
       { status: "ERROR", message: "Phone already verified" },
       { status: 400 },
     );
   }
 
-  const phoneNumber = user.phone;
+  const phoneNumber =
+    user.phone || (user.user_metadata?.phone as string | undefined);
 
   if (!phoneNumber) {
     return NextResponse.json(
