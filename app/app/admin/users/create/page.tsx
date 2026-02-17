@@ -18,6 +18,12 @@ import {
 
 type Role = "admin" | "shadchan" | "user";
 
+const ROLE_LABELS: Record<Role, string> = {
+  user: "משתמש",
+  shadchan: "שדכן",
+  admin: "מנהל מערכת",
+};
+
 export default function CreateAdminUserPage() {
   const router = useRouter();
 
@@ -38,6 +44,11 @@ export default function CreateAdminUserPage() {
       return;
     }
 
+    if (!phone) {
+      setError("יש להזין טלפון למשתמש החדש");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -50,7 +61,7 @@ export default function CreateAdminUserPage() {
           firstName: firstName || null,
           lastName: lastName || null,
           email,
-          phone: phone || null,
+          phone,
           role,
         }),
       });
@@ -131,10 +142,11 @@ export default function CreateAdminUserPage() {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="phone">טלפון (אופציונלי)</Label>
+              <Label htmlFor="phone">טלפון</Label>
               <Input
                 id="phone"
                 type="tel"
+                required
                 value={phone}
                 onChange={(event) => setPhone(event.target.value)}
                 placeholder="לדוגמה: 050-0000000"
@@ -145,12 +157,14 @@ export default function CreateAdminUserPage() {
               <Label>תפקיד במערכת</Label>
               <Select value={role} onValueChange={(value) => setRole(value as Role)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="בחר תפקיד" />
+                  <SelectValue placeholder="בחר תפקיד">
+                    {role ? ROLE_LABELS[role] : undefined}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user">משתמש</SelectItem>
-                  <SelectItem value="shadchan">שדכן</SelectItem>
-                  <SelectItem value="admin">מנהל מערכת</SelectItem>
+                  <SelectItem value="user">{ROLE_LABELS.user}</SelectItem>
+                  <SelectItem value="shadchan">{ROLE_LABELS.shadchan}</SelectItem>
+                  <SelectItem value="admin">{ROLE_LABELS.admin}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

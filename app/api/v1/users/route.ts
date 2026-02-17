@@ -8,15 +8,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const {
-      email,
-      phone,
-      firstName,
-      lastName,
-      role,
-    }: {
+    const { email, phone, firstName, lastName, role }: {
       email?: string;
-      phone?: string | null;
+      phone?: string;
       firstName?: string;
       lastName?: string;
       role?: string;
@@ -25,6 +19,13 @@ export async function POST(req: NextRequest) {
     if (!email) {
       return NextResponse.json(
         { error: "Email is required" },
+        { status: 400 },
+      );
+    }
+
+    if (!phone) {
+      return NextResponse.json(
+        { error: "Phone is required" },
         { status: 400 },
       );
     }
@@ -51,9 +52,9 @@ export async function POST(req: NextRequest) {
 
     const { data, error } = await adminClient.auth.admin.createUser({
       email,
-      phone: phone || undefined,
+      phone,
       email_confirm: true,
-      phone_confirm: !!phone,
+      phone_confirm: true,
       user_metadata: {
         firstName: firstName ?? null,
         lastName: lastName ?? null,
