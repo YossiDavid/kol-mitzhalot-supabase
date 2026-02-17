@@ -231,9 +231,14 @@ export default async function UsersPage() {
         titleNumber={stats.length}
         subTitle="רשימת כל המשתמשים במערכת"
         button={
-          <Button asChild>
-            <Link href="/app/admin">חזרה לדף הבית</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline">
+              <Link href="/app/admin">חזרה לדף הבית</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/app/admin/users/create">יצירת משתמש חדש</Link>
+            </Button>
+          </div>
         }
       >
         {stats.length === 0 ? (

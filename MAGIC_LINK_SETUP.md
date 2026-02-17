@@ -1,5 +1,25 @@
 # הגדרת Magic Link (קישור התחברות במייל)
 
+---
+
+## אם הכפתור במייל מפנה ל‑localhost כשנכנסים מ‑production
+
+זה קורה כאשר **Site URL** ב‑Supabase מוגדר ל‑`http://localhost:3000`. הקישור במייל נבנה מ‑`{{ .SiteURL }}` בתבנית, ולכן **חייבים** לעדכן את ההגדרה ב‑Supabase:
+
+1. **Supabase Dashboard** → הפרויקט → **Authentication** → **URL Configuration**
+2. בשדה **Site URL** החלף ל:
+   - `https://kol-mitzhalot-supabase.vercel.app` (אם האתר חי על Vercel בלבד), או
+   - `https://kol-mitzhalot.org.il` (אם מחובר דומיין מותאם)
+3. ב־**Redirect URLs** וודא שיש:
+   - `https://kol-mitzhalot-supabase.vercel.app/**`
+   - `https://*.vercel.app/**`
+   - `http://localhost:3000/**` (לפיתוח)
+4. **Save**
+
+אחרי השמירה, מיילים חדשים (Magic Link / הרשמה) יישלחו עם קישור לדומיין הנכון. מיילים שכבר נשלחו יישארו עם הקישור הישן.
+
+---
+
 כדי שה‑Magic Link יעבוד, **חובה** לעדכן את תבנית המייל ב‑Supabase כך שהקישור יכלול `token_hash` ו־`type`. ברירת המחדל לא שולחת אותם ל־`/auth/confirm`, ולכן תופיע השגיאה "חסרים פרמטרים לאימות".
 
 ## 1. עריכת תבנית המייל ב‑Supabase
@@ -31,7 +51,13 @@
 <p>אם לא ביקשת קישור זה, אפשר להתעלם מהמייל.</p>
 ```
 
-## 2. Site URL ב‑Supabase
+## 2. Site URL ב‑Supabase (חשוב: הפרודקשן)
+
+ב־**Authentication** → **URL Configuration**:
+
+> **אם הכפתור במייל מפנה ל‑localhost גם כששולחים מ‑production:** ב‑Supabase יש **ערך Site URL יחיד** לפרויקט. הקישורים במייל נבנים ממנו. אם הוא `http://localhost:3000`, **כל** המיילים (כולל מ‑production) יפנו ל‑localhost.  
+> **פתרון:** להגדיר **Site URL** = `https://kol-mitzhalot-supabase.vercel.app` (או `https://kol-mitzhalot.org.il`).  
+> **פיתוח:** כשעובדים מ‑localhost, קישורי המייל יפנו לפרודקשן. לבדיקת Magic Link: להשתמש ב‑preview ב‑Vercel, או לשנות זמנית את Site URL ל‑`http://localhost:3000` ולהחזיר אחרי הבדיקה.
 
 ב־**Authentication** → **URL Configuration**:
 
@@ -43,6 +69,7 @@
 
 - `http://localhost:3000/**`
 - `https://kol-mitzhalot.org.il/**`
+- `https://kol-mitzhalot-supabase.vercel.app/**`
 - `https://*.vercel.app/**`
 
 ## 3. איך זה עובד אחרי העדכון
