@@ -198,9 +198,14 @@ export default async function ShadchanimPage() {
         titleNumber={stats.length}
         subTitle="רשימת כל השדכנים במערכת עם סטטיסטיקות"
         button={
-          <Button asChild>
-            <Link href="/app/admin">חזרה לדף הבית</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline">
+              <Link href="/app/admin/shadchanim/requests">בקשות ממתינות</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/app/admin">חזרה לדף הבית</Link>
+            </Button>
+          </div>
         }
       >
         {stats.length === 0 ? (
