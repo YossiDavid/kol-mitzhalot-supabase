@@ -37,11 +37,13 @@ export function OTPForm({
   handleSubmit,
   channel = "email",
   error,
+  onResend,
   ...props
 }: React.ComponentProps<typeof Card> & {
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   channel?: "email" | "phone";
   error?: string | null;
+  onResend?: () => void;
 }) {
   const c = copy[channel];
 
@@ -75,7 +77,17 @@ export function OTPForm({
             <FieldGroup>
               <Button type="submit">אימות</Button>
               <FieldDescription className="text-center">
-                {c.resend}
+                {onResend ? (
+                  <button
+                    type="button"
+                    onClick={onResend}
+                    className="text-primary underline underline-offset-4"
+                  >
+                    {c.resend}
+                  </button>
+                ) : (
+                  c.resend
+                )}
               </FieldDescription>
             </FieldGroup>
           </FieldGroup>

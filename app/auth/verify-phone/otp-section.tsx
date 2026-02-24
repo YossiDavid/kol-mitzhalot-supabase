@@ -129,6 +129,7 @@ export default function OTPSection({ hasPhone = true }: OTPSectionProps) {
         handleSubmit={handleSubmit}
         channel="phone"
         error={sendError}
+        onResend={handleSendCode}
       />
     );
   }
