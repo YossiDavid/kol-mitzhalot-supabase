@@ -72,14 +72,11 @@ export async function callMicropay(
   params.set("phone", formatForMicropay(phone));
 
   if (mode === "get") {
-    const vmsFrom = process.env.MICROPAY_VMSFROM;
-    if (!vmsFrom) {
-      console.error("[Micropay] MICROPAY_VMSFROM is not set");
-      return { status: "ERROR", errorMessage: "SMS service not configured" };
-    }
     params.set("get", "1");
     params.set("type", "vms"); // sms | vms | auto
-    params.set("vmsfrom", vmsFrom);
+    // vmsfrom אופציונלי: אם לא נשלח, ההודעה הקולית יוצאת ממספר חסוי (לפי דוק׳ Micropay)
+    const vmsFrom = process.env.MICROPAY_VMSFROM?.trim();
+    if (vmsFrom) params.set("vmsfrom", vmsFrom);
   } else {
     // לפנייה שנייה – אימות הקוד: get=1, token, phone, code (לפי דוק׳ Micropay)
     params.set("get", "1");
