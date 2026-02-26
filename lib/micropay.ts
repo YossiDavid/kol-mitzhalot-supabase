@@ -67,6 +67,7 @@ export async function callMicropay(
   if (mode === "get") {
     params.set("get", "1");
     params.set("type", "vms"); // sms | vms | auto
+    params.set("vmsfrom", process.env.MICROPAY_VMSFROM!); // vms | sms | auto
   } else {
     params.set("get", "1");
     params.set("validate", "1");
