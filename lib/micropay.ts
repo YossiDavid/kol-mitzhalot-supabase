@@ -1,4 +1,6 @@
 // /lib/micropay
+// ממשק Micropay לשליחת OTP: https://www.micropay.co.il/extApi/sendOtp.php
+// פרמטרים ב־lowercase; שליחה ב־GET עם get=1; אימות עם code בלבד (בלי validate).
 
 export type MicroPayResponse =
   | "ERROR"
@@ -60,24 +62,47 @@ export async function callMicropay(
   phone: string,
   code?: string,
 ): Promise<MicroPayResult> {
+  const token = process.env.MICROPAY_TOKEN;
+  if (!token) {
+    console.error("[Micropay] MICROPAY_TOKEN is not set");
+    return { status: "ERROR", errorMessage: "SMS service not configured" };
+  }
   const params = new URLSearchParams();
-  params.set("token", process.env.MICROPAY_TOKEN!);
+  params.set("token", token);
   params.set("phone", formatForMicropay(phone));
 
   if (mode === "get") {
+    const vmsFrom = process.env.MICROPAY_VMSFROM;
+    if (!vmsFrom) {
+      console.error("[Micropay] MICROPAY_VMSFROM is not set");
+      return { status: "ERROR", errorMessage: "SMS service not configured" };
+    }
     params.set("get", "1");
     params.set("type", "vms"); // sms | vms | auto
-    params.set("vmsfrom", process.env.MICROPAY_VMSFROM!); // vms | sms | auto
+    params.set("vmsfrom", vmsFrom);
   } else {
+    // לפנייה שנייה – אימות הקוד: get=1, token, phone, code (לפי דוק׳ Micropay)
     params.set("get", "1");
-    params.set("validate", "1");
     if (code) params.set("code", code.trim());
   }
 
-  const url = `${process.env.MICROPAY_URL}?${params.toString()}`;
+  const baseUrl = process.env.MICROPAY_URL;
+  if (!baseUrl) {
+    console.error("[Micropay] MICROPAY_URL is not set");
+    return { status: "ERROR", errorMessage: "SMS service not configured" };
+  }
+  const url = `${baseUrl}?${params.toString()}`;
+
+  const timeoutMs = 15_000; // 15s so serverless doesn't timeout first
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const res = await fetch(url, { method: "GET" });
+    const res = await fetch(url, {
+      method: "GET",
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
     const rawText = await res.text();
 
     const masked = phone.replace(/(\d{3})\d+(\d{2})/, "$1******$2");
@@ -94,8 +119,16 @@ export async function callMicropay(
     }
     return parsed;
   } catch (err) {
-    console.error("Micropay request failed", err);
-    return { status: "ERROR", errorMessage: "REQUEST_FAILED" };
+    clearTimeout(timeoutId);
+    const isAbort = err instanceof Error && err.name === "AbortError";
+    console.error(
+      "[Micropay] request failed",
+      isAbort ? "timeout" : err,
+    );
+    return {
+      status: "ERROR",
+      errorMessage: isAbort ? "SMS service timeout" : "REQUEST_FAILED",
+    };
   }
 }
 

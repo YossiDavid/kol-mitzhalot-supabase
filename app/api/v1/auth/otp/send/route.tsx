@@ -101,15 +101,15 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
           {
             status: "ERROR",
-            message: result.errorMessage || "Micropay error",
+            message: result.errorMessage || "שירות השליחה לא זמין. נסה שוב בעוד דקה.",
           },
-          { status: 502 },
+          { status: 503 },
         );
     }
   } catch (error) {
     console.error("OTP send handler error", error);
     return NextResponse.json(
-      { status: "ERROR", message: "Internal server error" },
+      { status: "ERROR", message: "שגיאה בשרת. נסה שוב." },
       { status: 500 },
     );
   }
