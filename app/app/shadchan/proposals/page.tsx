@@ -20,6 +20,19 @@ import {
   type ShidduchStatus,
 } from "@/lib/shidduch-status";
 
+type StudentEmbed = {
+  first_name: string | null;
+  last_name: string | null;
+  city: string | null;
+};
+
+function singleEmbed(
+  v: StudentEmbed | StudentEmbed[] | null | undefined,
+): StudentEmbed | null {
+  if (v == null) return null;
+  return Array.isArray(v) ? (v[0] ?? null) : v;
+}
+
 function fullName(row: {
   first_name: string | null;
   last_name: string | null;
@@ -35,8 +48,8 @@ type ShidduchRow = {
   sent_at: string | null;
   note_for_groom: string | null;
   note_for_bride: string | null;
-  groom: { first_name: string | null; last_name: string | null; city: string | null } | null;
-  bride: { first_name: string | null; last_name: string | null; city: string | null } | null;
+  groom: StudentEmbed | null;
+  bride: StudentEmbed | null;
 };
 
 export default async function ShadchanProposalsPage() {
@@ -69,7 +82,16 @@ export default async function ShadchanProposalsPage() {
 
   if (error) console.error(error);
 
-  const shidduchim = (data || []) as ShidduchRow[];
+  const shidduchim: ShidduchRow[] = (data || []).map((row) => ({
+    id: row.id,
+    status: row.status,
+    created_at: row.created_at,
+    sent_at: row.sent_at,
+    note_for_groom: row.note_for_groom,
+    note_for_bride: row.note_for_bride,
+    groom: singleEmbed(row.groom),
+    bride: singleEmbed(row.bride),
+  }));
 
   return (
     <Section containerClassName="py-10">
