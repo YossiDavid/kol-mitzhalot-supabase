@@ -75,7 +75,8 @@ async function getShadchanimStats(): Promise<ShadchanStats[]> {
       email: user.email || null,
       createdAt: user.created_at,
       lastSignInAt: user.last_sign_in_at || null,
-      totalShidduchim: shidduchimData.length,
+      totalShidduchim: shidduchimData.filter((s) => s.status !== "draft")
+        .length,
       completedShidduchim: completedShidduchim.length,
       lastShidduchCreatedAt: lastShidduch?.created_at || null,
       lastShidduchCompletedAt: lastCompletedShidduch?.updated_at || null,

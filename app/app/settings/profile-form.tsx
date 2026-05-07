@@ -38,9 +38,14 @@ interface ProfileFormProps {
     email: string | null;
     phone: string | null;
   };
+  /** When false, phone changes do not require OTP or verify-phone redirect */
+  phoneVerificationEnabled?: boolean;
 }
 
-export function ProfileForm({ initialData }: ProfileFormProps) {
+export function ProfileForm({
+  initialData,
+  phoneVerificationEnabled = true,
+}: ProfileFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
@@ -75,8 +80,13 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
 
       if (phoneChanged) {
         updateData.phone = data.phone.trim();
-        updateData.phone_verified = false;
-        updateData.phone_confirmed_at = null;
+        if (phoneVerificationEnabled) {
+          updateData.phone_verified = false;
+          updateData.phone_confirmed_at = null;
+        } else {
+          updateData.phone_verified = true;
+          updateData.phone_confirmed_at = new Date().toISOString();
+        }
       }
 
       const { error } = await supabase.auth.updateUser({
@@ -89,7 +99,7 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
       toast.success("הפרופיל עודכן בהצלחה");
       router.refresh();
 
-      if (phoneChanged) {
+      if (phoneChanged && phoneVerificationEnabled) {
         toast.info("הטלפון שונה – נדרש אימות מחדש");
         router.push("/auth/verify-phone");
         return;

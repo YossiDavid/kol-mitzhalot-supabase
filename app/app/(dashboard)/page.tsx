@@ -9,6 +9,7 @@ import {
 } from "./sections/user";
 import { createClient } from "@/lib/supabase/server";
 import { unstable_noStore as noStore } from "next/cache";
+import Link from "next/link";
 
 export default async function Home() {
   noStore();
@@ -64,6 +65,50 @@ export default async function Home() {
   }
 
   const childrenData = children.data || [];
+
+  // השידוכים שהשדכן המחובר הציע
+  const activeShidduchimRes =
+    user?.id && (isShadchan || isAdmin)
+      ? await supabase
+          .from("shidduchim")
+          .select(
+            `
+            id,
+            note_for_groom,
+            note_for_bride,
+            status,
+            created_at,
+            groom:students!shidduchim_groom_id_fkey(
+              first_name,
+              last_name,
+              birth_date,
+              city,
+              cv_url,
+              parents_info,
+              education_history(name),
+              employment_history(category,role)
+            ),
+            bride:students!shidduchim_bride_id_fkey(
+              first_name,
+              last_name,
+              birth_date,
+              city,
+              cv_url,
+              parents_info,
+              education_history(name),
+              employment_history(category,role)
+            )
+          `,
+          )
+          .eq("shadchan_id", user.id)
+          .neq("status", "draft")
+          .order("created_at", { ascending: false })
+      : { data: [], error: null };
+
+  if (activeShidduchimRes.error) {
+    console.error(activeShidduchimRes.error);
+  }
+  const activeShidduchimData = activeShidduchimRes.data || [];
 
   // נשלוף את כל חדרי הצ'אט של המשתמש עם ההודעה האחרונה בכל חדר, כולל פרטי השולח
   let chatRooms = null;
@@ -245,61 +290,96 @@ export default async function Home() {
           <DashboardSection
             title="שידוכים באויר"
             subTitle="ההצעות האחרונות שלך"
-            button={<Button>לכל ההצעות שלך</Button>}
+            button={
+              <Button asChild>
+                <Link href={"/app/shadchan/proposals" as any}>
+                  לכל ההצעות שלך
+                </Link>
+              </Button>
+            }
           >
-            <ActiveShidduchim shiduchim={[]} />
+            <ActiveShidduchim shiduchim={activeShidduchimData as any} />
           </DashboardSection>
           <DashboardSection
             title="המועדפים שלך"
             subTitle="מיועדים שעניינו אותך והוספת ללוח העבודה"
-            button={<Button>ללוח העבודה</Button>}
+            button={
+              <Button asChild>
+                <Link href="/app/canvas">ללוח העבודה</Link>
+              </Button>
+            }
           >
             <Favorites favorites={favoritesStudentsData as any} />
           </DashboardSection>
           <DashboardSection
             title="הצ'אטים שלך"
             subTitle="הצ'אטים האחרונים שלך"
-            button={<Button>לכל הצ'אטים שלך</Button>}
+            button={
+              <Button asChild>
+                <Link href="/app/chats">לכל הצ'אטים שלך</Link>
+              </Button>
+            }
           >
             <Chat chats={chatsWithLastMessage as any} />
           </DashboardSection>
           <DashboardSection
             title="הפורומים שלך"
             subTitle="הפורומים האחרונים שלך"
-            button={<Button>לכל הפורומים שלך</Button>}
+            button={
+              <Button asChild>
+                <Link href={"/app/forums" as any}>לכל הפורומים שלך</Link>
+              </Button>
+            }
           >
             <Forum forums={[]} />
           </DashboardSection>
         </>
       )}
 
-      {(isUser || isShadchan || isAdmin) && (
+      {/* סקשנים למשתמש רגיל – מוצגים לכל משתמש מחובר (כולל כשהתפקיד לא מוגדר) */}
+      {user && (
         <>
           <DashboardSection
             title="הצעות פתוחות"
             subTitle="הצעות חדשות או מתקדמות שממתינות לטיפולך"
-            button={<Button>לכל ההצעות</Button>}
+            button={
+              <Button asChild>
+                <Link href={"/app/proposals" as any}>לכל ההצעות</Link>
+              </Button>
+            }
           >
             <UserActiveShidduchim shiduchim={[]} />
           </DashboardSection>
           <DashboardSection
             title="הודעות אחרונות"
             subTitle="שאלות ותשובות חדשות שקיבלת משדכנים בצ'אט"
-            button={<Button>למעבר לצ׳אט</Button>}
+            button={
+              <Button asChild>
+                <Link href="/app/chats">למעבר לצ׳אט</Link>
+              </Button>
+            }
           >
             <UserChat chats={chatsWithLastMessage as any} />
           </DashboardSection>
           <DashboardSection
             title="הילדים שלך"
             subTitle="מגיל 17 ועד החתונה בעז”ה"
-            button={<Button>להוספת בן / בת</Button>}
+            button={
+              <Button asChild>
+                <Link href="/app/students/create">להוספת בן / בת</Link>
+              </Button>
+            }
           >
             <Children childs={childrenData as any} />
           </DashboardSection>
           <DashboardSection
             title="שדכנים שפעלו בשבילך"
             subTitle="שדכנים שהציעו שידוכים או צפו בקו”ח של ילדיך"
-            button={<Button>לכל השדכנים</Button>}
+            button={
+              <Button asChild>
+                <Link href="/app/shadchanim">לכל השדכנים</Link>
+              </Button>
+            }
           >
             <ShadchanimList shadchanim={[]} />
           </DashboardSection>

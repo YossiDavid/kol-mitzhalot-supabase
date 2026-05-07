@@ -12,7 +12,7 @@ export default async function CanvasPage() {
 
   const favorites = await supabase
     .from("students")
-    .select(`*,employment_history(*)`)
+    .select(`*,employment_history(*),partner_preferences(*)`)
     .in("id", user?.user_metadata?.favorites || []);
 
   return (

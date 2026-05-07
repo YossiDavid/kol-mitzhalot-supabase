@@ -377,15 +377,44 @@ export default function CreateStudentPage() {
       // - medical_status_enum: good, littleProblem, hugeProblem
       // - education_type_enum: yeshiva_ktana, yeshiva_gdola, kolel, seminar
       // - reference_type_enum: rabbi, friend, family_friend
+      const normalizeEnumInput = (rawValue: unknown): string => {
+        if (rawValue === null || rawValue === undefined) return "";
+        return String(rawValue)
+          .replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "")
+          .trim()
+          .toLowerCase();
+      };
+
       const mapPersonalStatus = (status: string): string => {
         // personal_status_enum: single, divorced, widower
         // בטופס יש "divorce" אבל ב-enum זה "divorced"
-        if (status === "divorce") return "divorced";
-        return status; // single, widower כבר תואמים
+        const normalized = normalizeEnumInput(status);
+        if (normalized === "divorce") return "divorced";
+        return normalized; // single, widower כבר תואמים
       };
+
+      const mapCellphoneType = (value: unknown): string | null => {
+        const normalized = normalizeEnumInput(value);
+        if (!normalized) return null;
+        const allowed = new Set([
+          "kosher",
+          "sms",
+          "protected_smartphone",
+          "other",
+        ]);
+        return allowed.has(normalized) ? normalized : null;
+      };
+
+      const mappedCellphoneType = mapCellphoneType(values.cellphoneType);
+      if (!mappedCellphoneType) {
+        alert("שגיאה: יש לבחור סוג טלפון תקין עבור המיועד.ת");
+        setIsSubmitting(false);
+        return;
+      }
 
       const payload = {
         user_id: user.id,
+        in_shidduchim: true, // ברירת מחדל: מיועד בשידוכים
         first_name: values.firstName,
         last_name: values.lastName,
         identity_number: values.identityNumber,
@@ -400,7 +429,7 @@ export default function CreateStudentPage() {
         house: values.house,
         community: values.community || null,
         shtible: values.shtible || null,
-        cellphone_type: values.cellphoneType,
+        cellphone_type: mappedCellphoneType,
         plan_for_life: values.planForLife || null,
         head_cover_type: values.headCoverType || null,
         image_url: null, // יועלה אחרי יצירת הסטודנט
@@ -612,7 +641,7 @@ export default function CreateStudentPage() {
           work_status: values.partner?.workStatus || null,
           head_cover_type: values.partner?.headCoverType || null,
           plan_for_life: values.partner?.planForLife || null,
-          cellphone_type: values.partner?.cellphoneType || null,
+          cellphone_type: mapCellphoneType(values.partner?.cellphoneType),
           about_partner: values.partner?.aboutThePartner || null,
           additional_information: values.partner?.additionalInformation || null,
         },
@@ -1057,6 +1086,11 @@ function shouldDisplaySection(
           ? compareValue.includes(condition.value as never)
           : typeof compareValue === "string" &&
               compareValue.includes(String(condition.value));
+      case "in":
+        return (
+          Array.isArray(condition.value) &&
+          condition.value.includes(String(compareValue ?? ""))
+        );
       default:
         return true;
     }

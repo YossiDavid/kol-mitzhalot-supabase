@@ -1,5 +1,6 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { ImpersonationBanner } from "@/components/admin/impersonation-banner";
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
@@ -9,6 +10,8 @@ import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/sonner";
 import { redirect } from "next/navigation";
+import { getEffectiveRole } from "@/lib/user";
+import { getPhoneVerificationEnabled } from "@/lib/system-settings";
 
 async function SidebarLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
@@ -24,19 +27,22 @@ async function SidebarLayout({ children }: { children: React.ReactNode }) {
     redirect("/auth/login");
   }
 
-  // בדיקה האם המשתמש מאומת טלפונית
-  const isPhoneVerified = user?.user_metadata?.phone_verified === true;
+  const phoneVerificationEnabled = await getPhoneVerificationEnabled();
 
-  if (!isPhoneVerified) {
-    // כאן אתה מעביר אותו לדף "נא אמת את הטלפון שלך"
-    // או חוסם לו את הגישה לתפריטים ב-UI
-    redirect("/auth/verify-phone");
+  if (phoneVerificationEnabled) {
+    const isPhoneVerified = user?.user_metadata?.phone_verified === true;
+    if (!isPhoneVerified) {
+      redirect("/auth/verify-phone");
+    }
   }
+
+  const role = getEffectiveRole(user);
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebar />
+      <AppSidebar role={role} />
       <SidebarInset>
+        <ImpersonationBanner />
         <div className="flex flex-1 flex-col">
           <Header variant="app" />
           <main className="container flex-1 py-5">{children}</main>

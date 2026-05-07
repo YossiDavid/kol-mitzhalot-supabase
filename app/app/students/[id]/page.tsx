@@ -1,12 +1,10 @@
 import { Box } from "@/components/layout";
-import { ProfileImage } from "@/components/profile-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import calculateAge from "@/lib/calculateAge";
 import { createClient } from "@/lib/supabase/server";
 import {
   User,
-  MapPin,
   Phone,
   GraduationCap,
   Briefcase,
@@ -18,17 +16,27 @@ import {
   Stethoscope,
   Star,
   Mail,
-  Building2,
-  Home,
-  UserCircle,
-  Share2,
 } from "lucide-react";
 import Link from "next/link";
 import ShareButton from "./share-button";
 import MessageButton from "./message-button";
-import { getJewishDate, getJewishDay } from "jewish-dates-core";
 import { jewishDateHebrew } from "@/lib/jewishDatte";
+import {
+  eduToHebrew,
+  employmentCategoryToHebrew,
+  cellphoneTypeToHebrew,
+  exposureLevelToHebrew,
+  headCoverTypeToHebrew,
+  medicalStatusToHebrew,
+  parentsStatusToHebrew,
+  personalStatusToHebrew,
+  planForLifeToHebrew,
+  referenceTypeToHebrew,
+  relatedIssuePreferenceToHebrew,
+  workStatusToHebrew,
+} from "@/lib/student-profile-labels";
 import { unstable_noStore as noStore } from "next/cache";
+import { cn } from "@/lib/utils";
 
 export default async function StudentPage({
   params,
@@ -111,188 +119,23 @@ export default async function StudentPage({
     </div>
   );
 
-  // Helper functions for translations
-  const eduToHebrew = (edu: string) => {
-    switch (edu) {
-      case "yeshiva_ktana":
-        return "ישיבה קטנה";
-      case "yeshiva_gdola":
-        return "ישיבה גדולה";
-      case "kolel":
-        return "כולל";
-      case "seminar":
-        return "סמינר";
-      default:
-        return edu;
-    }
-  };
+  const genderLabel =
+    student.gender === "male"
+      ? "זכר"
+      : student.gender === "female"
+        ? "נקבה"
+        : null;
+  const shidduchimLabel =
+    student.in_shidduchim === true
+      ? "כן — מיועד לשידוכים"
+      : student.in_shidduchim === false
+        ? "לא"
+        : null;
 
-  const personalStatusToHebrew = (status: string) => {
-    switch (status) {
-      case "single":
-        return "רווק";
-      case "divorced":
-        return "גרוש";
-      case "widower":
-        return "אלמן";
-      default:
-        return status;
-    }
-  };
-
-  const medicalStatusToHebrew = (status: string) => {
-    switch (status) {
-      case "good":
-        return "תקין";
-      case "littleProblem":
-        return "בעיה קלה";
-      case "hugeProblem":
-        return "בעיה משמעותית";
-      default:
-        return status;
-    }
-  };
-
-  const cellphoneTypeToHebrew = (type: string) => {
-    switch (type) {
-      case "kosher":
-        return "כשר";
-      case "sms":
-        return "SMS";
-      case "protected_smartphone":
-        return "סמארטפון מוגן";
-      case "other":
-        return "אחר";
-      default:
-        return type;
-    }
-  };
-
-  const planForLifeToHebrew = (plan: string) => {
-    switch (plan) {
-      case "koilel":
-        return "ללמוד בכולל";
-      case "torah_job":
-        return "לעבוד בעבודה תורנית";
-      case "mix_torah_work":
-        return "לשלב תורה ועבודה";
-      case "work":
-        return "לעבוד";
-      default:
-        return plan;
-    }
-  };
-
-  const headCoverTypeToHebrew = (type: string) => {
-    switch (type) {
-      case "kerchief":
-        return "מטפחת";
-      case "wig":
-        return "פאה";
-      case "kerchief_on_wig":
-        return "מטפחת על פאה";
-      case "other":
-        return "אחר";
-      default:
-        return type;
-    }
-  };
-
-  const employmentCategoryToHebrew = (category: string) => {
-    switch (category) {
-      case "yeshiva":
-        return "לומד בישיבה";
-      case "kolel":
-        return "אברך כולל";
-      case "seminar":
-        return "תלמידת סמינר";
-      case "havruta":
-        return "לומד עם חברותא";
-      case "working":
-        return "עובד";
-      case "profession":
-        return "לומד מקצוע";
-      default:
-        return category;
-    }
-  };
-
-  const referenceTypeToHebrew = (type: string) => {
-    switch (type) {
-      case "rabbi":
-        return "רב";
-      case "friend":
-        return "חבר";
-      case "family_friend":
-        return "מכר משפחתי";
-      default:
-        return type;
-    }
-  };
-
-  const parentsStatusToHebrew = (status: string) => {
-    switch (status) {
-      case "married":
-        return "נשואים";
-      case "divorced":
-        return "גרושים";
-      case "widowed":
-        return "אלמן/ה";
-      default:
-        return status;
-    }
-  };
-
-  const workStatusToHebrew = (status: string) => {
-    switch (status) {
-      case "student":
-        return "תלמידה";
-      case "working":
-        return "עובד/ת";
-      case "yeshiva":
-        return "תלמיד ישיבה";
-      case "chavruta":
-        return "לומד עם חברותא";
-      case "profession_student":
-        return "לומד/ת מקצוע";
-      case "other":
-        return "לא משנה";
-      default:
-        return status;
-    }
-  };
-
-  const exposureLevelToHebrew = (level: string) => {
-    switch (level) {
-      case "no_exposure":
-        return "הסתרת עצם קיומה של הבעיה";
-      case "basic_exposure":
-        return "חשיפת רמת הבעיה בלבד עם פרטי יצירת קשר למידע נוסף";
-      case "only_for_kol_mitzhalot":
-        return "חשיפת פרטי הבעיה להנהלת קול מצהלות בלבד";
-      case "full_exposure":
-        return "חשיפת הבעיה ופרטיה לכלל השדכנים";
-      default:
-        return level;
-    }
-  };
-
-  const relatedIssuePreferenceToHebrew = (pref: string) => {
-    switch (pref) {
-      case "same_issue":
-        return "עם בעיה רפואית זהה";
-      case "similar_or_other":
-        return "בעיה רפואית דומה או אחרת באותה רמה";
-      case "no_issue":
-        return "ללא בעיה רפואית";
-      default:
-        return pref;
-    }
-  };
-
-  function formatJewishDateHebrew(arg0: any) {
-    throw new Error("Function not implemented.");
-  }
+  const hasMedicalIssue =
+    student.medical_records &&
+    (student.medical_records.status === "littleProblem" ||
+      student.medical_records.status === "hugeProblem");
 
   return (
     <div className="min-h-screen space-y-6 text-right">
@@ -325,6 +168,12 @@ export default async function StudentPage({
               </p>
             )}
             <div className="bg-muted/50 grid grid-cols-2 gap-4 rounded-lg p-4 sm:grid-cols-3 lg:grid-cols-4">
+              {genderLabel && (
+                <InfoTag label="מגדר" value={genderLabel} />
+              )}
+              {shidduchimLabel && (
+                <InfoTag label="מיועד לשידוכים" value={shidduchimLabel} />
+              )}
               <InfoTag label="עיר" value={student.city} />
               <InfoTag label="רחוב" value={student.street} />
               <InfoTag label="מספר בית" value={student.house} />
@@ -340,7 +189,11 @@ export default async function StudentPage({
               <InfoTag label="תעודת זהות" value={student.identity_number} />
               <InfoTag
                 label="סטטוס אישי"
-                value={personalStatusToHebrew(student.personal_status)}
+                value={
+                  student.personal_status
+                    ? personalStatusToHebrew(student.personal_status)
+                    : null
+                }
               />
               {student.height && (
                 <InfoTag label="גובה" value={`${student.height} ס"מ`} />
@@ -817,24 +670,26 @@ export default async function StudentPage({
                     </div>
                   )}
                 </div>
-                {student.partner_preferences.preferred_countries &&
-                  student.partner_preferences.preferred_countries.length >
-                    0 && (
-                    <div className="bg-muted/50 rounded-lg p-3">
-                      <p className="text-muted-foreground mb-2 text-xs">
-                        מדינות מועדפות
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {student.partner_preferences.preferred_countries.map(
-                          (country: string, idx: number) => (
-                            <Badge key={idx} variant="outline">
-                              {country}
-                            </Badge>
-                          ),
-                        )}
-                      </div>
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <p className="text-muted-foreground mb-2 text-xs">
+                    ארץ / מדינות מועדפות
+                  </p>
+                  {!student.partner_preferences.preferred_countries ||
+                  student.partner_preferences.preferred_countries.length ===
+                    0 ? (
+                    <p className="text-sm font-bold">ללא העדפה — כל הארצות</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {student.partner_preferences.preferred_countries.map(
+                        (country: string, idx: number) => (
+                          <Badge key={idx} variant="outline">
+                            {country}
+                          </Badge>
+                        ),
+                      )}
                     </div>
                   )}
+                </div>
                 {student.partner_preferences.about_partner && (
                   <div className="bg-muted/50 rounded-lg p-3">
                     <p className="text-muted-foreground mb-1 text-xs">
@@ -989,14 +844,34 @@ export default async function StudentPage({
             </Section>
           )}
 
-          {/* Medical Records */}
-          {student.medical_records &&
-            student.medical_records.status !== "good" && (
-              <div className="border-destructive/50 bg-destructive/10 rounded-lg border p-4">
-                <div className="text-destructive mb-2 flex items-center gap-2">
-                  <Stethoscope size={18} />
-                  <h3 className="text-sm font-bold">הצהרה רפואית</h3>
-                </div>
+          {/* Medical — תמיד מוצג: תקין או פירוט בעיה */}
+          <div
+            className={cn(
+              "rounded-lg border p-4",
+              hasMedicalIssue
+                ? "border-destructive/50 bg-destructive/10"
+                : "border-border bg-muted/30",
+            )}
+          >
+            <div
+              className={
+                hasMedicalIssue
+                  ? "text-destructive mb-2 flex items-center gap-2"
+                  : "text-foreground mb-2 flex items-center gap-2"
+              }
+            >
+              <Stethoscope size={18} />
+              <h3 className="text-sm font-bold">הצהרה רפואית</h3>
+            </div>
+            {!hasMedicalIssue ? (
+              <p className="text-foreground text-xs leading-relaxed">
+                <strong>מצב בריאותי כללי:</strong>{" "}
+                {student.medical_records?.status === "good"
+                  ? medicalStatusToHebrew("good")
+                  : "תקין — ללא פירוט על בעיה רפואית (כפי שנמסר במילוי)"}
+              </p>
+            ) : (
+              <>
                 <p className="text-foreground text-xs leading-relaxed">
                   צוין שיש נושא רפואי (
                   {medicalStatusToHebrew(student.medical_records.status)}):
@@ -1023,7 +898,7 @@ export default async function StudentPage({
                   </p>
                 )}
                 {student.medical_records.contact_info && (
-                  <div className="border-destructive/30 mt-3 border-t pt-3">
+                  <div className="border-border mt-3 border-t pt-3">
                     <p className="text-muted-foreground mb-1 text-xs font-bold">
                       יצירת קשר למידע נוסף:
                     </p>
@@ -1070,7 +945,7 @@ export default async function StudentPage({
                 )}
                 {student.medical_records.documents &&
                   student.medical_records.documents.length > 0 && (
-                    <div className="border-destructive/30 mt-3 border-t pt-3">
+                    <div className="border-border mt-3 border-t pt-3">
                       <p className="text-muted-foreground mb-2 text-xs font-bold">
                         מסמכים רפואיים:
                       </p>
@@ -1092,8 +967,9 @@ export default async function StudentPage({
                       </div>
                     </div>
                   )}
-              </div>
+              </>
             )}
+          </div>
 
           {/* Author Info */}
           {student.author_info && (

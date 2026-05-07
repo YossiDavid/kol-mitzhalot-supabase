@@ -7,6 +7,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import calculateAge from "@/lib/calculateAge";
 import { unstable_noStore as noStore } from "next/cache";
+import { getEffectiveRole, getRoleLabel } from "@/lib/user";
 
 type UserDetails = {
   id: string;
@@ -109,8 +110,11 @@ async function getUserDetails(userId: string): Promise<UserDetails | null> {
       (s, index, self) => index === self.findIndex((t) => t.id === s.id),
     );
 
-    shidduchimStats.totalOffered = uniqueShidduchim.length;
-    shidduchimStats.totalCompleted = uniqueShidduchim.filter(
+    const offeredNonDraft = uniqueShidduchim.filter(
+      (s) => s.status !== "draft",
+    );
+    shidduchimStats.totalOffered = offeredNonDraft.length;
+    shidduchimStats.totalCompleted = offeredNonDraft.filter(
       (s) => s.status === "completed",
     ).length;
 
@@ -119,11 +123,12 @@ async function getUserDetails(userId: string): Promise<UserDetails | null> {
       const childShidduchim = uniqueShidduchim.filter(
         (s) => s.groom_id === child.id || s.bride_id === child.id,
       );
+      const childNonDraft = childShidduchim.filter((s) => s.status !== "draft");
       shidduchimStats.byChild.push({
         childId: child.id,
         childName: `${child.first_name} ${child.last_name}`,
-        offered: childShidduchim.length,
-        completed: childShidduchim.filter((s) => s.status === "completed")
+        offered: childNonDraft.length,
+        completed: childNonDraft.filter((s) => s.status === "completed")
           .length,
       });
     }
@@ -135,7 +140,7 @@ async function getUserDetails(userId: string): Promise<UserDetails | null> {
     lastName: user.user_metadata?.lastName || null,
     email: user.email || null,
     phone: user.phone || null,
-    role: user.user_metadata?.role || "user",
+    role: getEffectiveRole(user),
     createdAt: user.created_at,
     lastSignInAt: user.last_sign_in_at || null,
     children: childrenData.map((c) => ({
@@ -161,19 +166,6 @@ function formatDate(dateString: string | null): string {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
-}
-
-function getRoleLabel(role: string | null): string {
-  switch (role) {
-    case "admin":
-      return "מנהל";
-    case "shadchan":
-      return "שדכן";
-    case "user":
-      return "משתמש";
-    default:
-      return "משתמש";
-  }
 }
 
 export default async function UserDetailsPage({

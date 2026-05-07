@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Home,
@@ -26,8 +27,9 @@ import {
 import { SidebarLogo } from "./sidebar/logo";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { usePathname } from "next/navigation";
+import type { Role } from "@/lib/user-role";
 
-const items = [
+const allItems = [
   { title: "ראשי", url: "/app", icon: Home },
   { title: "מיועדים", url: "/app/students", icon: Users },
   { title: "הוספת מיועד", url: "/app/students/create", icon: Plus },
@@ -36,10 +38,22 @@ const items = [
   { title: "הגדרות", url: "/app/settings", icon: Settings },
 ] as const;
 
-export function AppSidebar() {
+const shadchanOnlyUrls = ["/app/students", "/app/students/create", "/app/canvas"];
+
+export function AppSidebar({ role }: { role: Role }) {
+  const [mounted, setMounted] = useState(false);
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
   const pathname = usePathname();
+
+  useEffect(() => setMounted(true), []);
+
+  // Use role only after mount so server and client initial render match (avoid hydration mismatch)
+  const effectiveRole: Role = mounted ? role : "user";
+  const isShadchanOrAdmin = effectiveRole === "shadchan" || effectiveRole === "admin";
+  const items = isShadchanOrAdmin
+    ? allItems
+    : allItems.filter((item) => !shadchanOnlyUrls.includes(item.url));
   return (
     <Sidebar variant="floating" side="right" collapsible="icon">
       <SidebarLogo />

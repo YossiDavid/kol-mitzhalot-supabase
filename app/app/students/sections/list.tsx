@@ -74,10 +74,11 @@ export default function StudentsList() {
     async function fetchStudents() {
       setLoading(true);
       try {
+        // true או null (רשומות ישנות לפני תיקון create_full_student_profile) — לא false בלבד
         let q = supabase
           .from("students")
           .select("*")
-          .filter("in_shidduchim", "eq", true);
+          .or("in_shidduchim.eq.true,in_shidduchim.is.null");
 
         // פילוח דינמי לפי כל השדות הקיימים ב-query
         if (query.first_name)

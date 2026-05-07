@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { DashboardSection } from "@/components/layout";
 import { Shield, FileCheck, Accessibility } from "lucide-react";
+import { PhoneVerificationToggle } from "@/components/admin/phone-verification-toggle";
 
 export default function SettingsPage() {
   return (
@@ -11,7 +12,10 @@ export default function SettingsPage() {
         subTitle="עריכת תוכן מערכת"
         button={<Button asChild><Link href="/app/admin">חזרה לדף הבית</Link></Button>}
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+        <div className="mt-6 space-y-6">
+          <PhoneVerificationToggle />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
           <Link href="/app/admin/settings/privacy-policy">
             <div className="p-6 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
               <Shield className="h-8 w-8 mb-4" />

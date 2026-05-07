@@ -73,10 +73,13 @@ export async function callMicropay(
 
   if (mode === "get") {
     params.set("get", "1");
-    params.set("type", "vms"); // sms | vms | auto
-    // vmsfrom אופציונלי: אם לא נשלח, ההודעה הקולית יוצאת ממספר חסוי (לפי דוק׳ Micropay)
+    // type: sms | vms (שיחה קולית) | auto (מיקרופיי בוחרים). אם השיחה לא מגיעה – נסה "auto" או וודא ש־MICROPAY_VMSFROM מוגדר.
+    const otpType = (process.env.MICROPAY_OTP_TYPE ?? "vms").trim().toLowerCase();
+    const allowedType = ["sms", "vms", "auto"].includes(otpType) ? otpType : "vms";
+    params.set("type", allowedType);
     const vmsFrom = process.env.MICROPAY_VMSFROM?.trim();
     if (vmsFrom) params.set("vmsfrom", vmsFrom);
+    console.log("[Micropay] OTP request type=%s vmsfrom=%s", allowedType, vmsFrom ? "set" : "not set");
   } else {
     // לפנייה שנייה – אימות הקוד: get=1, token, phone, code (לפי דוק׳ Micropay)
     params.set("get", "1");

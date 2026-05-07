@@ -1,0 +1,85 @@
+<!--
+  ספק: Supabase Auth (לא SendGrid)
+  מיקום ב-Dashboard: Authentication → Email Templates → Change Email Address / Confirm Email Change
+  נושא מוצע: אישור שינוי כתובת מייל
+  משתנים: {{ .ConfirmationURL }}, {{ .Email }}, {{ .NewEmail }}
+-->
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#ecf0f2;">
+  <tr>
+    <td style="padding:40px 20px;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:480px;margin:0 auto;background:#ffffff;border-radius:10px;border:1px solid #e5e7eb;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+
+        <!-- לוגו -->
+        <tr>
+          <td style="padding:32px 32px 20px;text-align:center;">
+            <img src="https://hnsugnkkujaochdwfyzb.supabase.co/storage/v1/object/public/logo/logo-kol-mitzhalot.png"
+                 alt="קול מצהלות"
+                 width="220"
+                 height="120"
+                 style="display:block;margin:0 auto;max-width:220px;height:auto;" />
+          </td>
+        </tr>
+
+        <!-- כותרת -->
+        <tr>
+          <td style="padding:0 32px 8px;text-align:center;">
+            <h1 style="margin:0;font-size:22px;font-weight:700;color:#254c49;">
+              אישור שינוי כתובת מייל
+            </h1>
+          </td>
+        </tr>
+
+        <!-- תוכן -->
+        <tr>
+          <td style="padding:8px 32px 24px;text-align:center;">
+            <p style="margin:0 0 16px;color:#4b5563;font-size:15px;line-height:1.7;">
+              התקבלה בקשה לעדכן את כתובת המייל בחשבון שלך:
+            </p>
+
+            <p style="margin:0 0 18px;font-size:14px;color:#111827;line-height:1.7;">
+              <strong>מ:</strong> {{ .Email }}<br/>
+              <strong>אל:</strong> {{ .NewEmail }}
+            </p>
+
+            <p style="margin:0 0 20px;color:#4b5563;font-size:15px;line-height:1.7;">
+              כדי לאשר את השינוי ולהשלים את התהליך,
+              לחץ על הכפתור הבא:
+            </p>
+
+            <p style="margin:0 0 18px;">
+              <a href="{{ .ConfirmationURL }}"
+                 style="display:inline-block;padding:14px 32px;background:#3899a3;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:700;font-size:16px;">
+                אישור שינוי כתובת מייל
+              </a>
+            </p>
+
+            <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.7;">
+              אם לא ביקשת לשנות את כתובת המייל שלך, אין צורך לבצע פעולה.
+            </p>
+          </td>
+        </tr>
+
+        <!-- לינק חלופי -->
+        <tr>
+          <td style="padding:0 32px 28px;text-align:center;">
+            <p style="margin:0 0 10px;color:#4b5563;font-size:13px;line-height:1.7;">
+              במקרה שהכפתור לא עובד, ניתן להעתיק ולהדביק בדפדפן את הקישור הבא:
+            </p>
+
+            <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px;text-align:left;direction:ltr;word-break:break-all;font-size:12px;line-height:1.6;color:#111827;">
+              {{ .ConfirmationURL }}
+            </div>
+          </td>
+        </tr>
+
+        <!-- פוטר -->
+        <tr>
+          <td style="padding:16px 32px 24px;border-top:1px solid #e5e7eb;text-align:center;font-size:12px;color:#6b7280;">
+            קול מצהלות – המערכת לניהול שידוכים
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>

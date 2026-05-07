@@ -14,12 +14,17 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { isValidILPhone } from "@/lib/phone";
+import Link from "next/link";
 
 interface OTPSectionProps {
   hasPhone?: boolean;
+  maskedPhone?: string | null;
 }
 
-export default function OTPSection({ hasPhone = true }: OTPSectionProps) {
+export default function OTPSection({
+  hasPhone = true,
+  maskedPhone = null,
+}: OTPSectionProps) {
   const [codeSent, setCodeSent] = useState(false);
   const [addedPhone, setAddedPhone] = useState(false);
   const [phone, setPhone] = useState("");
@@ -125,12 +130,19 @@ export default function OTPSection({ hasPhone = true }: OTPSectionProps) {
 
   if (codeSent) {
     return (
-      <OTPForm
-        handleSubmit={handleSubmit}
-        channel="phone"
-        error={sendError}
-        onResend={handleSendCode}
-      />
+      <div className="space-y-4">
+        <OTPForm
+          handleSubmit={handleSubmit}
+          channel="phone"
+          error={sendError}
+          onResend={handleSendCode}
+        />
+        <p className="text-center text-sm text-muted-foreground">
+          <Link href="/app/settings" className="underline hover:text-foreground">
+            זה לא המספר שלי? לעדכון
+          </Link>
+        </p>
+      </div>
     );
   }
 
@@ -139,7 +151,13 @@ export default function OTPSection({ hasPhone = true }: OTPSectionProps) {
       <CardHeader>
         <CardTitle>אימות מספר הטלפון</CardTitle>
         <CardDescription>
-          נשלח אליך קוד אימות (SMS או הודעה קולית). לחץ לשליחה.
+          {maskedPhone ? (
+            <>
+              נשלח קוד אימות ל-<span dir="ltr">{maskedPhone}</span>. לחץ לשליחה.
+            </>
+          ) : (
+            "נשלח אליך קוד אימות (SMS או הודעה קולית). לחץ לשליחה."
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -150,6 +168,13 @@ export default function OTPSection({ hasPhone = true }: OTPSectionProps) {
           <Button onClick={handleSendCode} className="w-full">
             שלח קוד אימות
           </Button>
+          {maskedPhone && (
+            <p className="text-center text-sm text-muted-foreground">
+              <Link href="/app/settings" className="underline hover:text-foreground">
+                זה לא המספר שלי? לעדכון
+              </Link>
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>

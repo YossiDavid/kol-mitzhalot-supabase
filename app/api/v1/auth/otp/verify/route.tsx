@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callMicropay } from "@/lib/micropay";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getPhoneVerificationEnabled } from "@/lib/system-settings";
 import { unstable_noStore as noStore } from "next/cache";
 
 export async function POST(req: NextRequest) {
   noStore();
+  const phoneVerificationEnabled = await getPhoneVerificationEnabled();
+  if (!phoneVerificationEnabled) {
+    return NextResponse.json(
+      { status: "DISABLED", message: "אימות טלפוני אינו פעיל במערכת" },
+      { status: 403 },
+    );
+  }
+
   const supabase = await createClient();
 
   const {
@@ -26,8 +36,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // When user changed phone (pending verification), validate against the new number
   const phoneNumber =
-    user.phone || (user.user_metadata?.phone as string | undefined);
+    (user.user_metadata?.phone_verified === false &&
+      (user.user_metadata?.phone as string | undefined)) ||
+    user.phone ||
+    (user.user_metadata?.phone as string | undefined);
 
   if (!phoneNumber) {
     return NextResponse.json(
@@ -77,6 +91,20 @@ export async function POST(req: NextRequest) {
         { status: "ERROR", message: "Failed to confirm phone" },
         { status: 500 },
       );
+    }
+
+    // Sync auth.users.phone so it matches the verified number (e.g. after change-phone flow)
+    try {
+      const adminClient = createAdminClient();
+      const { error: adminError } = await adminClient.auth.admin.updateUserById(
+        user.id,
+        { phone: phoneNumber, phone_confirm: true },
+      );
+      if (adminError) {
+        console.warn("Failed to sync auth.users.phone after verify:", adminError);
+      }
+    } catch (e) {
+      console.warn("Admin client unavailable for phone sync:", e);
     }
 
     return NextResponse.json({ status: "CODE_VALID" });

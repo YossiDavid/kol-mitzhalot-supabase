@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/empty";
 import calculateAge from "@/lib/calculateAge";
 import { User } from "lucide-react";
+import type { Route } from "next";
 import Link from "next/link";
 import { Box } from "@/components/layout";
 import { Switch } from "@/components/ui/switch";
@@ -143,7 +144,7 @@ export default function Children({ childs }: { childs: Child[] }) {
                   </Button>
                 )}
                 <Button asChild className="flex-1">
-                  <Link href={`/app/students/${child.id}`}>
+                  <Link href={`/app/students/${child.id}` as Route}>
                     לצפיה בכרטיס המלא
                   </Link>
                 </Button>

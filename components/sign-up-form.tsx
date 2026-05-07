@@ -22,6 +22,8 @@ export function SignUpForm({
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
   const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
   const [phone, setPhone] = useState("");
@@ -51,12 +53,24 @@ export function SignUpForm({
       return;
     }
 
+    const fn = firstName.trim();
+    const ln = lastName.trim();
+    if (!fn || !ln) {
+      setError("הזן שם פרטי ושם משפחה");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: { phone: trimmed },
+          data: {
+            phone: trimmed,
+            firstName: fn,
+            lastName: ln,
+          },
           emailRedirectTo: getRedirectUrl(),
         },
       });
@@ -79,6 +93,30 @@ export function SignUpForm({
         <CardContent>
           <form onSubmit={handleSignUp}>
             <div className="flex flex-col gap-6">
+              <div className="grid gap-2 sm:grid-cols-2 sm:gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="firstName">שם פרטי</Label>
+                  <Input
+                    id="firstName"
+                    type="text"
+                    required
+                    autoComplete="given-name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="lastName">שם משפחה</Label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    required
+                    autoComplete="family-name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                  />
+                </div>
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="email">אימייל</Label>
                 <Input

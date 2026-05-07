@@ -29,8 +29,9 @@ const REPEATER_FIELD_TYPES = ["repeater"] as const;
 
 interface Condition {
   parameter: string;
-  operator: "===" | "!==" | "includes";
-  value: string;
+  operator: "===" | "!==" | "includes" | "in";
+  /** For `in`, use an array of allowed values (e.g. problem types only — not empty / not yet chosen). */
+  value: string | string[];
 }
 
 // Types
@@ -1540,8 +1541,8 @@ export const studentFields: FormSteps[] = [
             condition: [
               {
                 parameter: "medical.status",
-                operator: "!==",
-                value: "good",
+                operator: "in",
+                value: ["littleProblem", "hugeProblem"],
               },
             ],
           },
@@ -1552,8 +1553,8 @@ export const studentFields: FormSteps[] = [
             condition: [
               {
                 parameter: "medical.status",
-                operator: "!==",
-                value: "good",
+                operator: "in",
+                value: ["littleProblem", "hugeProblem"],
               },
             ],
           },
@@ -1571,8 +1572,8 @@ export const studentFields: FormSteps[] = [
             condition: [
               {
                 parameter: "medical.status",
-                operator: "!==",
-                value: "good",
+                operator: "in",
+                value: ["littleProblem", "hugeProblem"],
               },
             ],
           },
@@ -1587,8 +1588,8 @@ export const studentFields: FormSteps[] = [
             condition: [
               {
                 parameter: "medical.status",
-                operator: "!==",
-                value: "good",
+                operator: "in",
+                value: ["littleProblem", "hugeProblem"],
               },
             ],
           },
@@ -1644,8 +1645,8 @@ export const studentFields: FormSteps[] = [
             condition: [
               {
                 parameter: "medical.status",
-                operator: "!==",
-                value: "good",
+                operator: "in",
+                value: ["littleProblem", "hugeProblem"],
               },
             ],
           },

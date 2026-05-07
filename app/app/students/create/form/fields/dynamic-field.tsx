@@ -1083,6 +1083,11 @@ function shouldDisplayField(field: FieldMetadata, values: Record<string, any>) {
 					? compareValue.includes(condition.value)
 					: typeof compareValue === "string" &&
 					compareValue.includes(condition.value)
+			case "in":
+				return (
+					Array.isArray(condition.value) &&
+					condition.value.includes(String(compareValue ?? ""))
+				)
 			default:
 				return true
 		}

@@ -2,11 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { callMicropay } from "@/lib/micropay";
 import { isValidILPhone, maskPhone, normalizePhoneKey } from "@/lib/phone";
 import { createClient } from "@/lib/supabase/server";
+import { getPhoneVerificationEnabled } from "@/lib/system-settings";
 import { unstable_noStore as noStore } from "next/cache";
 
 type Counter = { count: number; resetAt: number };
 const sendCounters = new Map<string, Counter>();
-const MAX_PER_HOUR = 10;
+
+/** מקסימום שליחות OTP לשעה לכל צמד טלפון+IP. ניתן להרחיב ב-.env: OTP_RATE_LIMIT_PER_HOUR=20 */
+const MAX_PER_HOUR = (() => {
+  const env = process.env.OTP_RATE_LIMIT_PER_HOUR;
+  if (env === undefined || env === "") return 10;
+  const n = parseInt(env, 10);
+  return Number.isFinite(n) && n > 0 ? Math.min(n, 100) : 10;
+})();
 
 function getClientIp(req: NextRequest) {
   const fwd = req.headers.get("x-forwarded-for");
@@ -30,6 +38,14 @@ function getBucket(key: string) {
 
 export async function POST(req: NextRequest) {
   noStore();
+  const phoneVerificationEnabled = await getPhoneVerificationEnabled();
+  if (!phoneVerificationEnabled) {
+    return NextResponse.json(
+      { status: "DISABLED", message: "אימות טלפוני אינו פעיל במערכת" },
+      { status: 403 },
+    );
+  }
+
   const supabase = await createClient();
 
   const {
@@ -51,8 +67,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // When user changed phone (pending verification), send OTP to the new number
   const phoneNumber =
-    user.phone || (user.user_metadata?.phone as string | undefined);
+    (user.user_metadata?.phone_verified === false &&
+      (user.user_metadata?.phone as string | undefined)) ||
+    user.phone ||
+    (user.user_metadata?.phone as string | undefined);
 
   if (!phoneNumber) {
     return NextResponse.json(

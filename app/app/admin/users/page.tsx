@@ -1,112 +1,19 @@
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { DashboardSection } from "@/components/layout";
 import { Box } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import type { Route } from "next";
 import { unstable_noStore as noStore } from "next/cache";
-
-type UserStats = {
-  id: string;
-  firstName: string | null;
-  lastName: string | null;
-  email: string | null;
-  role: string | null;
-  createdAt: string;
-  lastSignInAt: string | null;
-  childrenCount: number;
-  shidduchimOfferedCount: number;
-  shidduchimCompletedCount: number;
-};
-
-async function getUsersStats(): Promise<UserStats[]> {
-  let adminClient;
-  try {
-    adminClient = createAdminClient();
-  } catch (error) {
-    console.error("Admin client error:", error);
-    throw error;
-  }
-
-  // שליפת כל המשתמשים
-  const { data: users, error: usersError } =
-    await adminClient.auth.admin.listUsers();
-
-  if (usersError || !users) {
-    console.error("Error fetching users:", usersError);
-    return [];
-  }
-
-  const supabase = await createClient();
-  const stats: UserStats[] = [];
-
-  for (const user of users.users) {
-    const role = user.user_metadata?.role || "user";
-
-    // ספירת ילדים
-    const { count: childrenCount } = await supabase
-      .from("students")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", user.id);
-
-    // ספירת שידוכים שהוצעו (כל השידוכים שקשורים לילדים שלו)
-    const { data: userStudents } = await supabase
-      .from("students")
-      .select("id")
-      .eq("user_id", user.id);
-
-    const studentIds = userStudents?.map((s) => s.id) || [];
-
-    let shidduchimOfferedCount = 0;
-    let shidduchimCompletedCount = 0;
-
-    if (studentIds.length > 0) {
-      // שליפת שידוכים שבהם אחד הילדים הוא חתן
-      const { data: groomShidduchim } = await supabase
-        .from("shidduchim")
-        .select("id, status")
-        .in("groom_id", studentIds);
-
-      // שליפת שידוכים שבהם אחד הילדים הוא כלה
-      const { data: brideShidduchim } = await supabase
-        .from("shidduchim")
-        .select("id, status")
-        .in("bride_id", studentIds);
-
-      // איחוד התוצאות והסרת כפילויות לפי id
-      const allShidduchim = [
-        ...(groomShidduchim || []),
-        ...(brideShidduchim || []),
-      ];
-      const uniqueShidduchim = allShidduchim.filter(
-        (s, index, self) => index === self.findIndex((t) => t.id === s.id),
-      );
-
-      shidduchimOfferedCount = uniqueShidduchim.length;
-      shidduchimCompletedCount = uniqueShidduchim.filter(
-        (s) => s.status === "completed",
-      ).length;
-    }
-
-    stats.push({
-      id: user.id,
-      firstName: user.user_metadata?.firstName || null,
-      lastName: user.user_metadata?.lastName || null,
-      email: user.email || null,
-      role,
-      createdAt: user.created_at,
-      lastSignInAt: user.last_sign_in_at || null,
-      childrenCount: childrenCount || 0,
-      shidduchimOfferedCount,
-      shidduchimCompletedCount,
-    });
-  }
-
-  // מיון לפי תאריך הצטרפות (הכי חדש ראשון)
-  return stats.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
-}
+import { Suspense } from "react";
+import { ImpersonateButton } from "@/components/admin/impersonate-button";
+import { AdminUsersFilters } from "@/components/admin/users-filters";
+import { getRoleLabel } from "@/lib/user";
+import {
+  formatFullName,
+  getAdminUsersList,
+  type AdminUsersQuery,
+  type UserStatsRow,
+} from "@/lib/admin-users";
 
 function formatDate(dateString: string | null): string {
   if (!dateString) return "לא זמין";
@@ -120,26 +27,73 @@ function formatDate(dateString: string | null): string {
   }).format(date);
 }
 
-function getRoleLabel(role: string | null): string {
-  switch (role) {
-    case "admin":
-      return "מנהל";
-    case "shadchan":
-      return "שדכן";
-    case "user":
-      return "משתמש";
-    default:
-      return "משתמש";
-  }
+function parseUsersQuery(
+  raw: Record<string, string | string[] | undefined>,
+): AdminUsersQuery {
+  const g = (k: string) => {
+    const v = raw[k];
+    return Array.isArray(v) ? v[0] : v;
+  };
+  const page = Math.max(1, parseInt(String(g("page") || "1"), 10) || 1);
+  const perPageRaw = parseInt(String(g("perPage") || "25"), 10) || 25;
+  const perPage = Math.min(100, Math.max(5, perPageRaw));
+  const q = String(g("q") || "").trim();
+  let roleRaw = String(g("role") || "");
+  if (roleRaw === "all") roleRaw = "";
+  const role = (
+    ["", "admin", "shadchan", "user"].includes(roleRaw) ? roleRaw : ""
+  ) as AdminUsersQuery["role"];
+  const sortRaw = String(g("sort") || "joined");
+  const sort = (
+    ["joined", "email", "name", "role"].includes(sortRaw) ? sortRaw : "joined"
+  ) as AdminUsersQuery["sort"];
+  const orderRaw = String(g("order") || "desc");
+  const order = (
+    ["asc", "desc"].includes(orderRaw) ? orderRaw : "desc"
+  ) as AdminUsersQuery["order"];
+
+  return { page, perPage, q, role, sort, order };
 }
 
-export default async function UsersPage() {
+function buildUsersHref(
+  base: AdminUsersQuery,
+  overrides: Partial<AdminUsersQuery>,
+): string {
+  const m = { ...base, ...overrides };
+  const params = new URLSearchParams();
+  if (m.page > 1) params.set("page", String(m.page));
+  if (m.perPage !== 25) params.set("perPage", String(m.perPage));
+  if (m.q) params.set("q", m.q);
+  if (m.role) params.set("role", m.role);
+  if (m.sort !== "joined") params.set("sort", m.sort);
+  if (m.order !== "desc") params.set("order", m.order);
+  const qs = params.toString();
+  return qs ? `/app/admin/users?${qs}` : "/app/admin/users";
+}
+
+export default async function UsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   noStore();
-  let stats: UserStats[] = [];
+  const sp = await searchParams;
+  const query = parseUsersQuery(sp);
+
+  let stats: UserStatsRow[] = [];
+  let total = 0;
+  let page = 1;
+  let perPage = 25;
+  let lastPage = 1;
   let error: Error | null = null;
 
   try {
-    stats = await getUsersStats();
+    const result = await getAdminUsersList(query);
+    stats = result.rows;
+    total = result.total;
+    page = result.page;
+    perPage = result.perPage;
+    lastPage = result.lastPage;
   } catch (err) {
     error = err instanceof Error ? err : new Error("Unknown error");
     console.error("Error in UsersPage:", error);
@@ -224,12 +178,14 @@ export default async function UsersPage() {
     );
   }
 
+  const q = query;
+
   return (
     <div className="space-y-10 py-4">
       <DashboardSection
         title="כל המשתמשים"
-        titleNumber={stats.length}
-        subTitle="רשימת כל המשתמשים במערכת"
+        titleNumber={total}
+        subTitle="רשימת משתמשים עם עימוד, סינון ומיון"
         button={
           <div className="flex items-center gap-2">
             <Button asChild variant="outline">
@@ -241,49 +197,94 @@ export default async function UsersPage() {
           </div>
         }
       >
-        {stats.length === 0 ? (
+        <Suspense fallback={<div className="bg-muted/30 mt-6 h-24 animate-pulse rounded-lg border" />}>
+          <AdminUsersFilters />
+        </Suspense>
+
+        {total === 0 ? (
           <div className="text-muted-foreground py-10 text-center">
-            לא נמצאו משתמשים במערכת
+            לא נמצאו משתמשים לפי הסינון
           </div>
         ) : (
-          <div className="grid grid-cols-[2fr_2fr_2fr_1fr_1fr_1fr_1fr_1fr_2fr] gap-4 pt-4">
-            <div
-              data-slot="table-header"
-              className="col-span-full grid grid-cols-subgrid font-semibold"
-            >
-              <div>שם פרטי</div>
-              <div>שם משפחה</div>
-              <div>אימייל</div>
-              <div>תפקיד</div>
-              <div>ילדים</div>
-              <div>שידוכים הוצעו</div>
-              <div>שידוכים נסגרו</div>
-              <div>תאריך הצטרפות</div>
-              <div>פעולות</div>
+          <>
+            <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-2 pt-6 text-sm">
+              <span>
+                מציג {(page - 1) * perPage + 1}–
+                {Math.min(page * perPage, total)} מתוך {total}
+              </span>
+              <span>
+                עמוד {page} מתוך {lastPage}
+              </span>
             </div>
-            {stats.map((user) => (
-              <Box
-                key={user.id}
-                className="col-span-full grid grid-cols-subgrid items-center"
+            <div className="grid grid-cols-[3fr_2fr_1fr_1fr_1fr_1fr_1fr_2fr] gap-4 pt-2">
+              <div
+                data-slot="table-header"
+                className="col-span-full grid grid-cols-subgrid font-semibold"
               >
-                <div>{user.firstName || "לא זמין"}</div>
-                <div>{user.lastName || "לא זמין"}</div>
-                <div className="text-sm">{user.email || "לא זמין"}</div>
-                <div>{getRoleLabel(user.role)}</div>
-                <div className="text-center">{user.childrenCount}</div>
-                <div className="text-center">{user.shidduchimOfferedCount}</div>
-                <div className="text-center">
-                  {user.shidduchimCompletedCount}
-                </div>
-                <div className="text-sm">{formatDate(user.createdAt)}</div>
-                <div>
-                  <Button asChild variant="outline" size="sm">
-                    <Link href={`/app/admin/users/${user.id}`}>צפייה</Link>
+                <div>שם מלא</div>
+                <div>אימייל</div>
+                <div>תפקיד</div>
+                <div>ילדים</div>
+                <div>שידוכים הוצעו</div>
+                <div>שידוכים נסגרו</div>
+                <div>תאריך הצטרפות</div>
+                <div>פעולות</div>
+              </div>
+              {stats.map((user) => (
+                <Box
+                  key={user.id}
+                  className="col-span-full grid grid-cols-subgrid items-center"
+                >
+                  <div>
+                    {formatFullName(user.firstName, user.lastName) || "לא זמין"}
+                  </div>
+                  <div className="text-sm">{user.email || "לא זמין"}</div>
+                  <div>{getRoleLabel(user.role)}</div>
+                  <div className="text-center">{user.childrenCount}</div>
+                  <div className="text-center">
+                    {user.shidduchimOfferedCount}
+                  </div>
+                  <div className="text-center">
+                    {user.shidduchimCompletedCount}
+                  </div>
+                  <div className="text-sm">{formatDate(user.createdAt)}</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={`/app/admin/users/${user.id}`}>צפייה</Link>
+                    </Button>
+                    {user.email && <ImpersonateButton userId={user.id} />}
+                  </div>
+                </Box>
+              ))}
+            </div>
+
+            {lastPage > 1 && (
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-8">
+                {page <= 1 ? (
+                  <Button variant="outline" size="sm" disabled type="button">
+                    הקודם
                   </Button>
-                </div>
-              </Box>
-            ))}
-          </div>
+                ) : (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={buildUsersHref(q, { page: page - 1 }) as Route}>
+                      הקודם
+                    </Link>
+                  </Button>
+                )}
+                {page >= lastPage ? (
+                  <Button variant="outline" size="sm" disabled type="button">
+                    הבא
+                  </Button>
+                ) : (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={buildUsersHref(q, { page: page + 1 }) as Route}>
+                      הבא
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            )}
+          </>
         )}
       </DashboardSection>
     </div>

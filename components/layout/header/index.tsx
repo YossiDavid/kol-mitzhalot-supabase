@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { DeployButton } from "@/components/deploy-button";
 import { Suspense } from "react";
 import { AuthButton } from "@/components/auth-button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/server";
+import { getEffectiveRole } from "@/lib/user";
 import HeaderIcons from "./icons";
+import { UserMenu } from "./user-menu";
 import { Button } from "../../ui/button";
 import { Separator } from "../../ui/separator";
 import Image from "next/image";
@@ -22,6 +23,9 @@ export default async function Header({ variant }: { variant: "app" | "website" }
 
   const firstName = user?.user_metadata?.firstName as string;
   const lastName = user?.user_metadata?.lastName as string;
+  const role = user ? getEffectiveRole(user) : null;
+  const showShadchanJoin =
+    role === "user" || (role !== "admin" && role !== "shadchan");
 
   return (
     <header className="border-b-foreground/10 container flex h-16 items-center justify-between gap-5 border-b font-semibold">
@@ -51,11 +55,15 @@ export default async function Header({ variant }: { variant: "app" | "website" }
       </div>
 
       <div className="flex gap-2">
-        <HeaderIcons />
+        <HeaderIcons hasUserMenu={variant === "app" && !!user} />
 
-        <Suspense>
-          <AuthButton />
-        </Suspense>
+        {variant === "app" && user ? (
+          <UserMenu showShadchanJoin={showShadchanJoin} />
+        ) : (
+          <Suspense>
+            <AuthButton />
+          </Suspense>
+        )}
         {variant === "app" && (
           <Button asChild>
             {user?.user_metadata?.role !== "shadchan" ? (

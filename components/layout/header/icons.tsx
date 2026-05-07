@@ -9,23 +9,17 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { BellRing, Crown, Eye, Home, Settings, Share2, X } from "lucide-react";
+import { BellRing, Crown, Home, Settings } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import React from "react";
-type MenuItem =
-  | {
-    type: "link";
-    href: string;
-    icon: ReactNode;
-  }
-  | {
-    type: "action";
-    onClick: () => void;
-    icon: ReactNode;
-  };
 
-export default function HeaderIcons() {
+interface HeaderIconsProps {
+  /** כשמוצג תפריט משתמש (אייקון משתמש) – לא להציג אייקון הגדרות נפרד */
+  hasUserMenu?: boolean;
+}
+
+export default function HeaderIcons({ hasUserMenu = false }: HeaderIconsProps) {
   // const menu: MenuItem[] = [
   //   {
   //     type: "link",
@@ -145,11 +139,13 @@ export default function HeaderIcons() {
         </PopoverContent>
       </Popover>
 
-      <Button variant="ghost" size="icon" asChild>
-        <Link href={"/app/settings"}>
-          <Settings />
-        </Link>
-      </Button>
+      {!hasUserMenu && (
+        <Button variant="ghost" size="icon" asChild>
+          <Link href={"/app/settings"}>
+            <Settings />
+          </Link>
+        </Button>
+      )}
       {/* {menu.map((item, index) => {
 				if (item.type === "link") {
 					return (

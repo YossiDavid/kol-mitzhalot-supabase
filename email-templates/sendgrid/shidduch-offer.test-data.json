@@ -1,0 +1,38 @@
+{
+  "both": {
+    "groom_name": "ישראל ישראלי",
+    "bride_name": "לאה לוי",
+    "shadchan_name": "משה כהן",
+    "subject": "הצעת שידוך חדשה — ישראל ישראלי ולאה לוי",
+    "offer_url": "https://example.com/app/shidduchim/00000000-0000-4000-8000-000000000001",
+    "note_for_groom": "שלום,\nנראה התאמה טובה בתחום הלימודים ובמשפחה. מומלץ לבדוק התאמת קהילה.",
+    "note_for_bride": "המיועד מתאים בטווח הגיל ובכיוון החיים שצוין בפרופיל.",
+    "is_both": true,
+    "is_groom_only": false,
+    "is_bride_only": false
+  },
+  "groom_only": {
+    "groom_name": "ישראל ישראלי",
+    "bride_name": "לאה לוי",
+    "shadchan_name": "משה כהן",
+    "subject": "הצעת שידוך חדשה — ישראל ישראלי ולאה לוי",
+    "offer_url": "https://example.com/app/shidduchim/00000000-0000-4000-8000-000000000001",
+    "note_for_groom": "הערה שתישלח רק למנהל הכרטיס של המיועד.",
+    "note_for_bride": "",
+    "is_both": false,
+    "is_groom_only": true,
+    "is_bride_only": false
+  },
+  "bride_only": {
+    "groom_name": "ישראל ישראלי",
+    "bride_name": "לאה לוי",
+    "shadchan_name": "משה כהן",
+    "subject": "הצעת שידוך חדשה — ישראל ישראלי ולאה לוי",
+    "offer_url": "https://example.com/app/shidduchim/00000000-0000-4000-8000-000000000001",
+    "note_for_groom": "",
+    "note_for_bride": "הערה שתישלח רק למנהל הכרטיס של המיועדת.",
+    "is_both": false,
+    "is_groom_only": false,
+    "is_bride_only": true
+  }
+}
