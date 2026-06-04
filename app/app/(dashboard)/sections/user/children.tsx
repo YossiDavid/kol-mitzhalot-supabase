@@ -121,7 +121,7 @@ export default function Children({ childs }: { childs: Child[] }) {
                 {/* {student.parents_info.mother.self.suffix} */}
               </div>
               <div>{child.city}</div>
-              <div>{calculateAge(new Date(child.birth_date || ""))}</div>
+              <div>{calculateAge(child.birth_date || "")}</div>
               <div>{child.height}</div>
               <div className="flex gap-1">
                 {child.cv_url ? (

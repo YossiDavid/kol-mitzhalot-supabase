@@ -22,7 +22,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { isValidILPhone, normalizePhoneKey } from "@/lib/phone";
+import {
+  isValidPhone,
+  normalizePhoneKey,
+  PHONE_INVALID_MESSAGE,
+} from "@/lib/phone";
 
 interface ProfileFormData {
   firstName: string;
@@ -66,8 +70,8 @@ export function ProfileForm({
       normalizePhoneKey(initialData.phone || "") !==
       normalizePhoneKey(data.phone || "");
 
-    if (phoneChanged && !isValidILPhone(data.phone.trim())) {
-      toast.error("מספר טלפון לא תקין. השתמש בפורמט 05XXXXXXXX או 9725XXXXXXXX");
+    if (phoneChanged && !isValidPhone(data.phone.trim())) {
+      toast.error(PHONE_INVALID_MESSAGE);
       setIsLoading(false);
       return;
     }
@@ -192,9 +196,7 @@ export function ProfileForm({
               name="phone"
               rules={{
                 validate: (v) =>
-                  !v?.trim() ||
-                  isValidILPhone(v.trim()) ||
-                  "פורמט: 05XXXXXXXX או 9725XXXXXXXX",
+                  !v?.trim() || isValidPhone(v.trim()) || PHONE_INVALID_MESSAGE,
               }}
               render={({ field }) => (
                 <FormItem>
@@ -203,7 +205,7 @@ export function ProfileForm({
                     <Input
                       {...field}
                       type="tel"
-                      placeholder="05XXXXXXXX"
+                      placeholder="+972 50…"
                       disabled={isLoading}
                       dir="ltr"
                       className="text-left"

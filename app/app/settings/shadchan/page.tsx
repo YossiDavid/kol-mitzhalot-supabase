@@ -24,7 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
-import { isValidILPhone } from "@/lib/phone";
+import { isValidPhone, PHONE_INVALID_MESSAGE } from "@/lib/phone";
 
 interface ShadchanFormData {
   bio: string;
@@ -132,8 +132,8 @@ export default function ShadchanApplicationPage() {
       }
 
       // בדיקת טלפון אם הוזן
-      if (data.contact_phone && !isValidILPhone(data.contact_phone.trim())) {
-        toast.error("מספר טלפון לא תקין. השתמש בפורמט 05XXXXXXXX או 9725XXXXXXXX");
+      if (data.contact_phone && !isValidPhone(data.contact_phone.trim())) {
+        toast.error(PHONE_INVALID_MESSAGE);
         setIsLoading(false);
         return;
       }
@@ -289,8 +289,8 @@ export default function ShadchanApplicationPage() {
                   rules={{
                     validate: (v) =>
                       !v?.trim() ||
-                      isValidILPhone(v.trim()) ||
-                      "פורמט: 05XXXXXXXX או 9725XXXXXXXX",
+                      isValidPhone(v.trim()) ||
+                      PHONE_INVALID_MESSAGE,
                   }}
                   render={({ field }) => (
                     <FormItem>
@@ -299,7 +299,7 @@ export default function ShadchanApplicationPage() {
                         <Input
                           {...field}
                           type="tel"
-                          placeholder="05XXXXXXXX"
+                          placeholder="+972 50…"
                           dir="ltr"
                           className="text-left"
                           disabled={isLoading}

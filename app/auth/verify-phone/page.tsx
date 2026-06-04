@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { unstable_noStore as noStore } from "next/cache";
 import { maskPhone } from "@/lib/phone";
 import { getPhoneVerificationEnabled } from "@/lib/system-settings";
+import { Spinner } from "@/components/ui/spinner";
 
 async function VerifyPhoneContent() {
   noStore();
@@ -35,15 +36,7 @@ async function VerifyPhoneContent() {
 
 export default function PageWrapper() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-          <div className="w-full max-w-sm">
-            <div>טוען...</div>
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<Spinner />}>
       <VerifyPhoneContent />
     </Suspense>
   );

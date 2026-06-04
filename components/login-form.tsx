@@ -61,7 +61,9 @@ export function LoginForm({
           <form onSubmit={handleLogin}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
-                <Label htmlFor="email">אימייל</Label>
+                <Label htmlFor="email" required>
+                  אימייל
+                </Label>
                 <Input
                   id="email"
                   type="email"
@@ -73,7 +75,7 @@ export function LoginForm({
                 />
               </div>
               {error && (
-                <p className="text-sm text-destructive" role="alert">
+                <p className="text-destructive text-sm" role="alert">
                   {error}
                 </p>
               )}
@@ -81,9 +83,12 @@ export function LoginForm({
                 {isLoading ? "שולח קישור..." : "שלח קישור התחברות"}
               </Button>
             </div>
-            <div className="mt-4 text-center text-sm text-muted-foreground">
+            <div className="text-muted-foreground mt-4 text-center text-sm">
               אין לך חשבון?{" "}
-              <Link href="/auth/sign-up" className="underline underline-offset-4">
+              <Link
+                href="/auth/sign-up"
+                className="underline underline-offset-4"
+              >
                 הירשם
               </Link>
             </div>

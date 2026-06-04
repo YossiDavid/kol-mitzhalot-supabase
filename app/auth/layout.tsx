@@ -16,7 +16,7 @@ export default function AuthLayout({
 }) {
   return (
     <div className="relative flex min-h-svh flex-col">
-      <div className="from-muted/30 to-background absolute inset-0 -z-10 bg-linear-to-b" />
+      {/* <div className="from-muted/30 to-background absolute inset-0 -z-10 bg-linear-to-b" /> */}
       <header className="border-border/50 bg-background/80 flex shrink-0 items-center justify-center border-b px-4 py-5 backdrop-blur-sm">
         <Link
           href="/"

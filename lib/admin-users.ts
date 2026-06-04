@@ -187,7 +187,7 @@ function sortUsers(
   return list;
 }
 
-async function fetchAllAuthUsers(
+export async function fetchAllAuthUsers(
   admin: ReturnType<typeof createAdminClient>,
 ): Promise<User[]> {
   const out: User[] = [];

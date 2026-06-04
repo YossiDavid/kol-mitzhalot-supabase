@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { isValidILPhone } from "@/lib/phone";
+import { isValidPhone, PHONE_INVALID_MESSAGE } from "@/lib/phone";
 import Link from "next/link";
 
 interface OTPSectionProps {
@@ -38,8 +38,8 @@ export default function OTPSection({
     e.preventDefault();
     setPhoneError(null);
     const trimmed = phone.replace(/\s/g, "");
-    if (!isValidILPhone(trimmed)) {
-      setPhoneError("פורמט: 05XXXXXXXX או 9725XXXXXXXX");
+    if (!isValidPhone(trimmed)) {
+      setPhoneError(PHONE_INVALID_MESSAGE);
       return;
     }
     setAddLoading(true);
@@ -107,7 +107,7 @@ export default function OTPSection({
                 <Input
                   id="phone"
                   type="tel"
-                  placeholder="05XXXXXXXX"
+                  placeholder="+972 50…"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   dir="ltr"

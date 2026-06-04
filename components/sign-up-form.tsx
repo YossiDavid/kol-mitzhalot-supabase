@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { isValidILPhone } from "@/lib/phone";
+import { isValidPhone, PHONE_INVALID_MESSAGE } from "@/lib/phone";
 
 export function SignUpForm({
   className,
@@ -47,8 +47,8 @@ export function SignUpForm({
     }
 
     const trimmed = phone.replace(/\s/g, "");
-    if (!isValidILPhone(trimmed)) {
-      setError("מספר טלפון לא תקין. השתמש בפורמט 05XXXXXXXX או 9725XXXXXXXX");
+    if (!isValidPhone(trimmed)) {
+      setError(PHONE_INVALID_MESSAGE);
       setIsLoading(false);
       return;
     }
@@ -87,15 +87,17 @@ export function SignUpForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">הירשם</CardTitle>
-          <CardDescription>צור חשבון חדש</CardDescription>
+          <CardTitle className="text-2xl">הרשמה</CardTitle>
+          {/* <CardDescription>צור חשבון חדש</CardDescription> */}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignUp}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2 sm:grid-cols-2 sm:gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="firstName">שם פרטי</Label>
+                  <Label htmlFor="firstName" required>
+                    שם פרטי
+                  </Label>
                   <Input
                     id="firstName"
                     type="text"
@@ -106,7 +108,9 @@ export function SignUpForm({
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="lastName">שם משפחה</Label>
+                  <Label htmlFor="lastName" required>
+                    שם משפחה
+                  </Label>
                   <Input
                     id="lastName"
                     type="text"
@@ -118,7 +122,9 @@ export function SignUpForm({
                 </div>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="email">אימייל</Label>
+                <Label htmlFor="email" required>
+                  אימייל
+                </Label>
                 <Input
                   id="email"
                   type="email"
@@ -130,11 +136,13 @@ export function SignUpForm({
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="phone">מספר טלפון</Label>
+                <Label htmlFor="phone" required>
+                  מספר טלפון
+                </Label>
                 <Input
                   id="phone"
                   type="tel"
-                  placeholder="05XXXXXXXX"
+                  placeholder="+44 7XXX XXXXXX"
                   required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
@@ -142,11 +150,11 @@ export function SignUpForm({
                   dir="ltr"
                   className="text-left"
                 />
-                <p className="text-xs text-muted-foreground">
-                  פורמט: 05XXXXXXXX או 9725XXXXXXXX
+                <p className="text-muted-foreground text-xs">
+                  מספר ישראלי (05…) או בינלאומי עם קידומת (+…)
                 </p>
               </div>
-              <div className="grid gap-2">
+              {/* <div className="grid gap-2">
                 <Label htmlFor="password">סיסמה</Label>
                 <Input
                   id="password"
@@ -167,9 +175,9 @@ export function SignUpForm({
                   onChange={(e) => setRepeatPassword(e.target.value)}
                   autoComplete="new-password"
                 />
-              </div>
+              </div> */}
               {error && (
-                <p className="text-sm text-destructive" role="alert">
+                <p className="text-destructive text-sm" role="alert">
                   {error}
                 </p>
               )}
@@ -177,7 +185,7 @@ export function SignUpForm({
                 {isLoading ? "יצירת חשבון..." : "הירשם"}
               </Button>
             </div>
-            <div className="mt-4 text-center text-sm text-muted-foreground">
+            <div className="text-muted-foreground mt-4 text-center text-sm">
               יש לך חשבון?{" "}
               <Link href="/auth/login" className="underline underline-offset-4">
                 התחבר

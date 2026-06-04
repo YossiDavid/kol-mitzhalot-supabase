@@ -227,7 +227,7 @@ export default function StudentsList() {
                 {/* {student.parents_info.mother.self.suffix} */}
               </div>
               <div>{student.city}</div>
-              <div>{calculateAge(new Date(student.birth_date || ""))}</div>
+              <div>{calculateAge(student.birth_date || "")}</div>
               <div>{student.height}</div>
               <div className="flex gap-1">
                 {student.cv_url ? (

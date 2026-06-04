@@ -1,113 +1,45 @@
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { DashboardSection } from "@/components/layout";
-import { Box } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
+import { Suspense } from "react";
+import type { AdminShadchanimQuery } from "@/lib/admin-shadchanim-query";
+import { getShadchanimSummary } from "@/lib/admin-shadchanim";
+import {
+  ShadchanimList,
+  ShadchanimListFallback,
+} from "./shadchanim-list";
 
-type ShadchanStats = {
-  id: string;
-  firstName: string | null;
-  lastName: string | null;
-  email: string | null;
-  createdAt: string;
-  lastSignInAt: string | null;
-  totalShidduchim: number;
-  completedShidduchim: number;
-  lastShidduchCreatedAt: string | null;
-  lastShidduchCompletedAt: string | null;
-};
-
-async function getShadchanimStats(): Promise<ShadchanStats[]> {
-  let adminClient;
-  try {
-    adminClient = createAdminClient();
-  } catch (error) {
-    console.error("Admin client error:", error);
-    throw error;
-  }
-
-  // שליפת כל המשתמשים עם role shadchan
-  const { data: users, error: usersError } =
-    await adminClient.auth.admin.listUsers();
-
-  if (usersError || !users) {
-    console.error("Error fetching users:", usersError);
-    return [];
-  }
-
-  // סינון רק שדכנים (לא אדמינים)
-  const shadchanim = users.users.filter(
-    (user) => user.user_metadata?.role === "shadchan",
-  );
-
-  const supabase = await createClient();
-  const stats: ShadchanStats[] = [];
-
-  for (const user of shadchanim) {
-    // שליפת סטטיסטיקות שידוכים
-    const { data: shidduchim, error: shidduchimError } = await supabase
-      .from("shidduchim")
-      .select("created_at, status, updated_at")
-      .eq("shadchan_id", user.id)
-      .order("created_at", { ascending: false });
-
-    if (shidduchimError) {
-      console.error(
-        `Error fetching shidduchim for user ${user.id}:`,
-        shidduchimError,
-      );
-    }
-
-    const shidduchimData = shidduchim || [];
-    const completedShidduchim = shidduchimData.filter(
-      (s) => s.status === "completed",
-    );
-
-    const lastShidduch = shidduchimData[0] || null;
-    const lastCompletedShidduch = completedShidduchim[0] || null;
-
-    stats.push({
-      id: user.id,
-      firstName: user.user_metadata?.firstName || null,
-      lastName: user.user_metadata?.lastName || null,
-      email: user.email || null,
-      createdAt: user.created_at,
-      lastSignInAt: user.last_sign_in_at || null,
-      totalShidduchim: shidduchimData.filter((s) => s.status !== "draft")
-        .length,
-      completedShidduchim: completedShidduchim.length,
-      lastShidduchCreatedAt: lastShidduch?.created_at || null,
-      lastShidduchCompletedAt: lastCompletedShidduch?.updated_at || null,
-    });
-  }
-
-  // מיון לפי תאריך הצטרפות (הכי חדש ראשון)
-  return stats.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
+function parseShadchanimQuery(
+  raw: Record<string, string | string[] | undefined>,
+): AdminShadchanimQuery {
+  const g = (k: string) => {
+    const v = raw[k];
+    return Array.isArray(v) ? v[0] : v;
+  };
+  const page = Math.max(1, parseInt(String(g("page") || "1"), 10) || 1);
+  const perPageRaw = parseInt(String(g("perPage") || "25"), 10) || 25;
+  const perPage = Math.min(100, Math.max(5, perPageRaw));
+  return { page, perPage };
 }
 
-function formatDate(dateString: string | null): string {
-  if (!dateString) return "לא זמין";
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat("he-IL", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
-
-export default async function ShadchanimPage() {
+export default async function ShadchanimPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   noStore();
-  let stats: ShadchanStats[] = [];
+  const sp = await searchParams;
+  const query = parseShadchanimQuery(sp);
+
+  let total = 0;
+  let pendingCount = 0;
   let error: Error | null = null;
 
   try {
-    stats = await getShadchanimStats();
+    const summary = await getShadchanimSummary();
+    total = summary.total;
+    pendingCount = summary.pendingCount;
   } catch (err) {
     error = err instanceof Error ? err : new Error("Unknown error");
     console.error("Error in ShadchanimPage:", error);
@@ -142,46 +74,6 @@ export default async function ShadchanimPage() {
                   </code>{" "}
                   לא מוגדר.
                 </p>
-                <div className="bg-muted space-y-2 rounded-lg p-4">
-                  <p className="font-semibold">הוראות התקנה:</p>
-                  <ol className="list-inside list-decimal space-y-1 text-sm">
-                    <li>
-                      פתח את קובץ{" "}
-                      <code className="bg-background rounded px-1">
-                        .env.local
-                      </code>{" "}
-                      בתיקיית הפרויקט
-                    </li>
-                    <li>
-                      הוסף את השורה:{" "}
-                      <code className="bg-background rounded px-1">
-                        SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
-                      </code>
-                    </li>
-                    <li>
-                      מצא את ה-Service Role Key ב-{" "}
-                      <a
-                        href="https://supabase.com/dashboard/project/_/settings/api"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary underline"
-                      >
-                        Supabase Dashboard → Settings → API
-                      </a>
-                    </li>
-                    <li>
-                      הפעל מחדש את שרת הפיתוח (
-                      <code className="bg-background rounded px-1">
-                        npm run dev
-                      </code>
-                      )
-                    </li>
-                  </ol>
-                </div>
-                <p className="text-muted-foreground text-xs">
-                  ⚠️ ה-Service Role Key רגיש מאוד - אל תחלוק אותו או תעלה אותו
-                  ל-Git
-                </p>
               </div>
             ) : (
               <p className="text-sm">{error.message}</p>
@@ -192,69 +84,35 @@ export default async function ShadchanimPage() {
     );
   }
 
+  const listKey = `${query.page}-${query.perPage}`;
+
   return (
     <div className="space-y-10 py-4">
       <DashboardSection
         title="כל השדכנים"
-        titleNumber={stats.length}
-        subTitle="רשימת כל השדכנים במערכת עם סטטיסטיקות"
+        titleNumber={total}
         button={
           <div className="flex items-center gap-2">
-            <Button asChild variant="outline">
-              <Link href="/app/admin/shadchanim/requests">בקשות ממתינות</Link>
-            </Button>
+            {pendingCount > 0 ? (
+              <Button asChild variant="outline">
+                <Link href="/app/admin/shadchanim/requests">
+                  בקשות ממתינות ({pendingCount})
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild variant="outline">
+                <Link href="/app/admin/shadchanim/requests">בקשות ממתינות</Link>
+              </Button>
+            )}
             <Button asChild>
               <Link href="/app/admin">חזרה לדף הבית</Link>
             </Button>
           </div>
         }
       >
-        {stats.length === 0 ? (
-          <div className="text-muted-foreground py-10 text-center">
-            לא נמצאו שדכנים במערכת
-          </div>
-        ) : (
-          <div className="grid grid-cols-[2fr_2fr_2fr_1fr_1fr_1fr_1fr_2fr_2fr_2fr] gap-4 pt-4">
-            <div
-              data-slot="table-header"
-              className="col-span-full grid grid-cols-subgrid font-semibold"
-            >
-              <div>שם פרטי</div>
-              <div>שם משפחה</div>
-              <div>אימייל</div>
-              <div>תאריך הצטרפות</div>
-              <div>שידוכים נוצרו</div>
-              <div>שידוכים נסגרו</div>
-              <div>הצעה אחרונה</div>
-              <div>שידוך אחרון נסגר</div>
-              <div>התחברות אחרונה</div>
-            </div>
-            {stats.map((shadchan) => (
-              <Box
-                key={shadchan.id}
-                className="col-span-full grid grid-cols-subgrid items-center"
-              >
-                <div>{shadchan.firstName || "לא זמין"}</div>
-                <div>{shadchan.lastName || "לא זמין"}</div>
-                <div className="text-sm">{shadchan.email || "לא זמין"}</div>
-                <div className="text-sm">{formatDate(shadchan.createdAt)}</div>
-                <div className="text-center">{shadchan.totalShidduchim}</div>
-                <div className="text-center">
-                  {shadchan.completedShidduchim}
-                </div>
-                <div className="text-sm">
-                  {formatDate(shadchan.lastShidduchCreatedAt)}
-                </div>
-                <div className="text-sm">
-                  {formatDate(shadchan.lastShidduchCompletedAt)}
-                </div>
-                <div className="text-sm">
-                  {formatDate(shadchan.lastSignInAt)}
-                </div>
-              </Box>
-            ))}
-          </div>
-        )}
+        <Suspense key={listKey} fallback={<ShadchanimListFallback />}>
+          <ShadchanimList query={query} />
+        </Suspense>
       </DashboardSection>
     </div>
   );

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callMicropay } from "@/lib/micropay";
-import { isValidILPhone, maskPhone, normalizePhoneKey } from "@/lib/phone";
+import { isValidPhone, maskPhone, normalizePhoneKey, PHONE_INVALID_MESSAGE } from "@/lib/phone";
 import { createClient } from "@/lib/supabase/server";
 import { getPhoneVerificationEnabled } from "@/lib/system-settings";
 import { unstable_noStore as noStore } from "next/cache";
@@ -81,11 +81,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!isValidILPhone(phoneNumber)) {
+  if (!isValidPhone(phoneNumber)) {
     return NextResponse.json(
       {
         status: "ERROR",
-        message: "Invalid phone format. Use 05XXXXXXXX or 9725XXXXXXXX",
+        message: PHONE_INVALID_MESSAGE,
       },
       { status: 400 },
     );
