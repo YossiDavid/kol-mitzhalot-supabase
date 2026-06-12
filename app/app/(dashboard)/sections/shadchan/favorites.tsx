@@ -109,77 +109,109 @@ export default function Favorites({ favorites }: { favorites: Favorite[] }) {
   return (
     <>
       {localFavorites.length > 0 ? (
-        <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_3fr] gap-4 pt-4">
-          <div
-            data-slot="table-header"
-            className="col-span-full grid grid-cols-subgrid"
-          >
-            <div>מועדף</div>
-            <div>סטטוס</div>
-            <div>שם משפחה</div>
-            <div>שם פרטי</div>
-            <div>שם האב</div>
-            <div>שם האם</div>
-            <div>עיר</div>
-            <div>גיל</div>
-            <div>גובה</div>
+        <>
+          {/* כרטיסים — מובייל */}
+          <div className="flex flex-col gap-3 pt-4 md:hidden">
+            {localFavorites.map((favorite, index) => (
+              <Box key={index} className="flex flex-col gap-3 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold">
+                    {favorite.first_name} {favorite.last_name}
+                  </span>
+                  <Switch
+                    checked={true}
+                    onCheckedChange={(e) => handleFavoriteChange(e, favorite.id)}
+                  />
+                </div>
+                <div className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 text-sm">
+                  <span>{parseStatus(favorite.personal_status)}</span>
+                  <span>גיל {calculateAge(new Date(favorite.birth_date || ""))}</span>
+                  {favorite.city && <span>{favorite.city}</span>}
+                  {favorite.height && <span>{favorite.height} ס״מ</span>}
+                </div>
+                <div className="flex gap-2">
+                  {favorite.cv_url ? (
+                    <Button asChild variant="outline" size="sm" className="flex-1">
+                      <a href={favorite.cv_url} target="_blank" rel="noopener noreferrer">
+                        קו״ח
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button asChild variant="outline" size="sm" className="flex-1 bg-amber-100">
+                      <Link href={"/" as any}>הוספת קו״ח</Link>
+                    </Button>
+                  )}
+                  <Button asChild size="sm" className="flex-1">
+                    <Link href={`/app/students/${favorite.id}`}>כרטיס מלא</Link>
+                  </Button>
+                </div>
+              </Box>
+            ))}
           </div>
-          {localFavorites.map((favorite, index) => (
-            <Box
-              key={index}
-              className="col-span-full grid grid-cols-subgrid items-center p-4"
+
+          {/* טבלה — דסקטופ */}
+          <div className="hidden md:grid md:grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_3fr] md:gap-4 md:pt-4">
+            <div
+              data-slot="table-header"
+              className="col-span-full grid grid-cols-subgrid"
             >
-              <div>
-                <Switch
-                  checked={true}
-                  onCheckedChange={(e) => handleFavoriteChange(e, favorite.id)}
-                />
-              </div>
-              <div>{parseStatus(favorite.personal_status)}</div>
-              <div>{favorite.last_name}</div>
-              <div>{favorite.first_name}</div>
-              <div>
-                {favorite.parents_info?.father?.self?.prefix || ""}{" "}
-                {favorite.parents_info?.father?.self?.name || ""}{" "}
-                {/* {student.parents_info.father.self.suffix} */}
-              </div>
-              <div>
-                {favorite.parents_info?.mother?.self?.prefix || ""}{" "}
-                {favorite.parents_info?.mother?.self?.name || ""}{" "}
-                {/* {student.parents_info.mother.self.suffix} */}
-              </div>
-              <div>{favorite.city}</div>
-              <div>{calculateAge(new Date(favorite.birth_date || ""))}</div>
-              <div>{favorite.height}</div>
-              <div className="flex gap-1">
-                {favorite.cv_url ? (
-                  <Button asChild className="flex-1" variant={"outline"}>
-                    <a
-                      href={favorite.cv_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      כרטיס קו״ח
-                    </a>
+              <div>מועדף</div>
+              <div>סטטוס</div>
+              <div>שם משפחה</div>
+              <div>שם פרטי</div>
+              <div>שם האב</div>
+              <div>שם האם</div>
+              <div>עיר</div>
+              <div>גיל</div>
+              <div>גובה</div>
+            </div>
+            {localFavorites.map((favorite, index) => (
+              <Box
+                key={index}
+                className="col-span-full grid grid-cols-subgrid items-center p-4"
+              >
+                <div>
+                  <Switch
+                    checked={true}
+                    onCheckedChange={(e) => handleFavoriteChange(e, favorite.id)}
+                  />
+                </div>
+                <div>{parseStatus(favorite.personal_status)}</div>
+                <div>{favorite.last_name}</div>
+                <div>{favorite.first_name}</div>
+                <div>
+                  {favorite.parents_info?.father?.self?.prefix || ""}{" "}
+                  {favorite.parents_info?.father?.self?.name || ""}
+                </div>
+                <div>
+                  {favorite.parents_info?.mother?.self?.prefix || ""}{" "}
+                  {favorite.parents_info?.mother?.self?.name || ""}
+                </div>
+                <div>{favorite.city}</div>
+                <div>{calculateAge(new Date(favorite.birth_date || ""))}</div>
+                <div>{favorite.height}</div>
+                <div className="flex gap-1">
+                  {favorite.cv_url ? (
+                    <Button asChild className="flex-1" variant={"outline"}>
+                      <a href={favorite.cv_url} target="_blank" rel="noopener noreferrer">
+                        כרטיס קו״ח
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button asChild className="flex-1 bg-amber-100" variant={"outline"}>
+                      <Link href={"/" as any}>להוספת קו״ח</Link>
+                    </Button>
+                  )}
+                  <Button asChild className="flex-1">
+                    <Link href={`/app/students/${favorite.id}`}>
+                      לצפיה בכרטיס המלא
+                    </Link>
                   </Button>
-                ) : (
-                  <Button
-                    asChild
-                    className="flex-1 bg-amber-100"
-                    variant={"outline"}
-                  >
-                    <Link href={"/" as any}>להוספת קו״ח</Link>
-                  </Button>
-                )}
-                <Button asChild className="flex-1">
-                  <Link href={`/app/students/${favorite.id}`}>
-                    לצפיה בכרטיס המלא
-                  </Link>
-                </Button>
-              </div>
-            </Box>
-          ))}
-        </div>
+                </div>
+              </Box>
+            ))}
+          </div>
+        </>
       ) : (
         <Empty>
           <EmptyHeader>

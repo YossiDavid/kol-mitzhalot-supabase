@@ -79,79 +79,113 @@ export default function Children({ childs }: { childs: Child[] }) {
   return (
     <>
       {childs.length > 0 ? (
-        <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_3fr] gap-4 pt-4">
-          <div
-            data-slot="table-header"
-            className="col-span-full grid grid-cols-subgrid"
-          >
-            <div>בשידוכים</div>
-            <div>סטטוס</div>
-            <div>שם משפחה</div>
-            <div>שם פרטי</div>
-            <div>שם האב</div>
-            <div>שם האם</div>
-            <div>עיר</div>
-            <div>גיל</div>
-            <div>גובה</div>
+        <>
+          {/* כרטיסים — מובייל */}
+          <div className="flex flex-col gap-3 pt-4 md:hidden">
+            {localChilds.map((child, index) => (
+              <Box key={index} className="flex flex-col gap-3 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold">
+                    {child.first_name} {child.last_name}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground text-xs">בשידוכים</span>
+                    <Switch
+                      checked={child.in_shidduchim || false}
+                      onCheckedChange={(e) => handleIsInShidduchimChange(e, child.id)}
+                    />
+                  </div>
+                </div>
+                <div className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 text-sm">
+                  <span>{parseStatus(child.personal_status)}</span>
+                  <span>גיל {calculateAge(child.birth_date || "")}</span>
+                  {child.city && <span>{child.city}</span>}
+                  {child.height && <span>{child.height} ס״מ</span>}
+                </div>
+                <div className="flex gap-2">
+                  {child.cv_url ? (
+                    <Button asChild variant="outline" size="sm" className="flex-1">
+                      <a href={child.cv_url} target="_blank" rel="noopener noreferrer">
+                        קו״ח
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button asChild variant="outline" size="sm" className="flex-1 bg-amber-100">
+                      <Link href={"/" as any}>הוספת קו״ח</Link>
+                    </Button>
+                  )}
+                  <Button asChild size="sm" className="flex-1">
+                    <Link href={`/app/students/${child.id}` as Route}>כרטיס מלא</Link>
+                  </Button>
+                </div>
+              </Box>
+            ))}
           </div>
-          {localChilds.map((child, index) => (
-            <Box
-              key={index}
-              className="col-span-full grid grid-cols-subgrid items-center p-4"
+
+          {/* טבלה — דסקטופ */}
+          <div className="hidden md:grid md:grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_3fr] md:gap-4 md:pt-4">
+            <div
+              data-slot="table-header"
+              className="col-span-full grid grid-cols-subgrid"
             >
-              <div>
-                <Switch
-                  checked={child.in_shidduchim || false}
-                  onCheckedChange={(e) =>
-                    handleIsInShidduchimChange(e, child.id)
-                  }
-                />
-              </div>
-              <div>{parseStatus(child.personal_status)}</div>
-              <div>{child.last_name}</div>
-              <div>{child.first_name}</div>
-              <div>
-                {child.parents_info?.father?.self?.prefix || ""}{" "}
-                {child.parents_info?.father?.self?.name || ""}{" "}
-                {/* {student.parents_info.father.self.suffix} */}
-              </div>
-              <div>
-                {child.parents_info?.mother?.self?.prefix || ""}{" "}
-                {child.parents_info?.mother?.self?.name || ""}{" "}
-                {/* {student.parents_info.mother.self.suffix} */}
-              </div>
-              <div>{child.city}</div>
-              <div>{calculateAge(child.birth_date || "")}</div>
-              <div>{child.height}</div>
-              <div className="flex gap-1">
-                {child.cv_url ? (
-                  <Button asChild className="flex-1" variant={"outline"}>
-                    <a
-                      href={child.cv_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      כרטיס קו״ח
-                    </a>
+              <div>בשידוכים</div>
+              <div>סטטוס</div>
+              <div>שם משפחה</div>
+              <div>שם פרטי</div>
+              <div>שם האב</div>
+              <div>שם האם</div>
+              <div>עיר</div>
+              <div>גיל</div>
+              <div>גובה</div>
+            </div>
+            {localChilds.map((child, index) => (
+              <Box
+                key={index}
+                className="col-span-full grid grid-cols-subgrid items-center p-4"
+              >
+                <div>
+                  <Switch
+                    checked={child.in_shidduchim || false}
+                    onCheckedChange={(e) => handleIsInShidduchimChange(e, child.id)}
+                  />
+                </div>
+                <div>{parseStatus(child.personal_status)}</div>
+                <div>{child.last_name}</div>
+                <div>{child.first_name}</div>
+                <div>
+                  {child.parents_info?.father?.self?.prefix || ""}{" "}
+                  {child.parents_info?.father?.self?.name || ""}
+                </div>
+                <div>
+                  {child.parents_info?.mother?.self?.prefix || ""}{" "}
+                  {child.parents_info?.mother?.self?.name || ""}
+                </div>
+                <div>{child.city}</div>
+                <div>{calculateAge(child.birth_date || "")}</div>
+                <div>{child.height}</div>
+                <div className="flex gap-1">
+                  {child.cv_url ? (
+                    <Button asChild className="flex-1" variant={"outline"}>
+                      <a href={child.cv_url} target="_blank" rel="noopener noreferrer">
+                        כרטיס קו״ח
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button asChild className="flex-1 bg-amber-100" variant={"outline"}>
+                      <Link href={"/" as any}>להוספת קו״ח</Link>
+                    </Button>
+                  )}
+                  <Button asChild className="flex-1">
+                    <Link href={`/app/students/${child.id}` as Route}>
+                      לצפיה בכרטיס המלא
+                    </Link>
                   </Button>
-                ) : (
-                  <Button
-                    asChild
-                    className="flex-1 bg-amber-100"
-                    variant={"outline"}
-                  >
-                    <Link href={"/" as any}>להוספת קו״ח</Link>
-                  </Button>
-                )}
-                <Button asChild className="flex-1">
-                  <Link href={`/app/students/${child.id}` as Route}>
-                    לצפיה בכרטיס המלא
-                  </Link>
-                </Button>
-              </div>
-            </Box>
-          ))}
-        </div>
+                </div>
+              </Box>
+            ))}
+          </div>
+        </>
+
       ) : (
         <Empty>
           <EmptyHeader>

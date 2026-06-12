@@ -277,7 +277,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
 
   return (
     <>
-      <div className="mx-auto mt-10 grid max-w-[800px] grid-cols-2 gap-4">
+      <div className="mx-auto mt-10 grid max-w-full grid-cols-1 gap-4 md:max-w-[800px] md:grid-cols-2">
         <div
           className="border-primary relative min-h-50 rounded-xl border border-dashed bg-[#d7edff] p-2"
           onDragEnter={handleDragEnterTicket}
