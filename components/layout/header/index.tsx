@@ -32,10 +32,10 @@ export default async function Header({ variant }: { variant: "app" | "website" }
       <div className="flex items-center justify-between">
         {variant === "app" && (
           <>
-            <SidebarTrigger className="z-20 -ms-1" />
+            <SidebarTrigger className="z-20 -ms-1 hidden md:inline-flex" />
             <Separator
               orientation="vertical"
-              className="bg-primary mx-2 data-[orientation=vertical]:h-4"
+              className="bg-primary mx-2 hidden data-[orientation=vertical]:h-4 md:block"
             />
             <div className="flex items-center gap-5 font-semibold">
               שלום וברכה, {firstName} {lastName}!

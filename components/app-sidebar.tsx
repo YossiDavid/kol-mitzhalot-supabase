@@ -55,7 +55,7 @@ export function AppSidebar({ role }: { role: Role }) {
     ? allItems
     : allItems.filter((item) => !shadchanOnlyUrls.includes(item.url));
   return (
-    <Sidebar variant="floating" side="right" collapsible="icon">
+    <Sidebar variant="floating" side="right" collapsible="icon" className="hidden md:flex">
       <SidebarLogo />
 
       <SidebarContent>

@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
+import { cn } from "@/lib/utils";
 
-export default async function Footer() {
+export default async function Footer({ className }: { className?: string }) {
   // Access cookies first to satisfy Next.js requirement for using new Date()
   await cookies();
 
   return (
-    <footer className="border-t-foreground/10 container flex min-h-16 items-center justify-between border-t">
+    <footer className={cn("border-t-foreground/10 container flex min-h-16 items-center justify-between border-t", className)}>
       <nav>
         <ul className="flex gap-4">
           <li>
