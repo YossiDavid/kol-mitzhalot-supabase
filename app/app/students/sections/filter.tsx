@@ -30,8 +30,8 @@ export default function FilterSection() {
       }
       containerClassName="p-0 space-y-4"
     >
-      <div className="box grid grid-cols-12 gap-4 p-4">
-        <div className="col-span-2">
+      <div className="box grid grid-cols-2 gap-4 p-4 md:grid-cols-12">
+        <div className="col-span-1 md:col-span-2">
           <Label htmlFor="gender">מגדר</Label>
           <NativeSelect
             id="gender"
@@ -43,7 +43,7 @@ export default function FilterSection() {
             <NativeSelectOption value={"female"}>נקבה</NativeSelectOption>
           </NativeSelect>
         </div>
-        <div className="col-span-2">
+        <div className="col-span-1 md:col-span-2">
           <Label htmlFor="status">סטטוס</Label>
           <NativeSelect
             id="status"
@@ -60,7 +60,7 @@ export default function FilterSection() {
             <NativeSelectOption value="engaged">מאורס/ה</NativeSelectOption>
           </NativeSelect>
         </div>
-        <div className="col-span-2">
+        <div className="col-span-1 md:col-span-2">
           <Label htmlFor="firstName">שם פרטי</Label>
           <TextField
             type="text"
@@ -70,7 +70,7 @@ export default function FilterSection() {
             }
           />
         </div>
-        <div className="col-span-2">
+        <div className="col-span-1 md:col-span-2">
           <Label htmlFor="lastName">שם משפחה</Label>
           <TextField
             type="text"
@@ -80,7 +80,7 @@ export default function FilterSection() {
             }
           />
         </div>
-        <div className="col-span-2">
+        <div className="col-span-1 md:col-span-2">
           <Label htmlFor="ageMin">טווח גילאים</Label>
           <TextField
             type="number"
@@ -89,7 +89,7 @@ export default function FilterSection() {
           />
         </div>
         <Activity mode={expanded ? "visible" : "hidden"}>
-          <div className="col-span-2">
+          <div className="col-span-1 md:col-span-2">
             <Label htmlFor="height">גובה (בס״מ)</Label>
             <TextField
               type="number"
@@ -97,7 +97,7 @@ export default function FilterSection() {
               onChange={(e) => setFilter({ ...filter, height: e.target.value })}
             />
           </div>
-          <div className="col-span-3">
+          <div className="col-span-1 md:col-span-3">
             <Label htmlFor="fatherName">שם האב</Label>
             <TextField
               type="text"
@@ -107,7 +107,7 @@ export default function FilterSection() {
               }
             />
           </div>
-          <div className="col-span-2">
+          <div className="col-span-1 md:col-span-2">
             <Label htmlFor="city">עיר</Label>
             <TextField
               type="text"
@@ -115,7 +115,7 @@ export default function FilterSection() {
               onChange={(e) => setFilter({ ...filter, city: e.target.value })}
             />
           </div>
-          <div className="col-span-3">
+          <div className="col-span-1 md:col-span-3">
             <Label htmlFor="employment">תעסוקה</Label>
             <TextField
               type="text"
@@ -125,7 +125,7 @@ export default function FilterSection() {
               }
             />
           </div>
-          <div className="col-span-4">
+          <div className="col-span-2 md:col-span-4">
             <Label htmlFor="institutions">מקום לימודים</Label>
             <TextField
               type="text"
@@ -135,7 +135,7 @@ export default function FilterSection() {
               }
             />
           </div>
-          <div className="col-span-2">
+          <div className="col-span-1 md:col-span-2">
             <Label htmlFor="yeshiva">תלמיד / בוגר ישיבה</Label>
             <NativeSelect
               id="yeshiva"
@@ -151,7 +151,7 @@ export default function FilterSection() {
               <NativeSelectOption value="false">לא</NativeSelectOption>
             </NativeSelect>
           </div>
-          <div className="col-span-2">
+          <div className="col-span-1 md:col-span-2">
             <Label htmlFor="reservoir">לבחירה מתוך המאגר</Label>
             <NativeSelect
               size="default"
@@ -174,7 +174,7 @@ export default function FilterSection() {
               <NativeSelectOption value="false">לא</NativeSelectOption>
             </NativeSelect>
           </div>
-          <div className="col-span-2">
+          <div className="col-span-1 md:col-span-2">
             <Label htmlFor="yeshivaName">שם הישיבה</Label>
             <TextField
               type="text"
@@ -184,7 +184,7 @@ export default function FilterSection() {
               }
             />
           </div>
-          <div className="col-span-2">
+          <div className="col-span-1 md:col-span-2">
             <Label htmlFor="yeshivaCity">עיר</Label>
             <TextField
               type="text"
@@ -194,7 +194,7 @@ export default function FilterSection() {
               }
             />
           </div>
-          <div className="col-span-2">
+          <div className="col-span-1 md:col-span-2">
             <Label htmlFor="class">שיעור / כיתה</Label>
             <TextField
               type="text"
@@ -203,7 +203,7 @@ export default function FilterSection() {
             />
           </div>
         </Activity>
-        <div className="col-span-2 flex items-center gap-2">
+        <div className="col-span-2 flex items-center gap-2 md:col-span-2">
           <Button
             variant="ghost"
             onClick={() => setExpanded((expanded) => !expanded)}

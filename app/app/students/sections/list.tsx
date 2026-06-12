@@ -184,80 +184,115 @@ export default function StudentsList() {
           </EmptyHeader>
         </Empty>
       ) : (
-        <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_3fr] gap-4">
-          <div
-            data-slot="table-header"
-            className="col-span-full grid grid-cols-subgrid"
-          >
-            <div>מועדף</div>
-            <div>סטטוס</div>
-            <div>שם משפחה</div>
-            <div>שם פרטי</div>
-            <div>שם האב</div>
-            <div>שם האם</div>
-            <div>עיר</div>
-            <div>גיל</div>
-            <div>גובה</div>
+        <>
+          {/* כרטיסים — מובייל בלבד */}
+          <div className="flex flex-col gap-3 md:hidden">
+            {students.map((student, index) => (
+              <Box key={index} className="flex flex-col gap-3 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold">
+                    {student.first_name} {student.last_name}
+                  </span>
+                  <Switch
+                    checked={
+                      user?.user_metadata?.favorites?.includes(student.id) ||
+                      false
+                    }
+                    onCheckedChange={(e) => handleFavoriteChange(e, student.id)}
+                  />
+                </div>
+                <div className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 text-sm">
+                  <span>{parseStatus(student.personal_status)}</span>
+                  <span>גיל {calculateAge(student.birth_date || "")}</span>
+                  {student.city && <span>{student.city}</span>}
+                  {student.height && <span>{student.height} ס״מ</span>}
+                </div>
+                <div className="flex gap-2">
+                  {student.cv_url ? (
+                    <Button asChild variant="outline" size="sm" className="flex-1">
+                      <a href={student.cv_url} target="_blank" rel="noopener noreferrer">
+                        קו״ח
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button asChild variant="outline" size="sm" className="flex-1 bg-amber-100">
+                      <Link href={"/" as any}>הוספת קו״ח</Link>
+                    </Button>
+                  )}
+                  <Button asChild size="sm" className="flex-1">
+                    <Link href={`/app/students/${student.id}`}>כרטיס מלא</Link>
+                  </Button>
+                </div>
+              </Box>
+            ))}
           </div>
-          {students.map((student, index) => (
-            <Box
-              key={index}
-              className="col-span-full grid grid-cols-subgrid items-center p-4"
+
+          {/* טבלה — דסקטופ בלבד */}
+          <div className="hidden md:grid md:grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_3fr] md:gap-4">
+            <div
+              data-slot="table-header"
+              className="col-span-full grid grid-cols-subgrid"
             >
-              <div>
-                <Switch
-                  checked={
-                    user?.user_metadata?.favorites?.includes(student.id) ||
-                    false
-                  }
-                  onCheckedChange={(e) => handleFavoriteChange(e, student.id)}
-                />
-              </div>
-              <div>{parseStatus(student.personal_status)}</div>
-              <div>{student.last_name}</div>
-              <div>{student.first_name}</div>
-              <div>
-                {student.parents_info.father.self.prefix}{" "}
-                {student.parents_info.father.self.name}{" "}
-                {/* {student.parents_info.father.self.suffix} */}
-              </div>
-              <div>
-                {student.parents_info.mother.self.prefix}{" "}
-                {student.parents_info.mother.self.name}{" "}
-                {/* {student.parents_info.mother.self.suffix} */}
-              </div>
-              <div>{student.city}</div>
-              <div>{calculateAge(student.birth_date || "")}</div>
-              <div>{student.height}</div>
-              <div className="flex gap-1">
-                {student.cv_url ? (
-                  <Button asChild className="flex-1" variant={"outline"}>
-                    <a
-                      href={student.cv_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      כרטיס קו״ח
-                    </a>
+              <div>מועדף</div>
+              <div>סטטוס</div>
+              <div>שם משפחה</div>
+              <div>שם פרטי</div>
+              <div>שם האב</div>
+              <div>שם האם</div>
+              <div>עיר</div>
+              <div>גיל</div>
+              <div>גובה</div>
+            </div>
+            {students.map((student, index) => (
+              <Box
+                key={index}
+                className="col-span-full grid grid-cols-subgrid items-center p-4"
+              >
+                <div>
+                  <Switch
+                    checked={
+                      user?.user_metadata?.favorites?.includes(student.id) ||
+                      false
+                    }
+                    onCheckedChange={(e) => handleFavoriteChange(e, student.id)}
+                  />
+                </div>
+                <div>{parseStatus(student.personal_status)}</div>
+                <div>{student.last_name}</div>
+                <div>{student.first_name}</div>
+                <div>
+                  {student.parents_info.father.self.prefix}{" "}
+                  {student.parents_info.father.self.name}
+                </div>
+                <div>
+                  {student.parents_info.mother.self.prefix}{" "}
+                  {student.parents_info.mother.self.name}
+                </div>
+                <div>{student.city}</div>
+                <div>{calculateAge(student.birth_date || "")}</div>
+                <div>{student.height}</div>
+                <div className="flex gap-1">
+                  {student.cv_url ? (
+                    <Button asChild className="flex-1" variant={"outline"}>
+                      <a href={student.cv_url} target="_blank" rel="noopener noreferrer">
+                        כרטיס קו״ח
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button asChild className="flex-1 bg-amber-100" variant={"outline"}>
+                      <Link href={"/" as any}>להוספת קו״ח</Link>
+                    </Button>
+                  )}
+                  <Button asChild className="flex-1">
+                    <Link href={`/app/students/${student.id}`}>
+                      לצפיה בכרטיס המלא
+                    </Link>
                   </Button>
-                ) : (
-                  <Button
-                    asChild
-                    className="flex-1 bg-amber-100"
-                    variant={"outline"}
-                  >
-                    <Link href={"/" as any}>להוספת קו״ח</Link>
-                  </Button>
-                )}
-                <Button asChild className="flex-1">
-                  <Link href={`/app/students/${student.id}`}>
-                    לצפיה בכרטיס המלא
-                  </Link>
-                </Button>
-              </div>
-            </Box>
-          ))}
-        </div>
+                </div>
+              </Box>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

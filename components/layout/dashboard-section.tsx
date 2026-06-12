@@ -23,7 +23,7 @@ export default function DashboardSection({
     >
       <div
         className={cn(
-          "col-span-full mb-2 flex items-center justify-between",
+          "col-span-full mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between",
           props.headClassName,
         )}
       >

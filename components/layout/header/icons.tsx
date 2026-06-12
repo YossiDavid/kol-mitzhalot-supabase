@@ -95,7 +95,7 @@ export default function HeaderIcons({ hasUserMenu = false }: HeaderIconsProps) {
         <Crown className="text-favorite fill-current" />
       </Button>
 
-      <Button variant="ghost" size="icon" asChild>
+      <Button variant="ghost" size="icon" asChild className="hidden md:inline-flex">
         <Link href={"/app"}>
           <Home />
         </Link>

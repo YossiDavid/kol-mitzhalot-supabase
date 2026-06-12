@@ -37,11 +37,11 @@ export default async function Header({ variant }: { variant: "app" | "website" }
               orientation="vertical"
               className="bg-primary mx-2 hidden data-[orientation=vertical]:h-4 md:block"
             />
-            <div className="flex items-center gap-5 font-semibold">
+            <div className="hidden items-center gap-5 font-semibold md:flex">
               שלום וברכה, {firstName} {lastName}!
             </div>
             {user?.user_metadata?.role === "admin" && (
-              <Button variant={"link"} asChild>
+              <Button variant={"link"} asChild className="hidden md:inline-flex">
                 <Link href="/app/admin">למערכת ניהול</Link>
               </Button>
             )}
@@ -65,7 +65,7 @@ export default async function Header({ variant }: { variant: "app" | "website" }
           </Suspense>
         )}
         {variant === "app" && (
-          <Button asChild>
+          <Button asChild className="hidden md:flex">
             {user?.user_metadata?.role !== "shadchan" ? (
               <Link href={"/app/students/create"}>הוספת מיועדים למערכת</Link>
             ) : (
