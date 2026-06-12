@@ -26,7 +26,7 @@ export function LoginForm({
   const router = useRouter();
 
   const getRedirectUrl = () =>
-    `${typeof window !== "undefined" ? window.location.origin : ""}/auth/confirm?next=/app`;
+    `${typeof window !== "undefined" ? window.location.origin : ""}/auth/confirm`;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
