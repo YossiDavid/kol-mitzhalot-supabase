@@ -84,17 +84,15 @@ export default function Children({ childs }: { childs: Child[] }) {
           <div className="flex flex-col gap-3 pt-4 md:hidden">
             {localChilds.map((child, index) => (
               <Box key={index} className="flex flex-col gap-3 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold">
-                    {child.first_name} {child.last_name}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground text-xs">בשידוכים</span>
-                    <Switch
-                      checked={child.in_shidduchim || false}
-                      onCheckedChange={(e) => handleIsInShidduchimChange(e, child.id)}
-                    />
-                  </div>
+                <span className="font-semibold">
+                  {child.first_name} {child.last_name}
+                </span>
+                <div className="flex items-center justify-between rounded-md border px-3 py-2">
+                  <span className="text-sm">פעיל בשידוכים?</span>
+                  <Switch
+                    checked={child.in_shidduchim || false}
+                    onCheckedChange={(e) => handleIsInShidduchimChange(e, child.id)}
+                  />
                 </div>
                 <div className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 text-sm">
                   <span>{parseStatus(child.personal_status)}</span>
