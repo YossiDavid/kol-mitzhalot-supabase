@@ -934,11 +934,11 @@ export default function CreateStudentPage() {
   }
 
   return (
-    <Section asChild className="my-10 space-y-4">
+    <Section asChild className="my-4 space-y-4 md:my-10">
       <div>
-        <h1 className="mb-4 text-3xl font-bold">הוספת קו״ח למערכת</h1>
-        <Box className="p-8">
-          <div className="grid gap-8 md:grid-cols-[220px_minmax(0,1fr)]">
+        <h1 className="mb-4 text-2xl font-bold md:text-3xl">הוספת קו״ח למערכת</h1>
+        <Box className="p-4 md:p-8">
+          <div className="grid gap-4 md:gap-8 md:grid-cols-[220px_minmax(0,1fr)]">
             <StepSidebar
               steps={steps}
               currentStepIndex={currentStepIndex}
@@ -952,7 +952,7 @@ export default function CreateStudentPage() {
                   className="space-y-8"
                 >
                   <div className="space-y-6">
-                    <h2 className="text-2xl font-semibold">
+                    <h2 className="text-xl font-semibold md:text-2xl">
                       {getStepTitle(currentStep, gender)}
                     </h2>
                     {currentStep.sections.map((section) => (
@@ -1107,7 +1107,7 @@ function StepSidebar({
     steps[currentStepIndex]?.name === "intro" && !gender;
 
   return (
-    <nav className="space-y-2">
+    <nav className="flex gap-1 overflow-x-auto pb-2 md:block md:space-y-2 md:overflow-x-visible md:pb-0">
       {steps.map((step, index) => {
         const isActive = index === currentStepIndex;
         const isDisabled = disableForwardNavigation && index > currentStepIndex;
@@ -1117,9 +1117,9 @@ function StepSidebar({
             type="button"
             onClick={() => onStepClick(index)}
             className={cn(
-              "relative w-full rounded-lg px-3 py-2 text-right transition",
+              "relative shrink-0 rounded-lg px-3 py-2 text-right transition md:w-full",
               isActive
-                ? "bg-primary/10 text-primary before:bg-primary before:absolute before:top-1/2 before:right-0 before:h-1/2 before:w-1 before:-translate-y-1/2 before:rounded-l-2xl"
+                ? "bg-primary/10 text-primary md:before:bg-primary md:before:absolute md:before:top-1/2 md:before:right-0 md:before:h-1/2 md:before:w-1 md:before:-translate-y-1/2 md:before:rounded-l-2xl"
                 : "hover:bg-muted/70 bg-transparent",
               isDisabled && "cursor-not-allowed opacity-60",
             )}
