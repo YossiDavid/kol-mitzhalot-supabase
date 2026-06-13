@@ -95,7 +95,7 @@ export default function FavoritesGrid({
       </div>
 
       {/* גריד */}
-      <div className="mt-4 grid grid-cols-4 gap-4">
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {favorites
           .filter((item) => item.gender === activeTab)
           .map((item) => (
