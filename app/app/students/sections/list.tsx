@@ -189,10 +189,11 @@ export default function StudentsList() {
           <div className="flex flex-col gap-3 md:hidden">
             {students.map((student, index) => (
               <Box key={index} className="flex flex-col gap-3 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold">
-                    {student.first_name} {student.last_name}
-                  </span>
+                <span className="font-semibold">
+                  {student.first_name} {student.last_name}
+                </span>
+                <div className="flex items-center justify-between rounded-md border px-3 py-2">
+                  <span className="text-sm">הוסף למועדפים</span>
                   <Switch
                     checked={
                       user?.user_metadata?.favorites?.includes(student.id) ||

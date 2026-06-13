@@ -114,10 +114,11 @@ export default function Favorites({ favorites }: { favorites: Favorite[] }) {
           <div className="flex flex-col gap-3 pt-4 md:hidden">
             {localFavorites.map((favorite, index) => (
               <Box key={index} className="flex flex-col gap-3 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold">
-                    {favorite.first_name} {favorite.last_name}
-                  </span>
+                <span className="font-semibold">
+                  {favorite.first_name} {favorite.last_name}
+                </span>
+                <div className="flex items-center justify-between rounded-md border px-3 py-2">
+                  <span className="text-sm">מועדף</span>
                   <Switch
                     checked={true}
                     onCheckedChange={(e) => handleFavoriteChange(e, favorite.id)}
