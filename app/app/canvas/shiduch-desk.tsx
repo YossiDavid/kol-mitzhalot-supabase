@@ -317,7 +317,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
         </div>
 
         <div
-          className="border-primary relative rounded-xl border border-dashed bg-[#ffdddd] p-2"
+          className="border-primary relative min-h-50 rounded-xl border border-dashed bg-[#ffdddd] p-2"
           onDragEnter={handleDragEnterTicket}
           onDragLeave={handleDragLeaveTicket}
           onDragOver={handleDragOverTicket}
