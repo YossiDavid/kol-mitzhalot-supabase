@@ -13,7 +13,7 @@ const allItems = [
   { title: "צ'אטים", url: "/app/chats", icon: MessageCircle },
   { title: "לוח עבודה", url: "/app/canvas", icon: Network },
   { title: "הגדרות", url: "/app/settings", icon: Settings },
-  { title: "הוספת מיועד", url: "/app/students/create", icon: Plus },
+  { title: "הוספה", url: "/app/students/create", icon: Plus },
 ] as const;
 
 const shadchanOnlyUrls = ["/app/students", "/app/students/create", "/app/canvas"];
@@ -31,8 +31,11 @@ export function BottomNav({ role }: { role: Role }) {
     : allItems.filter((item) => !shadchanOnlyUrls.includes(item.url));
 
   return (
-    <nav className="fixed bottom-0 right-0 left-0 z-50 border-t bg-background/90 backdrop-blur-md supports-[backdrop-filter]:bg-background/75 md:hidden">
-      <div className="flex h-16 items-stretch justify-around" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+    <nav
+      className="fixed bottom-0 right-0 left-0 z-50 md:hidden"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      <div className="flex h-16 items-center justify-around rounded-t-2xl border-t border-border/60 bg-background px-1 shadow-[0_-4px_24px_rgba(0,0,0,0.07)]">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.url;
@@ -44,12 +47,12 @@ export function BottomNav({ role }: { role: Role }) {
                 key={item.url}
                 href={item.url}
                 prefetch={false}
-                className="flex flex-1 flex-col items-center justify-center gap-1 text-xs text-muted-foreground"
+                className="flex flex-col items-center -translate-y-3"
+                aria-label="הוספת מיועד"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-transform active:scale-95">
-                  <Icon className="h-5 w-5" />
+                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 transition-transform active:scale-95">
+                  <Icon className="h-6 w-6" strokeWidth={2.5} />
                 </span>
-                <span className="leading-none">הוספה</span>
               </Link>
             );
           }
@@ -60,13 +63,18 @@ export function BottomNav({ role }: { role: Role }) {
               href={item.url}
               prefetch={false}
               className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-1 text-xs transition-colors",
-                isActive
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground",
+                "flex flex-1 flex-col items-center justify-center gap-1.5 py-2 text-[11px] transition-colors",
+                isActive ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <Icon className={cn("h-5 w-5", isActive && "stroke-[2.5]")} />
+              <span
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-xl transition-colors",
+                  isActive ? "bg-primary/10" : "bg-muted",
+                )}
+              >
+                <Icon className={cn("h-4.5 w-4.5", isActive && "stroke-[2.5]")} />
+              </span>
               <span className="leading-none">{item.title}</span>
             </Link>
           );
