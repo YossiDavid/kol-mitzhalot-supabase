@@ -168,7 +168,7 @@ function AtomicFieldRenderer({
 														)
 													}
 													disabled={disableBecauseLinkedId}
-													className="w-[72px] shrink-0 md:w-[100px] text-xs border-0 rounded-none rounded-r-md shadow-none focus-visible:ring-0 focus-visible:border-0 [&_select]:rounded-r-md"
+													className="w-[100px] shrink-0 text-xs border-0 rounded-none rounded-r-md shadow-none focus-visible:ring-0 focus-visible:border-0 [&_select]:rounded-r-md"
 												>
 													{!value.prefix && (
 														<NativeSelectOption value="" disabled>
@@ -212,7 +212,7 @@ function AtomicFieldRenderer({
 													)
 												}
 												disabled={disableBecauseLinkedId}
-												className="w-[72px] shrink-0 md:w-[100px] text-xs border-0 rounded-none rounded-l-md shadow-none focus-visible:ring-0 focus-visible:border-0 [&_select]:rounded-l-md"
+												className="w-[100px] shrink-0 text-xs border-0 rounded-none rounded-l-md shadow-none focus-visible:ring-0 focus-visible:border-0 [&_select]:rounded-l-md"
 											>
 												{!value.suffix && (
 													<NativeSelectOption value="" disabled>
