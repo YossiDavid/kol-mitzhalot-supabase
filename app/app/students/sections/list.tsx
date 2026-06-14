@@ -14,8 +14,10 @@ import { Spinner } from "@/components/ui/spinner";
 import Link from "next/link";
 import calculateAge from "@/lib/calculateAge";
 import { Switch } from "@/components/ui/switch";
+import { Star } from "lucide-react";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
+import { cn } from "@/lib/utils";
 
 type Student = {
   id: string;
@@ -23,20 +25,8 @@ type Student = {
   last_name: string;
   first_name: string;
   parents_info: {
-    father: {
-      self: {
-        prefix: string;
-        name: string;
-        suffix: string;
-      };
-    };
-    mother: {
-      self: {
-        prefix: string;
-        name: string;
-        suffix: string;
-      };
-    };
+    father: { self: { prefix: string; name: string; suffix: string } };
+    mother: { self: { prefix: string; name: string; suffix: string } };
   };
   city: string;
   birth_date: Date;
@@ -60,8 +50,6 @@ export default function StudentsList() {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // rerender-dependencies: stable ref — createClient() returns a singleton,
-  // but storing in ref makes the dep explicit and prevents lint warnings
   const supabaseRef = useRef(createClient());
   const supabase = supabaseRef.current;
 
@@ -70,9 +58,7 @@ export default function StudentsList() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (isMounted) setUser(user || undefined);
     });
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [supabase]);
 
   useEffect(() => {
@@ -86,12 +72,10 @@ export default function StudentsList() {
           .select("*")
           .or("in_shidduchim.eq.true,in_shidduchim.is.null");
 
-        if (query.first_name)
-          q = q.ilike("first_name", `%${query.first_name}%`);
+        if (query.first_name) q = q.ilike("first_name", `%${query.first_name}%`);
         if (query.last_name) q = q.ilike("last_name", `%${query.last_name}%`);
         if (query.gender) q = q.eq("gender", query.gender);
-        if (query.personal_status)
-          q = q.eq("personal_status", query.personal_status);
+        if (query.personal_status) q = q.eq("personal_status", query.personal_status);
         if (query.city) q = q.ilike("city", `%${query.city}%`);
 
         if (query.ageMin) {
@@ -117,10 +101,7 @@ export default function StudentsList() {
 
         const { data, error } = await q;
         if (!isMounted) return;
-        if (error) {
-          setStudents([]);
-          return;
-        }
+        if (error) { setStudents([]); return; }
         setStudents(data || []);
       } catch {
         if (isMounted) setStudents([]);
@@ -130,12 +111,9 @@ export default function StudentsList() {
     }
 
     fetchStudents();
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, [query, supabase]);
 
-  // js-set-map-lookups: O(1) favorites lookup instead of O(n) .includes() per row
   const favSet = useMemo(
     () => new Set<string>(user?.user_metadata?.favorites || []),
     [user?.user_metadata?.favorites],
@@ -151,11 +129,7 @@ export default function StudentsList() {
       data: { favorites: nextFavs },
     });
 
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-
+    if (error) { toast.error(error.message); return; }
     if (data) setUser(data.user || undefined);
   };
 
@@ -167,7 +141,7 @@ export default function StudentsList() {
     );
 
   return (
-    <div className="mt-8">
+    <div className="mt-6">
       {students.length === 0 ? (
         <Empty>
           <EmptyHeader>
@@ -177,49 +151,45 @@ export default function StudentsList() {
         </Empty>
       ) : (
         <>
-          {/* כרטיסים — מובייל בלבד */}
-          <div className="flex flex-col gap-3 md:hidden">
+          {/* כרטיסים — מובייל */}
+          <div className="flex flex-col gap-2 md:hidden">
             {students.map((student) => (
-              <Box key={student.id} className="flex flex-col gap-3 p-4">
-                <span className="font-semibold">
-                  {student.first_name} {student.last_name}
-                </span>
-                <div className="flex items-center justify-between rounded-md border px-3 py-2">
-                  <span className="text-sm">הוסף למועדפים</span>
-                  <Switch
-                    checked={favSet.has(student.id)}
-                    onCheckedChange={(e) => handleFavoriteChange(e, student.id)}
-                  />
+              <Box key={student.id} className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold">
+                      {student.first_name} {student.last_name}
+                    </p>
+                    <p className="text-muted-foreground mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-sm">
+                      <span>{parseStatus(student.personal_status)}</span>
+                      <span>·</span>
+                      <span>גיל {calculateAge(student.birth_date || "")}</span>
+                      {student.city && <><span>·</span><span>{student.city}</span></>}
+                      {student.height && <><span>·</span><span>{student.height} ס״מ</span></>}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleFavoriteChange(!favSet.has(student.id), student.id)}
+                    className="mt-0.5 shrink-0 p-1 transition-colors"
+                    aria-label={favSet.has(student.id) ? "הסר ממועדפים" : "הוסף למועדפים"}
+                  >
+                    <Star
+                      className={cn(
+                        "h-5 w-5 transition-colors",
+                        favSet.has(student.id)
+                          ? "fill-favorite text-favorite"
+                          : "text-muted-foreground",
+                      )}
+                    />
+                  </button>
                 </div>
-                <div className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 text-sm">
-                  <span>{parseStatus(student.personal_status)}</span>
-                  <span>גיל {calculateAge(student.birth_date || "")}</span>
-                  {student.city && <span>{student.city}</span>}
-                  {student.height && <span>{student.height} ס״מ</span>}
-                </div>
-                <div className="flex gap-2">
+                <div className="mt-3 flex gap-2">
                   {student.cv_url ? (
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                    >
-                      <a
-                        href={student.cv_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        קו״ח
-                      </a>
+                    <Button asChild variant="outline" size="sm" className="flex-1">
+                      <a href={student.cv_url} target="_blank" rel="noopener noreferrer">קו״ח</a>
                     </Button>
                   ) : (
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                    >
+                    <Button asChild variant="outline" size="sm" className="flex-1 text-muted-foreground">
                       <Link href={"/" as any}>הוספת קו״ח</Link>
                     </Button>
                   )}
@@ -231,13 +201,11 @@ export default function StudentsList() {
             ))}
           </div>
 
-          {/* טבלה — דסקטופ בלבד */}
-          <div className="hidden md:grid md:grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_3fr] md:gap-4">
-            <div
-              data-slot="table-header"
-              className="col-span-full grid grid-cols-subgrid"
-            >
-              <div>מועדף</div>
+          {/* טבלה — דסקטופ */}
+          <Box className="hidden p-0 md:block">
+            {/* Header */}
+            <div className="grid grid-cols-[2rem_6rem_8rem_8rem_10rem_10rem_8rem_5rem_5rem_1fr] gap-x-4 border-b border-border px-4 py-3 text-xs font-medium text-muted-foreground">
+              <div>★</div>
               <div>סטטוס</div>
               <div>שם משפחה</div>
               <div>שם פרטי</div>
@@ -246,57 +214,64 @@ export default function StudentsList() {
               <div>עיר</div>
               <div>גיל</div>
               <div>גובה</div>
+              <div>פעולות</div>
             </div>
-            {students.map((student) => (
-              <Box
+            {/* Rows */}
+            {students.map((student, idx) => (
+              <div
                 key={student.id}
-                className="col-span-full grid grid-cols-subgrid items-center p-4"
+                className={cn(
+                  "grid grid-cols-[2rem_6rem_8rem_8rem_10rem_10rem_8rem_5rem_5rem_1fr] items-center gap-x-4 px-4 py-3 text-sm transition-colors hover:bg-muted/40",
+                  idx < students.length - 1 && "border-b border-border",
+                )}
               >
                 <div>
-                  <Switch
-                    checked={favSet.has(student.id)}
-                    onCheckedChange={(e) => handleFavoriteChange(e, student.id)}
-                  />
+                  <button
+                    onClick={() => handleFavoriteChange(!favSet.has(student.id), student.id)}
+                    aria-label={favSet.has(student.id) ? "הסר ממועדפים" : "הוסף למועדפים"}
+                    className="p-0.5"
+                  >
+                    <Star
+                      className={cn(
+                        "h-4 w-4 transition-colors",
+                        favSet.has(student.id)
+                          ? "fill-favorite text-favorite"
+                          : "text-muted-foreground hover:text-favorite",
+                      )}
+                    />
+                  </button>
                 </div>
-                <div>{parseStatus(student.personal_status)}</div>
-                <div>{student.last_name}</div>
-                <div>{student.first_name}</div>
-                <div>
+                <div className="text-muted-foreground">{parseStatus(student.personal_status)}</div>
+                <div className="font-medium">{student.last_name}</div>
+                <div className="font-medium">{student.first_name}</div>
+                <div className="text-muted-foreground">
                   {student.parents_info.father.self.prefix}{" "}
                   {student.parents_info.father.self.name}
                 </div>
-                <div>
+                <div className="text-muted-foreground">
                   {student.parents_info.mother.self.prefix}{" "}
                   {student.parents_info.mother.self.name}
                 </div>
-                <div>{student.city}</div>
+                <div className="text-muted-foreground">{student.city}</div>
                 <div>{calculateAge(student.birth_date || "")}</div>
                 <div>{student.height}</div>
-                <div className="flex gap-1">
+                <div className="flex gap-1.5">
                   {student.cv_url ? (
-                    <Button asChild className="flex-1" variant="outline">
-                      <a
-                        href={student.cv_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        כרטיס קו״ח
-                      </a>
+                    <Button asChild size="sm" variant="outline" className="flex-1">
+                      <a href={student.cv_url} target="_blank" rel="noopener noreferrer">קו״ח</a>
                     </Button>
                   ) : (
-                    <Button asChild className="flex-1" variant="outline">
-                      <Link href={"/" as any}>להוספת קו״ח</Link>
+                    <Button asChild size="sm" variant="outline" className="flex-1 text-muted-foreground">
+                      <Link href={"/" as any}>הוספת קו״ח</Link>
                     </Button>
                   )}
-                  <Button asChild className="flex-1">
-                    <Link href={`/app/students/${student.id}`}>
-                      לצפיה בכרטיס המלא
-                    </Link>
+                  <Button asChild size="sm" className="flex-1">
+                    <Link href={`/app/students/${student.id}`}>כרטיס מלא</Link>
                   </Button>
                 </div>
-              </Box>
+              </div>
             ))}
-          </div>
+          </Box>
         </>
       )}
     </div>
