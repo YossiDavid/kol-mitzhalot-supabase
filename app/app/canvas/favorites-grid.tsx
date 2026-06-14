@@ -2,21 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Heart } from "lucide-react";
+
 import StudentBox from "./student-box";
+import type { Student } from "./student-box";
 import calculateAge from "@/lib/calculateAge";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-
-type Student = {
-  id: string;
-  gender: "male" | "female";
-  first_name: string;
-  last_name: string;
-  birth_date: string | Date;
-  city: string;
-  parents_info?: any;
-  employment_history?: { category: string }[];
-};
 
 type Props = {
   initialFavorites: Student[];
@@ -24,8 +17,31 @@ type Props = {
   onAddFemale: (student: Student) => void;
   onDragGenderChange: (gender: "male" | "female" | null) => void;
   onFavoritesChanged?: () => void;
-
 };
+
+function mapEmploymentToHebrew(
+  category: string,
+  gender: "male" | "female",
+): string {
+  switch (category) {
+    case "yeshiva":
+      return "בחור ישיבה";
+    case "seminar":
+      return "לומדת בסמינר";
+    case "at_home":
+      return "בבית";
+    case "havruta":
+      return "לומד עם חברותא";
+    case "kolel":
+      return "כולל";
+    case "profession":
+      return gender === "male" ? "לומד מקצוע" : "לומדת מקצוע";
+    case "working":
+      return gender === "male" ? "עובד" : "עובדת";
+    default:
+      return "";
+  }
+}
 
 export default function FavoritesGrid({
   initialFavorites,
@@ -33,7 +49,6 @@ export default function FavoritesGrid({
   onAddFemale,
   onDragGenderChange,
   onFavoritesChanged,
-
 }: Props) {
   const supabase = createClient();
   const router = useRouter();
@@ -41,7 +56,6 @@ export default function FavoritesGrid({
   const [favorites, setFavorites] = useState<Student[]>(initialFavorites);
   const [activeTab, setActiveTab] = useState<"male" | "female">("male");
 
-  // חשוב: סנכרון כשה־props משתנים (אחרי router.refresh)
   useEffect(() => {
     setFavorites(initialFavorites);
   }, [initialFavorites]);
@@ -53,52 +67,71 @@ export default function FavoritesGrid({
     student.gender === "male" ? onAddMale(student) : onAddFemale(student);
   };
 
-  // ===== הסרה ממועדפים =====
   const handleRemoveFromFavorites = async (student: Student) => {
     const nextFavorites = favorites.filter((s) => s.id !== student.id);
 
     const { error } = await supabase.auth.updateUser({
-      data: {
-        favorites: nextFavorites.map((s) => s.id), // ← רק IDs
-      },
+      data: { favorites: nextFavorites.map((s) => s.id) },
     });
 
     if (error) {
-      console.warn(error);
+      toast.error("שגיאה בהסרת המועדף");
       return;
     }
 
-    // UI מיידי
     setFavorites(nextFavorites);
-
-    // רענון Server Components (כולל CanvasPage)
     router.refresh();
     onFavoritesChanged?.();
   };
 
+  const filtered = favorites.filter((item) => item.gender === activeTab);
+
   return (
     <div className="mt-8">
-      {/* טאבים */}
+      {/* Tab switcher */}
       <div
         className={cn(
-          "before:bg-primary relative mx-auto flex w-fit cursor-pointer gap-2 rounded-full bg-white p-2 select-none before:absolute before:top-0 before:left-0 before:h-full before:w-1/2 before:rounded-full before:border-4 before:border-white before:transition-all before:duration-300",
-          activeTab === "male" ? "before:translate-x-full" : ""
+          "before:bg-primary relative mx-auto flex w-fit cursor-pointer gap-2 rounded-full bg-white p-2 select-none",
+          "before:absolute before:top-0 before:left-0 before:h-full before:w-1/2 before:rounded-full before:border-4 before:border-white before:transition-all before:duration-300",
+          activeTab === "male" ? "before:translate-x-full" : "",
         )}
         onClick={toggleTab}
+        role="tablist"
+        aria-label="סינון לפי מגדר"
       >
-        <div className={`z-10 min-w-32 p-2 text-center ${activeTab === "male" ? "text-white" : "text-gray-500"}`}>
+        <div
+          role="tab"
+          aria-selected={activeTab === "male"}
+          className={cn(
+            "z-10 min-w-32 p-2 text-center text-sm font-medium",
+            activeTab === "male" ? "text-white" : "text-muted-foreground",
+          )}
+        >
           מיועדים
         </div>
-        <div className={`z-10 min-w-32 p-2 text-center ${activeTab === "female" ? "text-white" : "text-gray-500"}`}>
+        <div
+          role="tab"
+          aria-selected={activeTab === "female"}
+          className={cn(
+            "z-10 min-w-32 p-2 text-center text-sm font-medium",
+            activeTab === "female" ? "text-white" : "text-muted-foreground",
+          )}
+        >
           מיועדות
         </div>
       </div>
 
-      {/* גריד */}
+      {/* Grid */}
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {favorites
-          .filter((item) => item.gender === activeTab)
-          .map((item) => (
+        {filtered.length === 0 ? (
+          <div className="col-span-full flex flex-col items-center gap-2 py-10 text-center">
+            <Heart className="text-muted-foreground/30 size-10" />
+            <p className="text-muted-foreground text-sm">
+              אין {activeTab === "male" ? "מיועדים" : "מיועדות"} במועדפים
+            </p>
+          </div>
+        ) : (
+          filtered.map((item) => (
             <StudentBox
               key={item.id}
               gender={item.gender}
@@ -106,26 +139,9 @@ export default function FavoritesGrid({
               lastName={item.last_name}
               age={Number(calculateAge(item.birth_date))}
               city={item.city}
-              doingToday={item.employment_history?.map((emp) => {
-                switch (emp.category) {
-                  case "yeshiva":
-                    return "בחור ישיבה";
-                  case "seminar":
-                    return "לומדת בסמינר";
-                  case "at_home":
-                    return "בבית";
-                  case "havruta":
-                    return "לומד עם חברותא";
-                  case "kolel":
-                    return "כולל";
-                  case "profession":
-                    return item.gender === "male" ? "לומד מקצוע" : "לומדת מקצוע";
-                  case "working":
-                    return item.gender === "male" ? "עובד" : "עובדת";
-                  default:
-                    return "";
-                }
-              })}
+              doingToday={item.employment_history?.map((emp) =>
+                mapEmploymentToHebrew(emp.category, item.gender),
+              )}
               father={{
                 name: `${item.parents_info?.father?.self?.name || ""} ${item.parents_info?.father?.self?.suffix || ""}`.trim(),
                 position: item.parents_info?.father?.job || "",
@@ -139,11 +155,18 @@ export default function FavoritesGrid({
               draggable
               onDragEnter={() => onDragGenderChange(item.gender)}
               onDragEnd={() => onDragGenderChange(null)}
-              onAddToDesk={handleAddToDesk}
-              onRemoveFromFavorites={handleRemoveFromFavorites}
-              favorites
-            />
-          ))}
+              setDraggingGender={onDragGenderChange}
+            >
+              <StudentBox.AddToDesk onClick={handleAddToDesk} />
+              <div className="grid grid-cols-2 gap-2">
+                <StudentBox.ViewProfile />
+                <StudentBox.RemoveFromFavorites
+                  onClick={handleRemoveFromFavorites}
+                />
+              </div>
+            </StudentBox>
+          ))
+        )}
       </div>
     </div>
   );

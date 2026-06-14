@@ -94,7 +94,7 @@ function CandidateSection({
             href={student.cv_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-emerald-700 hover:text-emerald-800"
+            className="text-primary hover:text-primary/80"
             title="פתיחת קובץ קו״ח"
           >
             <FileCheck2 className="size-4 shrink-0 md:size-5" />
@@ -112,7 +112,7 @@ function CandidateSection({
         {getAge(student)} | {student?.city || "ללא עיר"} |{" "}
         {getLastInstitution(student)} | {getOccupation(student)}
       </p>
-      <p className="mt-3 inline-flex rounded-lg bg-slate-100 px-3 py-1 text-base text-slate-700 md:text-lg">
+      <p className="bg-muted text-muted-foreground mt-3 inline-flex rounded-lg px-3 py-1 text-base md:text-lg">
         {note?.trim() || "ממתינים לעדכון מהשדכן"}
       </p>
     </div>

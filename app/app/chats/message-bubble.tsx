@@ -60,8 +60,8 @@ export function MessageBubble({
                 "px-3 py-2 shadow-none",
                 highlighted && "ring-primary/30 ring-2",
                 isMe
-                  ? "text-accent-foreground border-border/50 border bg-green-100"
-                  : "border-border/30 border bg-slate-100",
+                  ? "border-primary/20 border bg-primary/10 text-foreground"
+                  : "border-border/30 border bg-muted",
               )}
             >
               {repliedMessage && (
@@ -95,12 +95,12 @@ export function MessageBubble({
 
           <ContextMenuContent alignOffset={4}>
             <ContextMenuItem onClick={onReply}>
-              <ReplyIcon className="mr-2 h-4 w-4" />
+              <ReplyIcon className="me-2 h-4 w-4" />
               השב
             </ContextMenuItem>
             {canEdit && (
               <ContextMenuItem onClick={() => onEdit(message)}>
-                <Pencil className="mr-2 h-4 w-4" />
+                <Pencil className="me-2 h-4 w-4" />
                 ערוך
               </ContextMenuItem>
             )}

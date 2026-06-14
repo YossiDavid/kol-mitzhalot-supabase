@@ -71,12 +71,28 @@ export default async function StudentPage({
     user?.user_metadata?.role === "admin";
 
   if (error) {
-    return <div>Error: {error.message}</div>;
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="space-y-2 text-center">
+          <p className="text-destructive font-semibold">שגיאה בטעינת הפרופיל</p>
+          <p className="text-muted-foreground text-sm">{error.message}</p>
+        </div>
+      </div>
+    );
   }
 
   const student = data;
   if (!student) {
-    return <div>Student not found</div>;
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="space-y-2 text-center">
+          <p className="text-foreground font-semibold">מיועד לא נמצא</p>
+          <p className="text-muted-foreground text-sm">
+            הרשומה שחיפשת אינה קיימת במערכת
+          </p>
+        </div>
+      </div>
+    );
   }
 
   type IconComponent = React.ComponentType<{

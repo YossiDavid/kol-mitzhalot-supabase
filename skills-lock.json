@@ -7,6 +7,12 @@
       "skillPath": "skills/deploy-to-vercel/SKILL.md",
       "computedHash": "d2b5bcc7c09fdb649129ffc7dd7b647ec1b155736974b974292675afd588cb39"
     },
+    "impeccable": {
+      "source": "pbakaus/impeccable",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/impeccable/SKILL.md",
+      "computedHash": "715c2745ca23185d650972974457e760a1a4d3486edca967e9fa461c56210f1b"
+    },
     "supabase": {
       "source": "supabase/agent-skills",
       "sourceType": "github",

@@ -123,16 +123,11 @@ export default async function Home() {
       .is("deleted_before", null);
 
     if (participantsError) {
-      console.error("Error fetching participants:", participantsError);
       chatRoomsError = participantsError;
     } else {
-      console.log("Participants found:", participants?.length || 0);
-
       if (participants && participants.length > 0) {
         const roomIds = participants.map((p) => p.room_id);
-        console.log("Room IDs:", roomIds);
 
-        // נשלוף את פרטי החדרים (ללא ההודעות - נשתמש ב-last_message_id)
         const { data: roomsData, error: roomsError } = await supabase
           .from("chat_rooms")
           .select("*")
@@ -140,15 +135,12 @@ export default async function Home() {
           .order("last_message_at", { ascending: false, nullsFirst: false });
 
         if (roomsError) {
-          console.error("Error fetching rooms:", roomsError);
           chatRoomsError = roomsError;
         } else {
-          console.log("Rooms found:", roomsData?.length || 0);
           chatRooms = roomsData;
         }
       } else {
-        // אם אין participants, ננסה דרך user_a/user_b (fallback)
-        console.log("No participants found, trying user_a/user_b fallback");
+        // fallback: query by user_a/user_b directly
         const { data: roomsData, error: roomsError } = await supabase
           .from("chat_rooms")
           .select("*")
@@ -156,20 +148,16 @@ export default async function Home() {
           .order("last_message_at", { ascending: false, nullsFirst: false });
 
         if (roomsError) {
-          console.error("Error fetching rooms (fallback):", roomsError);
           chatRoomsError = roomsError;
         } else {
-          console.log("Rooms found (fallback):", roomsData?.length || 0);
           chatRooms = roomsData;
         }
       }
     }
   }
 
-  // נמצא את ההודעה האחרונה בכל חדר, ונשלוף אליה את פרטי השולח והמשתמש השני
   const chatsWithLastMessage = [];
   if (chatRooms) {
-    console.log("Processing", chatRooms.length, "rooms");
     for (const room of chatRooms) {
       // נמצא את המשתמש השני בחדר
       const otherUserId = room.user_a === user?.id ? room.user_b : room.user_a;
@@ -198,8 +186,7 @@ export default async function Home() {
           }
           otherUserAvatar = userData.avatar_url || null;
         }
-      } catch (e) {
-        console.error("Error fetching user name:", e);
+      } catch {
         otherUserName = otherUserId.substring(0, 8);
       }
 
@@ -246,8 +233,8 @@ export default async function Home() {
               avatar_url: null, // user_profiles doesn't have avatar_url
             };
           }
-        } catch (e) {
-          console.error("Error fetching sender details:", e);
+        } catch {
+          // sender name unavailable
         }
       }
 
@@ -264,25 +251,7 @@ export default async function Home() {
           : null,
       });
     }
-    console.log("Total chats processed:", chatsWithLastMessage.length);
-  } else {
-    console.log("No chat rooms found");
   }
-
-  console.log(
-    "User role - isUser:",
-    isUser,
-    "isShadchan:",
-    isShadchan,
-    "isAdmin:",
-    isAdmin,
-  );
-  console.log(
-    "chatsWithLastMessage to render:",
-    chatsWithLastMessage.length,
-    chatsWithLastMessage,
-  );
-
   return (
     <div className="space-y-10 py-4">
       {(isShadchan || isAdmin) && (
