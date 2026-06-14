@@ -166,10 +166,11 @@ export default async function Home() {
             if (!otherUserId) return null;
 
             const [userMetaResult, lastMsgResult] = await Promise.all([
-              supabase
-                .rpc("get_user_metadata", { target_user_id: otherUserId })
-                .then((r) => r)
-                .catch(() => ({ data: null, error: null })),
+              Promise.resolve(
+                supabase.rpc("get_user_metadata", {
+                  target_user_id: otherUserId,
+                }),
+              ).catch(() => ({ data: null, error: null })),
               room.last_message_id
                 ? supabase
                     .from("chat_messages")
