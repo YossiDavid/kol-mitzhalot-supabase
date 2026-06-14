@@ -34,7 +34,9 @@ export default function DashboardSection({
               <span className="text-base"> ({`${props.titleNumber}`})</span>
             )}
           </h2>
-          <p>{props.subTitle}</p>
+          {props.subTitle && (
+            <p className="mt-1 text-sm text-muted-foreground">{props.subTitle}</p>
+          )}
         </div>
         {props.button}
       </div>
