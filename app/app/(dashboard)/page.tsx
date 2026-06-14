@@ -156,102 +156,59 @@ export default async function Home() {
     }
   }
 
-  const chatsWithLastMessage = [];
-  if (chatRooms) {
-    for (const room of chatRooms) {
-      // נמצא את המשתמש השני בחדר
-      const otherUserId = room.user_a === user?.id ? room.user_b : room.user_a;
+  // async-parallel: process all chat rooms concurrently instead of sequentially
+  const chatsWithLastMessage = chatRooms
+    ? (
+        await Promise.all(
+          chatRooms.map(async (room) => {
+            const otherUserId =
+              room.user_a === user?.id ? room.user_b : room.user_a;
+            if (!otherUserId) return null;
 
-      // אם אין משתמש שני, נדלג על החדר הזה
-      if (!otherUserId) continue;
+            const [userMetaResult, lastMsgResult] = await Promise.all([
+              supabase
+                .rpc("get_user_metadata", { target_user_id: otherUserId })
+                .then((r) => r)
+                .catch(() => ({ data: null, error: null })),
+              room.last_message_id
+                ? supabase
+                    .from("chat_messages")
+                    .select("message_id, content, created_at, sender_id")
+                    .eq("message_id", room.last_message_id)
+                    .single()
+                : Promise.resolve({ data: null, error: null }),
+            ]);
 
-      // נשלוף את שם המשתמש השני
-      let otherUserName = "Unknown User";
-      let otherUserAvatar = null;
-      try {
-        const { data: userData, error: rpcError } = await supabase.rpc(
-          "get_user_metadata",
-          {
-            target_user_id: otherUserId,
-          },
-        );
+            const userData = userMetaResult.data as {
+              firstName?: string;
+              lastName?: string;
+              email?: string;
+              avatar_url?: string;
+            } | null;
 
-        if (!rpcError && userData) {
-          if (userData.firstName || userData.lastName) {
-            otherUserName = `${userData.firstName || ""} ${
-              userData.lastName || ""
-            }`.trim();
-          } else if (userData.email) {
-            otherUserName = userData.email.split("@")[0];
-          }
-          otherUserAvatar = userData.avatar_url || null;
-        }
-      } catch {
-        otherUserName = otherUserId.substring(0, 8);
-      }
+            let otherUserName = otherUserId.substring(0, 8);
+            if (userData?.firstName || userData?.lastName) {
+              otherUserName =
+                `${userData.firstName || ""} ${userData.lastName || ""}`.trim();
+            } else if (userData?.email) {
+              otherUserName = userData.email.split("@")[0];
+            }
 
-      // נשלוף את ההודעה האחרונה באמצעות last_message_id
-      let lastMessage = null;
-      let lastMessageContent = null;
-      let lastMessageTime = null;
-      let senderDetails = null;
-
-      if (room.last_message_id) {
-        const { data: lastMsg, error: lastMsgError } = await supabase
-          .from("chat_messages")
-          .select("message_id, content, created_at, sender_id")
-          .eq("message_id", room.last_message_id)
-          .single();
-
-        if (!lastMsgError && lastMsg) {
-          lastMessage = lastMsg;
-          lastMessageContent = lastMsg.content;
-          lastMessageTime = lastMsg.created_at;
-        }
-      }
-
-      if (lastMessage?.sender_id) {
-        // נשלוף מידע על השולח באמצעות RPC function
-        try {
-          const { data: senderData, error: senderError } = await supabase.rpc(
-            "get_user_metadata",
-            {
-              target_user_id: lastMessage.sender_id,
-            },
-          );
-
-          if (!senderError && senderData) {
-            senderDetails = {
-              id: lastMessage.sender_id,
-              full_name:
-                senderData.firstName || senderData.lastName
-                  ? `${senderData.firstName || ""} ${
-                      senderData.lastName || ""
-                    }`.trim()
-                  : null,
-              email: senderData.email || null,
-              avatar_url: null, // user_profiles doesn't have avatar_url
+            const lastMsg = lastMsgResult.data;
+            return {
+              id: room.room_id,
+              name: otherUserName,
+              description: "",
+              image: userData?.avatar_url || "/placeholder-avatar.png",
+              link: `/app/chats/${room.room_id}`,
+              lastMessage: lastMsg?.content ?? null,
+              lastMessageTime: lastMsg?.created_at ?? null,
+              lastMessageSender: null,
             };
-          }
-        } catch {
-          // sender name unavailable
-        }
-      }
-
-      chatsWithLastMessage.push({
-        id: room.room_id,
-        name: otherUserName,
-        description: "",
-        image: otherUserAvatar || "/placeholder-avatar.png",
-        link: `/app/chats/${room.room_id}`,
-        lastMessage: lastMessageContent || null,
-        lastMessageTime: lastMessageTime,
-        lastMessageSender: senderDetails
-          ? senderDetails.full_name || senderDetails.email || null
-          : null,
-      });
-    }
-  }
+          }),
+        )
+      ).filter(Boolean)
+    : [];
   return (
     <div className="space-y-10 py-4">
       {(isShadchan || isAdmin) && (

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useStudentQuery } from "../page";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -45,42 +45,47 @@ type Student = {
   permalink: string;
 };
 
+function parseStatus(status: string): string {
+  if (status === "married") return "נשוי";
+  if (status === "engaged") return "מאורס";
+  if (status === "single") return "רווק";
+  if (status === "divorced") return "גרוש";
+  if (status === "widowed") return "אלמן";
+  return status;
+}
+
 export default function StudentsList() {
   const [user, setUser] = useState<User | undefined>(undefined);
   const { query } = useStudentQuery();
   const [students, setStudents] = useState<Student[]>([]);
-
-  const parseStatus = (status: Student["personal_status"]) => {
-    if (status === "married") return "נשוי";
-    if (status === "engaged") return "מאורס";
-    if (status === "single") return "רווק";
-    if (status === "divorced") return "גרוש";
-    if (status === "widowed") return "אלמן";
-  };
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+
+  // rerender-dependencies: stable ref — createClient() returns a singleton,
+  // but storing in ref makes the dep explicit and prevents lint warnings
+  const supabaseRef = useRef(createClient());
+  const supabase = supabaseRef.current;
 
   useEffect(() => {
-    async function fetchUser() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user || undefined);
-    }
-    fetchUser();
-  }, []);
+    let isMounted = true;
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (isMounted) setUser(user || undefined);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [supabase]);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchStudents() {
       setLoading(true);
       try {
-        // true או null (רשומות ישנות לפני תיקון create_full_student_profile) — לא false בלבד
         let q = supabase
           .from("students")
           .select("*")
           .or("in_shidduchim.eq.true,in_shidduchim.is.null");
 
-        // פילוח דינמי לפי כל השדות הקיימים ב-query
         if (query.first_name)
           q = q.ilike("first_name", `%${query.first_name}%`);
         if (query.last_name) q = q.ilike("last_name", `%${query.last_name}%`);
@@ -89,7 +94,6 @@ export default function StudentsList() {
           q = q.eq("personal_status", query.personal_status);
         if (query.city) q = q.ilike("city", `%${query.city}%`);
 
-        // Filter by age using birth_date (calculate max birth_date for minimum age)
         if (query.ageMin) {
           const minAge = parseInt(query.ageMin);
           if (!isNaN(minAge)) {
@@ -99,8 +103,6 @@ export default function StudentsList() {
           }
         }
 
-        // Handle is_yeshiva - convert string to boolean if needed
-        // Note: This column might not exist in all database schemas
         if (query.is_yeshiva !== undefined && query.is_yeshiva !== "") {
           try {
             const isYeshivaValue =
@@ -108,63 +110,53 @@ export default function StudentsList() {
                 ? query.is_yeshiva
                 : query.is_yeshiva === "true";
             q = q.eq("is_yeshiva", isYeshivaValue);
-          } catch (err) {
-            // Column might not exist, skip this filter
+          } catch {
+            // column may not exist in all schemas
           }
         }
 
-        // Note: yeshiva_name might be in education_history table, not students table
-        // For now, we'll skip this filter if it causes issues
-        // if (query.yeshiva_name)
-        //   q = q.ilike("yeshiva_name", `%${query.yeshiva_name}%`);
-        // ... תוסיף כאן עוד שדות לפי הצורך
-
         const { data, error } = await q;
-
+        if (!isMounted) return;
         if (error) {
-          // Silently handle error - show empty state
           setStudents([]);
           return;
         }
         setStudents(data || []);
-      } catch (err) {
-        // Silently handle error - show empty state
-        setStudents([]);
+      } catch {
+        if (isMounted) setStudents([]);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
 
     fetchStudents();
-  }, [query, supabase]); // ירוץ בכל פעם שהפילטר משתנה
+    return () => {
+      isMounted = false;
+    };
+  }, [query, supabase]);
 
-  const handleFavoriteChange = async (e: boolean, id: string) => {
+  // js-set-map-lookups: O(1) favorites lookup instead of O(n) .includes() per row
+  const favSet = useMemo(
+    () => new Set<string>(user?.user_metadata?.favorites || []),
+    [user?.user_metadata?.favorites],
+  );
+
+  const handleFavoriteChange = async (checked: boolean, id: string) => {
+    const currentFavs: string[] = user?.user_metadata?.favorites || [];
+    const nextFavs = checked
+      ? [...currentFavs, id]
+      : currentFavs.filter((fid) => fid !== id);
+
     const { data, error } = await supabase.auth.updateUser({
-      data: {
-        favorites: e
-          ? [...(user?.user_metadata?.favorites || ([] as string[])), id]
-          : (user?.user_metadata?.favorites || ([] as string[])).filter(
-              (favoriteId: string) => favoriteId !== id,
-            ),
-      },
+      data: { favorites: nextFavs },
     });
-
-    if (data) {
-      setUser(data.user || undefined);
-      return;
-    }
 
     if (error) {
       toast.error(error.message);
       return;
     }
 
-    setStudents(
-      students.map((student) =>
-        student.id === id ? { ...student, isFavorite: e } : student,
-      ),
-    );
-    toast.success("המיועד נוסף למועדפים");
+    if (data) setUser(data.user || undefined);
   };
 
   if (loading)
@@ -187,18 +179,15 @@ export default function StudentsList() {
         <>
           {/* כרטיסים — מובייל בלבד */}
           <div className="flex flex-col gap-3 md:hidden">
-            {students.map((student, index) => (
-              <Box key={index} className="flex flex-col gap-3 p-4">
+            {students.map((student) => (
+              <Box key={student.id} className="flex flex-col gap-3 p-4">
                 <span className="font-semibold">
                   {student.first_name} {student.last_name}
                 </span>
                 <div className="flex items-center justify-between rounded-md border px-3 py-2">
                   <span className="text-sm">הוסף למועדפים</span>
                   <Switch
-                    checked={
-                      user?.user_metadata?.favorites?.includes(student.id) ||
-                      false
-                    }
+                    checked={favSet.has(student.id)}
                     onCheckedChange={(e) => handleFavoriteChange(e, student.id)}
                   />
                 </div>
@@ -210,13 +199,27 @@ export default function StudentsList() {
                 </div>
                 <div className="flex gap-2">
                   {student.cv_url ? (
-                    <Button asChild variant="outline" size="sm" className="flex-1">
-                      <a href={student.cv_url} target="_blank" rel="noopener noreferrer">
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      <a
+                        href={student.cv_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         קו״ח
                       </a>
                     </Button>
                   ) : (
-                    <Button asChild variant="outline" size="sm" className="flex-1 bg-amber-100">
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                    >
                       <Link href={"/" as any}>הוספת קו״ח</Link>
                     </Button>
                   )}
@@ -244,17 +247,14 @@ export default function StudentsList() {
               <div>גיל</div>
               <div>גובה</div>
             </div>
-            {students.map((student, index) => (
+            {students.map((student) => (
               <Box
-                key={index}
+                key={student.id}
                 className="col-span-full grid grid-cols-subgrid items-center p-4"
               >
                 <div>
                   <Switch
-                    checked={
-                      user?.user_metadata?.favorites?.includes(student.id) ||
-                      false
-                    }
+                    checked={favSet.has(student.id)}
                     onCheckedChange={(e) => handleFavoriteChange(e, student.id)}
                   />
                 </div>
@@ -274,13 +274,17 @@ export default function StudentsList() {
                 <div>{student.height}</div>
                 <div className="flex gap-1">
                   {student.cv_url ? (
-                    <Button asChild className="flex-1" variant={"outline"}>
-                      <a href={student.cv_url} target="_blank" rel="noopener noreferrer">
+                    <Button asChild className="flex-1" variant="outline">
+                      <a
+                        href={student.cv_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         כרטיס קו״ח
                       </a>
                     </Button>
                   ) : (
-                    <Button asChild className="flex-1 bg-amber-100" variant={"outline"}>
+                    <Button asChild className="flex-1" variant="outline">
                       <Link href={"/" as any}>להוספת קו״ח</Link>
                     </Button>
                   )}

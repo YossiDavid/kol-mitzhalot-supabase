@@ -21,7 +21,17 @@ import Upload from "./upload"
 import { Control, useFieldArray } from "react-hook-form"
 import { cn } from "@/lib/utils"
 import { PlusCircle, Trash, Trash2 } from "lucide-react"
-import { ReactJewishDatePicker } from "@yossidavid/react-jewish-datepicker"
+import dynamic from "next/dynamic"
+
+// bundle-dynamic-imports: lazy-load the heavy Jewish date picker so it's only
+// bundled when a date field is actually rendered in the multi-step form
+const ReactJewishDatePicker = dynamic(
+  () =>
+    import("@yossidavid/react-jewish-datepicker").then(
+      (m) => m.ReactJewishDatePicker,
+    ),
+  { ssr: false },
+)
 
 type FieldMetadata = Record<string, any>
 

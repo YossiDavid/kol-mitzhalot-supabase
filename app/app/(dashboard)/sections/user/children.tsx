@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -47,31 +48,34 @@ type Child = {
   cv_url?: string;
 };
 
+function parseStatus(status: string): string {
+  if (status === "married") return "נשוי";
+  if (status === "engaged") return "מאורס";
+  if (status === "single") return "רווק";
+  if (status === "divorced") return "גרוש";
+  if (status === "widowed") return "אלמן";
+  return status;
+}
+
 export default function Children({ childs }: { childs: Child[] }) {
-  const supabase = createClient();
+  const supabaseRef = useRef(createClient());
+  const supabase = supabaseRef.current;
 
   const [localChilds, setLocalChilds] = useState<Child[]>(childs);
 
-  const parseStatus = (status: Child["personal_status"]) => {
-    if (status === "married") return "נשוי";
-    if (status === "engaged") return "מאורס";
-    if (status === "single") return "רווק";
-    if (status === "divorced") return "גרוש";
-    if (status === "widowed") return "אלמן";
-  };
-
-  const handleIsInShidduchimChange = async (e: boolean, id: string) => {
-    const { data, error } = await supabase
+  const handleIsInShidduchimChange = async (checked: boolean, id: string) => {
+    const { error } = await supabase
       .from("students")
-      .update({ in_shidduchim: e })
+      .update({ in_shidduchim: checked })
       .eq("id", id);
     if (error) {
-      console.error(error);
+      toast.error("שגיאה בעדכון סטטוס השידוכים");
       return;
     }
-    setLocalChilds(
-      localChilds.map((child) =>
-        child.id === id ? { ...child, in_shidduchim: e } : child,
+    // rerender-functional-setstate: use functional form to avoid stale closure
+    setLocalChilds((prev) =>
+      prev.map((child) =>
+        child.id === id ? { ...child, in_shidduchim: checked } : child,
       ),
     );
   };
