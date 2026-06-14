@@ -114,7 +114,7 @@ export default async function StudentPage({
         <div className="bg-muted rounded-lg p-2">
           <Icon size={20} className="text-primary" />
         </div>
-        <h2 className="text-xl font-bold">{title}</h2>
+        <h2 className="text-xl! font-bold!">{title}</h2>
       </div>
       {children}
     </Box>
@@ -155,12 +155,57 @@ export default async function StudentPage({
 
   return (
     <div className="min-h-screen space-y-6 text-right">
-      {/* Header */}
-      {/* <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:justify-center">
-        <h1>
-          {student.first_name} {student.last_name}
-        </h1>
-      </div> */}
+      {/* Hero */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl! font-bold! leading-tight!">
+            {student.first_name} {student.last_name}
+          </h1>
+          <p className="text-muted-foreground mt-1.5 flex flex-wrap gap-x-2 gap-y-1 text-sm">
+            {genderLabel && <span>{genderLabel}</span>}
+            {student.birth_date && (
+              <>
+                <span className="text-muted-foreground/40">·</span>
+                <span>גיל {calculateAge(student.birth_date)}</span>
+              </>
+            )}
+            {student.personal_status && (
+              <>
+                <span className="text-muted-foreground/40">·</span>
+                <span>{personalStatusToHebrew(student.personal_status)}</span>
+              </>
+            )}
+            {student.city && (
+              <>
+                <span className="text-muted-foreground/40">·</span>
+                <span>{student.city}</span>
+              </>
+            )}
+            {student.height && (
+              <>
+                <span className="text-muted-foreground/40">·</span>
+                <span>{student.height} ס"מ</span>
+              </>
+            )}
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {student.cv_url && (
+            <Button asChild variant="outline" size="sm">
+              <Link
+                href={student.cv_url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FileText className="h-4 w-4" />
+                קו"ח
+              </Link>
+            </Button>
+          )}
+          <ShareButton />
+          {isShadchan && <MessageButton authorId={student.user_id} />}
+        </div>
+      </div>
 
       {/* Main Content */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
@@ -168,16 +213,6 @@ export default async function StudentPage({
         <div className="space-y-6 lg:col-span-3">
           {/* Basic Information */}
           <Section title="פרטים אישיים" icon={User}>
-            <div className="flex justify-between gap-2">
-              <h1>
-                {student.first_name} {student.last_name}
-              </h1>
-              <div className="flex gap-2">
-                <ShareButton />
-                {isShadchan && <MessageButton authorId={student.user_id} />}
-              </div>
-            </div>
-
             {student.about && (
               <p className="text-muted-foreground leading-relaxed">
                 {student.about}
@@ -1005,24 +1040,6 @@ export default async function StudentPage({
             </div>
           )}
 
-          {/* CV Link */}
-          {student.cv_url && (
-            <Button
-              asChild
-              variant="outline"
-              className="border-border bg-card w-full rounded-lg border p-4 text-center"
-            >
-              <Link
-                href={student.cv_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary flex items-center justify-center gap-2 text-sm font-bold"
-              >
-                <FileText size={16} />
-                צפייה בקורות חיים
-              </Link>
-            </Button>
-          )}
         </div>
       </div>
     </div>
