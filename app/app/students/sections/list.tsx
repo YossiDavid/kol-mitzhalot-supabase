@@ -9,24 +9,36 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Box } from "@/components/layout";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import Link from "next/link";
 import calculateAge from "@/lib/calculateAge";
-import { FileText, Star } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Star } from "lucide-react";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
 import { cn } from "@/lib/utils";
 
 type Student = {
   id: string;
-  personal_status: "married" | "engaged" | "single" | "divorced" | "widowed";
+  personal_status: "married" | "engaged" | "single";
   last_name: string;
   first_name: string;
   parents_info: {
-    father: { self: { prefix: string; name: string; suffix: string } };
-    mother: { self: { prefix: string; name: string; suffix: string } };
+    father: {
+      self: {
+        prefix: string;
+        name: string;
+        suffix: string;
+      };
+    };
+    mother: {
+      self: {
+        prefix: string;
+        name: string;
+        suffix: string;
+      };
+    };
   };
   city: string;
   birth_date: Date;
@@ -35,21 +47,14 @@ type Student = {
   permalink: string;
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  single: "רווק",
-  married: "נשוי",
-  engaged: "מאורס",
-  divorced: "גרוש",
-  widowed: "אלמן",
-};
-
-const STATUS_CLASS: Record<string, string> = {
-  single: "border-blue-200 bg-blue-50 text-blue-700",
-  married: "border-muted bg-muted text-muted-foreground",
-  engaged: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  divorced: "border-orange-200 bg-orange-50 text-orange-700",
-  widowed: "border-purple-200 bg-purple-50 text-purple-700",
-};
+function parseStatus(status: string): string {
+  if (status === "married") return "נשוי";
+  if (status === "engaged") return "מאורס";
+  if (status === "single") return "רווק";
+  if (status === "divorced") return "גרוש";
+  if (status === "widowed") return "אלמן";
+  return status;
+}
 
 export default function StudentsList() {
   const [user, setUser] = useState<User | undefined>(undefined);
@@ -70,6 +75,7 @@ export default function StudentsList() {
 
   useEffect(() => {
     let isMounted = true;
+
     async function fetchStudents() {
       setLoading(true);
       try {
@@ -78,11 +84,14 @@ export default function StudentsList() {
           .select("*")
           .or("in_shidduchim.eq.true,in_shidduchim.is.null");
 
-        if (query.first_name) q = q.ilike("first_name", `%${query.first_name}%`);
+        if (query.first_name)
+          q = q.ilike("first_name", `%${query.first_name}%`);
         if (query.last_name) q = q.ilike("last_name", `%${query.last_name}%`);
         if (query.gender) q = q.eq("gender", query.gender);
-        if (query.personal_status) q = q.eq("personal_status", query.personal_status);
+        if (query.personal_status)
+          q = q.eq("personal_status", query.personal_status);
         if (query.city) q = q.ilike("city", `%${query.city}%`);
+
         if (query.ageMin) {
           const minAge = parseInt(query.ageMin);
           if (!isNaN(minAge)) {
@@ -91,11 +100,17 @@ export default function StudentsList() {
             q = q.lte("birth_date", maxBirthDate.toISOString().split("T")[0]);
           }
         }
+
         if (query.is_yeshiva !== undefined && query.is_yeshiva !== "") {
           try {
-            const v = typeof query.is_yeshiva === "boolean" ? query.is_yeshiva : query.is_yeshiva === "true";
-            q = q.eq("is_yeshiva", v);
-          } catch {}
+            const isYeshivaValue =
+              typeof query.is_yeshiva === "boolean"
+                ? query.is_yeshiva
+                : query.is_yeshiva === "true";
+            q = q.eq("is_yeshiva", isYeshivaValue);
+          } catch {
+            // column may not exist in all schemas
+          }
         }
 
         const { data, error } = await q;
@@ -108,6 +123,7 @@ export default function StudentsList() {
         if (isMounted) setLoading(false);
       }
     }
+
     fetchStudents();
     return () => { isMounted = false; };
   }, [query, supabase]);
@@ -119,8 +135,14 @@ export default function StudentsList() {
 
   const handleFavoriteChange = async (checked: boolean, id: string) => {
     const currentFavs: string[] = user?.user_metadata?.favorites || [];
-    const nextFavs = checked ? [...currentFavs, id] : currentFavs.filter((f) => f !== id);
-    const { data, error } = await supabase.auth.updateUser({ data: { favorites: nextFavs } });
+    const nextFavs = checked
+      ? [...currentFavs, id]
+      : currentFavs.filter((fid) => fid !== id);
+
+    const { data, error } = await supabase.auth.updateUser({
+      data: { favorites: nextFavs },
+    });
+
     if (error) { toast.error(error.message); return; }
     if (data) setUser(data.user || undefined);
   };
@@ -133,7 +155,7 @@ export default function StudentsList() {
     );
 
   return (
-    <div className="mt-4">
+    <div className="mt-8">
       {students.length === 0 ? (
         <Empty>
           <EmptyHeader>
@@ -143,7 +165,7 @@ export default function StudentsList() {
         </Empty>
       ) : (
         <>
-          {/* מובייל */}
+          {/* כרטיסים — מובייל בלבד */}
           <div className="flex flex-col gap-2 md:hidden">
             {students.map((student) => (
               <Box key={student.id} className="p-4">
@@ -153,7 +175,7 @@ export default function StudentsList() {
                       {student.first_name} {student.last_name}
                     </p>
                     <p className="text-muted-foreground mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-sm">
-                      <span>{STATUS_LABEL[student.personal_status] ?? student.personal_status}</span>
+                      <span>{parseStatus(student.personal_status)}</span>
                       <span>·</span>
                       <span>גיל {calculateAge(student.birth_date || "")}</span>
                       {student.city && <><span>·</span><span>{student.city}</span></>}
@@ -179,8 +201,8 @@ export default function StudentsList() {
                       <a href={student.cv_url} target="_blank" rel="noopener noreferrer">קו״ח</a>
                     </Button>
                   ) : (
-                    <Button variant="outline" size="sm" className="flex-1 text-muted-foreground" disabled>
-                      אין קו״ח
+                    <Button asChild variant="outline" size="sm" className="flex-1">
+                      <Link href={"/" as any}>הוספת קו״ח</Link>
                     </Button>
                   )}
                   <Button asChild size="sm" className="flex-1">
@@ -191,11 +213,13 @@ export default function StudentsList() {
             ))}
           </div>
 
-          {/* דסקטופ */}
-          <div className="hidden md:flex md:flex-col md:gap-2">
-            {/* Header */}
-            <div className="grid grid-cols-[2rem_7rem_9rem_9rem_10rem_10rem_7rem_4rem_4rem_1fr] items-center gap-x-3 px-4 py-2 text-xs font-medium text-muted-foreground">
-              <div>★</div>
+          {/* טבלה — דסקטופ בלבד */}
+          <div className="hidden md:grid md:grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_3fr] md:gap-4">
+            <div
+              data-slot="table-header"
+              className="col-span-full grid grid-cols-subgrid"
+            >
+              <div>מועדף</div>
               <div>סטטוס</div>
               <div>שם משפחה</div>
               <div>שם פרטי</div>
@@ -204,61 +228,48 @@ export default function StudentsList() {
               <div>עיר</div>
               <div>גיל</div>
               <div>גובה</div>
-              <div></div>
             </div>
-
             {students.map((student) => (
               <Box
                 key={student.id}
-                className="grid grid-cols-[2rem_7rem_9rem_9rem_10rem_10rem_7rem_4rem_4rem_1fr] items-center gap-x-3 px-4 py-3"
+                className="col-span-full grid grid-cols-subgrid items-center p-4"
               >
-                <button
-                  onClick={() => handleFavoriteChange(!favSet.has(student.id), student.id)}
-                  aria-label={favSet.has(student.id) ? "הסר ממועדפים" : "הוסף למועדפים"}
-                >
-                  <Star
-                    className={cn(
-                      "h-4 w-4 transition-colors",
-                      favSet.has(student.id) ? "fill-favorite text-favorite" : "text-muted-foreground hover:text-favorite",
-                    )}
-                  />
-                </button>
-
                 <div>
-                  <Badge
-                    variant="outline"
-                    className={cn("text-xs", STATUS_CLASS[student.personal_status])}
-                  >
-                    {STATUS_LABEL[student.personal_status] ?? student.personal_status}
-                  </Badge>
+                  <Switch
+                    checked={favSet.has(student.id)}
+                    onCheckedChange={(e) => handleFavoriteChange(e, student.id)}
+                  />
                 </div>
-
-                <div className="font-medium">{student.last_name}</div>
-                <div className="font-medium">{student.first_name}</div>
-                <div className="truncate text-sm text-muted-foreground">
-                  {student.parents_info.father.self.prefix} {student.parents_info.father.self.name}
+                <div>{parseStatus(student.personal_status)}</div>
+                <div>{student.last_name}</div>
+                <div>{student.first_name}</div>
+                <div>
+                  {student.parents_info.father.self.prefix}{" "}
+                  {student.parents_info.father.self.name}
                 </div>
-                <div className="truncate text-sm text-muted-foreground">
-                  {student.parents_info.mother.self.prefix} {student.parents_info.mother.self.name}
+                <div>
+                  {student.parents_info.mother.self.prefix}{" "}
+                  {student.parents_info.mother.self.name}
                 </div>
-                <div className="truncate text-sm text-muted-foreground">{student.city}</div>
-                <div className="text-sm">{calculateAge(student.birth_date || "")}</div>
-                <div className="text-sm">{student.height}</div>
-
-                <div className="flex gap-1.5">
+                <div>{student.city}</div>
+                <div>{calculateAge(student.birth_date || "")}</div>
+                <div>{student.height}</div>
+                <div className="flex gap-1">
                   {student.cv_url ? (
-                    <Button asChild size="sm" variant="outline" className="flex-1">
+                    <Button asChild className="flex-1" variant="outline">
                       <a href={student.cv_url} target="_blank" rel="noopener noreferrer">
                         כרטיס קו״ח
                       </a>
                     </Button>
                   ) : (
-                    <Button asChild size="sm" variant="outline" className="flex-1 text-muted-foreground">
-                      <Link href={"/" as any}>הוספת קו״ח</Link>
+                    <Button asChild className="flex-1" variant="outline">
+                      <Link href={"/" as any}>להוספת קו״ח</Link>
                     </Button>
                   )}
-                  <Button asChild size="sm" className="flex-1">
-                    <Link href={`/app/students/${student.id}`}>כרטיס מלא</Link>
+                  <Button asChild className="flex-1">
+                    <Link href={`/app/students/${student.id}`}>
+                      לצפיה בכרטיס המלא
+                    </Link>
                   </Button>
                 </div>
               </Box>
