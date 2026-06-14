@@ -126,9 +126,9 @@ export function RoomList() {
 
             // Fetch user metadata and last message in parallel
             const [userMetaResult, lastMsgResult] = await Promise.all([
-              supabase
-                .rpc("get_user_metadata", { target_user_id: otherUserId })
-                .catch(() => ({ data: null })),
+              Promise.resolve(
+                supabase.rpc("get_user_metadata", { target_user_id: otherUserId })
+              ).catch(() => ({ data: null })),
               room.last_message_id
                 ? supabase
                     .from("chat_messages")
