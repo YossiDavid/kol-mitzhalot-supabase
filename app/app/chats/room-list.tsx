@@ -183,7 +183,7 @@ export function RoomList() {
   return (
     <Box
       asChild
-      className="my-4 h-[calc(100%-2rem)] rounded-l-none p-0 inset-shadow-[10px_0_10px_-10px_rgba(0,0,0,0.1)]"
+      className="my-4 h-[calc(100%-2rem)] p-0 md:rounded-l-none md:inset-shadow-[10px_0_10px_-10px_rgba(0,0,0,0.1)]"
     >
       <aside>
         <div className="flex h-14 items-center px-4">
