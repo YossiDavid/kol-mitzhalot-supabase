@@ -210,8 +210,23 @@ export default async function Home() {
         )
       ).filter(Boolean)
     : [];
+  const firstName = user?.user_metadata?.firstName as string | undefined;
+  const roleLabel = isAdmin ? "מנהל" : isShadchan ? "שדכן" : "משתמש";
+
   return (
     <div className="space-y-10 py-4">
+      {/* ברכה */}
+      {user && (
+        <div className="pb-2">
+          <p className="text-2xl font-bold text-foreground">
+            שלום{firstName ? `, ${firstName}` : ""}
+          </p>
+          <p className="text-muted-foreground mt-1 text-sm">
+            ברוך הבא למערכת קול מצהלות · {roleLabel}
+          </p>
+        </div>
+      )}
+
       {(isShadchan || isAdmin) && (
         <>
           <DashboardSection

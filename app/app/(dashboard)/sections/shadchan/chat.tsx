@@ -35,7 +35,7 @@ export default function Chat({ chats }: { chats: Chat[] }) {
               <img
                 src={chat.image || "/placeholder-avatar.png"}
                 alt={chat.name}
-                className="mr-4 h-10 w-10 rounded-full border"
+                className="me-4 h-10 w-10 rounded-full border"
               />
               <div className="min-w-0 flex-1">
                 <div className="mb-1 flex items-center justify-between gap-2">
