@@ -60,7 +60,9 @@ export function AppSidebar({ role }: { role: Role }) {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>שדכנים</SidebarGroupLabel>
+          <SidebarGroupLabel>
+            {isShadchanOrAdmin ? "שדכנים" : "ניווט"}
+          </SidebarGroupLabel>
 
           <SidebarGroupContent>
             <SidebarMenu>

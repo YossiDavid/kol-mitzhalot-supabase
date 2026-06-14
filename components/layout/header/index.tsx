@@ -28,7 +28,7 @@ export default async function Header({ variant }: { variant: "app" | "website" }
     role === "user" || (role !== "admin" && role !== "shadchan");
 
   return (
-    <header className="border-b-foreground/10 container flex h-16 items-center justify-between gap-5 border-b font-semibold">
+    <header className="border-b-foreground/10 container sticky top-0 z-30 flex h-16 items-center justify-between gap-5 border-b bg-background/95 font-semibold backdrop-blur-sm supports-[backdrop-filter]:bg-background/80">
       <div className="flex items-center justify-between">
         {variant === "app" && (
           <>
