@@ -33,7 +33,6 @@ export function ChatView({ roomId }: { roomId: string }) {
 
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [roomTitle, setRoomTitle] = React.useState<string | null>(null);
-  const [otherUserId, setOtherUserId] = React.useState<string | null>(null);
   const [otherUserInitials, setOtherUserInitials] = React.useState("?");
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [sending, setSending] = React.useState(false);
@@ -45,28 +44,29 @@ export function ChatView({ roomId }: { roomId: string }) {
 
   const messageRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
   const listRef = React.useRef<HTMLDivElement | null>(null);
+  // Stable ref for otherUserId — avoids tearing down the presence channel on async updates
+  const otherUserIdRef = React.useRef<string | null>(null);
 
+  // Fetch user + room details in one pass — no extra render cycle / waterfall
   React.useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setCurrentUserId(data.user?.id ?? null);
-    });
-  }, [supabase]);
+    let isMounted = true;
 
-  // Fetch room details (title, other user)
-  React.useEffect(() => {
-    if (!currentUserId) return;
+    async function init() {
+      const { data: authData } = await supabase.auth.getUser();
+      const uid = authData.user?.id ?? null;
+      if (!isMounted || !uid) return;
+      setCurrentUserId(uid);
 
-    async function fetchRoomDetails() {
       const { data: room } = await supabase
         .from("chat_rooms")
         .select("*")
         .eq("room_id", roomId)
         .single();
 
-      if (!room) return;
+      if (!room || !isMounted) return;
 
-      const otherId = room.user_a === currentUserId ? room.user_b : room.user_a;
-      setOtherUserId(otherId);
+      const otherId = room.user_a === uid ? room.user_b : room.user_a;
+      otherUserIdRef.current = otherId;
 
       try {
         const { data: userData } = await supabase.rpc("get_user_metadata", {
@@ -80,18 +80,24 @@ export function ChatView({ roomId }: { roomId: string }) {
           name = userData.email.split("@")[0];
         }
 
+        if (!isMounted) return;
         setRoomTitle(name);
         setOtherUserInitials(getInitials(name));
       } catch {
+        if (!isMounted) return;
         setRoomTitle(otherId.substring(0, 8));
         setOtherUserInitials(otherId[0]?.toUpperCase() ?? "?");
       }
     }
 
-    fetchRoomDetails();
-  }, [currentUserId, roomId, supabase]);
+    void init();
+    return () => {
+      isMounted = false;
+    };
+  }, [roomId, supabase]);
 
   // Fetch messages + realtime + presence
+  // otherUserId removed from deps — read via ref to avoid channel teardown
   React.useEffect(() => {
     if (!currentUserId) return;
 
@@ -121,7 +127,9 @@ export function ChatView({ roomId }: { roomId: string }) {
       Object.values(state).forEach((arr) =>
         arr.forEach((p) => onlineIds.add(p.user_id)),
       );
-      setOtherOnline(Boolean(otherUserId && onlineIds.has(otherUserId)));
+      setOtherOnline(
+        Boolean(otherUserIdRef.current && onlineIds.has(otherUserIdRef.current)),
+      );
     };
 
     channel
@@ -164,7 +172,7 @@ export function ChatView({ roomId }: { roomId: string }) {
       isMounted = false;
       supabase.removeChannel(channel);
     };
-  }, [roomId, currentUserId, supabase, otherUserId]);
+  }, [roomId, currentUserId, supabase]);
 
   // Auto scroll to bottom on new messages
   React.useEffect(() => {
@@ -192,13 +200,25 @@ export function ChatView({ roomId }: { roomId: string }) {
     });
   }, [messages.length, roomId]);
 
-  function scrollToMessage(targetId: string) {
+  // O(1) lookup for replied messages instead of O(N) .find() per message
+  const messageById = React.useMemo(
+    () => new Map(messages.map((m) => [m.message_id, m])),
+    [messages],
+  );
+
+  const scrollToMessage = React.useCallback((targetId: string) => {
     const el = messageRefs.current[targetId];
     if (!el) return;
     el.scrollIntoView({ behavior: "smooth", block: "center" });
     setHighlightId(targetId);
     setTimeout(() => setHighlightId(null), 1200);
-  }
+  }, []);
+
+  const startEdit = React.useCallback((m: Message) => {
+    setEditTarget(m);
+    setReplyTo(null);
+    setDraft(m.content);
+  }, []);
 
   async function onSend() {
     if (editTarget) {
@@ -261,12 +281,6 @@ export function ChatView({ roomId }: { roomId: string }) {
     }
   }
 
-  function startEdit(m: Message) {
-    setEditTarget(m);
-    setReplyTo(null);
-    setDraft(m.content);
-  }
-
   return (
     <Box asChild className="my-4">
       <main className="flex h-[calc(100%-2rem)] flex-col">
@@ -318,9 +332,7 @@ export function ChatView({ roomId }: { roomId: string }) {
                       canEdit={canEditMessage(m, currentUserId)}
                       repliedMessage={
                         m.reply_to_message_id
-                          ? (messages.find(
-                              (x) => x.message_id === m.reply_to_message_id,
-                            ) ?? null)
+                          ? (messageById.get(m.reply_to_message_id) ?? null)
                           : null
                       }
                       onJumpToReplied={scrollToMessage}

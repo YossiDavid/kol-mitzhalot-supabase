@@ -32,6 +32,29 @@ type Props = {
   initialFavorites: any[];
 };
 
+function mapDoingToday(person: any): string[] | undefined {
+  return person.employment_history?.map((emp: any) => {
+    switch (emp.category) {
+      case "yeshiva":
+        return "בחור ישיבה";
+      case "seminar":
+        return "לומדת בסמינר";
+      case "at_home":
+        return "בבית";
+      case "havruta":
+        return "לומד עם חברותא";
+      case "kolel":
+        return "כולל";
+      case "profession":
+        return person.gender === "male" ? "לומד מקצוע" : "לומדת מקצוע";
+      case "working":
+        return person.gender === "male" ? "עובד" : "עובדת";
+      default:
+        return "";
+    }
+  });
+}
+
 export default function ShiduchDesk({ initialFavorites }: Props) {
   const supabase = createClient();
   const router = useRouter();
@@ -61,7 +84,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
       const r = getEffectiveRole(data.user);
       setCanOffer(r === "shadchan" || r === "admin");
     });
-  }, [supabase.auth]);
+  }, [supabase]);
 
   const newShiduch = useMemo(() => {
     if (!male?.id || !female?.id) return null;
@@ -175,27 +198,6 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
     }
   };
 
-  const mapDoingToday = (person: any) =>
-    person.employment_history?.map((emp: any) => {
-      switch (emp.category) {
-        case "yeshiva":
-          return "בחור ישיבה";
-        case "seminar":
-          return "לומדת בסמינר";
-        case "at_home":
-          return "בבית";
-        case "havruta":
-          return "לומד עם חברותא";
-        case "kolel":
-          return "כולל";
-        case "profession":
-          return person.gender === "male" ? "לומד מקצוע" : "לומדת מקצוע";
-        case "working":
-          return person.gender === "male" ? "עובד" : "עובדת";
-        default:
-          return "";
-      }
-    });
 
   const handleSaveDraft = async () => {
     if (!newShiduch || !canOffer) return;

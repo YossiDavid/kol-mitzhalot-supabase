@@ -19,39 +19,91 @@ function formatTime(dateString: string | null): string {
     (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24),
   );
   if (diffDays === 0)
-    return date.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleTimeString("he-IL", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   if (diffDays < 7) return `${diffDays} ימים`;
   return date.toLocaleDateString("he-IL", { day: "2-digit", month: "2-digit" });
 }
+
+const RoomRow = React.memo(function RoomRow({
+  room,
+  active,
+}: {
+  room: Room;
+  active: boolean;
+}) {
+  const initials = room.title
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+
+  return (
+    <Link
+      href={`/app/chats/${room.room_id}`}
+      className={cn(
+        "flex w-full items-center gap-3 px-4 py-4 transition",
+        active ? "bg-slate-100" : "hover:bg-muted/60",
+      )}
+    >
+      <Avatar className="size-9 shrink-0">
+        <AvatarFallback>{initials}</AvatarFallback>
+      </Avatar>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <div className="truncate text-sm font-medium">{room.title}</div>
+          {room.lastAt && (
+            <div className="text-muted-foreground shrink-0 text-xs">
+              {room.lastAt}
+            </div>
+          )}
+        </div>
+        {room.lastMessage && (
+          <div className="text-muted-foreground truncate text-xs">
+            {room.lastMessage.length > 50
+              ? `${room.lastMessage.substring(0, 50)}...`
+              : room.lastMessage}
+          </div>
+        )}
+      </div>
+    </Link>
+  );
+});
 
 export function RoomList() {
   const supabase = createClient();
   const pathname = usePathname();
 
-  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [rooms, setRooms] = React.useState<Room[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
 
+  // Fetch user + rooms in a single pass — no extra render cycle waterfall
   React.useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setCurrentUserId(data.user?.id ?? null);
-    });
-  }, [supabase]);
+    let isMounted = true;
 
-  React.useEffect(() => {
-    if (!currentUserId) return;
+    async function init() {
+      const { data: authData } = await supabase.auth.getUser();
+      const uid = authData.user?.id ?? null;
+      if (!isMounted) return;
+      if (!uid) {
+        setLoading(false);
+        return;
+      }
+      setCurrentUserId(uid);
 
-    async function fetchRooms() {
-      setLoading(true);
       try {
         const { data: participants, error: participantsError } = await supabase
           .from("chat_room_participants")
           .select("room_id")
-          .eq("user_id", currentUserId)
+          .eq("user_id", uid)
           .is("deleted_before", null);
 
         if (participantsError || !participants?.length) {
-          setRooms([]);
+          if (isMounted) setRooms([]);
           return;
         }
 
@@ -64,70 +116,67 @@ export function RoomList() {
           .order("last_message_at", { ascending: false, nullsFirst: false });
 
         if (roomsError) {
-          setRooms([]);
+          if (isMounted) setRooms([]);
           return;
         }
 
         const roomsWithDetails: Room[] = await Promise.all(
           (roomsData || []).map(async (room) => {
-            const otherUserId =
-              room.user_a === currentUserId ? room.user_b : room.user_a;
+            const otherUserId = room.user_a === uid ? room.user_b : room.user_a;
 
-            let otherUserName = "Unknown";
-            try {
-              const { data: userData, error: rpcError } = await supabase.rpc(
-                "get_user_metadata",
-                { target_user_id: otherUserId },
-              );
-              if (!rpcError && userData) {
-                if (userData.firstName || userData.lastName) {
-                  otherUserName =
-                    `${userData.firstName || ""} ${userData.lastName || ""}`.trim();
-                } else if (userData.email) {
-                  otherUserName = userData.email.split("@")[0];
-                }
-              }
-            } catch {
-              otherUserName = otherUserId.substring(0, 8);
+            // Fetch user metadata and last message in parallel
+            const [userMetaResult, lastMsgResult] = await Promise.all([
+              supabase
+                .rpc("get_user_metadata", { target_user_id: otherUserId })
+                .catch(() => ({ data: null })),
+              room.last_message_id
+                ? supabase
+                    .from("chat_messages")
+                    .select("content, created_at")
+                    .eq("message_id", room.last_message_id)
+                    .single()
+                : Promise.resolve({ data: null }),
+            ]);
+
+            const userData = userMetaResult.data;
+            let otherUserName = otherUserId.substring(0, 8);
+            if (userData?.firstName || userData?.lastName) {
+              otherUserName =
+                `${userData.firstName || ""} ${userData.lastName || ""}`.trim();
+            } else if (userData?.email) {
+              otherUserName = userData.email.split("@")[0];
             }
 
-            let lastMessage: string | null = null;
-            let lastAt: string | null = null;
-            if (room.last_message_id) {
-              const { data: lastMsg } = await supabase
-                .from("chat_messages")
-                .select("content, created_at")
-                .eq("message_id", room.last_message_id)
-                .single();
-              if (lastMsg) {
-                lastMessage = lastMsg.content;
-                lastAt = formatTime(lastMsg.created_at);
-              }
-            }
-
+            const lastMsg = lastMsgResult.data;
             return {
               room_id: room.room_id,
               title: otherUserName,
-              lastMessage,
-              lastAt,
+              lastMessage: lastMsg?.content ?? null,
+              lastAt: lastMsg ? formatTime(lastMsg.created_at) : null,
               other_user_id: otherUserId,
               other_user_name: otherUserName,
             };
           }),
         );
 
-        setRooms(roomsWithDetails);
+        if (isMounted) setRooms(roomsWithDetails);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
 
-    fetchRooms();
-  }, [currentUserId, supabase]);
+    void init();
+    return () => {
+      isMounted = false;
+    };
+  }, [supabase]);
 
   // Realtime room updates
   React.useEffect(() => {
     if (!currentUserId || !rooms.length) return;
+
+    // O(1) lookup instead of .some() scan on every realtime event
+    const roomIdSet = new Set(rooms.map((r) => r.room_id));
 
     const channel = supabase
       .channel(`rooms:${currentUserId}`)
@@ -136,8 +185,7 @@ export function RoomList() {
         { event: "*", schema: "public", table: "chat_rooms" },
         async (payload) => {
           const updated = payload.new as any;
-          if (!updated?.room_id) return;
-          if (!rooms.some((r) => r.room_id === updated.room_id)) return;
+          if (!updated?.room_id || !roomIdSet.has(updated.room_id)) return;
 
           let lastMessage: string | null = null;
           let lastAt: string | null = null;
@@ -153,19 +201,19 @@ export function RoomList() {
             }
           }
 
-          setRooms((prev) => {
-            const next = prev.map((r) =>
-              r.room_id === updated.room_id
-                ? {
-                    ...r,
-                    lastMessage: lastMessage ?? r.lastMessage,
-                    lastAt: lastAt ?? r.lastAt,
-                  }
-                : r,
-            );
-            next.sort((a, b) => (b.lastAt ? 1 : 0) - (a.lastAt ? 1 : 0));
-            return next;
-          });
+          setRooms((prev) =>
+            prev
+              .map((r) =>
+                r.room_id === updated.room_id
+                  ? {
+                      ...r,
+                      lastMessage: lastMessage ?? r.lastMessage,
+                      lastAt: lastAt ?? r.lastAt,
+                    }
+                  : r,
+              )
+              .toSorted((a, b) => (b.lastAt ? 1 : 0) - (a.lastAt ? 1 : 0)),
+          );
         },
       )
       .subscribe();
@@ -200,48 +248,13 @@ export function RoomList() {
               אין צ׳אטים
             </div>
           ) : (
-            rooms.map((r) => {
-              const active = r.room_id === activeRoomId;
-              const initials = r.title
-                .split(" ")
-                .slice(0, 2)
-                .map((w) => w[0])
-                .join("")
-                .toUpperCase();
-              return (
-                <Link
-                  key={r.room_id}
-                  href={`/app/chats/${r.room_id}`}
-                  className={cn(
-                    "flex w-full items-center gap-3 px-4 py-4 transition",
-                    active ? "bg-slate-100" : "hover:bg-muted/60",
-                  )}
-                >
-                  <Avatar className="size-9 shrink-0">
-                    <AvatarFallback>{initials}</AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="truncate text-sm font-medium">
-                        {r.title}
-                      </div>
-                      {r.lastAt && (
-                        <div className="text-muted-foreground shrink-0 text-xs">
-                          {r.lastAt}
-                        </div>
-                      )}
-                    </div>
-                    {r.lastMessage && (
-                      <div className="text-muted-foreground truncate text-xs">
-                        {r.lastMessage.length > 50
-                          ? `${r.lastMessage.substring(0, 50)}...`
-                          : r.lastMessage}
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              );
-            })
+            rooms.map((r) => (
+              <RoomRow
+                key={r.room_id}
+                room={r}
+                active={r.room_id === activeRoomId}
+              />
+            ))
           )}
         </ScrollArea>
       </aside>
