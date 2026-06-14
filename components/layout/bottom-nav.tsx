@@ -10,10 +10,10 @@ import type { Role } from "@/lib/user-role";
 const allItems = [
   { title: "ראשי", url: "/app", icon: Home },
   { title: "מיועדים", url: "/app/students", icon: Users },
-  { title: "הוספת מיועד", url: "/app/students/create", icon: Plus },
   { title: "צ'אטים", url: "/app/chats", icon: MessageCircle },
   { title: "לוח עבודה", url: "/app/canvas", icon: Network },
   { title: "הגדרות", url: "/app/settings", icon: Settings },
+  { title: "הוספת מיועד", url: "/app/students/create", icon: Plus },
 ] as const;
 
 const shadchanOnlyUrls = ["/app/students", "/app/students/create", "/app/canvas"];
