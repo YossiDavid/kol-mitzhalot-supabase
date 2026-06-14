@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import Link from "next/link";
 import calculateAge from "@/lib/calculateAge";
-import { Switch } from "@/components/ui/switch";
 import { Star } from "lucide-react";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
@@ -235,10 +234,18 @@ export default function StudentsList() {
                 className="col-span-full grid grid-cols-subgrid items-center p-4"
               >
                 <div>
-                  <Switch
-                    checked={favSet.has(student.id)}
-                    onCheckedChange={(e) => handleFavoriteChange(e, student.id)}
-                  />
+                  <button
+                    onClick={() => handleFavoriteChange(!favSet.has(student.id), student.id)}
+                    className="p-1"
+                    aria-label={favSet.has(student.id) ? "הסר ממועדפים" : "הוסף למועדפים"}
+                  >
+                    <Star
+                      className={cn(
+                        "h-5 w-5 transition-colors",
+                        favSet.has(student.id) ? "fill-favorite text-favorite" : "text-muted-foreground",
+                      )}
+                    />
+                  </button>
                 </div>
                 <div>{parseStatus(student.personal_status)}</div>
                 <div>{student.last_name}</div>
