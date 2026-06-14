@@ -16,6 +16,7 @@ import {
   Stethoscope,
   Star,
   Mail,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import ShareButton from "./share-button";
@@ -126,14 +127,15 @@ export default async function StudentPage({
   }: {
     label: string;
     value: string | number | null | undefined;
-  }) => (
-    <div className="flex flex-col">
-      <span className="text-muted-foreground text-xs font-medium">{label}</span>
-      <span className="text-foreground text-sm font-semibold">
-        {value || "---"}
-      </span>
-    </div>
-  );
+  }) => {
+    if (!value && value !== 0) return null;
+    return (
+      <div className="flex flex-col">
+        <span className="text-muted-foreground text-xs font-medium">{label}</span>
+        <span className="text-foreground text-sm font-semibold">{value}</span>
+      </div>
+    );
+  };
 
   const genderLabel =
     student.gender === "male"
@@ -155,6 +157,15 @@ export default async function StudentPage({
 
   return (
     <div className="min-h-screen space-y-6 text-right">
+      {/* Back */}
+      <Link
+        href="/app/students"
+        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
+      >
+        <ChevronRight className="h-4 w-4" />
+        חזרה לרשימה
+      </Link>
+
       {/* Hero */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
@@ -207,12 +218,8 @@ export default async function StudentPage({
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-        {/* Left Column - Main Details */}
-        <div className="space-y-6 lg:col-span-3">
-          {/* Basic Information */}
-          <Section title="פרטים אישיים" icon={User}>
+      {/* Personal details — full width */}
+      <Section title="פרטים אישיים" icon={User}>
             {student.about && (
               <p className="text-muted-foreground leading-relaxed">
                 {student.about}
@@ -287,8 +294,12 @@ export default async function StudentPage({
                 />
               )}
             </div>
-          </Section>
+      </Section>
 
+      {/* Main Content */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
+        {/* Main Column */}
+        <div className="space-y-6 lg:col-span-3">
           {/* Family Background */}
           <Section title="רקע משפחתי" icon={Users}>
             <div className="space-y-6">
@@ -895,25 +906,16 @@ export default async function StudentPage({
             </Section>
           )}
 
-          {/* Medical — תמיד מוצג: תקין או פירוט בעיה */}
-          <div
-            className={cn(
-              "rounded-lg border p-4",
-              hasMedicalIssue
-                ? "border-destructive/50 bg-destructive/10"
-                : "border-border bg-muted/30",
-            )}
-          >
+          {/* Medical */}
+          <Section title="הצהרה רפואית" icon={Stethoscope}>
             <div
-              className={
+              className={cn(
+                "rounded-lg p-3",
                 hasMedicalIssue
-                  ? "text-destructive mb-2 flex items-center gap-2"
-                  : "text-foreground mb-2 flex items-center gap-2"
-              }
+                  ? "border border-destructive/40 bg-destructive/10"
+                  : "bg-muted/40",
+              )}
             >
-              <Stethoscope size={18} />
-              <h3 className="text-sm font-bold">הצהרה רפואית</h3>
-            </div>
             {!hasMedicalIssue ? (
               <p className="text-foreground text-xs leading-relaxed">
                 <strong>מצב בריאותי כללי:</strong>{" "}
@@ -1020,11 +1022,12 @@ export default async function StudentPage({
                   )}
               </>
             )}
-          </div>
+            </div>
+          </Section>
 
           {/* Author Info */}
           {student.author_info && (
-            <div className="border-border bg-card rounded-lg border p-4 text-center">
+            <div className="border-border bg-card rounded-lg border p-4">
               <p className="text-muted-foreground mb-1 text-xs font-bold tracking-widest uppercase">
                 הקו״ח מולאו ע"י
               </p>
@@ -1032,7 +1035,7 @@ export default async function StudentPage({
               {student.author_info.phone && (
                 <a
                   href={`tel:${student.author_info.phone}`}
-                  className="text-muted-foreground hover:text-primary mt-1 flex items-center justify-center gap-1 text-xs"
+                  className="text-muted-foreground hover:text-primary mt-1 flex items-center gap-1 text-xs"
                 >
                   <Phone size={12} /> {student.author_info.phone}
                 </a>
