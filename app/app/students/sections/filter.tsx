@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useStudentQuery, StudentQuery } from "../page";
 import { Box } from "@/components/layout";
 import { TextField } from "../create/form/fields/text";
@@ -15,23 +15,23 @@ export default function FilterSection() {
   const [expanded, setExpanded] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const activeFilterCount = Object.values(filter).filter(
+    (v) => v !== undefined && v !== "",
+  ).length;
+
   function handleSearch() {
     setQuery(filter);
     setMobileOpen(false);
   }
 
-  const activeFilterCount = Object.values(filter).filter(
-    (v) => v !== undefined && v !== "",
-  ).length;
-
   return (
-    <div className="space-y-1">
-      {/* כותרת עמוד */}
-      <div className="pb-4 text-center md:text-start">
+    <div className="space-y-4">
+      {/* כותרת */}
+      <div className="text-center md:text-start">
         <h1>רשימת פרחי אנ״ש</h1>
       </div>
 
-      {/* מובייל: שורת סיכום + פתיחה */}
+      {/* מובייל: toggle */}
       <div className="md:hidden">
         <button
           onClick={() => setMobileOpen((o) => !o)}
@@ -46,12 +46,7 @@ export default function FilterSection() {
               </span>
             )}
           </span>
-          <ChevronDown
-            className={cn(
-              "h-4 w-4 text-muted-foreground transition-transform duration-200",
-              mobileOpen && "rotate-180",
-            )}
-          />
+          <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform duration-200", mobileOpen && "rotate-180")} />
         </button>
 
         {mobileOpen && (
@@ -59,11 +54,7 @@ export default function FilterSection() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="m-gender">מגדר</Label>
-                <NativeSelect
-                  id="m-gender"
-                  value={filter.gender || ""}
-                  onChange={(e) => setFilter({ ...filter, gender: e.target.value })}
-                >
+                <NativeSelect id="m-gender" value={filter.gender || ""} onChange={(e) => setFilter({ ...filter, gender: e.target.value })}>
                   <NativeSelectOption value="">הכל</NativeSelectOption>
                   <NativeSelectOption value="male">זכר</NativeSelectOption>
                   <NativeSelectOption value="female">נקבה</NativeSelectOption>
@@ -71,49 +62,42 @@ export default function FilterSection() {
               </div>
               <div>
                 <Label htmlFor="m-status">סטטוס</Label>
-                <NativeSelect
-                  id="m-status"
-                  value={filter.personal_status || ""}
-                  onChange={(e) => setFilter({ ...filter, personal_status: e.target.value })}
-                >
+                <NativeSelect id="m-status" value={filter.personal_status || ""} onChange={(e) => setFilter({ ...filter, personal_status: e.target.value })}>
                   <NativeSelectOption value="">הכל</NativeSelectOption>
                   <NativeSelectOption value="single">רווק/ה</NativeSelectOption>
                   <NativeSelectOption value="divorced">גרוש/ה</NativeSelectOption>
                   <NativeSelectOption value="widowed">אלמן/ה</NativeSelectOption>
                   <NativeSelectOption value="married">נשוי/ה</NativeSelectOption>
+                  <NativeSelectOption value="engaged">מאורס/ה</NativeSelectOption>
                 </NativeSelect>
               </div>
               <div>
                 <Label htmlFor="m-first">שם פרטי</Label>
-                <TextField
-                  type="text"
-                  id="m-first"
-                  onChange={(e) => setFilter({ ...filter, first_name: e.target.value })}
-                />
+                <TextField type="text" id="m-first" onChange={(e) => setFilter({ ...filter, first_name: e.target.value })} />
               </div>
               <div>
                 <Label htmlFor="m-last">שם משפחה</Label>
-                <TextField
-                  type="text"
-                  id="m-last"
-                  onChange={(e) => setFilter({ ...filter, last_name: e.target.value })}
-                />
+                <TextField type="text" id="m-last" onChange={(e) => setFilter({ ...filter, last_name: e.target.value })} />
               </div>
               <div>
                 <Label htmlFor="m-age">גיל מינימלי</Label>
-                <TextField
-                  type="number"
-                  id="m-age"
-                  onChange={(e) => setFilter({ ...filter, ageMin: e.target.value })}
-                />
+                <TextField type="number" id="m-age" onChange={(e) => setFilter({ ...filter, ageMin: e.target.value })} />
               </div>
               <div>
                 <Label htmlFor="m-city">עיר</Label>
-                <TextField
-                  type="text"
-                  id="m-city"
-                  onChange={(e) => setFilter({ ...filter, city: e.target.value })}
-                />
+                <TextField type="text" id="m-city" onChange={(e) => setFilter({ ...filter, city: e.target.value })} />
+              </div>
+              <div>
+                <Label htmlFor="m-yeshiva">ישיבה</Label>
+                <NativeSelect id="m-yeshiva" value={filter.is_yeshiva === undefined ? "" : String(filter.is_yeshiva)} onChange={(e: any) => setFilter({ ...filter, is_yeshiva: e.target.value })}>
+                  <NativeSelectOption value="">הכל</NativeSelectOption>
+                  <NativeSelectOption value="true">כן</NativeSelectOption>
+                  <NativeSelectOption value="false">לא</NativeSelectOption>
+                </NativeSelect>
+              </div>
+              <div>
+                <Label htmlFor="m-height">גובה (ס״מ)</Label>
+                <TextField type="number" id="m-height" onChange={(e) => setFilter({ ...filter, height: e.target.value })} />
               </div>
             </div>
             <Button onClick={handleSearch} className="w-full gap-2">
@@ -129,11 +113,7 @@ export default function FilterSection() {
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-2">
             <Label htmlFor="gender">מגדר</Label>
-            <NativeSelect
-              id="gender"
-              value={filter.gender || ""}
-              onChange={(e) => setFilter({ ...filter, gender: e.target.value })}
-            >
+            <NativeSelect id="gender" value={filter.gender || ""} onChange={(e) => setFilter({ ...filter, gender: e.target.value })}>
               <NativeSelectOption value="">הכל</NativeSelectOption>
               <NativeSelectOption value="male">זכר</NativeSelectOption>
               <NativeSelectOption value="female">נקבה</NativeSelectOption>
@@ -141,49 +121,29 @@ export default function FilterSection() {
           </div>
           <div className="col-span-2">
             <Label htmlFor="status">סטטוס</Label>
-            <NativeSelect
-              id="status"
-              value={filter.personal_status || ""}
-              onChange={(e) => setFilter({ ...filter, personal_status: e.target.value })}
-            >
+            <NativeSelect id="status" value={filter.personal_status || ""} onChange={(e) => setFilter({ ...filter, personal_status: e.target.value })}>
               <NativeSelectOption value="">הכל</NativeSelectOption>
-              <NativeSelectOption value="single">רווק/ה</NativeSelectOption>
               <NativeSelectOption value="divorced">גרוש/ה</NativeSelectOption>
               <NativeSelectOption value="widowed">אלמן/ה</NativeSelectOption>
+              <NativeSelectOption value="single">רווק/ה</NativeSelectOption>
               <NativeSelectOption value="married">נשוי/ה</NativeSelectOption>
+              <NativeSelectOption value="engaged">מאורס/ה</NativeSelectOption>
             </NativeSelect>
           </div>
           <div className="col-span-2">
             <Label htmlFor="firstName">שם פרטי</Label>
-            <TextField
-              type="text"
-              id="firstName"
-              onChange={(e) => setFilter({ ...filter, first_name: e.target.value })}
-            />
+            <TextField type="text" id="firstName" onChange={(e) => setFilter({ ...filter, first_name: e.target.value })} />
           </div>
           <div className="col-span-2">
             <Label htmlFor="lastName">שם משפחה</Label>
-            <TextField
-              type="text"
-              id="lastName"
-              onChange={(e) => setFilter({ ...filter, last_name: e.target.value })}
-            />
+            <TextField type="text" id="lastName" onChange={(e) => setFilter({ ...filter, last_name: e.target.value })} />
           </div>
           <div className="col-span-2">
-            <Label htmlFor="ageMin">גיל מינימלי</Label>
-            <TextField
-              type="number"
-              id="ageMin"
-              onChange={(e) => setFilter({ ...filter, ageMin: e.target.value })}
-            />
+            <Label htmlFor="ageMin">טווח גילאים</Label>
+            <TextField type="number" id="ageMin" onChange={(e) => setFilter({ ...filter, ageMin: e.target.value })} />
           </div>
           <div className="col-span-2 flex items-end gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setExpanded((v) => !v)}
-              title="עוד מסננים"
-            >
+            <Button variant="ghost" size="icon" onClick={() => setExpanded((v) => !v)} title="עוד מסננים">
               <SlidersHorizontal className="h-4 w-4" />
             </Button>
             <Button onClick={handleSearch} className="flex-1 gap-1.5">
@@ -196,48 +156,52 @@ export default function FilterSection() {
         {expanded && (
           <div className="mt-4 grid grid-cols-12 gap-4 border-t border-border pt-4">
             <div className="col-span-2">
-              <Label htmlFor="height">גובה (ס״מ)</Label>
-              <TextField
-                type="number"
-                id="height"
-                onChange={(e) => setFilter({ ...filter, height: e.target.value })}
-              />
+              <Label htmlFor="height">גובה (בס״מ)</Label>
+              <TextField type="number" id="height" onChange={(e) => setFilter({ ...filter, height: e.target.value })} />
             </div>
             <div className="col-span-3">
               <Label htmlFor="fatherName">שם האב</Label>
-              <TextField
-                type="text"
-                id="fatherName"
-                onChange={(e) => setFilter({ ...filter, father_name: e.target.value })}
-              />
+              <TextField type="text" id="fatherName" onChange={(e) => setFilter({ ...filter, father_name: e.target.value })} />
             </div>
             <div className="col-span-2">
               <Label htmlFor="city">עיר</Label>
-              <TextField
-                type="text"
-                id="city"
-                onChange={(e) => setFilter({ ...filter, city: e.target.value })}
-              />
+              <TextField type="text" id="city" onChange={(e) => setFilter({ ...filter, city: e.target.value })} />
+            </div>
+            <div className="col-span-3">
+              <Label htmlFor="employment">תעסוקה</Label>
+              <TextField type="text" id="employment" onChange={(e) => setFilter({ ...filter, employment: e.target.value })} />
+            </div>
+            <div className="col-span-4">
+              <Label htmlFor="institutions">מקום לימודים</Label>
+              <TextField type="text" id="institutions" onChange={(e) => setFilter({ ...filter, yeshiva_name: e.target.value })} />
             </div>
             <div className="col-span-2">
-              <Label htmlFor="yeshiva">ישיבה</Label>
-              <NativeSelect
-                id="yeshiva"
-                value={filter.is_yeshiva === undefined ? "" : String(filter.is_yeshiva)}
-                onChange={(e: any) => setFilter({ ...filter, is_yeshiva: e.target.value })}
-              >
+              <Label htmlFor="yeshiva">תלמיד / בוגר ישיבה</Label>
+              <NativeSelect id="yeshiva" value={filter.is_yeshiva === undefined ? "" : String(filter.is_yeshiva)} onChange={(e: any) => setFilter({ ...filter, is_yeshiva: e.target.value })}>
                 <NativeSelectOption value="">הכל</NativeSelectOption>
                 <NativeSelectOption value="true">כן</NativeSelectOption>
                 <NativeSelectOption value="false">לא</NativeSelectOption>
               </NativeSelect>
             </div>
-            <div className="col-span-3">
+            <div className="col-span-2">
+              <Label htmlFor="reservoir">לבחירה מתוך המאגר</Label>
+              <NativeSelect id="reservoir" value={filter.is_reservoir === undefined ? "" : String(filter.is_reservoir)} onChange={(e: any) => setFilter({ ...filter, is_reservoir: e.target.value === "true" })} className="w-full">
+                <NativeSelectOption value="">הכל</NativeSelectOption>
+                <NativeSelectOption value="true">כן</NativeSelectOption>
+                <NativeSelectOption value="false">לא</NativeSelectOption>
+              </NativeSelect>
+            </div>
+            <div className="col-span-2">
               <Label htmlFor="yeshivaName">שם הישיבה</Label>
-              <TextField
-                type="text"
-                id="yeshivaName"
-                onChange={(e) => setFilter({ ...filter, yeshiva_name: e.target.value })}
-              />
+              <TextField type="text" id="yeshivaName" onChange={(e) => setFilter({ ...filter, yeshiva_name: e.target.value })} />
+            </div>
+            <div className="col-span-2">
+              <Label htmlFor="yeshivaCity">עיר הישיבה</Label>
+              <TextField type="text" id="yeshivaCity" onChange={(e) => setFilter({ ...filter, yeshiva_city: e.target.value })} />
+            </div>
+            <div className="col-span-2">
+              <Label htmlFor="class">שיעור / כיתה</Label>
+              <TextField type="text" id="class" onChange={(e) => setFilter({ ...filter, class: e.target.value })} />
             </div>
           </div>
         )}

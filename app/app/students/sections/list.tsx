@@ -194,7 +194,7 @@ export default function StudentsList() {
           {/* דסקטופ */}
           <div className="hidden md:flex md:flex-col md:gap-2">
             {/* Header */}
-            <div className="grid grid-cols-[2rem_7rem_9rem_9rem_10rem_10rem_7rem_4rem_4rem_auto] items-center gap-x-3 px-4 py-2 text-xs font-medium text-muted-foreground">
+            <div className="grid grid-cols-[2rem_7rem_9rem_9rem_10rem_10rem_7rem_4rem_4rem_1fr] items-center gap-x-3 px-4 py-2 text-xs font-medium text-muted-foreground">
               <div>★</div>
               <div>סטטוס</div>
               <div>שם משפחה</div>
@@ -204,13 +204,13 @@ export default function StudentsList() {
               <div>עיר</div>
               <div>גיל</div>
               <div>גובה</div>
-              <div>פעולות</div>
+              <div></div>
             </div>
 
             {students.map((student) => (
               <Box
                 key={student.id}
-                className="grid grid-cols-[2rem_7rem_9rem_9rem_10rem_10rem_7rem_4rem_4rem_auto] items-center gap-x-3 px-4 py-3"
+                className="grid grid-cols-[2rem_7rem_9rem_9rem_10rem_10rem_7rem_4rem_4rem_1fr] items-center gap-x-3 px-4 py-3"
               >
                 <button
                   onClick={() => handleFavoriteChange(!favSet.has(student.id), student.id)}
@@ -245,20 +245,20 @@ export default function StudentsList() {
                 <div className="text-sm">{calculateAge(student.birth_date || "")}</div>
                 <div className="text-sm">{student.height}</div>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex gap-1.5">
                   {student.cv_url ? (
-                    <Button asChild size="icon-sm" variant="outline" title="פתיחת קו״ח">
+                    <Button asChild size="sm" variant="outline" className="flex-1">
                       <a href={student.cv_url} target="_blank" rel="noopener noreferrer">
-                        <FileText className="h-3.5 w-3.5" />
+                        כרטיס קו״ח
                       </a>
                     </Button>
                   ) : (
-                    <Button size="icon-sm" variant="ghost" disabled title="אין קו״ח" className="opacity-30">
-                      <FileText className="h-3.5 w-3.5" />
+                    <Button asChild size="sm" variant="outline" className="flex-1 text-muted-foreground">
+                      <Link href={"/" as any}>הוספת קו״ח</Link>
                     </Button>
                   )}
-                  <Button asChild size="sm">
-                    <Link href={`/app/students/${student.id}`}>כרטיס</Link>
+                  <Button asChild size="sm" className="flex-1">
+                    <Link href={`/app/students/${student.id}`}>כרטיס מלא</Link>
                   </Button>
                 </div>
               </Box>
