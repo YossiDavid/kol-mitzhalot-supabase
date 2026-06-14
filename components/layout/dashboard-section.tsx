@@ -6,7 +6,7 @@ type DashboardSectionProps = {
   title: string;
   titleNumber?: string | number;
   subTitle?: string;
-  button: React.ReactElement;
+  button?: React.ReactElement;
   className?: string;
   containerClassName?: string;
   headClassName?: string;
@@ -38,7 +38,7 @@ export default function DashboardSection({
             <p className="mt-0.5 text-sm text-muted-foreground">{props.subTitle}</p>
           )}
         </div>
-        {props.button}
+        {props.button ?? null}
       </div>
       {children}
     </Section>
