@@ -16,8 +16,7 @@ import { Label } from "@/components/ui/label";
 import { MessageSquare } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
-import router from "next/router";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export async function getOrCreateDmRoom(otherUserId: string) {
   const supabase = createClient();
@@ -63,6 +62,8 @@ export async function messageCardAuthor(params: {
 }
 
 export default function MessageButton({ authorId }: { authorId: string }) {
+  const router = useRouter();
+
   const handleMessageSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
@@ -71,18 +72,14 @@ export default function MessageButton({ authorId }: { authorId: string }) {
       authorId: authorId,
       content: message,
     });
-
-    console.log(roomId);
-    redirect(`/app/chats/${roomId}`);
+    router.push(`/app/chats/${roomId}`);
   };
 
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button
-          onClick={() => {
-            console.log("Clicked message button");
-          }}
+          onClick={() => {}}
         >
           פניה למנהל הכרטיס
           <MessageSquare />

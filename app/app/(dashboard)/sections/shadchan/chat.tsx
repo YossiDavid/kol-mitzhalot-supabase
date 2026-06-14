@@ -22,11 +22,6 @@ type Chat = {
 };
 
 export default function Chat({ chats }: { chats: Chat[] }) {
-  console.log(
-    "Shadchan Chat component received chats:",
-    chats?.length || 0,
-    chats,
-  );
   return (
     <>
       {chats.length > 0 ? (
@@ -34,10 +29,7 @@ export default function Chat({ chats }: { chats: Chat[] }) {
           {chats.map((chat) => (
             <Link
               key={chat.id}
-              href={{
-                pathname: "/app/chats",
-                query: { room: chat.id },
-              }}
+              href={`/app/chats/${chat.id}`}
               className="hover:bg-muted group flex items-center rounded-lg border p-4 transition"
             >
               <img
