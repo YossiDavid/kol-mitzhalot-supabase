@@ -10,7 +10,7 @@ import { UserMenu } from "./user-menu";
 import { Button } from "../../ui/button";
 import { Separator } from "../../ui/separator";
 import Image from "next/image";
-import Logo from "@/assets/images/logo_negative_text.svg"
+import Logo from "@/assets/images/logo-text.svg"
 
 
 export default async function Header({ variant }: { variant: "app" | "website" }) {
