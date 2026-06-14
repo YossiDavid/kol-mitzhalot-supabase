@@ -29,9 +29,14 @@ export default async function Header({ variant }: { variant: "app" | "website" }
 
   return (
     <header className="border-b-foreground/10 container sticky top-0 z-30 flex h-16 items-center justify-between gap-5 border-b bg-background/95 font-semibold backdrop-blur-sm supports-[backdrop-filter]:bg-background/80">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
         {variant === "app" && (
           <>
+            {/* מובייל: לוגו */}
+            <Link href="/app" className="md:hidden">
+              <Image src={Logo.src} alt="קול מצהלות" width={140} height={40} className="h-8 w-auto" />
+            </Link>
+            {/* דסקטופ: טריגר + ברכה */}
             <SidebarTrigger className="z-20 -ms-1 hidden md:inline-flex" />
             <Separator
               orientation="vertical"

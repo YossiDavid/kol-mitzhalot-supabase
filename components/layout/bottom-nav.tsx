@@ -44,11 +44,12 @@ export function BottomNav({ role }: { role: Role }) {
                 key={item.url}
                 href={item.url}
                 prefetch={false}
-                className="flex flex-1 flex-col items-center justify-center gap-1 text-xs"
+                className="flex flex-1 flex-col items-center justify-center gap-1 text-xs text-muted-foreground"
               >
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-transform active:scale-95">
                   <Icon className="h-5 w-5" />
                 </span>
+                <span className="leading-none">הוספה</span>
               </Link>
             );
           }
