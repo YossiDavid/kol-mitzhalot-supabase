@@ -47,7 +47,7 @@ export function BottomNav({ role }: { role: Role }) {
                 key={item.url}
                 href={item.url}
                 prefetch={false}
-                className="flex flex-col items-center -translate-y-3"
+                className="flex flex-1 flex-col items-center justify-center -translate-y-3"
                 aria-label="הוספת מיועד"
               >
                 <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 transition-transform active:scale-95">
@@ -67,14 +67,7 @@ export function BottomNav({ role }: { role: Role }) {
                 isActive ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <span
-                className={cn(
-                  "flex h-9 w-9 items-center justify-center rounded-xl transition-colors",
-                  isActive ? "bg-primary/10" : "bg-muted",
-                )}
-              >
-                <Icon className={cn("h-4.5 w-4.5", isActive && "stroke-[2.5]")} />
-              </span>
+              <Icon className={cn("h-5 w-5", isActive ? "stroke-[2.5]" : "stroke-[1.5]")} />
               <span className="leading-none">{item.title}</span>
             </Link>
           );
