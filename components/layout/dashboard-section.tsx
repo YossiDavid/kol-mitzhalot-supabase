@@ -28,7 +28,7 @@ export default function DashboardSection({
         )}
       >
         <div>
-          <h2 className="text-xl! font-bold! leading-tight! text-foreground!">
+          <h2 className="text-xl! font-bold! leading-tight! text-foreground! md:text-2xl!">
             {props.title}
             {props.titleNumber && (
               <span className="text-sm! font-normal! text-muted-foreground ms-1.5">({props.titleNumber})</span>
