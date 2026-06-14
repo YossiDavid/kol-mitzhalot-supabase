@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
 import { Form } from "@/components/ui/form";
@@ -11,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { studentFields } from "./form/fileds-data";
 import { DynamicField } from "./form/fields/dynamic-field";
 import { createClient } from "@/lib/supabase/client";
+import { studentFormSchema, type StudentFormValues } from "./form/schema";
 
 type Step = (typeof studentFields)[number];
 
@@ -153,7 +155,7 @@ const defaultValues = {
   },
 };
 
-type FormValues = typeof defaultValues;
+type FormValues = StudentFormValues;
 
 const genderLabelOverrides: Record<string, { male: string; female: string }> = {
   "previousPartners.fullName": {
@@ -195,43 +197,41 @@ export default function CreateStudentPage() {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<FormValues>({
-    mode: "onChange",
+    mode: "onTouched",
+    resolver: zodResolver(studentFormSchema) as any,
     defaultValues,
   });
 
   const formValues = form.watch();
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    console.log("Form values changed:", formValues);
-  }, [formValues]);
 
   const steps = studentFields;
   const currentStep = steps[currentStepIndex];
   const gender = formValues.gender as "male" | "female" | "";
   const isLastStep = currentStepIndex === steps.length - 1;
 
-  const canProceedFromCurrentStep = () => {
-    if (steps[currentStepIndex]?.name === "intro") {
-      const selectedGender = form.getValues("gender");
-      if (!selectedGender) {
-        form.setError("gender", {
-          type: "manual",
-          message: "יש לבחור מיועד/מיועדת לפני שממשיכים",
-        });
-        return false;
+  const getStepFieldNames = (step: Step) => {
+    const names: string[] = [];
+    for (const section of step.sections) {
+      for (const field of section.fields) {
+        if (field.type === "repeater") continue;
+        names.push(field.name as string);
       }
-      form.clearErrors("gender");
     }
-
-    return true;
+    return names;
   };
 
-  const handleNextStep = (e?: React.MouseEvent<HTMLButtonElement>) => {
+  const canProceedFromCurrentStep = async () => {
+    const fieldNames = getStepFieldNames(currentStep);
+    return form.trigger(fieldNames as any);
+  };
+
+  const handleNextStep = async (e?: React.MouseEvent<HTMLButtonElement>) => {
     e?.preventDefault();
     e?.stopPropagation();
-    if (!canProceedFromCurrentStep()) return;
+    const valid = await canProceedFromCurrentStep();
+    if (!valid) return;
     if (currentStepIndex === steps.length - 1) return;
     setCurrentStepIndex((prev) => prev + 1);
   };
@@ -243,11 +243,12 @@ export default function CreateStudentPage() {
     setCurrentStepIndex((prev) => prev - 1);
   };
 
-  const handleStepClick = (targetIndex: number) => {
+  const handleStepClick = async (targetIndex: number) => {
     if (targetIndex === currentStepIndex) return;
     const movingForward = targetIndex > currentStepIndex;
-    if (movingForward && !canProceedFromCurrentStep()) {
-      return;
+    if (movingForward) {
+      const valid = await canProceedFromCurrentStep();
+      if (!valid) return;
     }
     setCurrentStepIndex(targetIndex);
   };
@@ -1048,7 +1049,7 @@ function SectionRenderer({
           <DynamicField
             key={`${field.name}-${index}`}
             field={field as any}
-            control={control}
+            control={control as any}
             values={values}
             gender={gender}
             getLabel={getFieldLabel}

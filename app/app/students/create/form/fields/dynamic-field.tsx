@@ -156,7 +156,7 @@ function AtomicFieldRenderer({
 									)}
 								</FormLabel>
 								<FormControl>
-									<div className="group/text-and-select flex flex-col md:flex-row rounded-md border border-input bg-transparent shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px] ">
+									<div className="group/text-and-select flex flex-row rounded-md border border-input bg-transparent shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]">
 										{prefixOptions.length > 0 && (
 											<div className="relative shrink-0">
 												<NativeSelect
@@ -168,7 +168,7 @@ function AtomicFieldRenderer({
 														)
 													}
 													disabled={disableBecauseLinkedId}
-													className="w-full md:w-[100px] text-xs border-0 rounded-none rounded-r-md md:rounded-l-md md:rounded-r-none shadow-none focus-visible:ring-0 focus-visible:border-0 [&_select]:rounded-r-md md:[&_select]:rounded-l-md md:[&_select]:rounded-r-none"
+													className="w-[72px] shrink-0 md:w-[100px] text-xs border-0 rounded-none rounded-r-md shadow-none focus-visible:ring-0 focus-visible:border-0 [&_select]:rounded-r-md"
 												>
 													{!value.prefix && (
 														<NativeSelectOption value="" disabled>
@@ -212,7 +212,7 @@ function AtomicFieldRenderer({
 													)
 												}
 												disabled={disableBecauseLinkedId}
-												className="w-full md:w-[100px] text-xs border-0 rounded-none rounded-l-md md:rounded-r-md md:rounded-l-none shadow-none focus-visible:ring-0 focus-visible:border-0 [&_select]:rounded-l-md md:[&_select]:rounded-r-md md:[&_select]:rounded-l-none"
+												className="w-[72px] shrink-0 md:w-[100px] text-xs border-0 rounded-none rounded-l-md shadow-none focus-visible:ring-0 focus-visible:border-0 [&_select]:rounded-l-md"
 											>
 												{!value.suffix && (
 													<NativeSelectOption value="" disabled>
