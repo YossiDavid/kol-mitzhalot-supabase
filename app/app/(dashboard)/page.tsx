@@ -210,6 +210,44 @@ export default async function Home() {
         )
       ).filter(Boolean)
     : [];
+  // פוסטים אחרונים בפורום (לדשבורד)
+  let recentForumPosts: import("./sections/shadchan/forum").ForumPost[] = [];
+  if (isShadchan || isAdmin) {
+    const { data: postsData } = await supabase
+      .from("forum_posts")
+      .select("id, title, author_id, created_at, forum_replies(count)")
+      .order("is_pinned", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(3);
+
+    if (postsData) {
+      recentForumPosts = await Promise.all(
+        postsData.map(async (post) => {
+          const { data: meta } = await supabase.rpc("get_user_metadata", {
+            target_user_id: post.author_id,
+          });
+          let author_name = "משתמש";
+          if (meta?.firstName || meta?.lastName) {
+            author_name = `${meta.firstName ?? ""} ${meta.lastName ?? ""}`.trim();
+          } else if (meta?.email) {
+            author_name = meta.email.split("@")[0];
+          }
+          const replies_count =
+            (
+              post.forum_replies as unknown as { count: number }[]
+            )?.[0]?.count ?? 0;
+          return {
+            id: post.id,
+            title: post.title,
+            author_name,
+            replies_count,
+            created_at: post.created_at,
+          };
+        }),
+      );
+    }
+  }
+
   const firstName = user?.user_metadata?.firstName as string | undefined;
   const roleLabel = isAdmin ? "מנהל" : isShadchan ? "שדכן" : "משתמש";
 
@@ -273,7 +311,7 @@ export default async function Home() {
               </Button>
             }
           >
-            <Forum forums={[]} />
+            <Forum forums={recentForumPosts} canWrite={isShadchan || isAdmin} />
           </DashboardSection>
         </>
       )}
