@@ -15,6 +15,7 @@ export type ForumPost = {
   author_name: string;
   replies_count: number;
   created_at: string;
+  category_slug?: string;
 };
 
 export default function Forum({
@@ -31,7 +32,7 @@ export default function Forum({
           {forums.map((post) => (
             <Link
               key={post.id}
-              href={`/app/forums/${post.id}`}
+              href={post.category_slug ? `/app/forums/${post.category_slug}/${post.id}` : `/app/forums`}
               className="hover:bg-muted flex items-start justify-between rounded-lg border p-4 transition"
             >
               <div className="min-w-0 flex-1">

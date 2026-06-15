@@ -215,7 +215,7 @@ export default async function Home() {
   if (isShadchan || isAdmin) {
     const { data: postsData } = await supabase
       .from("forum_posts")
-      .select("id, title, author_id, created_at, forum_replies(count)")
+      .select("id, title, author_id, created_at, forum_replies(count), forum_categories(slug)")
       .order("is_pinned", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(3);
@@ -236,12 +236,15 @@ export default async function Home() {
             (
               post.forum_replies as unknown as { count: number }[]
             )?.[0]?.count ?? 0;
+          const category_slug =
+            (post.forum_categories as { slug: string } | null)?.slug ?? undefined;
           return {
             id: post.id,
             title: post.title,
             author_name,
             replies_count,
             created_at: post.created_at,
+            category_slug,
           };
         }),
       );
