@@ -237,7 +237,7 @@ export default async function Home() {
               post.forum_replies as unknown as { count: number }[]
             )?.[0]?.count ?? 0;
           const category_slug =
-            (post.forum_categories as { slug: string } | null)?.slug ?? undefined;
+            (post.forum_categories as { slug: string }[] | null)?.[0]?.slug ?? undefined;
           return {
             id: post.id,
             title: post.title,
