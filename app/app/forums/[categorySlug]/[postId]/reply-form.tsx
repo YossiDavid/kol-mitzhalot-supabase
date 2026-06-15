@@ -3,15 +3,21 @@
 import { useRef, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { createReply } from "../actions";
+import { createReply } from "../../actions";
 
-export function ReplyForm({ postId }: { postId: string }) {
+export function ReplyForm({
+  postId,
+  categorySlug,
+}: {
+  postId: string;
+  categorySlug: string;
+}) {
   const ref = useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
-      await createReply(postId, formData);
+      await createReply(postId, categorySlug, formData);
       ref.current?.reset();
     });
   }

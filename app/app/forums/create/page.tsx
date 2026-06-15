@@ -20,6 +20,11 @@ export default async function CreateForumPostPage() {
     redirect("/app/forums");
   }
 
+  const { data: categories } = await supabase
+    .from("forum_categories")
+    .select("id, name, slug")
+    .order("sort_order", { ascending: true });
+
   return (
     <Section containerClassName="py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -30,6 +35,22 @@ export default async function CreateForumPostPage() {
       </div>
 
       <form action={createPost} className="mt-8 max-w-2xl space-y-6">
+        <div className="space-y-2">
+          <Label htmlFor="category_id">קטגוריה</Label>
+          <select
+            id="category_id"
+            name="category_id"
+            className="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+          >
+            <option value="">ללא קטגוריה</option>
+            {(categories ?? []).map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="title">כותרת הנושא</Label>
           <Input
@@ -49,6 +70,18 @@ export default async function CreateForumPostPage() {
             rows={10}
             required
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="tags">תגיות (מופרדות בפסיקים)</Label>
+          <Input
+            id="tags"
+            name="tags"
+            placeholder="לדוגמה: שידוכים, ייעוץ, הלכה"
+          />
+          <p className="text-muted-foreground text-xs">
+            הוסף תגיות כדי לעזור לאחרים למצוא את הנושא
+          </p>
         </div>
 
         <div className="flex gap-3">
