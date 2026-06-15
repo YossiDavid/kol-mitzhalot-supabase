@@ -45,7 +45,7 @@ export async function createPost(formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  const slug = (data.forum_categories as { slug: string } | null)?.slug ?? "general";
+  const slug = (data.forum_categories as { slug: string }[] | null)?.[0]?.slug ?? "general";
   redirect(`/app/forums/${slug}/${data.id}`);
 }
 
@@ -78,7 +78,7 @@ export async function updatePost(postId: string, formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  const slug = (post.forum_categories as { slug: string } | null)?.slug ?? "general";
+  const slug = (post.forum_categories as { slug: string }[] | null)?.[0]?.slug ?? "general";
   revalidatePath(`/app/forums/${slug}/${postId}`);
 }
 
@@ -192,7 +192,7 @@ export async function toggleLike(postId?: string, replyId?: string) {
       .select("forum_categories(slug)")
       .eq("id", postId)
       .single();
-    const slug = (post?.forum_categories as { slug: string } | null)?.slug ?? "general";
+    const slug = (post?.forum_categories as { slug: string }[] | null)?.[0]?.slug ?? "general";
     revalidatePath(`/app/forums/${slug}/${postId}`);
   }
 }
