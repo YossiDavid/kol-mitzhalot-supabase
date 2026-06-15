@@ -19,7 +19,7 @@ export function SearchBar({ defaultValue }: { defaultValue?: string }) {
       params.delete("search");
     }
     startTransition(() => {
-      router.replace(`${pathname}?${params.toString()}`);
+      router.replace(`${pathname}?${params.toString()}` as any);
     });
   }
 
