@@ -119,7 +119,7 @@ export default async function CategoryPage({
         {allTags.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {tag && (
-              <Link href={`/app/forums/${categorySlug}`}>
+              <Link href={`/app/forums/${categorySlug}` as any}>
                 <Badge variant="secondary" className="cursor-pointer">
                   × הסר פילטר
                 </Badge>
@@ -128,7 +128,7 @@ export default async function CategoryPage({
             {allTags.map((t) => (
               <Link
                 key={t}
-                href={`/app/forums/${categorySlug}?tag=${encodeURIComponent(t)}`}
+                href={`/app/forums/${categorySlug}?tag=${encodeURIComponent(t)}` as any}
               >
                 <Badge
                   variant={tag === t ? "default" : "outline"}
@@ -156,7 +156,7 @@ export default async function CategoryPage({
             return (
               <Link
                 key={post.id}
-                href={`/app/forums/${categorySlug}/${post.id}`}
+                href={`/app/forums/${categorySlug}/${post.id}` as any}
                 className="hover:bg-muted block rounded-lg border p-4 transition"
               >
                 <div className="mb-2 flex items-start gap-2">

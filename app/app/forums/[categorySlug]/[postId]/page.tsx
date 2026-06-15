@@ -46,23 +46,40 @@ export default async function PostPage({
   const isAdmin = role === "admin";
   const canWrite = isAdmin || role === "shadchan";
 
+  // שאילתות בסיסיות
   const [{ data: category }, { data: post }] = await Promise.all([
-    supabase.from("forum_categories").select("id, name, slug").eq("slug", categorySlug).single(),
     supabase
-      .from("forum_posts")
-      .select(`*, forum_replies(*, forum_likes(count, user_id)), forum_likes(count, user_id)`)
-      .eq("id", postId)
+      .from("forum_categories")
+      .select("id, name, slug")
+      .eq("slug", categorySlug)
       .single(),
+    supabase.from("forum_posts").select("*").eq("id", postId).single(),
   ]);
 
   if (!category || !post) notFound();
 
   const { data: replies } = await supabase
     .from("forum_replies")
-    .select(`*, forum_likes(count, user_id)`)
+    .select("*")
     .eq("post_id", postId)
     .order("created_at", { ascending: true });
 
+  // likes בשאילתא נפרדת
+  const replyIds = (replies ?? []).map((r: { id: string }) => r.id);
+  const [{ data: postLikes }, { data: replyLikes }] = await Promise.all([
+    supabase.from("forum_likes").select("user_id").eq("post_id", postId),
+    replyIds.length > 0
+      ? supabase
+          .from("forum_likes")
+          .select("user_id, reply_id")
+          .in("reply_id", replyIds)
+      : Promise.resolve({ data: [] as { user_id: string; reply_id: string }[] }),
+  ]);
+
+  const postLikesCount = postLikes?.length ?? 0;
+  const postLiked = (postLikes ?? []).some((l) => l.user_id === user?.id);
+
+  // author names
   const allAuthorIds = [
     post.author_id,
     ...((replies ?? []).map((r: { author_id: string }) => r.author_id)),
@@ -74,10 +91,6 @@ export default async function PostPage({
       authorNames[uid] = await getAuthorName(supabase, uid);
     }),
   );
-
-  const postLikesRaw = post.forum_likes as { count: number; user_id: string }[] | null;
-  const postLikesCount = postLikesRaw?.[0]?.count ?? 0;
-  const postLiked = (postLikesRaw ?? []).some((l) => l.user_id === user?.id);
 
   const isPostAuthor = user?.id === post.author_id;
 
@@ -94,10 +107,10 @@ export default async function PostPage({
         </Link>
       </div>
 
-      {/* כותרת + ניווט */}
+      {/* כותרת */}
       <div className="flex items-start gap-3">
         <Button asChild variant="ghost" size="icon" className="mt-0.5 shrink-0">
-          <Link href={`/app/forums/${categorySlug}`}>
+          <Link href={`/app/forums/${categorySlug}` as any}>
             <ArrowRight />
           </Link>
         </Button>
@@ -111,7 +124,10 @@ export default async function PostPage({
       {(post.tags as string[])?.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
           {(post.tags as string[]).map((t) => (
-            <Link key={t} href={`/app/forums/${categorySlug}?tag=${encodeURIComponent(t)}`}>
+            <Link
+              key={t}
+              href={`/app/forums/${categorySlug}?tag=${encodeURIComponent(t)}` as any}
+            >
               <Badge variant="secondary">{t}</Badge>
             </Link>
           ))}
@@ -159,7 +175,7 @@ export default async function PostPage({
           </div>
         </div>
         <p className="whitespace-pre-wrap leading-relaxed">{post.content}</p>
-        <div className="mt-4 flex items-center gap-2">
+        <div className="mt-4">
           <LikeButton postId={post.id} count={postLikesCount} liked={postLiked} />
         </div>
       </div>
@@ -173,17 +189,18 @@ export default async function PostPage({
 
         {replies && replies.length > 0 ? (
           <div className="space-y-4">
-            {replies.map((reply: {
+            {(replies as {
               id: string;
               author_id: string;
               content: string;
               created_at: string;
               updated_at: string | null;
-              forum_likes: { count: number; user_id: string }[] | null;
-            }) => {
-              const replyLikesRaw = reply.forum_likes ?? [];
-              const replyLikesCount = replyLikesRaw[0]?.count ?? 0;
-              const replyLiked = replyLikesRaw.some((l) => l.user_id === user?.id);
+            }[]).map((reply) => {
+              const rLikes = (replyLikes ?? []).filter(
+                (l) => l.reply_id === reply.id,
+              );
+              const replyLikesCount = rLikes.length;
+              const replyLiked = rLikes.some((l) => l.user_id === user?.id);
               const isReplyAuthor = user?.id === reply.author_id;
 
               return (
@@ -214,7 +231,14 @@ export default async function PostPage({
                         />
                       )}
                       {(isReplyAuthor || isAdmin) && (
-                        <form action={deleteReply.bind(null, reply.id, postId, categorySlug)}>
+                        <form
+                          action={deleteReply.bind(
+                            null,
+                            reply.id,
+                            postId,
+                            categorySlug,
+                          )}
+                        >
                           <Button
                             type="submit"
                             variant="ghost"
