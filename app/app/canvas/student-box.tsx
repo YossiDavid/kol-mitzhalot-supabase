@@ -14,28 +14,20 @@ type Student = {
   birth_date: string | Date;
   city: string;
   parents_info?: {
-    father?: {
-      self?: {
-        name?: string;
-        suffix?: string;
-      };
-      job?: string;
-    };
+    father?: { self?: { name?: string; suffix?: string }; job?: string };
     mother?: {
-      self?: {
-        name?: string;
-        suffix?: string;
-      };
+      self?: { name?: string; suffix?: string };
       job?: string;
       maidenName?: string;
     };
   };
-  employment_history?: Array<{
-    category: string;
-  }>;
+  employment_history?: Array<{ category: string }>;
 };
 
-// מאפשר לקבל כל prop חוקי של div כולל onDragEnter/onDragStart וכו'
+type StudentBoxContextValue = { item?: Student };
+
+const StudentBoxContext = React.createContext<StudentBoxContextValue>({});
+
 type StudentBoxProps = React.HTMLAttributes<HTMLDivElement> & {
   gender: "male" | "female";
   firstName?: string;
@@ -45,23 +37,12 @@ type StudentBoxProps = React.HTMLAttributes<HTMLDivElement> & {
   doingToday?: string[];
   father?: { name: string; position: string };
   mother?: { name: string; maidenName?: string; position: string };
-  student?: string; // demo
-  data?: { age: number; city: string; where: string; what: string };
-
-  onAddToDesk?: (student: Student) => void;
-  onRemoveFromDesk?: () => void;
-  onRemoveFromFavorites?: (student: Student) => void;
-
-  draggable?: boolean;
   item?: Student;
-
-  favorites?: boolean;
-
+  draggable?: boolean;
   setDraggingGender?: (gender: "male" | "female" | null) => void;
 };
 
 function StudentBox({
-  favorites = false,
   className,
   gender,
   firstName,
@@ -71,31 +52,25 @@ function StudentBox({
   doingToday,
   father,
   mother,
-  student,
-  data,
-  onAddToDesk,
-  onRemoveFromDesk,
-  onRemoveFromFavorites,
-  draggable,
   item,
+  draggable,
   setDraggingGender,
+  children,
   ...divProps
 }: StudentBoxProps) {
-  const subtitle = [age, city, doingToday?.join(",")];
+  const subtitleParts = [
+    age != null ? `${age}` : null,
+    city || null,
+    doingToday?.filter(Boolean).join(", ") || null,
+  ].filter(Boolean);
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
-    // 1) קודם כל: אם ההורה העביר onDragStart – נקרא לו
     divProps.onDragStart?.(e);
-
     if (!draggable) return;
-
-    // 2) תמיד תכלול gender בתוך ה payload כדי שה drop יעבוד
-    const payload = JSON.stringify({
-      ...(item ?? {}),
-      gender,
-    });
-
-    e.dataTransfer.setData("application/json", payload);
+    e.dataTransfer.setData(
+      "application/json",
+      JSON.stringify({ ...(item ?? {}), gender }),
+    );
     setDraggingGender?.(gender);
   };
 
@@ -105,83 +80,109 @@ function StudentBox({
   };
 
   return (
-    <div
-      {...divProps}
-      className={cn(
-        "rounded-md bg-white p-4",
-        draggable && "cursor-grab active:cursor-grabbing",
-        className,
-      )}
-      draggable={draggable}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      {/* שם התלמיד */}
-      {student ?? `${firstName ?? ""} ${lastName ?? ""}`}
+    <StudentBoxContext.Provider value={{ item }}>
+      <div
+        {...divProps}
+        className={cn(
+          "rounded-md bg-white p-4",
+          draggable && "cursor-grab active:cursor-grabbing",
+          className,
+        )}
+        draggable={draggable}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="font-semibold">
+          {`${firstName ?? ""} ${lastName ?? ""}`.trim()}
+        </div>
 
-      {/* מה עושה היום */}
-      {doingToday?.length ? (
-        <div>{subtitle.filter((d) => d && d !== "").join(" | ")}</div>
-      ) : null}
-
-      {/* הורים */}
-      <div className="rounded-lg bg-gray-200 p-2">
-        {father && (
-          <div>
-            <b>אב: </b>
-            {Object.values(father)
-              .filter((data) => (typeof data === "string" ? data.length > 0 : true))
-              .join(" | ")}
+        {subtitleParts.length > 0 && (
+          <div className="text-muted-foreground mt-0.5 text-sm">
+            {subtitleParts.join(" | ")}
           </div>
         )}
-        {mother && (
-          <div>
-            <b>אם: </b>
-            {Object.values(mother)
-              .filter((data) => (typeof data === "string" ? data.length > 0 : true))
-              .join(" | ")}
-          </div>
-        )}
+
+        <div className="bg-muted mt-3 rounded-lg p-2 text-sm">
+          {father && (
+            <div>
+              <b>אב: </b>
+              {Object.values(father)
+                .filter((v) => typeof v === "string" && v.length > 0)
+                .join(" | ")}
+            </div>
+          )}
+          {mother && (
+            <div>
+              <b>אם: </b>
+              {Object.values(mother)
+                .filter((v) => typeof v === "string" && v.length > 0)
+                .join(" | ")}
+            </div>
+          )}
+        </div>
+
+        {children && <div className="mt-4 space-y-2">{children}</div>}
       </div>
-
-      {/* כפתור הוספה אם מדובר בפייבוריט */}
-      {favorites && (
-        <Button
-          className="mt-4 w-full"
-          size="lg"
-          onClick={() => onAddToDesk?.(item!)}
-        >
-          הוספת כרטיס לשידוך
-          <CirclePlus />
-        </Button>
-      )}
-
-      {/* כפתורים כלליים */}
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <Button variant="outline" asChild>
-          <Link href={`/app/students/${item?.id}`}>
-            צפיה בקו״ח
-            <FileCheck />
-          </Link>
-        </Button>
-
-        {draggable ? (
-          <Button
-            variant="destructiveOutline"
-            onClick={() => onRemoveFromFavorites?.(item!)}
-          >
-            הסרה מהמועדפים
-            <X />
-          </Button>
-        ) : (
-          <Button variant="destructiveOutline" onClick={onRemoveFromDesk}>
-            הסרה מהשידוך
-            <X />
-          </Button>
-        )}
-      </div>
-    </div>
+    </StudentBoxContext.Provider>
   );
 }
 
+StudentBox.AddToDesk = function AddToDesk({
+  onClick,
+}: {
+  onClick: (student: Student) => void;
+}) {
+  const { item } = React.useContext(StudentBoxContext);
+  return (
+    <Button className="w-full" onClick={() => item && onClick(item)}>
+      הוספת כרטיס לשידוך
+      <CirclePlus className="size-4" />
+    </Button>
+  );
+};
+
+StudentBox.ViewProfile = function ViewProfile() {
+  const { item } = React.useContext(StudentBoxContext);
+  return (
+    <Button variant="outline" className="w-full" asChild>
+      <Link href={`/app/students/${item?.id}`}>
+        צפיה בקו״ח
+        <FileCheck className="size-4" />
+      </Link>
+    </Button>
+  );
+};
+
+StudentBox.RemoveFromFavorites = function RemoveFromFavorites({
+  onClick,
+}: {
+  onClick: (student: Student) => void;
+}) {
+  const { item } = React.useContext(StudentBoxContext);
+  return (
+    <Button
+      variant="destructiveOutline"
+      className="w-full"
+      onClick={() => item && onClick(item)}
+    >
+      הסרה מהמועדפים
+      <X className="size-4" />
+    </Button>
+  );
+};
+
+StudentBox.RemoveFromDesk = function RemoveFromDesk({
+  onClick,
+}: {
+  onClick: () => void;
+}) {
+  return (
+    <Button variant="destructiveOutline" className="w-full" onClick={onClick}>
+      הסרה מהשידוך
+      <X className="size-4" />
+    </Button>
+  );
+};
+
 export default StudentBox;
+export type { Student };

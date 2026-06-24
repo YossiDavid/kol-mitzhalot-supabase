@@ -10,7 +10,7 @@ import { UserMenu } from "./user-menu";
 import { Button } from "../../ui/button";
 import { Separator } from "../../ui/separator";
 import Image from "next/image";
-import Logo from "@/assets/images/logo_negative_text.svg"
+import Logo from "@/assets/images/logo-text.svg"
 
 
 export default async function Header({ variant }: { variant: "app" | "website" }) {
@@ -28,20 +28,25 @@ export default async function Header({ variant }: { variant: "app" | "website" }
     role === "user" || (role !== "admin" && role !== "shadchan");
 
   return (
-    <header className="border-b-foreground/10 container flex h-16 items-center justify-between gap-5 border-b font-semibold">
-      <div className="flex items-center justify-between">
+    <header className="border-b-foreground/10 container sticky top-0 z-30 flex h-16 items-center justify-between gap-5 border-b bg-background/95 font-semibold backdrop-blur-sm supports-[backdrop-filter]:bg-background/80">
+      <div className="flex items-center gap-2">
         {variant === "app" && (
           <>
-            <SidebarTrigger className="z-20 -ms-1" />
+            {/* מובייל: לוגו */}
+            <Link href="/app" className="md:hidden">
+              <Image src={Logo.src} alt="קול מצהלות" width={140} height={40} className="h-8 w-auto" />
+            </Link>
+            {/* דסקטופ: טריגר + ברכה */}
+            <SidebarTrigger className="z-20 -ms-1 hidden md:inline-flex" />
             <Separator
               orientation="vertical"
-              className="bg-primary mx-2 data-[orientation=vertical]:h-4"
+              className="bg-primary mx-2 hidden data-[orientation=vertical]:h-4 md:block"
             />
-            <div className="flex items-center gap-5 font-semibold">
+            <div className="hidden items-center gap-5 font-semibold md:flex">
               שלום וברכה, {firstName} {lastName}!
             </div>
             {user?.user_metadata?.role === "admin" && (
-              <Button variant={"link"} asChild>
+              <Button variant={"link"} asChild className="hidden md:inline-flex">
                 <Link href="/app/admin">למערכת ניהול</Link>
               </Button>
             )}
@@ -65,7 +70,7 @@ export default async function Header({ variant }: { variant: "app" | "website" }
           </Suspense>
         )}
         {variant === "app" && (
-          <Button asChild>
+          <Button asChild className="hidden md:flex">
             {user?.user_metadata?.role !== "shadchan" ? (
               <Link href={"/app/students/create"}>הוספת מיועדים למערכת</Link>
             ) : (

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import StudentBox from "./student-box";
+import type { Student } from "./student-box";
 import CompatibilityDiagnosis from "./compatibility-diagnosis";
 import SendProposalModal from "./send-proposal-modal";
 import type { RecipientScope } from "./send-proposal-modal";
@@ -13,7 +14,7 @@ import FavoritesGrid from "./favorites-grid";
 import { Spinner } from "@/components/ui/spinner";
 import calculateAge from "@/lib/calculateAge";
 import { Button } from "@/components/ui/button";
-import { Save, Send } from "lucide-react";
+import { Save, Send, User as UserIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { getCompatibilityNotes } from "@/lib/shidduch-compatibility";
 import { getEffectiveRole } from "@/lib/user-role";
@@ -29,15 +30,38 @@ type PairRow = {
 };
 
 type Props = {
-  initialFavorites: any[];
+  initialFavorites: Student[];
 };
+
+function mapDoingToday(person: any): string[] | undefined {
+  return person.employment_history?.map((emp: any) => {
+    switch (emp.category) {
+      case "yeshiva":
+        return "בחור ישיבה";
+      case "seminar":
+        return "לומדת בסמינר";
+      case "at_home":
+        return "בבית";
+      case "havruta":
+        return "לומד עם חברותא";
+      case "kolel":
+        return "כולל";
+      case "profession":
+        return person.gender === "male" ? "לומד מקצוע" : "לומדת מקצוע";
+      case "working":
+        return person.gender === "male" ? "עובד" : "עובדת";
+      default:
+        return "";
+    }
+  });
+}
 
 export default function ShiduchDesk({ initialFavorites }: Props) {
   const supabase = createClient();
   const router = useRouter();
 
-  const [male, setMale] = useState<any | null>(null);
-  const [female, setFemale] = useState<any | null>(null);
+  const [male, setMale] = useState<Student | null>(null);
+  const [female, setFemale] = useState<Student | null>(null);
 
   const [pairRows, setPairRows] = useState<PairRow[] | null>(null);
   const [pairLoading, setPairLoading] = useState(false);
@@ -61,7 +85,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
       const r = getEffectiveRole(data.user);
       setCanOffer(r === "shadchan" || r === "admin");
     });
-  }, [supabase.auth]);
+  }, [supabase]);
 
   const newShiduch = useMemo(() => {
     if (!male?.id || !female?.id) return null;
@@ -175,27 +199,6 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
     }
   };
 
-  const mapDoingToday = (person: any) =>
-    person.employment_history?.map((emp: any) => {
-      switch (emp.category) {
-        case "yeshiva":
-          return "בחור ישיבה";
-        case "seminar":
-          return "לומדת בסמינר";
-        case "at_home":
-          return "בבית";
-        case "havruta":
-          return "לומד עם חברותא";
-        case "kolel":
-          return "כולל";
-        case "profession":
-          return person.gender === "male" ? "לומד מקצוע" : "לומדת מקצוע";
-        case "working":
-          return person.gender === "male" ? "עובד" : "עובדת";
-        default:
-          return "";
-      }
-    });
 
   const handleSaveDraft = async () => {
     if (!newShiduch || !canOffer) return;
@@ -277,9 +280,10 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
 
   return (
     <>
-      <div className="mx-auto mt-10 grid max-w-[800px] grid-cols-2 gap-4">
+      <div className="mx-auto mt-4 grid max-w-full grid-cols-1 gap-4 md:mt-10 md:max-w-[800px] md:grid-cols-2">
+        {/* Male drop zone */}
         <div
-          className="border-primary relative min-h-50 rounded-xl border border-dashed bg-[#d7edff] p-2"
+          className="border-primary relative min-h-50 rounded-xl border border-dashed bg-sky-50 p-2"
           onDragEnter={handleDragEnterTicket}
           onDragLeave={handleDragLeaveTicket}
           onDragOver={handleDragOverTicket}
@@ -287,12 +291,12 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
           data-male
         >
           {draggingGender === "female" && (
-            <div className="absolute top-2 left-1/2 -translate-x-1/2 text-sm text-red-600">
+            <div className="text-destructive absolute top-2 left-1/2 -translate-x-1/2 text-sm">
               לא ניתן להכניס מיועדת כאן
             </div>
           )}
 
-          {male && (
+          {male ? (
             <StudentBox
               gender="male"
               firstName={male.first_name}
@@ -310,14 +314,23 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
                 maidenName: male.parents_info?.mother?.maidenName || "",
               }}
               item={male}
-              onAddToDesk={setMale}
-              onRemoveFromDesk={() => setMale(null)}
-            />
+            >
+              <div className="grid grid-cols-2 gap-2">
+                <StudentBox.ViewProfile />
+                <StudentBox.RemoveFromDesk onClick={() => setMale(null)} />
+              </div>
+            </StudentBox>
+          ) : (
+            <div className="text-muted-foreground absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm">
+              <UserIcon className="size-8 opacity-30" />
+              <span>גרור מיועד לכאן</span>
+            </div>
           )}
         </div>
 
+        {/* Female drop zone */}
         <div
-          className="border-primary relative rounded-xl border border-dashed bg-[#ffdddd] p-2"
+          className="border-primary relative min-h-50 rounded-xl border border-dashed bg-rose-50 p-2"
           onDragEnter={handleDragEnterTicket}
           onDragLeave={handleDragLeaveTicket}
           onDragOver={handleDragOverTicket}
@@ -325,12 +338,12 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
           data-female
         >
           {draggingGender === "male" && (
-            <div className="absolute top-2 left-1/2 -translate-x-1/2 text-sm text-red-600">
+            <div className="text-destructive absolute top-2 left-1/2 -translate-x-1/2 text-sm">
               לא ניתן להכניס מיועד כאן
             </div>
           )}
 
-          {female && (
+          {female ? (
             <StudentBox
               gender="female"
               firstName={female.first_name}
@@ -348,9 +361,17 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
                 maidenName: female.parents_info?.mother?.maidenName || "",
               }}
               item={female}
-              onAddToDesk={setFemale}
-              onRemoveFromDesk={() => setFemale(null)}
-            />
+            >
+              <div className="grid grid-cols-2 gap-2">
+                <StudentBox.ViewProfile />
+                <StudentBox.RemoveFromDesk onClick={() => setFemale(null)} />
+              </div>
+            </StudentBox>
+          ) : (
+            <div className="text-muted-foreground absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm">
+              <UserIcon className="size-8 opacity-30" />
+              <span>גרור מיועדת לכאן</span>
+            </div>
           )}
         </div>
       </div>
@@ -420,7 +441,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
         onAddMale={setMale}
         onAddFemale={setFemale}
         onDragGenderChange={setDraggingGender}
-        onFavoritesChanged={handleFavoritesChanged as any}
+        onFavoritesChanged={handleFavoritesChanged}
       />
     </>
   );

@@ -16,6 +16,7 @@ import {
   Stethoscope,
   Star,
   Mail,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import ShareButton from "./share-button";
@@ -71,12 +72,28 @@ export default async function StudentPage({
     user?.user_metadata?.role === "admin";
 
   if (error) {
-    return <div>Error: {error.message}</div>;
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="space-y-2 text-center">
+          <p className="text-destructive font-semibold">שגיאה בטעינת הפרופיל</p>
+          <p className="text-muted-foreground text-sm">{error.message}</p>
+        </div>
+      </div>
+    );
   }
 
   const student = data;
   if (!student) {
-    return <div>Student not found</div>;
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="space-y-2 text-center">
+          <p className="text-foreground font-semibold">מיועד לא נמצא</p>
+          <p className="text-muted-foreground text-sm">
+            הרשומה שחיפשת אינה קיימת במערכת
+          </p>
+        </div>
+      </div>
+    );
   }
 
   type IconComponent = React.ComponentType<{
@@ -98,7 +115,7 @@ export default async function StudentPage({
         <div className="bg-muted rounded-lg p-2">
           <Icon size={20} className="text-primary" />
         </div>
-        <h2 className="text-xl font-bold">{title}</h2>
+        <h2 className="text-xl! font-bold!">{title}</h2>
       </div>
       {children}
     </Box>
@@ -110,14 +127,15 @@ export default async function StudentPage({
   }: {
     label: string;
     value: string | number | null | undefined;
-  }) => (
-    <div className="flex flex-col">
-      <span className="text-muted-foreground text-xs font-medium">{label}</span>
-      <span className="text-foreground text-sm font-semibold">
-        {value || "---"}
-      </span>
-    </div>
-  );
+  }) => {
+    if (!value && value !== 0) return null;
+    return (
+      <div className="flex flex-col">
+        <span className="text-muted-foreground text-xs font-medium">{label}</span>
+        <span className="text-foreground text-sm font-semibold">{value}</span>
+      </div>
+    );
+  };
 
   const genderLabel =
     student.gender === "male"
@@ -139,29 +157,69 @@ export default async function StudentPage({
 
   return (
     <div className="min-h-screen space-y-6 text-right">
-      {/* Header */}
-      {/* <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:justify-center">
-        <h1>
-          {student.first_name} {student.last_name}
-        </h1>
-      </div> */}
+      {/* Back */}
+      <Link
+        href="/app/students"
+        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
+      >
+        <ChevronRight className="h-4 w-4" />
+        חזרה לרשימה
+      </Link>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-        {/* Left Column - Main Details */}
-        <div className="space-y-6 lg:col-span-3">
-          {/* Basic Information */}
-          <Section title="פרטים אישיים" icon={User}>
-            <div className="flex justify-between gap-2">
-              <h1>
-                {student.first_name} {student.last_name}
-              </h1>
-              <div className="flex gap-2">
-                <ShareButton />
-                {isShadchan && <MessageButton authorId={student.user_id} />}
-              </div>
-            </div>
+      {/* Hero */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl! font-bold! leading-tight!">
+            {student.first_name} {student.last_name}
+          </h1>
+          <p className="text-muted-foreground mt-1.5 flex flex-wrap gap-x-2 gap-y-1 text-sm">
+            {genderLabel && <span>{genderLabel}</span>}
+            {student.birth_date && (
+              <>
+                <span className="text-muted-foreground/40">·</span>
+                <span>גיל {calculateAge(student.birth_date)}</span>
+              </>
+            )}
+            {student.personal_status && (
+              <>
+                <span className="text-muted-foreground/40">·</span>
+                <span>{personalStatusToHebrew(student.personal_status)}</span>
+              </>
+            )}
+            {student.city && (
+              <>
+                <span className="text-muted-foreground/40">·</span>
+                <span>{student.city}</span>
+              </>
+            )}
+            {student.height && (
+              <>
+                <span className="text-muted-foreground/40">·</span>
+                <span>{student.height} ס"מ</span>
+              </>
+            )}
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {student.cv_url && (
+            <Button asChild variant="outline" size="sm">
+              <Link
+                href={student.cv_url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FileText className="h-4 w-4" />
+                קו"ח
+              </Link>
+            </Button>
+          )}
+          <ShareButton />
+          {isShadchan && <MessageButton authorId={student.user_id} />}
+        </div>
+      </div>
 
+      {/* Personal details — full width */}
+      <Section title="פרטים אישיים" icon={User}>
             {student.about && (
               <p className="text-muted-foreground leading-relaxed">
                 {student.about}
@@ -236,8 +294,12 @@ export default async function StudentPage({
                 />
               )}
             </div>
-          </Section>
+      </Section>
 
+      {/* Main Content */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
+        {/* Main Column */}
+        <div className="space-y-6 lg:col-span-3">
           {/* Family Background */}
           <Section title="רקע משפחתי" icon={Users}>
             <div className="space-y-6">
@@ -844,25 +906,16 @@ export default async function StudentPage({
             </Section>
           )}
 
-          {/* Medical — תמיד מוצג: תקין או פירוט בעיה */}
-          <div
-            className={cn(
-              "rounded-lg border p-4",
-              hasMedicalIssue
-                ? "border-destructive/50 bg-destructive/10"
-                : "border-border bg-muted/30",
-            )}
-          >
+          {/* Medical */}
+          <Section title="הצהרה רפואית" icon={Stethoscope}>
             <div
-              className={
+              className={cn(
+                "rounded-lg p-3",
                 hasMedicalIssue
-                  ? "text-destructive mb-2 flex items-center gap-2"
-                  : "text-foreground mb-2 flex items-center gap-2"
-              }
+                  ? "border border-destructive/40 bg-destructive/10"
+                  : "bg-muted/40",
+              )}
             >
-              <Stethoscope size={18} />
-              <h3 className="text-sm font-bold">הצהרה רפואית</h3>
-            </div>
             {!hasMedicalIssue ? (
               <p className="text-foreground text-xs leading-relaxed">
                 <strong>מצב בריאותי כללי:</strong>{" "}
@@ -969,11 +1022,12 @@ export default async function StudentPage({
                   )}
               </>
             )}
-          </div>
+            </div>
+          </Section>
 
           {/* Author Info */}
           {student.author_info && (
-            <div className="border-border bg-card rounded-lg border p-4 text-center">
+            <div className="border-border bg-card rounded-lg border p-4">
               <p className="text-muted-foreground mb-1 text-xs font-bold tracking-widest uppercase">
                 הקו״ח מולאו ע"י
               </p>
@@ -981,7 +1035,7 @@ export default async function StudentPage({
               {student.author_info.phone && (
                 <a
                   href={`tel:${student.author_info.phone}`}
-                  className="text-muted-foreground hover:text-primary mt-1 flex items-center justify-center gap-1 text-xs"
+                  className="text-muted-foreground hover:text-primary mt-1 flex items-center gap-1 text-xs"
                 >
                   <Phone size={12} /> {student.author_info.phone}
                 </a>
@@ -989,24 +1043,6 @@ export default async function StudentPage({
             </div>
           )}
 
-          {/* CV Link */}
-          {student.cv_url && (
-            <Button
-              asChild
-              variant="outline"
-              className="border-border bg-card w-full rounded-lg border p-4 text-center"
-            >
-              <Link
-                href={student.cv_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary flex items-center justify-center gap-2 text-sm font-bold"
-              >
-                <FileText size={16} />
-                צפייה בקורות חיים
-              </Link>
-            </Button>
-          )}
         </div>
       </div>
     </div>

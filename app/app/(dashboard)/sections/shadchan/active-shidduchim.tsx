@@ -94,7 +94,7 @@ function CandidateSection({
             href={student.cv_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-emerald-700 hover:text-emerald-800"
+            className="text-primary hover:text-primary/80"
             title="פתיחת קובץ קו״ח"
           >
             <FileCheck2 className="size-4 shrink-0 md:size-5" />
@@ -112,7 +112,7 @@ function CandidateSection({
         {getAge(student)} | {student?.city || "ללא עיר"} |{" "}
         {getLastInstitution(student)} | {getOccupation(student)}
       </p>
-      <p className="mt-3 inline-flex rounded-lg bg-slate-100 px-3 py-1 text-base text-slate-700 md:text-lg">
+      <p className="bg-muted text-muted-foreground mt-3 inline-flex rounded-lg px-3 py-1 text-base md:text-lg">
         {note?.trim() || "ממתינים לעדכון מהשדכן"}
       </p>
     </div>
@@ -121,40 +121,38 @@ function CandidateSection({
 
 function ActiveShidduchCard({ shiduch }: { shiduch: Shiduch }) {
   return (
-    <Box>
-      <div className="bg-muted/40 relative flex flex-col gap-2 rounded-2xl border p-4 md:p-5">
-        <Button
-          asChild
-          variant="outline"
-          size="icon"
-          title="עריכה"
-          className="absolute start-4 top-4 z-10"
-        >
-          <Link href={`/app/shidduchim/${shiduch.id}`}>
-            <Pencil />
-            <span className="sr-only">עריכה</span>
-          </Link>
-        </Button>
-        <Badge
-          variant="outline"
-          className={`self-center ${SHIDDUCH_STATUS_BADGE_CLASS[shiduch.status]}`}
-        >
-          {SHIDDUCH_STATUS_LABELS[shiduch.status]}
-        </Badge>
-        <CandidateSection
-          title="שם המיועד"
-          student={shiduch.groom}
-          parentPrefix="בן ר׳"
-          note={shiduch.note_for_groom}
-        />
-        <div className="my-4 border-t border-dashed" />
-        <CandidateSection
-          title="שם המיועדת"
-          student={shiduch.bride}
-          parentPrefix="בת ר׳"
-          note={shiduch.note_for_bride}
-        />
-      </div>
+    <Box className="bg-muted/20 relative flex flex-col gap-2 p-4 md:p-5">
+      <Button
+        asChild
+        variant="outline"
+        size="icon"
+        title="עריכה"
+        className="absolute start-4 top-4 z-10"
+      >
+        <Link href={`/app/shidduchim/${shiduch.id}`}>
+          <Pencil />
+          <span className="sr-only">עריכה</span>
+        </Link>
+      </Button>
+      <Badge
+        variant="outline"
+        className={`self-center ${SHIDDUCH_STATUS_BADGE_CLASS[shiduch.status]}`}
+      >
+        {SHIDDUCH_STATUS_LABELS[shiduch.status]}
+      </Badge>
+      <CandidateSection
+        title="שם המיועד"
+        student={shiduch.groom}
+        parentPrefix="בן ר׳"
+        note={shiduch.note_for_groom}
+      />
+      <div className="my-4 border-t border-dashed" />
+      <CandidateSection
+        title="שם המיועדת"
+        student={shiduch.bride}
+        parentPrefix="בת ר׳"
+        note={shiduch.note_for_bride}
+      />
     </Box>
   );
 }

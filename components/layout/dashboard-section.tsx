@@ -6,7 +6,7 @@ type DashboardSectionProps = {
   title: string;
   titleNumber?: string | number;
   subTitle?: string;
-  button: React.ReactElement;
+  button?: React.ReactElement;
   className?: string;
   containerClassName?: string;
   headClassName?: string;
@@ -23,20 +23,22 @@ export default function DashboardSection({
     >
       <div
         className={cn(
-          "col-span-full mb-2 flex items-center justify-between",
+          "col-span-full mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between",
           props.headClassName,
         )}
       >
         <div>
-          <h2>
+          <h2 className="text-xl! font-bold! leading-tight! text-foreground! md:text-2xl!">
             {props.title}
             {props.titleNumber && (
-              <span className="text-base"> ({`${props.titleNumber}`})</span>
+              <span className="text-sm! font-normal! text-muted-foreground ms-1.5">({props.titleNumber})</span>
             )}
           </h2>
-          <p>{props.subTitle}</p>
+          {props.subTitle && (
+            <p className="mt-0.5 text-sm text-muted-foreground">{props.subTitle}</p>
+          )}
         </div>
-        {props.button}
+        {props.button ?? null}
       </div>
       {children}
     </Section>

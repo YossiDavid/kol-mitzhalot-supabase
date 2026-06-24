@@ -72,17 +72,19 @@ export async function POST(req: NextRequest) {
 
   const admin = createAdminClient();
 
-  const { data: groom, error: gErr } = await admin
-    .from("students")
-    .select("id, gender, user_id, first_name, last_name")
-    .eq("id", groomId)
-    .single();
-
-  const { data: bride, error: bErr } = await admin
-    .from("students")
-    .select("id, gender, user_id, first_name, last_name")
-    .eq("id", brideId)
-    .single();
+  const [{ data: groom, error: gErr }, { data: bride, error: bErr }] =
+    await Promise.all([
+      admin
+        .from("students")
+        .select("id, gender, user_id, first_name, last_name")
+        .eq("id", groomId)
+        .single(),
+      admin
+        .from("students")
+        .select("id, gender, user_id, first_name, last_name")
+        .eq("id", brideId)
+        .single(),
+    ]);
 
   if (gErr || !groom || bErr || !bride) {
     return NextResponse.json(
@@ -178,8 +180,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, id: inserted.id, status: "draft" });
   }
 
-  const { data: groomAuth } = await admin.auth.admin.getUserById(groom.user_id);
-  const { data: brideAuth } = await admin.auth.admin.getUserById(bride.user_id);
+  const [{ data: groomAuth }, { data: brideAuth }] = await Promise.all([
+    admin.auth.admin.getUserById(groom.user_id),
+    admin.auth.admin.getUserById(bride.user_id),
+  ]);
 
   const groomParentEmail = groomAuth.user?.email ?? null;
   const brideParentEmail = brideAuth.user?.email ?? null;

@@ -123,16 +123,11 @@ export default async function Home() {
       .is("deleted_before", null);
 
     if (participantsError) {
-      console.error("Error fetching participants:", participantsError);
       chatRoomsError = participantsError;
     } else {
-      console.log("Participants found:", participants?.length || 0);
-
       if (participants && participants.length > 0) {
         const roomIds = participants.map((p) => p.room_id);
-        console.log("Room IDs:", roomIds);
 
-        // נשלוף את פרטי החדרים (ללא ההודעות - נשתמש ב-last_message_id)
         const { data: roomsData, error: roomsError } = await supabase
           .from("chat_rooms")
           .select("*")
@@ -140,15 +135,12 @@ export default async function Home() {
           .order("last_message_at", { ascending: false, nullsFirst: false });
 
         if (roomsError) {
-          console.error("Error fetching rooms:", roomsError);
           chatRoomsError = roomsError;
         } else {
-          console.log("Rooms found:", roomsData?.length || 0);
           chatRooms = roomsData;
         }
       } else {
-        // אם אין participants, ננסה דרך user_a/user_b (fallback)
-        console.log("No participants found, trying user_a/user_b fallback");
+        // fallback: query by user_a/user_b directly
         const { data: roomsData, error: roomsError } = await supabase
           .from("chat_rooms")
           .select("*")
@@ -156,135 +148,85 @@ export default async function Home() {
           .order("last_message_at", { ascending: false, nullsFirst: false });
 
         if (roomsError) {
-          console.error("Error fetching rooms (fallback):", roomsError);
           chatRoomsError = roomsError;
         } else {
-          console.log("Rooms found (fallback):", roomsData?.length || 0);
           chatRooms = roomsData;
         }
       }
     }
   }
 
-  // נמצא את ההודעה האחרונה בכל חדר, ונשלוף אליה את פרטי השולח והמשתמש השני
-  const chatsWithLastMessage = [];
-  if (chatRooms) {
-    console.log("Processing", chatRooms.length, "rooms");
-    for (const room of chatRooms) {
-      // נמצא את המשתמש השני בחדר
-      const otherUserId = room.user_a === user?.id ? room.user_b : room.user_a;
+  // async-parallel: process all chat rooms concurrently instead of sequentially
+  const chatsWithLastMessage = chatRooms
+    ? (
+        await Promise.all(
+          chatRooms.map(async (room) => {
+            const otherUserId =
+              room.user_a === user?.id ? room.user_b : room.user_a;
+            if (!otherUserId) return null;
 
-      // אם אין משתמש שני, נדלג על החדר הזה
-      if (!otherUserId) continue;
+            const [userMetaResult, lastMsgResult] = await Promise.all([
+              Promise.resolve(
+                supabase.rpc("get_user_metadata", {
+                  target_user_id: otherUserId,
+                }),
+              ).catch(() => ({ data: null, error: null })),
+              room.last_message_id
+                ? supabase
+                    .from("chat_messages")
+                    .select("message_id, content, created_at, sender_id")
+                    .eq("message_id", room.last_message_id)
+                    .single()
+                : Promise.resolve({ data: null, error: null }),
+            ]);
 
-      // נשלוף את שם המשתמש השני
-      let otherUserName = "Unknown User";
-      let otherUserAvatar = null;
-      try {
-        const { data: userData, error: rpcError } = await supabase.rpc(
-          "get_user_metadata",
-          {
-            target_user_id: otherUserId,
-          },
-        );
+            const userData = userMetaResult.data as {
+              firstName?: string;
+              lastName?: string;
+              email?: string;
+              avatar_url?: string;
+            } | null;
 
-        if (!rpcError && userData) {
-          if (userData.firstName || userData.lastName) {
-            otherUserName = `${userData.firstName || ""} ${
-              userData.lastName || ""
-            }`.trim();
-          } else if (userData.email) {
-            otherUserName = userData.email.split("@")[0];
-          }
-          otherUserAvatar = userData.avatar_url || null;
-        }
-      } catch (e) {
-        console.error("Error fetching user name:", e);
-        otherUserName = otherUserId.substring(0, 8);
-      }
+            let otherUserName = otherUserId.substring(0, 8);
+            if (userData?.firstName || userData?.lastName) {
+              otherUserName =
+                `${userData.firstName || ""} ${userData.lastName || ""}`.trim();
+            } else if (userData?.email) {
+              otherUserName = userData.email.split("@")[0];
+            }
 
-      // נשלוף את ההודעה האחרונה באמצעות last_message_id
-      let lastMessage = null;
-      let lastMessageContent = null;
-      let lastMessageTime = null;
-      let senderDetails = null;
-
-      if (room.last_message_id) {
-        const { data: lastMsg, error: lastMsgError } = await supabase
-          .from("chat_messages")
-          .select("message_id, content, created_at, sender_id")
-          .eq("message_id", room.last_message_id)
-          .single();
-
-        if (!lastMsgError && lastMsg) {
-          lastMessage = lastMsg;
-          lastMessageContent = lastMsg.content;
-          lastMessageTime = lastMsg.created_at;
-        }
-      }
-
-      if (lastMessage?.sender_id) {
-        // נשלוף מידע על השולח באמצעות RPC function
-        try {
-          const { data: senderData, error: senderError } = await supabase.rpc(
-            "get_user_metadata",
-            {
-              target_user_id: lastMessage.sender_id,
-            },
-          );
-
-          if (!senderError && senderData) {
-            senderDetails = {
-              id: lastMessage.sender_id,
-              full_name:
-                senderData.firstName || senderData.lastName
-                  ? `${senderData.firstName || ""} ${
-                      senderData.lastName || ""
-                    }`.trim()
-                  : null,
-              email: senderData.email || null,
-              avatar_url: null, // user_profiles doesn't have avatar_url
+            const lastMsg = lastMsgResult.data;
+            return {
+              id: room.room_id,
+              name: otherUserName,
+              description: "",
+              image: userData?.avatar_url || "/placeholder-avatar.png",
+              link: `/app/chats/${room.room_id}`,
+              lastMessage: lastMsg?.content ?? null,
+              lastMessageTime: lastMsg?.created_at ?? null,
+              lastMessageSender: null,
             };
-          }
-        } catch (e) {
-          console.error("Error fetching sender details:", e);
-        }
-      }
-
-      chatsWithLastMessage.push({
-        id: room.room_id,
-        name: otherUserName,
-        description: "",
-        image: otherUserAvatar || "/placeholder-avatar.png",
-        link: `/app/chats/${room.room_id}`,
-        lastMessage: lastMessageContent || null,
-        lastMessageTime: lastMessageTime,
-        lastMessageSender: senderDetails
-          ? senderDetails.full_name || senderDetails.email || null
-          : null,
-      });
-    }
-    console.log("Total chats processed:", chatsWithLastMessage.length);
-  } else {
-    console.log("No chat rooms found");
-  }
-
-  console.log(
-    "User role - isUser:",
-    isUser,
-    "isShadchan:",
-    isShadchan,
-    "isAdmin:",
-    isAdmin,
-  );
-  console.log(
-    "chatsWithLastMessage to render:",
-    chatsWithLastMessage.length,
-    chatsWithLastMessage,
-  );
+          }),
+        )
+      ).filter(Boolean)
+    : [];
+  const firstName = user?.user_metadata?.firstName as string | undefined;
+  const roleLabel = isAdmin ? "מנהל" : isShadchan ? "שדכן" : "משתמש";
 
   return (
     <div className="space-y-10 py-4">
+      {/* ברכה */}
+      {user && (
+        <div className="pb-2">
+          <p className="text-2xl font-bold text-foreground">
+            שלום{firstName ? `, ${firstName}` : ""}
+          </p>
+          <p className="text-muted-foreground mt-1 text-sm">
+            ברוך הבא למערכת קול מצהלות · {roleLabel}
+          </p>
+        </div>
+      )}
+
       {(isShadchan || isAdmin) && (
         <>
           <DashboardSection

@@ -22,11 +22,6 @@ type Chat = {
 };
 
 export default function Chat({ chats }: { chats: Chat[] }) {
-  console.log(
-    "Shadchan Chat component received chats:",
-    chats?.length || 0,
-    chats,
-  );
   return (
     <>
       {chats.length > 0 ? (
@@ -34,16 +29,13 @@ export default function Chat({ chats }: { chats: Chat[] }) {
           {chats.map((chat) => (
             <Link
               key={chat.id}
-              href={{
-                pathname: "/app/chats",
-                query: { room: chat.id },
-              }}
+              href={`/app/chats/${chat.id}`}
               className="hover:bg-muted group flex items-center rounded-lg border p-4 transition"
             >
               <img
                 src={chat.image || "/placeholder-avatar.png"}
                 alt={chat.name}
-                className="mr-4 h-10 w-10 rounded-full border"
+                className="me-4 h-10 w-10 rounded-full border"
               />
               <div className="min-w-0 flex-1">
                 <div className="mb-1 flex items-center justify-between gap-2">

@@ -8,6 +8,7 @@ import { cookies } from "next/headers";
 import { Suspense } from "react";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
+import { BottomNav } from "@/components/layout/bottom-nav";
 import { Toaster } from "@/components/ui/sonner";
 import { redirect } from "next/navigation";
 import { getEffectiveRole } from "@/lib/user";
@@ -45,9 +46,10 @@ async function SidebarLayout({ children }: { children: React.ReactNode }) {
         <ImpersonationBanner />
         <div className="flex flex-1 flex-col">
           <Header variant="app" />
-          <main className="container flex-1 py-5">{children}</main>
-          <Footer />
+          <main className="container flex-1 px-3 py-4 pb-24 md:px-4 md:py-5 md:pb-5">{children}</main>
+          <Footer className="hidden md:block" />
         </div>
+        <BottomNav role={role} />
         <Toaster
           richColors
           dir="rtl"

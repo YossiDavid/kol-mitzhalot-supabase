@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
 import { Form } from "@/components/ui/form";
@@ -11,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { studentFields } from "./form/fileds-data";
 import { DynamicField } from "./form/fields/dynamic-field";
 import { createClient } from "@/lib/supabase/client";
+import { studentFormSchema, type StudentFormValues } from "./form/schema";
 
 type Step = (typeof studentFields)[number];
 
@@ -153,7 +155,7 @@ const defaultValues = {
   },
 };
 
-type FormValues = typeof defaultValues;
+type FormValues = StudentFormValues;
 
 const genderLabelOverrides: Record<string, { male: string; female: string }> = {
   "previousPartners.fullName": {
@@ -195,43 +197,41 @@ export default function CreateStudentPage() {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<FormValues>({
-    mode: "onChange",
+    mode: "onTouched",
+    resolver: zodResolver(studentFormSchema) as any,
     defaultValues,
   });
 
   const formValues = form.watch();
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    console.log("Form values changed:", formValues);
-  }, [formValues]);
 
   const steps = studentFields;
   const currentStep = steps[currentStepIndex];
   const gender = formValues.gender as "male" | "female" | "";
   const isLastStep = currentStepIndex === steps.length - 1;
 
-  const canProceedFromCurrentStep = () => {
-    if (steps[currentStepIndex]?.name === "intro") {
-      const selectedGender = form.getValues("gender");
-      if (!selectedGender) {
-        form.setError("gender", {
-          type: "manual",
-          message: "יש לבחור מיועד/מיועדת לפני שממשיכים",
-        });
-        return false;
+  const getStepFieldNames = (step: Step) => {
+    const names: string[] = [];
+    for (const section of step.sections) {
+      for (const field of section.fields) {
+        if (field.type === "repeater") continue;
+        names.push(field.name as string);
       }
-      form.clearErrors("gender");
     }
-
-    return true;
+    return names;
   };
 
-  const handleNextStep = (e?: React.MouseEvent<HTMLButtonElement>) => {
+  const canProceedFromCurrentStep = async () => {
+    const fieldNames = getStepFieldNames(currentStep);
+    return form.trigger(fieldNames as any);
+  };
+
+  const handleNextStep = async (e?: React.MouseEvent<HTMLButtonElement>) => {
     e?.preventDefault();
     e?.stopPropagation();
-    if (!canProceedFromCurrentStep()) return;
+    const valid = await canProceedFromCurrentStep();
+    if (!valid) return;
     if (currentStepIndex === steps.length - 1) return;
     setCurrentStepIndex((prev) => prev + 1);
   };
@@ -243,11 +243,12 @@ export default function CreateStudentPage() {
     setCurrentStepIndex((prev) => prev - 1);
   };
 
-  const handleStepClick = (targetIndex: number) => {
+  const handleStepClick = async (targetIndex: number) => {
     if (targetIndex === currentStepIndex) return;
     const movingForward = targetIndex > currentStepIndex;
-    if (movingForward && !canProceedFromCurrentStep()) {
-      return;
+    if (movingForward) {
+      const valid = await canProceedFromCurrentStep();
+      if (!valid) return;
     }
     setCurrentStepIndex(targetIndex);
   };
@@ -934,11 +935,11 @@ export default function CreateStudentPage() {
   }
 
   return (
-    <Section asChild className="my-10 space-y-4">
+    <Section asChild className="my-4 space-y-4 md:my-10">
       <div>
-        <h1 className="mb-4 text-3xl font-bold">הוספת קו״ח למערכת</h1>
-        <Box className="p-8">
-          <div className="grid gap-8 md:grid-cols-[220px_minmax(0,1fr)]">
+        <h1 className="mb-4 text-2xl font-bold md:text-3xl">הוספת קו״ח למערכת</h1>
+        <Box className="p-4 md:p-8">
+          <div className="grid gap-4 md:gap-8 md:grid-cols-[220px_minmax(0,1fr)]">
             <StepSidebar
               steps={steps}
               currentStepIndex={currentStepIndex}
@@ -952,7 +953,7 @@ export default function CreateStudentPage() {
                   className="space-y-8"
                 >
                   <div className="space-y-6">
-                    <h2 className="text-2xl font-semibold">
+                    <h2 className="text-xl font-semibold md:text-2xl">
                       {getStepTitle(currentStep, gender)}
                     </h2>
                     {currentStep.sections.map((section) => (
@@ -1048,7 +1049,7 @@ function SectionRenderer({
           <DynamicField
             key={`${field.name}-${index}`}
             field={field as any}
-            control={control}
+            control={control as any}
             values={values}
             gender={gender}
             getLabel={getFieldLabel}
@@ -1107,7 +1108,7 @@ function StepSidebar({
     steps[currentStepIndex]?.name === "intro" && !gender;
 
   return (
-    <nav className="space-y-2">
+    <nav className="flex gap-1 overflow-x-auto pb-2 md:block md:space-y-2 md:overflow-x-visible md:pb-0">
       {steps.map((step, index) => {
         const isActive = index === currentStepIndex;
         const isDisabled = disableForwardNavigation && index > currentStepIndex;
@@ -1117,9 +1118,9 @@ function StepSidebar({
             type="button"
             onClick={() => onStepClick(index)}
             className={cn(
-              "relative w-full rounded-lg px-3 py-2 text-right transition",
+              "relative shrink-0 rounded-lg px-3 py-2 text-right transition md:w-full",
               isActive
-                ? "bg-primary/10 text-primary before:bg-primary before:absolute before:top-1/2 before:right-0 before:h-1/2 before:w-1 before:-translate-y-1/2 before:rounded-l-2xl"
+                ? "bg-primary/10 text-primary md:before:bg-primary md:before:absolute md:before:top-1/2 md:before:right-0 md:before:h-1/2 md:before:w-1 md:before:-translate-y-1/2 md:before:rounded-l-2xl"
                 : "hover:bg-muted/70 bg-transparent",
               isDisabled && "cursor-not-allowed opacity-60",
             )}

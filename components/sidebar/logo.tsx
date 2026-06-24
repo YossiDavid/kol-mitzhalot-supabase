@@ -9,11 +9,12 @@ import Logo from "@/assets/images/logo_negative_text.svg"
 export function SidebarLogo() {
 	const { state, toggleSidebar } = useSidebar()
 	return (
-		<SidebarHeader className={cn(state === "collapsed" ? "p-4" : "p-4")}>
-			<Link href="/app">
+		<SidebarHeader className={cn(state === "collapsed" ? "flex items-center justify-center p-3" : "p-4")}>
+			<Link href="/app" className="flex items-center">
 				<img
 					src={state === "collapsed" ? LogoIcon.src : Logo.src}
 					alt="לוגו קול מצהלות"
+					className={cn(state === "collapsed" ? "h-8 w-8" : "h-auto w-full")}
 				/>
 			</Link>
 		</SidebarHeader>
