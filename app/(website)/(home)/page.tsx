@@ -1,11 +1,27 @@
 import Section from "@/components/layout/section";
-import { Sparkles, Heart, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import Logo from "@/assets/images/logo.svg"
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
-export default function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string>>;
+}) {
+  const params = await searchParams;
+  if (params.token_hash) {
+    const qs = new URLSearchParams(
+      Object.fromEntries(
+        Object.entries(params).filter(([k]) =>
+          ["token_hash", "type", "next", "code"].includes(k),
+        ),
+      ),
+    ).toString();
+    redirect(`/auth/confirm?${qs}`);
+  }
   return (
     <Section containerClassName="py-16 md:py-24">
       <div className="mx-auto max-w-4xl text-center space-y-12">
