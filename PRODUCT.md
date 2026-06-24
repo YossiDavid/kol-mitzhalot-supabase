@@ -35,3 +35,4 @@ Professional, modern, and efficient — the tool should feel like a polished B2B
 - WCAG 2.1 AA minimum contrast
 - Reduced motion respected (no required animations)
 - Keyboard navigation for all primary flows
+

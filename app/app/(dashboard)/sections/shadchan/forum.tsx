@@ -6,35 +6,73 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { MessageSquareMore } from "lucide-react";
+import { MessageSquare, PlusCircle } from "lucide-react";
 import Link from "next/link";
 
-type Forum = {
+export type ForumPost = {
   id: string;
-  name: string;
-  description: string;
-  image: string;
-  link: string;
+  title: string;
+  author_name: string;
+  replies_count: number;
+  created_at: string;
+  category_slug?: string;
 };
 
-export default function Forum({ forums }: { forums: Forum[] }) {
+export default function Forum({
+  forums,
+  canWrite,
+}: {
+  forums: ForumPost[];
+  canWrite?: boolean;
+}) {
   return (
     <>
       {forums.length > 0 ? (
-        <></>
+        <div className="space-y-3">
+          {forums.map((post) => (
+            <Link
+              key={post.id}
+              href={post.category_slug ? `/app/forums/${post.category_slug}/${post.id}` : `/app/forums`}
+              className="hover:bg-muted flex items-start justify-between rounded-lg border p-4 transition"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">{post.title}</p>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  {post.author_name} ·{" "}
+                  {new Date(post.created_at).toLocaleDateString("he-IL")}
+                </p>
+              </div>
+              <span className="text-muted-foreground ms-4 flex shrink-0 items-center gap-1 text-xs">
+                <MessageSquare className="h-3 w-3" />
+                {post.replies_count}
+              </span>
+            </Link>
+          ))}
+        </div>
       ) : (
         <Empty>
           <EmptyHeader>
             <EmptyTitle>עדיין אין הודעות בפורום השדכנים</EmptyTitle>
             <EmptyDescription>
-              מה דעתך לכתוב את ההודעה הראשונה?
+              {canWrite
+                ? "מה דעתך לכתוב את הנושא הראשון?"
+                : "הפורום עדיין ריק."}
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button asChild>
-              <Link href="/app/students">
-                <MessageSquareMore />
-                לפורום
+              <Link href={canWrite ? "/app/forums/create" : "/app/forums"}>
+                {canWrite ? (
+                  <>
+                    <PlusCircle />
+                    פתח נושא ראשון
+                  </>
+                ) : (
+                  <>
+                    <MessageSquare />
+                    לפורום
+                  </>
+                )}
               </Link>
             </Button>
           </EmptyContent>
