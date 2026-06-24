@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { Suspense } from "react";
-import type { AdminShadchanimQuery } from "@/features/admin/lib/shadchanim";
+import type { AdminShadchanimQuery } from "@/features/admin/lib/shadchanim-query";
 import { getShadchanimSummary } from "@/features/admin/lib/shadchanim";
 import {
   ShadchanimList,

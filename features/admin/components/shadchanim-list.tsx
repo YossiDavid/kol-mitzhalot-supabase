@@ -1,7 +1,7 @@
 import { Box } from "@/components/layout";
 import { Spinner } from "@/components/ui/spinner";
 import { ShadchanimPagination, ShadchanimPerPageSelect } from "@/features/admin/components/shadchanim-pagination";
-import type { AdminShadchanimQuery } from "@/features/admin/lib/shadchanim";
+import type { AdminShadchanimQuery } from "@/features/admin/lib/shadchanim-query";
 import { getShadchanimList } from "@/features/admin/lib/shadchanim";
 import { Suspense } from "react";
 
