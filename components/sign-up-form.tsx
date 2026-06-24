@@ -24,8 +24,6 @@ export function SignUpForm({
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [password, setPassword] = useState("");
-  const [repeatPassword, setRepeatPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,12 +37,6 @@ export function SignUpForm({
     const supabase = createClient();
     setIsLoading(true);
     setError(null);
-
-    if (password !== repeatPassword) {
-      setError("הסיסמאות אינן תואמות");
-      setIsLoading(false);
-      return;
-    }
 
     const trimmed = phone.replace(/\s/g, "");
     if (!isValidPhone(trimmed)) {
@@ -62,9 +54,8 @@ export function SignUpForm({
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signInWithOtp({
         email,
-        password,
         options: {
           data: {
             phone: trimmed,
@@ -75,7 +66,7 @@ export function SignUpForm({
         },
       });
       if (error) throw error;
-      router.push("/auth/sign-up-success");
+      router.push("/auth/check-email");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "אירעה שגיאה");
     } finally {
