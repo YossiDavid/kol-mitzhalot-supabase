@@ -46,10 +46,11 @@ export default async function Home() {
   const favoritesStudentsData = favoritesStudents.data || [];
 
   // הילדים שלך
-  const children = await supabase
-    .from("students")
-    .select(
-      `*,
+  const children = user?.id
+    ? await supabase
+        .from("students")
+        .select(
+          `*,
       education_history(*),
       employment_history(*),
       medical_records(*),
@@ -57,8 +58,9 @@ export default async function Home() {
       references(*),
       previous_partners(*)
     `,
-    )
-    .eq("user_id", user?.id);
+        )
+        .eq("user_id", user.id)
+    : { data: [], error: null };
 
   if (children.error) {
     console.error(children.error);
