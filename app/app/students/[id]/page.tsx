@@ -19,8 +19,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
-import ShareButton from "./share-button";
-import MessageButton from "./message-button";
+import ShareButton from "@/features/students/components/share-button";
+import MessageButton from "@/features/students/components/message-button";
 import { jewishDateHebrew } from "@/lib/jewishDatte";
 import {
   eduToHebrew,
@@ -35,7 +35,7 @@ import {
   referenceTypeToHebrew,
   relatedIssuePreferenceToHebrew,
   workStatusToHebrew,
-} from "@/lib/student-profile-labels";
+} from "@/features/students/lib/profile-labels";
 import { unstable_noStore as noStore } from "next/cache";
 import { cn } from "@/lib/utils";
 

@@ -20,7 +20,7 @@ import {
   buildShadchanimHref,
   getVisiblePaginationPages,
   type AdminShadchanimQuery,
-} from "@/lib/admin-shadchanim-query";
+} from "@/features/admin/lib/shadchanim";
 import { cn } from "@/lib/utils";
 
 const PER_PAGE_OPTIONS = ["10", "25", "50", "100"] as const;

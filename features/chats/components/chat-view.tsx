@@ -14,7 +14,7 @@ import { Box } from "@/components/layout";
 import { ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { MessageBubble } from "./message-bubble";
-import type { Message } from "./types";
+import type { Message } from "@/app/app/chats/types";
 
 function canEditMessage(m: Message, uid: string | null): boolean {
   if (!uid || m.sender_id !== uid) return false;

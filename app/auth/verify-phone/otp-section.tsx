@@ -1,6 +1,6 @@
 "use client";
 
-import { OTPForm } from "@/components/otp-form";
+import { OTPForm } from "@/features/auth/components/otp-form";
 import { Button } from "@/components/ui/button";
 import {
   Card,

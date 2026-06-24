@@ -10,7 +10,7 @@ import {
   SHIDDUCH_STATUS_LABELS,
   SHIDDUCH_STATUS_OPTIONS,
   type ShidduchStatus,
-} from "@/lib/shidduch-status";
+} from "@/features/shidduchim/lib/status";
 
 type Props = {
   shidduchId: string;

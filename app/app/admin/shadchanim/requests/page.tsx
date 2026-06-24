@@ -5,7 +5,7 @@ import { Box } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
-import { ShadchanRequestActions } from "./request-actions";
+import { ShadchanRequestActions } from "@/features/admin/components/request-actions";
 
 type ShadchanRequest = {
   id: string;

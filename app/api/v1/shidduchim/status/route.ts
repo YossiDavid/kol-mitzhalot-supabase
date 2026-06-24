@@ -7,7 +7,7 @@ import {
   isShidduchStatus,
   SHIDDUCH_STATUS_LABELS,
   SHIDDUCH_STATUS_VALUES,
-} from "@/lib/shidduch-status";
+} from "@/features/shidduchim/lib/status";
 import { getEffectiveRole } from "@/lib/user";
 
 const bodySchema = z.object({

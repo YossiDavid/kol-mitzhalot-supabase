@@ -4,14 +4,14 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import {
   isShidduchStatus,
   type ShidduchStatus,
-} from "@/lib/shidduch-status";
+} from "@/features/shidduchim/lib/status";
 import { createClient } from "@/lib/supabase/server";
 import { getEffectiveRole } from "@/lib/user";
 import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import SendOtherSideButton from "./send-other-side-button";
-import StatusSelector from "./status-selector";
+import SendOtherSideButton from "@/features/shidduchim/components/send-other-side-button";
+import StatusSelector from "@/features/shidduchim/components/status-selector";
 
 function fullName(
   row: { first_name: string | null; last_name: string | null } | null,

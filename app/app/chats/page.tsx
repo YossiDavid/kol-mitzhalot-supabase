@@ -1,4 +1,4 @@
-import { RoomList } from "./room-list";
+import { RoomList } from "@/features/chats/components/room-list";
 
 export default function ChatsPage() {
   return <RoomList />;

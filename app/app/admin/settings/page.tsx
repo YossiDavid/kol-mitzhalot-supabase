@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { DashboardSection } from "@/components/layout";
 import { Shield, FileCheck, Accessibility } from "lucide-react";
-import { PhoneVerificationToggle } from "@/components/admin/phone-verification-toggle";
+import { PhoneVerificationToggle } from "@/features/admin/components/phone-verification-toggle";
 
 export default function SettingsPage() {
   return (

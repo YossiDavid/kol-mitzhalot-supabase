@@ -16,7 +16,7 @@ import calculateAge from "@/lib/calculateAge";
 import { Button } from "@/components/ui/button";
 import { Save, Send, User as UserIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { getCompatibilityNotes } from "@/lib/shidduch-compatibility";
+import { getCompatibilityNotes } from "@/features/shidduchim/lib/compatibility";
 import { getEffectiveRole } from "@/lib/user-role";
 
 type Gender = "male" | "female";

@@ -18,7 +18,7 @@ import {
   SHIDDUCH_STATUS_LABELS,
   isShidduchStatus,
   type ShidduchStatus,
-} from "@/lib/shidduch-status";
+} from "@/features/shidduchim/lib/status";
 
 type StudentEmbed = {
   first_name: string | null;

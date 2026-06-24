@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { sendShidduchOfferEmails } from "@/lib/send-offer-email";
+import { sendShidduchOfferEmails } from "@/features/shidduchim/lib/send-offer-email";
 import { getEffectiveRole } from "@/lib/user";
 
 const recipientScopeSchema = z.enum(["both", "groom_only", "bride_only"]);

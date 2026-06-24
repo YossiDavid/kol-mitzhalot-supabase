@@ -1,4 +1,4 @@
-import { ChatView } from "../../chat-view";
+import { ChatView } from "@/features/chats/components/chat-view";
 
 export default async function ChatRoomPage({
   params,

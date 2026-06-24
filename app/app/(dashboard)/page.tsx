@@ -1,12 +1,12 @@
 import { DashboardSection } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { ActiveShidduchim, Favorites, Chat, Forum } from "./sections/shadchan";
+import { ActiveShidduchim, Favorites, Chat, Forum } from "@/features/dashboard/components/shadchan";
 import {
   ActiveShidduchim as UserActiveShidduchim,
   ShadchanimList,
   Children,
   Chat as UserChat,
-} from "./sections/user";
+} from "@/features/dashboard/components/user";
 import { createClient } from "@/lib/supabase/server";
 import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";

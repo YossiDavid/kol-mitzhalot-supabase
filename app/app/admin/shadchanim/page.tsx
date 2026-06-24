@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { Suspense } from "react";
-import type { AdminShadchanimQuery } from "@/lib/admin-shadchanim-query";
-import { getShadchanimSummary } from "@/lib/admin-shadchanim";
+import type { AdminShadchanimQuery } from "@/features/admin/lib/shadchanim";
+import { getShadchanimSummary } from "@/features/admin/lib/shadchanim";
 import {
   ShadchanimList,
   ShadchanimListFallback,
-} from "./shadchanim-list";
+} from "@/features/admin/components/shadchanim-list";
 
 function parseShadchanimQuery(
   raw: Record<string, string | string[] | undefined>,

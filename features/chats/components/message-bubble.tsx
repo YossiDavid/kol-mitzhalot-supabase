@@ -10,7 +10,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Reply as ReplyIcon, Pencil } from "lucide-react";
-import type { Message } from "./types";
+import type { Message } from "@/app/app/chats/types";
 
 function formatMessageTime(dateString: string) {
   return new Date(dateString).toLocaleTimeString("he-IL", {

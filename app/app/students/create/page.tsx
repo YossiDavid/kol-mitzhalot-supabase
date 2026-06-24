@@ -9,10 +9,10 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Box, Section } from "@/components/layout";
 import { cn } from "@/lib/utils";
-import { studentFields } from "./form/fileds-data";
-import { DynamicField } from "./form/fields/dynamic-field";
+import { studentFields } from "@/features/students/components/create-form/fileds-data";
+import { DynamicField } from "@/features/students/components/create-form/fields/dynamic-field";
 import { createClient } from "@/lib/supabase/client";
-import { studentFormSchema, type StudentFormValues } from "./form/schema";
+import { studentFormSchema, type StudentFormValues } from "@/features/students/components/create-form/schema";
 
 type Step = (typeof studentFields)[number];
 

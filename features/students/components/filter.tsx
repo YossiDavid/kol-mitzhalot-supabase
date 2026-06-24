@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
-import { useStudentQuery, StudentQuery } from "../page";
+import { useStudentQuery, StudentQuery } from "@/features/students/lib/student-query-context";
 import { Box, DashboardSection } from "@/components/layout";
-import { TextField } from "../create/form/fields/text";
+import { TextField } from "@/features/students/components/create-form/fields/text";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Search, Sliders, SlidersHorizontal, ChevronDown } from "lucide-react";

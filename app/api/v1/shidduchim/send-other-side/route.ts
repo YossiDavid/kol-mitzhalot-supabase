@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { sendShidduchOfferEmails } from "@/lib/send-offer-email";
+import { sendShidduchOfferEmails } from "@/features/shidduchim/lib/send-offer-email";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getEffectiveRole } from "@/lib/user";

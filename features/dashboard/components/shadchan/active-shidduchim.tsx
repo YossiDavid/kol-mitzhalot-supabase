@@ -13,8 +13,8 @@ import {
   SHIDDUCH_STATUS_BADGE_CLASS,
   SHIDDUCH_STATUS_LABELS,
   type ShidduchStatus,
-} from "@/lib/shidduch-status";
-import { employmentCategoryToHebrew } from "@/lib/student-profile-labels";
+} from "@/features/shidduchim/lib/status";
+import { employmentCategoryToHebrew } from "@/features/students/lib/profile-labels";
 import { FileCheck2, Pencil, User } from "lucide-react";
 import Link from "next/link";
 

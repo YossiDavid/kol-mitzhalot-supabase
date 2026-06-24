@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useStudentQuery } from "../page";
+import { useStudentQuery } from "@/features/students/lib/student-query-context";
 import { createClient } from "@/lib/supabase/client";
 import {
   Empty,

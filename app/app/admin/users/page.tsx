@@ -5,15 +5,15 @@ import Link from "next/link";
 import type { Route } from "next";
 import { unstable_noStore as noStore } from "next/cache";
 import { Suspense } from "react";
-import { ImpersonateButton } from "@/components/admin/impersonate-button";
-import { AdminUsersFilters } from "@/components/admin/users-filters";
+import { ImpersonateButton } from "@/features/admin/components/impersonate-button";
+import { AdminUsersFilters } from "@/features/admin/components/users-filters";
 import { getRoleLabel } from "@/lib/user";
 import {
   formatFullName,
   getAdminUsersList,
   type AdminUsersQuery,
   type UserStatsRow,
-} from "@/lib/admin-users";
+} from "@/features/admin/lib/users";
 
 function formatDate(dateString: string | null): string {
   if (!dateString) return "לא זמין";

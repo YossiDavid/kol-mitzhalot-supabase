@@ -1,6 +1,6 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { ImpersonationBanner } from "@/components/admin/impersonation-banner";
+import { ImpersonationBanner } from "@/features/admin/components/impersonation-banner";
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";

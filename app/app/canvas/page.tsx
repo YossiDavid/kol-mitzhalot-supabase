@@ -1,5 +1,5 @@
 import Section from "@/components/layout/section";
-import ShiduchDesk from "./shiduch-desk";
+import ShiduchDesk from "@/features/shidduchim/components/shiduch-desk";
 import { createClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/user";
 import { unstable_noStore as noStore } from "next/cache";

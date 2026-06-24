@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Box } from "@/components/layout";
 import { createClient } from "@/lib/supabase/client";
-import type { Room } from "./types";
+import type { Room } from "@/app/app/chats/types";
 
 function formatTime(dateString: string | null): string {
   if (!dateString) return "";
