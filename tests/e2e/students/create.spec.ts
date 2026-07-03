@@ -1,14 +1,7 @@
 import { test, expect, Page } from "@playwright/test";
 
-// Helper: fill a text input by its field id (name → id via toFieldId)
 const fill = (page: Page, fieldName: string, value: string) =>
   page.locator(`#${fieldName.replace(/[^a-zA-Z0-9]+/g, "-")}`).fill(value);
-
-// Helper: select a value in a NativeSelect that's closest to a given label text
-const selectByLabel = async (page: Page, labelText: string, value: string) => {
-  const label = page.locator("label").filter({ hasText: new RegExp(`^${labelText}`) }).first();
-  await label.locator("..").locator("select").selectOption(value);
-};
 
 test.describe("יצירת תלמיד חדש", () => {
   test.beforeEach(async ({ page }) => {
