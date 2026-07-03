@@ -66,17 +66,19 @@ test.describe("יצירת תלמיד חדש", () => {
     // ── Step 2: Family info ─────────────────────────────────────────
     await expect(page.locator("text=על המשפחה").first()).toBeVisible({ timeout: 5_000 });
 
-    await fill(page, "father.self.name", "אברהם");
+    // father.self / grandFather / grandMother are textAndSelect fields — their
+    // input id is "father-self" (no ".name" suffix), not "father-self-name"
+    await fill(page, "father.self", "אברהם");
     await fill(page, "father.phone", "0501234567");
     await fill(page, "father.job", "מלמד");
-    await fill(page, "father.grandFather.name", "יצחק");
-    await fill(page, "father.grandMother.name", "שרה");
-    await fill(page, "mother.self.name", "רחל");
+    await fill(page, "father.grandFather", "יצחק");
+    await fill(page, "father.grandMother", "שרה");
+    await fill(page, "mother.self", "רחל");
     await fill(page, "mother.maidenName", "לוי");
     await fill(page, "mother.phone", "0507654321");
     await fill(page, "mother.job", "מורה");
-    await fill(page, "mother.grandFather.name", "יעקב");
-    await fill(page, "mother.grandMother.name", "לאה");
+    await fill(page, "mother.grandFather", "יעקב");
+    await fill(page, "mother.grandMother", "לאה");
     await fill(page, "family.numberOfChildren", "5");
     await fill(page, "family.currentChildPlace", "3");
     await fill(page, "family.about", "משפחה חסידית תורנית");
