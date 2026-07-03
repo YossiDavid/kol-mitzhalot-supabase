@@ -1,3 +1,7 @@
+import { execSync } from "child_process";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 import type { FullConfig } from "@playwright/test";
 
 const SCHEMA_SQL = `
@@ -163,52 +167,37 @@ async function globalSetup(_config: FullConfig) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const accessToken = process.env.SUPABASE_ACCESS_TOKEN;
 
-  if (!supabaseUrl) {
-    console.log("[global-setup] NEXT_PUBLIC_SUPABASE_URL not set, skipping");
-    return;
-  }
-
-  // Fall back to service role key — works if the Supabase Management API
-  // accepts it (organisation-owned projects); harmless 401 otherwise.
-  const token =
-    accessToken ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!token) {
+  if (!supabaseUrl || !accessToken) {
     console.log(
-      "[global-setup] Neither SUPABASE_ACCESS_TOKEN nor SUPABASE_SERVICE_ROLE_KEY set — " +
-        "schema setup skipped. Add SUPABASE_ACCESS_TOKEN to GitHub Secrets.",
+      "[global-setup] Skipping schema setup: NEXT_PUBLIC_SUPABASE_URL or SUPABASE_ACCESS_TOKEN not set",
     );
     return;
   }
 
   const projectRef = new URL(supabaseUrl).hostname.split(".")[0];
-  const endpoint = `https://api.supabase.com/v1/projects/${projectRef}/database/query`;
+  const tmpFile = path.join(os.tmpdir(), "e2e-schema.sql");
+  fs.writeFileSync(tmpFile, SCHEMA_SQL);
 
-  console.log(
-    `[global-setup] Applying schema to project ${projectRef} ` +
-      `(using ${accessToken ? "SUPABASE_ACCESS_TOKEN" : "SUPABASE_SERVICE_ROLE_KEY"})...`,
-  );
+  console.log(`[global-setup] Applying schema to project ${projectRef} via Supabase CLI...`);
 
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ query: SCHEMA_SQL }),
-  });
+  const env = { ...process.env, SUPABASE_ACCESS_TOKEN: accessToken };
 
-  if (!res.ok) {
-    const body = await res.text();
-    // Non-fatal: log the error but let tests run (they may still pass if schema exists).
+  try {
+    execSync(`npx supabase link --project-ref ${projectRef} --yes`, {
+      stdio: "inherit",
+      env,
+    });
+    execSync(`npx supabase db query --linked -f ${tmpFile}`, {
+      stdio: "inherit",
+      env,
+    });
+    console.log("[global-setup] Schema applied successfully.");
+  } catch (e) {
     console.warn(
-      `[global-setup] Schema setup returned ${res.status} — ` +
-        `tests may fail if the DB schema is missing.\n${body}`,
+      "[global-setup] Schema setup failed — tests may fail if DB schema is missing.\n",
+      e,
     );
-    return;
   }
-
-  console.log("[global-setup] Schema applied successfully.");
 }
 
 export default globalSetup;
