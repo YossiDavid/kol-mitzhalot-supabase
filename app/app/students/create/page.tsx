@@ -159,6 +159,7 @@ const defaultValues = {
 type FormValues = StudentFormValues;
 
 const genderLabelOverrides: Record<string, { male: string; female: string }> = {
+  // Previous partner fields
   "previousPartners.fullName": {
     male: "שם מלא של האשה הקודמת",
     female: "שם מלא של הבעל הקודם",
@@ -178,6 +179,41 @@ const genderLabelOverrides: Record<string, { male: string; female: string }> = {
   "previousPartners.marriedChildrenNumber": {
     male: "מתוכם נשואים",
     female: "מתוכם נשואות",
+  },
+  // Father section — labels differ for male vs female student
+  "father.self": {
+    male: "שם אביו",
+    female: "שם אביה",
+  },
+  "father.grandFather": {
+    male: "שם אבי אביו",
+    female: "שם אבי אביה",
+  },
+  "father.grandMother": {
+    male: "שם אם אביו",
+    female: "שם אם אביה",
+  },
+  // Mother section
+  "mother.self": {
+    male: "שם אמו",
+    female: "שם אמה",
+  },
+  "mother.maidenName": {
+    male: "שם נעורים של האם",
+    female: "שם נעורים של האם",
+  },
+  "mother.grandFather": {
+    male: "שם אבי אמו",
+    female: "שם אבי אמה",
+  },
+  "mother.grandMother": {
+    male: "שם אם אמו",
+    female: "שם אם אמה",
+  },
+  // Family
+  "family.currentChildPlace": {
+    male: "מיקום הבן בין האחים",
+    female: "מיקום הבת בין האחים",
   },
 };
 

@@ -15,14 +15,15 @@ export function eduToHebrew(edu: string) {
   }
 }
 
-export function personalStatusToHebrew(status: string) {
+export function personalStatusToHebrew(status: string, gender?: string) {
+  const female = gender === "female";
   switch (status) {
     case "single":
-      return "רווק";
+      return female ? "רווקה" : "רווק";
     case "divorced":
-      return "גרוש";
+      return female ? "גרושה" : "גרוש";
     case "widower":
-      return "אלמן";
+      return female ? "אלמנה" : "אלמן";
     default:
       return status;
   }

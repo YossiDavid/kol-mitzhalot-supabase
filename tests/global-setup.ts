@@ -81,10 +81,19 @@ DO $$ BEGIN ALTER TABLE public.system_settings ADD CONSTRAINT system_settings_pk
 DO $$ BEGIN ALTER TABLE public.system_settings ADD CONSTRAINT system_settings_key_key UNIQUE (key); EXCEPTION WHEN others THEN NULL; END $$;
 ALTER TABLE public.system_settings ENABLE ROW LEVEL SECURITY;
 
-CREATE OR REPLACE FUNCTION public.is_admin() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public','auth' AS $$ SELECT EXISTS (SELECT 1 FROM auth.users WHERE id = auth.uid() AND (raw_user_meta_data->>'role')::text = 'admin'); $$;
-CREATE OR REPLACE FUNCTION public.is_admin(uid uuid) RETURNS boolean LANGUAGE sql SECURITY DEFINER AS $$ SELECT COALESCE((raw_user_meta_data->>'role')::text = 'admin', false) FROM auth.users WHERE id = uid; $$;
-CREATE OR REPLACE FUNCTION public.is_shadchan() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public','auth' AS $$ SELECT EXISTS (SELECT 1 FROM auth.users WHERE id = auth.uid() AND (raw_user_meta_data->>'role')::text = 'shadchan'); $$;
-CREATE OR REPLACE FUNCTION public.is_shadchan_or_admin() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public','auth' AS $$ SELECT public.is_admin() OR public.is_shadchan(); $$;
+CREATE TABLE IF NOT EXISTS public.user_roles (user_id uuid PRIMARY KEY, role text NOT NULL DEFAULT 'user' CHECK (role IN ('admin','shadchan','user')), granted_at timestamptz DEFAULT now(), granted_by uuid);
+DO $$ BEGIN ALTER TABLE public.user_roles ADD CONSTRAINT user_roles_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE; EXCEPTION WHEN others THEN NULL; END $$;
+ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "user_roles_select_own" ON public.user_roles;
+CREATE POLICY "user_roles_select_own" ON public.user_roles FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "user_roles_select_admin" ON public.user_roles;
+CREATE POLICY "user_roles_select_admin" ON public.user_roles FOR SELECT USING (public.is_admin());
+
+CREATE OR REPLACE FUNCTION public.get_my_role() RETURNS text LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $$ SELECT role FROM public.user_roles WHERE user_id = auth.uid(); $$;
+CREATE OR REPLACE FUNCTION public.is_admin() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $$ SELECT COALESCE(public.get_my_role() = 'admin', false); $$;
+CREATE OR REPLACE FUNCTION public.is_admin(uid uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $$ SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = uid AND role = 'admin'); $$;
+CREATE OR REPLACE FUNCTION public.is_shadchan() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $$ SELECT COALESCE(public.get_my_role() IN ('admin','shadchan'), false); $$;
+CREATE OR REPLACE FUNCTION public.is_shadchan_or_admin() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $$ SELECT COALESCE(public.get_my_role() IN ('admin','shadchan'), false); $$;
 CREATE OR REPLACE FUNCTION public.sync_user_profile() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public','auth' AS $$ DECLARE fn text; ln text; BEGIN fn := COALESCE(NULLIF(TRIM(NEW.raw_user_meta_data->>'firstName'),''),NULLIF(TRIM(NEW.raw_user_meta_data->>'first_name'),'')); ln := COALESCE(NULLIF(TRIM(NEW.raw_user_meta_data->>'lastName'),''),NULLIF(TRIM(NEW.raw_user_meta_data->>'last_name'),'')); INSERT INTO public.user_profiles (id,first_name,last_name,email,updated_at) VALUES (NEW.id,fn,ln,NEW.email,NOW()) ON CONFLICT (id) DO UPDATE SET first_name=COALESCE(fn,user_profiles.first_name), last_name=COALESCE(ln,user_profiles.last_name), email=COALESCE(NEW.email,user_profiles.email), updated_at=NOW(); RETURN NEW; END; $$;
 
 CREATE OR REPLACE FUNCTION public.create_full_student_profile(payload jsonb) RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public' AS $func$

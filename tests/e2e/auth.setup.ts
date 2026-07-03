@@ -43,6 +43,11 @@ setup("authenticate test user", async ({ page }) => {
     .from("user_profiles")
     .upsert({ id: userId, first_name: "Test", last_name: "User" });
 
+  // Grant shadchan role in user_roles table
+  await admin
+    .from("user_roles")
+    .upsert({ user_id: userId, role: "shadchan" });
+
   // Disable phone verification gate so the test user can reach /app
   await admin
     .from("system_settings")

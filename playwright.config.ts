@@ -22,12 +22,25 @@ export default defineConfig({
       testMatch: "**/auth.setup.ts",
     },
     {
+      name: "setup-admin",
+      testMatch: "**/auth.setup.admin.ts",
+    },
+    {
       name: "chromium",
       use: {
         ...devices["Desktop Chrome"],
         storageState: "playwright/.auth/user.json",
       },
       dependencies: ["setup"],
+    },
+    {
+      name: "chromium-admin",
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: "playwright/.auth/admin.json",
+      },
+      dependencies: ["setup-admin"],
+      testMatch: "**/admin/**/*.spec.ts",
     },
   ],
 

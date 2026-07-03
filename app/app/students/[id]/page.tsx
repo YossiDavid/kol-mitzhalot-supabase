@@ -183,7 +183,7 @@ export default async function StudentPage({
             {student.personal_status && (
               <>
                 <span className="text-muted-foreground/40">·</span>
-                <span>{personalStatusToHebrew(student.personal_status)}</span>
+                <span>{personalStatusToHebrew(student.personal_status, student.gender)}</span>
               </>
             )}
             {student.city && (
@@ -213,7 +213,7 @@ export default async function StudentPage({
               </Link>
             </Button>
           )}
-          <ShareButton />
+          <ShareButton studentId={student.id} studentName={`${student.first_name} ${student.last_name}`} />
           {isShadchan && <MessageButton authorId={student.user_id} />}
         </div>
       </div>
@@ -249,7 +249,7 @@ export default async function StudentPage({
                 label="סטטוס אישי"
                 value={
                   student.personal_status
-                    ? personalStatusToHebrew(student.personal_status)
+                    ? personalStatusToHebrew(student.personal_status, student.gender)
                     : null
                 }
               />

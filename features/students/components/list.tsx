@@ -46,12 +46,13 @@ type Student = {
   permalink: string;
 };
 
-function parseStatus(status: string): string {
-  if (status === "married") return "נשוי";
-  if (status === "engaged") return "מאורס";
-  if (status === "single") return "רווק";
-  if (status === "divorced") return "גרוש";
-  if (status === "widowed") return "אלמן";
+function parseStatus(status: string, gender?: string): string {
+  const f = gender === "female";
+  if (status === "married") return f ? "נשואה" : "נשוי";
+  if (status === "engaged") return f ? "מאורסת" : "מאורס";
+  if (status === "single") return f ? "רווקה" : "רווק";
+  if (status === "divorced") return f ? "גרושה" : "גרוש";
+  if (status === "widowed") return f ? "אלמנה" : "אלמן";
   return status;
 }
 
@@ -174,7 +175,7 @@ export default function StudentsList() {
                       {student.first_name} {student.last_name}
                     </p>
                     <p className="text-muted-foreground mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-sm">
-                      <span>{parseStatus(student.personal_status)}</span>
+                      <span>{parseStatus(student.personal_status, student.gender)}</span>
                       <span>·</span>
                       <span>גיל {calculateAge(student.birth_date || "")}</span>
                       {student.city && <><span>·</span><span>{student.city}</span></>}
@@ -247,7 +248,7 @@ export default function StudentsList() {
                     />
                   </button>
                 </div>
-                <div>{parseStatus(student.personal_status)}</div>
+                <div>{parseStatus(student.personal_status, student.gender)}</div>
                 <div>{student.last_name}</div>
                 <div>{student.first_name}</div>
                 <div>
