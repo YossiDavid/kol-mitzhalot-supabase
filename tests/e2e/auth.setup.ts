@@ -48,11 +48,10 @@ setup("authenticate test user", async ({ page }) => {
   if (linkError)
     throw new Error(`Failed to generate link: ${linkError.message}`);
 
-  const linkUrl = new URL(linkData.properties.action_link);
-  const tokenHash = linkUrl.searchParams.get("token_hash");
-  const type = linkUrl.searchParams.get("type") ?? "magiclink";
+  const tokenHash = linkData.properties.hashed_token;
+  const type = "magiclink";
 
-  if (!tokenHash) throw new Error("No token_hash in magic link");
+  if (!tokenHash) throw new Error("No hashed_token in generateLink response");
 
   // Log in via the app's /auth/confirm route
   await page.goto(
