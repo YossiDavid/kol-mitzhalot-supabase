@@ -54,8 +54,9 @@ test.describe("יצירת תלמיד חדש", () => {
     await page.locator('input[placeholder="בחר תאריך עברי"]').click();
     await page.locator(".grid-cols-7 button").first().click();
 
-    // personalStatus select
-    const selects = page.locator("select");
+    // personalStatus / cellphoneType / planForLife — use data-slot to avoid matching
+    // the calendar's hidden <select id="month"> and <select id="year"> elements
+    const selects = page.locator("[data-slot='native-select']");
     await selects.nth(0).selectOption("single");  // personalStatus
     await selects.nth(1).selectOption("kosher");   // cellphoneType
     await selects.nth(2).selectOption("koilel");   // planForLife (male only)
