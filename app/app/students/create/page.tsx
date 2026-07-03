@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -194,6 +195,7 @@ const genderedStepTitles: Record<string, { male: string; female: string }> = {
 const supabase = createClient();
 
 export default function CreateStudentPage() {
+  const router = useRouter();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -920,8 +922,7 @@ export default function CreateStudentPage() {
         alert("הקו״ח נשמר בהצלחה!");
       }
 
-      // אפשר להוסיף כאן ניתוב לדף אחר או איפוס הטופס
-      // router.push('/students')
+      router.push(`/app/students/${studentId}`);
     } catch (error) {
       console.error("Unexpected error:", error);
       alert("אירעה שגיאה לא צפויה");
