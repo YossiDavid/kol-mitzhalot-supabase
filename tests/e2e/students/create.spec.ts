@@ -49,14 +49,10 @@ test.describe("יצירת תלמיד חדש", () => {
     await fill(page, "street", "רב שך");
     await fill(page, "house", "5");
 
-    // Birth date — find the date input (Jewish date picker renders an underlying input)
-    const birthInput = page.locator("input[type='date'], input[placeholder*='תאריך'], input[placeholder*='DD']").first();
-    if (await birthInput.isVisible()) {
-      await birthInput.fill("2000-01-15");
-    } else {
-      // Fallback: fill the text input associated with birthDate
-      await fill(page, "birthDate", "2000-01-15");
-    }
+    // Birth date — ReactJewishDatePicker renders a readOnly input; click it to open the
+    // calendar, then click the first day cell in the grid to select any date.
+    await page.locator('input[placeholder="בחר תאריך עברי"]').click();
+    await page.locator(".grid-cols-7 button").first().click();
 
     // personalStatus select
     const selects = page.locator("select");
