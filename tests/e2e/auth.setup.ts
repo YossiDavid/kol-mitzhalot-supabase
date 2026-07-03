@@ -20,6 +20,9 @@ setup("authenticate test user", async ({ page }) => {
   let userId: string;
   if (existing) {
     userId = existing.id;
+    await admin.auth.admin.updateUserById(userId, {
+      user_metadata: { phone_verified: true },
+    });
   } else {
     const { data, error } = await admin.auth.admin.createUser({
       email: testEmail,
@@ -28,6 +31,7 @@ setup("authenticate test user", async ({ page }) => {
         role: "shadchan",
         firstName: "Test",
         lastName: "User",
+        phone_verified: true,
       },
     });
     if (error) throw new Error(`Failed to create test user: ${error.message}`);
@@ -38,6 +42,11 @@ setup("authenticate test user", async ({ page }) => {
   await admin
     .from("user_profiles")
     .upsert({ id: userId, first_name: "Test", last_name: "User" });
+
+  // Disable phone verification gate so the test user can reach /app
+  await admin
+    .from("system_settings")
+    .upsert({ key: "phone_verification_enabled", value: false });
 
   // Generate a magic link token
   const { data: linkData, error: linkError } =
