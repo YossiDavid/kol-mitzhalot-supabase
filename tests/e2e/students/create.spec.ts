@@ -12,13 +12,13 @@ test.describe("יצירת תלמיד חדש", () => {
   test("טופס יצירת תלמיד מוצג בצורה תקינה", async ({ page }) => {
     // Step 0 should be visible
     await expect(page.locator("text=ברוכים הבאים")).toBeVisible();
-    await expect(page.getByRole("radio", { name: "מיועד" })).toBeVisible();
-    await expect(page.getByRole("radio", { name: "מיועדת" })).toBeVisible();
+    await expect(page.getByRole("radio", { name: "מיועד", exact: true })).toBeVisible();
+    await expect(page.getByRole("radio", { name: "מיועדת", exact: true })).toBeVisible();
   });
 
   test("ניווט בין שלבים עובד", async ({ page }) => {
     // Step 0 — select gender
-    await page.getByRole("radio", { name: "מיועד" }).click();
+    await page.getByRole("radio", { name: "מיועד", exact: true }).click();
     await page.locator("button:has-text('הבא')").click();
 
     // Step 1 — basic information should appear
@@ -35,7 +35,7 @@ test.describe("יצירת תלמיד חדש", () => {
 
   test("זרימת יצירה מלאה — 7 שלבים עד Submit", async ({ page }) => {
     // ── Step 0: Gender ─────────────────────────────────────────────
-    await page.getByRole("radio", { name: "מיועד" }).click();
+    await page.getByRole("radio", { name: "מיועד", exact: true }).click();
     await page.locator("button:has-text('הבא')").click();
 
     // ── Step 1: Basic information ───────────────────────────────────
