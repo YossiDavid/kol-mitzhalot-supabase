@@ -10,7 +10,7 @@ DO $$ BEGIN CREATE TYPE public.education_type_enum AS ENUM ('yeshiva_ktana', 'ye
 DO $$ BEGIN CREATE TYPE public.gender_enum AS ENUM ('male', 'female'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE TYPE public.head_cover_type_enum AS ENUM ('kerchief', 'wig', 'kerchief_on_wig', 'other'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE TYPE public.medical_status_enum AS ENUM ('good', 'littleProblem', 'hugeProblem'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-DO $$ BEGIN CREATE TYPE public.personal_status_enum AS ENUM ('single', 'divorced', 'widower'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE public.personal_status_enum AS ENUM ('single', 'divorced', 'widower', 'widowed', 'engaged', 'married'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE TYPE public.plan_for_life_enum AS ENUM ('koilel', 'torah_job', 'mix_torah_work', 'work'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE TYPE public.reference_type_enum AS ENUM ('rabbi', 'friend', 'family_friend'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE TYPE public.shidduch_status_enum AS ENUM ('draft', 'sent', 'waiting_response', 'interested', 'more_info_needed', 'in_progress', 'rejected', 'completed'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
@@ -76,15 +76,35 @@ DO $$ BEGIN ALTER TABLE public.shidduchim ADD CONSTRAINT shidduchim_groom_id_fke
 DO $$ BEGIN ALTER TABLE public.shidduchim ADD CONSTRAINT shidduchim_bride_id_fkey FOREIGN KEY (bride_id) REFERENCES public.students(id) ON DELETE CASCADE; EXCEPTION WHEN others THEN NULL; END $$;
 ALTER TABLE public.shidduchim ENABLE ROW LEVEL SECURITY;
 
+CREATE TABLE IF NOT EXISTS public.shadchanim_info (id uuid DEFAULT gen_random_uuid() NOT NULL, user_id uuid NOT NULL, bio text, experience_years integer, specializations text[], contact_phone text, contact_email text, website_url text, location text, languages text[], certifications text[], additional_info jsonb DEFAULT '{}'::jsonb, created_at timestamptz DEFAULT now() NOT NULL, updated_at timestamptz DEFAULT now() NOT NULL, application_status text, submitted_at timestamptz, approved_at timestamptz, rejected_at timestamptz, rejected_reason text);
+DO $$ BEGIN ALTER TABLE public.shadchanim_info ADD CONSTRAINT shadchanim_info_pkey PRIMARY KEY (id); EXCEPTION WHEN others THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.shadchanim_info ADD CONSTRAINT shadchanim_info_user_id_key UNIQUE (user_id); EXCEPTION WHEN others THEN NULL; END $$;
+ALTER TABLE public.shadchanim_info ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "shadchanim_info_select" ON public.shadchanim_info;
+CREATE POLICY "shadchanim_info_select" ON public.shadchanim_info AS PERMISSIVE FOR SELECT TO public USING (auth.uid() = user_id OR is_admin());
+DROP POLICY IF EXISTS "shadchanim_info_insert" ON public.shadchanim_info;
+CREATE POLICY "shadchanim_info_insert" ON public.shadchanim_info AS PERMISSIVE FOR INSERT TO public WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "shadchanim_info_update" ON public.shadchanim_info;
+CREATE POLICY "shadchanim_info_update" ON public.shadchanim_info AS PERMISSIVE FOR UPDATE TO public USING (auth.uid() = user_id);
+
 CREATE TABLE IF NOT EXISTS public.system_settings (key text NOT NULL, value boolean NOT NULL, updated_at timestamptz DEFAULT now() NOT NULL);
 DO $$ BEGIN ALTER TABLE public.system_settings ADD CONSTRAINT system_settings_pkey PRIMARY KEY (key); EXCEPTION WHEN others THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE public.system_settings ADD CONSTRAINT system_settings_key_key UNIQUE (key); EXCEPTION WHEN others THEN NULL; END $$;
 ALTER TABLE public.system_settings ENABLE ROW LEVEL SECURITY;
 
-CREATE OR REPLACE FUNCTION public.is_admin() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public','auth' AS $$ SELECT EXISTS (SELECT 1 FROM auth.users WHERE id = auth.uid() AND (raw_user_meta_data->>'role')::text = 'admin'); $$;
-CREATE OR REPLACE FUNCTION public.is_admin(uid uuid) RETURNS boolean LANGUAGE sql SECURITY DEFINER AS $$ SELECT COALESCE((raw_user_meta_data->>'role')::text = 'admin', false) FROM auth.users WHERE id = uid; $$;
-CREATE OR REPLACE FUNCTION public.is_shadchan() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public','auth' AS $$ SELECT EXISTS (SELECT 1 FROM auth.users WHERE id = auth.uid() AND (raw_user_meta_data->>'role')::text = 'shadchan'); $$;
-CREATE OR REPLACE FUNCTION public.is_shadchan_or_admin() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public','auth' AS $$ SELECT public.is_admin() OR public.is_shadchan(); $$;
+CREATE TABLE IF NOT EXISTS public.user_roles (user_id uuid PRIMARY KEY, role text NOT NULL DEFAULT 'user' CHECK (role IN ('admin','shadchan','user')), granted_at timestamptz DEFAULT now(), granted_by uuid);
+DO $$ BEGIN ALTER TABLE public.user_roles ADD CONSTRAINT user_roles_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE; EXCEPTION WHEN others THEN NULL; END $$;
+ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "user_roles_select_own" ON public.user_roles;
+CREATE POLICY "user_roles_select_own" ON public.user_roles FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "user_roles_select_admin" ON public.user_roles;
+CREATE POLICY "user_roles_select_admin" ON public.user_roles FOR SELECT USING (public.is_admin());
+
+CREATE OR REPLACE FUNCTION public.get_my_role() RETURNS text LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $$ SELECT role FROM public.user_roles WHERE user_id = auth.uid(); $$;
+CREATE OR REPLACE FUNCTION public.is_admin() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $$ SELECT COALESCE(public.get_my_role() = 'admin', false); $$;
+CREATE OR REPLACE FUNCTION public.is_admin(uid uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $$ SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = uid AND role = 'admin'); $$;
+CREATE OR REPLACE FUNCTION public.is_shadchan() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $$ SELECT COALESCE(public.get_my_role() IN ('admin','shadchan'), false); $$;
+CREATE OR REPLACE FUNCTION public.is_shadchan_or_admin() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO 'public' AS $$ SELECT COALESCE(public.get_my_role() IN ('admin','shadchan'), false); $$;
 CREATE OR REPLACE FUNCTION public.sync_user_profile() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public','auth' AS $$ DECLARE fn text; ln text; BEGIN fn := COALESCE(NULLIF(TRIM(NEW.raw_user_meta_data->>'firstName'),''),NULLIF(TRIM(NEW.raw_user_meta_data->>'first_name'),'')); ln := COALESCE(NULLIF(TRIM(NEW.raw_user_meta_data->>'lastName'),''),NULLIF(TRIM(NEW.raw_user_meta_data->>'last_name'),'')); INSERT INTO public.user_profiles (id,first_name,last_name,email,updated_at) VALUES (NEW.id,fn,ln,NEW.email,NOW()) ON CONFLICT (id) DO UPDATE SET first_name=COALESCE(fn,user_profiles.first_name), last_name=COALESCE(ln,user_profiles.last_name), email=COALESCE(NEW.email,user_profiles.email), updated_at=NOW(); RETURN NEW; END; $$;
 
 CREATE OR REPLACE FUNCTION public.create_full_student_profile(payload jsonb) RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public' AS $func$
@@ -145,6 +165,31 @@ BEGIN
   RETURN new_student_id;
 END;
 $func$;
+
+-- Ensure shadchanim_info has all required columns (in case table was created without them)
+DO $$ BEGIN ALTER TABLE public.students ADD COLUMN IF NOT EXISTS status_changed_at timestamptz; EXCEPTION WHEN others THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.shadchanim_info ADD COLUMN IF NOT EXISTS application_status text; EXCEPTION WHEN others THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.shadchanim_info ADD COLUMN IF NOT EXISTS submitted_at timestamptz; EXCEPTION WHEN others THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.shadchanim_info ADD COLUMN IF NOT EXISTS approved_at timestamptz; EXCEPTION WHEN others THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.shadchanim_info ADD COLUMN IF NOT EXISTS rejected_at timestamptz; EXCEPTION WHEN others THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.shadchanim_info ADD COLUMN IF NOT EXISTS rejected_reason text; EXCEPTION WHEN others THEN NULL; END $$;
+
+GRANT EXECUTE ON FUNCTION public.create_full_student_profile TO authenticated;
+
+CREATE TABLE IF NOT EXISTS public.forum_posts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  body text NOT NULL,
+  author_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at timestamptz DEFAULT now() NOT NULL
+);
+ALTER TABLE public.forum_posts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "forum_posts_select" ON public.forum_posts;
+CREATE POLICY "forum_posts_select" ON public.forum_posts FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "forum_posts_insert" ON public.forum_posts;
+CREATE POLICY "forum_posts_insert" ON public.forum_posts FOR INSERT TO authenticated WITH CHECK (auth.uid() = author_id AND public.is_shadchan_or_admin());
+DROP POLICY IF EXISTS "forum_posts_delete_own" ON public.forum_posts;
+CREATE POLICY "forum_posts_delete_own" ON public.forum_posts FOR DELETE TO authenticated USING (auth.uid() = author_id OR public.is_admin());
 
 DROP POLICY IF EXISTS "Users can read profiles of users they chat with" ON public.user_profiles;
 CREATE POLICY "Users can read profiles of users they chat with" ON public.user_profiles AS PERMISSIVE FOR SELECT TO authenticated USING (auth.uid() = id);

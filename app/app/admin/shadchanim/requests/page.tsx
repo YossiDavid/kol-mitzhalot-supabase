@@ -40,11 +40,10 @@ async function getPendingRequests(): Promise<ShadchanRequest[]> {
     throw error;
   }
 
-  // שליפת כל הבקשות עם סטטוס pending
+  // שליפת כל הבקשות (ממתינות + מאושרות + נדחות)
   const { data, error } = await supabase
     .from("shadchanim_info")
     .select("*")
-    .eq("application_status", "pending")
     .order("submitted_at", { ascending: false });
 
   if (error) {
@@ -141,7 +140,7 @@ export default async function ShadchanRequestsPage() {
       <DashboardSection
         title="בקשות הצטרפות כשדכן"
         titleNumber={requests.length}
-        subTitle="בקשות ממתינות לאישור"
+        subTitle={`${requests.filter(r => r.application_status === "pending").length} ממתינות · ${requests.filter(r => r.application_status === "approved").length} מאושרות · ${requests.filter(r => r.application_status === "rejected").length} נדחות`}
         button={
           <div className="flex items-center gap-2">
             <Button asChild variant="outline">
@@ -162,13 +161,28 @@ export default async function ShadchanRequestsPage() {
             {requests.map((request) => (
               <Box key={request.id} className="p-6">
                 <div className="space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold">
-                        {request.user_first_name || request.user_last_name
-                          ? `${request.user_first_name || ""} ${request.user_last_name || ""}`.trim()
-                          : `בקשה #${request.id.substring(0, 8)}`}
-                      </h3>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-semibold">
+                          {request.user_first_name || request.user_last_name
+                            ? `${request.user_first_name || ""} ${request.user_last_name || ""}`.trim()
+                            : `בקשה #${request.id.substring(0, 8)}`}
+                        </h3>
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          request.application_status === "approved"
+                            ? "bg-green-100 text-green-800"
+                            : request.application_status === "rejected"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}>
+                          {request.application_status === "approved"
+                            ? "מאושר"
+                            : request.application_status === "rejected"
+                            ? "נדחה"
+                            : "ממתין לאישור"}
+                        </span>
+                      </div>
                       {request.user_email && (
                         <p className="text-sm text-muted-foreground">
                           אימייל: {request.user_email}
@@ -177,8 +191,29 @@ export default async function ShadchanRequestsPage() {
                       <p className="text-sm text-muted-foreground">
                         תאריך הגשה: {formatDate(request.submitted_at)}
                       </p>
+                      {request.application_status === "approved" && request.approved_at && (
+                        <p className="text-sm text-green-700">
+                          אושר ב: {formatDate(request.approved_at)}
+                        </p>
+                      )}
+                      {request.application_status === "rejected" && (
+                        <>
+                          {request.rejected_at && (
+                            <p className="text-sm text-red-700">
+                              נדחה ב: {formatDate(request.rejected_at)}
+                            </p>
+                          )}
+                          {request.rejected_reason && (
+                            <p className="text-sm text-red-700">
+                              סיבה: {request.rejected_reason}
+                            </p>
+                          )}
+                        </>
+                      )}
                     </div>
-                    <ShadchanRequestActions requestId={request.user_id} />
+                    {request.application_status === "pending" && (
+                      <ShadchanRequestActions requestId={request.user_id} />
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

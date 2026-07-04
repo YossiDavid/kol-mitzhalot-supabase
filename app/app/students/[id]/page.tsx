@@ -17,10 +17,13 @@ import {
   Star,
   Mail,
   ChevronRight,
+  Lock,
+  ImageIcon,
 } from "lucide-react";
 import Link from "next/link";
 import ShareButton from "@/features/students/components/share-button";
 import MessageButton from "@/features/students/components/message-button";
+import StatusUpdateButton from "./status-update-button";
 import { jewishDateHebrew } from "@/lib/jewishDatte";
 import {
   eduToHebrew,
@@ -96,6 +99,9 @@ export default async function StudentPage({
     );
   }
 
+  const isOwnProfile = user?.id === student.user_id;
+  const photoPrivate = student.gender === "female" && !isOwnProfile && !isShadchan;
+
   type IconComponent = React.ComponentType<{
     size?: number;
     className?: string;
@@ -167,8 +173,31 @@ export default async function StudentPage({
       </Link>
 
       {/* Hero */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        {/* Photo */}
+        {student.image_url && (
+          <div className="shrink-0">
+            {photoPrivate ? (
+              <div className="bg-muted flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-full border sm:h-24 sm:w-24">
+                <Lock className="text-muted-foreground h-6 w-6" />
+                <span className="text-muted-foreground text-[10px]">חסוי</span>
+              </div>
+            ) : (
+              <img
+                src={student.image_url}
+                alt={`${student.first_name} ${student.last_name}`}
+                className="h-20 w-20 rounded-full object-cover sm:h-24 sm:w-24"
+              />
+            )}
+          </div>
+        )}
+        {!student.image_url && (
+          <div className="bg-muted flex h-20 w-20 shrink-0 items-center justify-center rounded-full border sm:h-24 sm:w-24">
+            <ImageIcon className="text-muted-foreground h-8 w-8" />
+          </div>
+        )}
+
+        <div className="min-w-0 flex-1">
           <h1 className="text-2xl! font-bold! leading-tight!">
             {student.first_name} {student.last_name}
           </h1>
@@ -183,7 +212,7 @@ export default async function StudentPage({
             {student.personal_status && (
               <>
                 <span className="text-muted-foreground/40">·</span>
-                <span>{personalStatusToHebrew(student.personal_status)}</span>
+                <span>{personalStatusToHebrew(student.personal_status, student.gender)}</span>
               </>
             )}
             {student.city && (
@@ -213,8 +242,15 @@ export default async function StudentPage({
               </Link>
             </Button>
           )}
-          <ShareButton />
+          <ShareButton studentId={student.id} studentName={`${student.first_name} ${student.last_name}`} />
           {isShadchan && <MessageButton authorId={student.user_id} />}
+          {isShadchan && (
+            <StatusUpdateButton
+              studentId={student.id}
+              currentStatus={student.personal_status as any}
+              gender={student.gender as any}
+            />
+          )}
         </div>
       </div>
 
@@ -249,7 +285,7 @@ export default async function StudentPage({
                 label="סטטוס אישי"
                 value={
                   student.personal_status
-                    ? personalStatusToHebrew(student.personal_status)
+                    ? personalStatusToHebrew(student.personal_status, student.gender)
                     : null
                 }
               />
