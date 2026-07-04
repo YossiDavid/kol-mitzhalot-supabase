@@ -167,6 +167,7 @@ END;
 $func$;
 
 -- Ensure shadchanim_info has all required columns (in case table was created without them)
+DO $$ BEGIN ALTER TABLE public.students ADD COLUMN IF NOT EXISTS status_changed_at timestamptz; EXCEPTION WHEN others THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE public.shadchanim_info ADD COLUMN IF NOT EXISTS application_status text; EXCEPTION WHEN others THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE public.shadchanim_info ADD COLUMN IF NOT EXISTS submitted_at timestamptz; EXCEPTION WHEN others THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE public.shadchanim_info ADD COLUMN IF NOT EXISTS approved_at timestamptz; EXCEPTION WHEN others THEN NULL; END $$;

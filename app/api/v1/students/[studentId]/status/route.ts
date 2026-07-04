@@ -53,11 +53,17 @@ export async function PATCH(
   const { status } = parsed.data;
   const admin = createAdminClient();
 
+  const isEngagedOrMarried = status === "engaged" || status === "married";
+
   const { data: updated, error: updateError } = await admin
     .from("students")
-    .update({ personal_status: status })
+    .update({
+      personal_status: status,
+      status_changed_at: new Date().toISOString(),
+      ...(isEngagedOrMarried ? { in_shidduchim: false } : {}),
+    })
     .eq("id", studentId)
-    .select("id, personal_status")
+    .select("id, personal_status, in_shidduchim, status_changed_at")
     .single();
 
   if (updateError || !updated) {

@@ -45,8 +45,18 @@ type Student = {
   height: number;
   cv_url?: string;
   image_url?: string | null;
+  status_changed_at?: string | null;
   permalink: string;
 };
+
+function isRecentlyEngaged(student: Student): boolean {
+  if (student.personal_status !== "engaged") return false;
+  if (!student.status_changed_at) return true;
+  const changedAt = new Date(student.status_changed_at);
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  return changedAt >= oneMonthAgo;
+}
 
 function parseStatus(status: string, gender?: string): string {
   const f = gender === "female";
@@ -81,10 +91,16 @@ export default function StudentsList() {
     async function fetchStudents() {
       setLoading(true);
       try {
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        const oneMonthAgoStr = oneMonthAgo.toISOString();
+
         let q = supabase
           .from("students")
           .select("*")
-          .or("in_shidduchim.eq.true,in_shidduchim.is.null");
+          .or(
+            `in_shidduchim.eq.true,in_shidduchim.is.null,and(personal_status.eq.engaged,status_changed_at.gte.${oneMonthAgoStr})`,
+          );
 
         if (query.first_name)
           q = q.ilike("first_name", `%${query.first_name}%`);
@@ -170,11 +186,23 @@ export default function StudentsList() {
           {/* כרטיסים — מובייל בלבד */}
           <div className="flex flex-col gap-2 md:hidden">
             {students.map((student) => (
-              <Box key={student.id} className="p-4">
+              <Box
+                key={student.id}
+                className={cn(
+                  "p-4",
+                  isRecentlyEngaged(student) &&
+                    "border-yellow-400 bg-yellow-50 dark:bg-yellow-950/30",
+                )}
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-1.5 font-semibold">
                       {student.first_name} {student.last_name}
+                      {isRecentlyEngaged(student) && (
+                        <span className="text-xs font-medium text-yellow-700 dark:text-yellow-400">
+                          🎉 מאורס/ת
+                        </span>
+                      )}
                       {student.image_url && (
                         <Camera className="text-muted-foreground h-3.5 w-3.5 shrink-0" aria-label="יש תמונה" />
                       )}
@@ -237,7 +265,11 @@ export default function StudentsList() {
             {students.map((student) => (
               <Box
                 key={student.id}
-                className="col-span-full grid grid-cols-subgrid items-center p-4"
+                className={cn(
+                  "col-span-full grid grid-cols-subgrid items-center p-4",
+                  isRecentlyEngaged(student) &&
+                    "border-yellow-400 bg-yellow-50 dark:bg-yellow-950/30",
+                )}
               >
                 <div>
                   <button
