@@ -175,6 +175,21 @@ DO $$ BEGIN ALTER TABLE public.shadchanim_info ADD COLUMN IF NOT EXISTS rejected
 
 GRANT EXECUTE ON FUNCTION public.create_full_student_profile TO authenticated;
 
+CREATE TABLE IF NOT EXISTS public.forum_posts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  body text NOT NULL,
+  author_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at timestamptz DEFAULT now() NOT NULL
+);
+ALTER TABLE public.forum_posts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "forum_posts_select" ON public.forum_posts;
+CREATE POLICY "forum_posts_select" ON public.forum_posts FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "forum_posts_insert" ON public.forum_posts;
+CREATE POLICY "forum_posts_insert" ON public.forum_posts FOR INSERT TO authenticated WITH CHECK (auth.uid() = author_id AND public.is_shadchan_or_admin());
+DROP POLICY IF EXISTS "forum_posts_delete_own" ON public.forum_posts;
+CREATE POLICY "forum_posts_delete_own" ON public.forum_posts FOR DELETE TO authenticated USING (auth.uid() = author_id OR public.is_admin());
+
 DROP POLICY IF EXISTS "Users can read profiles of users they chat with" ON public.user_profiles;
 CREATE POLICY "Users can read profiles of users they chat with" ON public.user_profiles AS PERMISSIVE FOR SELECT TO authenticated USING (auth.uid() = id);
 DROP POLICY IF EXISTS "Users can insert their own profile" ON public.students;

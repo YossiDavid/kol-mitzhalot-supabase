@@ -112,6 +112,17 @@ export default async function Home() {
   }
   const activeShidduchimData = activeShidduchimRes.data || [];
 
+  // פוסטים אחרונים בפורום השדכנים
+  const forumPostsRes =
+    user?.id && (isShadchan || isAdmin)
+      ? await supabase
+          .from("forum_posts")
+          .select("id, title, body, created_at")
+          .order("created_at", { ascending: false })
+          .limit(3)
+      : { data: [], error: null };
+  const forumPostsData = forumPostsRes.data || [];
+
   // נשלוף את כל חדרי הצ'אט של המשתמש עם ההודעה האחרונה בכל חדר, כולל פרטי השולח
   let chatRooms = null;
   let chatRoomsError = null;
@@ -275,7 +286,7 @@ export default async function Home() {
               </Button>
             }
           >
-            <Forum forums={[]} />
+            <Forum posts={forumPostsData} />
           </DashboardSection>
         </>
       )}
