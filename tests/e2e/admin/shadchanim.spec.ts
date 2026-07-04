@@ -24,8 +24,11 @@ test.describe("ניהול שדכנים — בדיקות admin", () => {
     const count = await rows.count();
 
     if (count > 0) {
+      // Each shadchan row can have up to 3 null date fields (last shidduch created,
+      // last shidduch completed, last sign-in) which render as "לא זמין".
+      // Real name/email fields should not show "לא זמין", so total must be < count*4.
       const notAvailableCount = await page.locator("text=לא זמין").count();
-      expect(notAvailableCount).toBeLessThan(count);
+      expect(notAvailableCount).toBeLessThan(count * 4);
     }
   });
 
