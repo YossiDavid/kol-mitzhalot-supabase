@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import Link from "next/link";
 import calculateAge from "@/lib/calculateAge";
-import { Star } from "lucide-react";
+import { Star, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
 import { cn } from "@/lib/utils";
@@ -44,6 +44,7 @@ type Student = {
   birth_date: Date;
   height: number;
   cv_url?: string;
+  image_url?: string | null;
   permalink: string;
 };
 
@@ -172,8 +173,11 @@ export default function StudentsList() {
               <Box key={student.id} className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold">
+                    <p className="flex items-center gap-1.5 font-semibold">
                       {student.first_name} {student.last_name}
+                      {student.image_url && (
+                        <Camera className="text-muted-foreground h-3.5 w-3.5 shrink-0" aria-label="יש תמונה" />
+                      )}
                     </p>
                     <p className="text-muted-foreground mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-sm">
                       <span>{parseStatus(student.personal_status, student.gender)}</span>
@@ -249,7 +253,12 @@ export default function StudentsList() {
                     />
                   </button>
                 </div>
-                <div>{parseStatus(student.personal_status, student.gender)}</div>
+                <div className="flex items-center gap-1">
+                  {parseStatus(student.personal_status, student.gender)}
+                  {student.image_url && (
+                    <Camera className="text-muted-foreground h-3.5 w-3.5 shrink-0" aria-label="יש תמונה" />
+                  )}
+                </div>
                 <div>{student.last_name}</div>
                 <div>{student.first_name}</div>
                 <div>

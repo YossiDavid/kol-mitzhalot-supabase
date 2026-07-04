@@ -21,6 +21,7 @@ import {
 import Link from "next/link";
 import ShareButton from "@/features/students/components/share-button";
 import MessageButton from "@/features/students/components/message-button";
+import StatusUpdateButton from "./status-update-button";
 import { jewishDateHebrew } from "@/lib/jewishDatte";
 import {
   eduToHebrew,
@@ -215,6 +216,13 @@ export default async function StudentPage({
           )}
           <ShareButton studentId={student.id} studentName={`${student.first_name} ${student.last_name}`} />
           {isShadchan && <MessageButton authorId={student.user_id} />}
+          {isShadchan && (
+            <StatusUpdateButton
+              studentId={student.id}
+              currentStatus={student.personal_status as any}
+              gender={student.gender as any}
+            />
+          )}
         </div>
       </div>
 
