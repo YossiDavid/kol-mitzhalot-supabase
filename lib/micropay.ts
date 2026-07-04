@@ -48,13 +48,18 @@ function parseMicropayResponse(raw: string): MicroPayResult {
  * אם הגיע '9725XXXXXXXX' – נשאר.
  * מסיר תווים לא-ספרתיים, אבל לא מוחק אפס מוביל של פורמט מקומי.
  */
-function formatForMicropay(raw: string): string {
+function isIsraeliNumber(raw: string): boolean {
+  const d = raw.replace(/[^\d+]/g, "");
+  return d.startsWith("+972") || d.startsWith("972") || /^0[5-9]/.test(d.replace(/[^\d]/g, ""));
+}
+
+/** Returns null for non-Israeli numbers (Micropay only delivers to Israel). */
+function formatForMicropay(raw: string): string | null {
+  if (!isIsraeliNumber(raw)) return null;
   const digits = raw.replace(/[^\d+]/g, "");
   if (digits.startsWith("+972")) return digits.replace("+", "");
   if (digits.startsWith("972")) return digits;
-  // לוקאלי
-  const onlyDigits = raw.replace(/[^\d]/g, "");
-  return onlyDigits; // ישאיר 05XXXXXXXX בדיוק
+  return raw.replace(/[^\d]/g, ""); // local 05XXXXXXXX
 }
 
 export async function callMicropay(
@@ -67,9 +72,17 @@ export async function callMicropay(
     console.error("[Micropay] MICROPAY_TOKEN is not set");
     return { status: "ERROR", errorMessage: "SMS service not configured" };
   }
+  const formatted = formatForMicropay(phone);
+  if (!formatted) {
+    return {
+      status: "ERROR",
+      errorMessage: "מספר הטלפון חייב להיות ישראלי (05x). מספרים בינלאומיים אינם נתמכים כרגע.",
+    };
+  }
+
   const params = new URLSearchParams();
   params.set("token", token);
-  params.set("phone", formatForMicropay(phone));
+  params.set("phone", formatted);
 
   if (mode === "get") {
     params.set("get", "1");
