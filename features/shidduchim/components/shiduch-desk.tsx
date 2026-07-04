@@ -73,6 +73,8 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
   const [draftLoading, setDraftLoading] = useState(false);
   const [canOffer, setCanOffer] = useState(false);
   const [hideDiagnosis, setHideDiagnosis] = useState(false);
+  const [maleNote, setMaleNote] = useState("");
+  const [femaleNote, setFemaleNote] = useState("");
 
   const pairReq = useRef(0);
 
@@ -211,8 +213,8 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
           groomId: newShiduch.groomId,
           brideId: newShiduch.brideId,
           action: "draft",
-          noteForGroom: "",
-          noteForBride: "",
+          noteForGroom: maleNote,
+          noteForBride: femaleNote,
         }),
       });
       const data = await res.json();
@@ -297,29 +299,39 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
           )}
 
           {male ? (
-            <StudentBox
-              gender="male"
-              firstName={male.first_name}
-              lastName={male.last_name}
-              age={Number(calculateAge(male.birth_date))}
-              city={male.city}
-              doingToday={mapDoingToday(male)}
-              father={{
-                name: `${male.parents_info?.father?.self?.name || ""} ${male.parents_info?.father?.self?.suffix || ""}`.trim(),
-                position: male.parents_info?.father?.job || "",
-              }}
-              mother={{
-                name: `${male.parents_info?.mother?.self?.name || ""} ${male.parents_info?.mother?.self?.suffix || ""}`.trim(),
-                position: male.parents_info?.mother?.job || "",
-                maidenName: male.parents_info?.mother?.maidenName || "",
-              }}
-              item={male}
-            >
-              <div className="grid grid-cols-2 gap-2">
-                <StudentBox.ViewProfile />
-                <StudentBox.RemoveFromDesk onClick={() => setMale(null)} />
-              </div>
-            </StudentBox>
+            <>
+              <StudentBox
+                gender="male"
+                firstName={male.first_name}
+                lastName={male.last_name}
+                age={Number(calculateAge(male.birth_date))}
+                city={male.city}
+                doingToday={mapDoingToday(male)}
+                father={{
+                  name: `${male.parents_info?.father?.self?.name || ""} ${male.parents_info?.father?.self?.suffix || ""}`.trim(),
+                  position: male.parents_info?.father?.job || "",
+                }}
+                mother={{
+                  name: `${male.parents_info?.mother?.self?.name || ""} ${male.parents_info?.mother?.self?.suffix || ""}`.trim(),
+                  position: male.parents_info?.mother?.job || "",
+                  maidenName: male.parents_info?.mother?.maidenName || "",
+                }}
+                item={male}
+              >
+                <div className="grid grid-cols-2 gap-2">
+                  <StudentBox.ViewProfile />
+                  <StudentBox.RemoveFromDesk onClick={() => { setMale(null); setMaleNote(""); }} />
+                </div>
+              </StudentBox>
+              <textarea
+                className="mt-2 w-full resize-none rounded-md border border-sky-200 bg-white/70 p-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-sky-400"
+                rows={2}
+                placeholder="הערות על המיועד..."
+                value={maleNote}
+                onChange={(e) => setMaleNote(e.target.value)}
+                dir="rtl"
+              />
+            </>
           ) : (
             <div className="text-muted-foreground absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm">
               <UserIcon className="size-8 opacity-30" />
@@ -344,29 +356,39 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
           )}
 
           {female ? (
-            <StudentBox
-              gender="female"
-              firstName={female.first_name}
-              lastName={female.last_name}
-              age={Number(calculateAge(female.birth_date))}
-              city={female.city}
-              doingToday={mapDoingToday(female)}
-              father={{
-                name: `${female.parents_info?.father?.self?.name || ""} ${female.parents_info?.father?.self?.suffix || ""}`.trim(),
-                position: female.parents_info?.father?.job || "",
-              }}
-              mother={{
-                name: `${female.parents_info?.mother?.self?.name || ""} ${female.parents_info?.mother?.self?.suffix || ""}`.trim(),
-                position: female.parents_info?.mother?.job || "",
-                maidenName: female.parents_info?.mother?.maidenName || "",
-              }}
-              item={female}
-            >
-              <div className="grid grid-cols-2 gap-2">
-                <StudentBox.ViewProfile />
-                <StudentBox.RemoveFromDesk onClick={() => setFemale(null)} />
-              </div>
-            </StudentBox>
+            <>
+              <StudentBox
+                gender="female"
+                firstName={female.first_name}
+                lastName={female.last_name}
+                age={Number(calculateAge(female.birth_date))}
+                city={female.city}
+                doingToday={mapDoingToday(female)}
+                father={{
+                  name: `${female.parents_info?.father?.self?.name || ""} ${female.parents_info?.father?.self?.suffix || ""}`.trim(),
+                  position: female.parents_info?.father?.job || "",
+                }}
+                mother={{
+                  name: `${female.parents_info?.mother?.self?.name || ""} ${female.parents_info?.mother?.self?.suffix || ""}`.trim(),
+                  position: female.parents_info?.mother?.job || "",
+                  maidenName: female.parents_info?.mother?.maidenName || "",
+                }}
+                item={female}
+              >
+                <div className="grid grid-cols-2 gap-2">
+                  <StudentBox.ViewProfile />
+                  <StudentBox.RemoveFromDesk onClick={() => { setFemale(null); setFemaleNote(""); }} />
+                </div>
+              </StudentBox>
+              <textarea
+                className="mt-2 w-full resize-none rounded-md border border-rose-200 bg-white/70 p-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-rose-400"
+                rows={2}
+                placeholder="הערות על המיועדת..."
+                value={femaleNote}
+                onChange={(e) => setFemaleNote(e.target.value)}
+                dir="rtl"
+              />
+            </>
           ) : (
             <div className="text-muted-foreground absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm">
               <UserIcon className="size-8 opacity-30" />
@@ -434,6 +456,8 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
         onOpenChange={setSendModalOpen}
         onConfirm={handleSendOffer}
         loading={sendLoading}
+        initialNoteGroom={maleNote}
+        initialNoteBride={femaleNote}
       />
 
       <FavoritesGrid

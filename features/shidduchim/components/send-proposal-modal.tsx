@@ -25,6 +25,8 @@ type Props = {
     noteForBride: string;
   }) => Promise<void>;
   loading?: boolean;
+  initialNoteGroom?: string;
+  initialNoteBride?: string;
 };
 
 const TAB_ITEMS: { scope: RecipientScope; label: string }[] = [
@@ -38,17 +40,23 @@ export default function SendProposalModal({
   onOpenChange,
   onConfirm,
   loading,
+  initialNoteGroom = "",
+  initialNoteBride = "",
 }: Props) {
   const [scope, setScope] = useState<RecipientScope>("both");
-  const [noteGroom, setNoteGroom] = useState("");
-  const [noteBride, setNoteBride] = useState("");
+  const [noteGroom, setNoteGroom] = useState(initialNoteGroom);
+  const [noteBride, setNoteBride] = useState(initialNoteBride);
 
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      setNoteGroom(initialNoteGroom);
+      setNoteBride(initialNoteBride);
+    } else {
       setScope("both");
       setNoteGroom("");
       setNoteBride("");
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const showGroomNote = scope === "both" || scope === "groom_only";
