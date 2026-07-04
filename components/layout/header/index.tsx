@@ -53,8 +53,17 @@ export default async function Header({ variant }: { variant: "app" | "website" }
           </>
         )}
         {variant === "website" && (
-          <div className="flex items-center gap-5 font-semibold">
+          <div className="flex items-center gap-6 font-semibold">
             <Link href="/"><Image src={Logo.src} alt="logo" width={200} height={100} /></Link>
+            <nav className="hidden items-center gap-4 text-sm font-medium lg:flex">
+              <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">בית</Link>
+              <Link href={"/about" as any} className="text-muted-foreground hover:text-foreground transition-colors">אודות</Link>
+              <Link href={"/knowledge" as any} className="text-muted-foreground hover:text-foreground transition-colors">מרכז הידע</Link>
+              <Link href={"/whats-new" as any} className="text-muted-foreground hover:text-foreground transition-colors">מה חדש</Link>
+              <Link href={"/shadchanim" as any} className="text-muted-foreground hover:text-foreground transition-colors">לשדכנים</Link>
+              <Link href={"/parents" as any} className="text-muted-foreground hover:text-foreground transition-colors">להורים ומיועדים</Link>
+              <Link href={"/contact" as any} className="text-muted-foreground hover:text-foreground transition-colors">צרו קשר</Link>
+            </nav>
           </div>
         )}
       </div>
