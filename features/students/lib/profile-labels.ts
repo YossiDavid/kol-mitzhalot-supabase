@@ -22,8 +22,13 @@ export function personalStatusToHebrew(status: string, gender?: string) {
       return female ? "רווקה" : "רווק";
     case "divorced":
       return female ? "גרושה" : "גרוש";
+    case "widowed":
     case "widower":
       return female ? "אלמנה" : "אלמן";
+    case "engaged":
+      return female ? "מאורסת" : "מאורס";
+    case "married":
+      return female ? "נשואה" : "נשוי";
     default:
       return status;
   }

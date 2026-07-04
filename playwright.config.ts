@@ -32,6 +32,7 @@ export default defineConfig({
         storageState: "playwright/.auth/user.json",
       },
       dependencies: ["setup"],
+      testIgnore: "**/admin/**/*.spec.ts",
     },
     {
       name: "chromium-admin",

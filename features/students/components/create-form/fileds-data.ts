@@ -271,11 +271,11 @@ export const studentFields: FormSteps[] = [
                 label: "רווק.ה",
               },
               {
-                value: "divorce",
+                value: "divorced",
                 label: "גרוש.ה",
               },
               {
-                value: "widower",
+                value: "widowed",
                 label: "אלמנ.ה",
               },
             ],

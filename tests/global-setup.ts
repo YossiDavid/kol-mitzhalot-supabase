@@ -10,7 +10,7 @@ DO $$ BEGIN CREATE TYPE public.education_type_enum AS ENUM ('yeshiva_ktana', 'ye
 DO $$ BEGIN CREATE TYPE public.gender_enum AS ENUM ('male', 'female'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE TYPE public.head_cover_type_enum AS ENUM ('kerchief', 'wig', 'kerchief_on_wig', 'other'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE TYPE public.medical_status_enum AS ENUM ('good', 'littleProblem', 'hugeProblem'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-DO $$ BEGIN CREATE TYPE public.personal_status_enum AS ENUM ('single', 'divorced', 'widower'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE public.personal_status_enum AS ENUM ('single', 'divorced', 'widower', 'widowed', 'engaged', 'married'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE TYPE public.plan_for_life_enum AS ENUM ('koilel', 'torah_job', 'mix_torah_work', 'work'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE TYPE public.reference_type_enum AS ENUM ('rabbi', 'friend', 'family_friend'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE TYPE public.shidduch_status_enum AS ENUM ('draft', 'sent', 'waiting_response', 'interested', 'more_info_needed', 'in_progress', 'rejected', 'completed'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
@@ -75,6 +75,17 @@ DO $$ BEGIN ALTER TABLE public.shidduchim ADD CONSTRAINT unique_shidduch_pair UN
 DO $$ BEGIN ALTER TABLE public.shidduchim ADD CONSTRAINT shidduchim_groom_id_fkey FOREIGN KEY (groom_id) REFERENCES public.students(id) ON DELETE CASCADE; EXCEPTION WHEN others THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE public.shidduchim ADD CONSTRAINT shidduchim_bride_id_fkey FOREIGN KEY (bride_id) REFERENCES public.students(id) ON DELETE CASCADE; EXCEPTION WHEN others THEN NULL; END $$;
 ALTER TABLE public.shidduchim ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE IF NOT EXISTS public.shadchanim_info (id uuid DEFAULT gen_random_uuid() NOT NULL, user_id uuid NOT NULL, bio text, experience_years integer, specializations text[], contact_phone text, contact_email text, website_url text, location text, languages text[], certifications text[], additional_info jsonb DEFAULT '{}'::jsonb, created_at timestamptz DEFAULT now() NOT NULL, updated_at timestamptz DEFAULT now() NOT NULL, application_status text, submitted_at timestamptz, approved_at timestamptz, rejected_at timestamptz, rejected_reason text);
+DO $$ BEGIN ALTER TABLE public.shadchanim_info ADD CONSTRAINT shadchanim_info_pkey PRIMARY KEY (id); EXCEPTION WHEN others THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.shadchanim_info ADD CONSTRAINT shadchanim_info_user_id_key UNIQUE (user_id); EXCEPTION WHEN others THEN NULL; END $$;
+ALTER TABLE public.shadchanim_info ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "shadchanim_info_select" ON public.shadchanim_info;
+CREATE POLICY "shadchanim_info_select" ON public.shadchanim_info AS PERMISSIVE FOR SELECT TO public USING (auth.uid() = user_id OR is_admin());
+DROP POLICY IF EXISTS "shadchanim_info_insert" ON public.shadchanim_info;
+CREATE POLICY "shadchanim_info_insert" ON public.shadchanim_info AS PERMISSIVE FOR INSERT TO public WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "shadchanim_info_update" ON public.shadchanim_info;
+CREATE POLICY "shadchanim_info_update" ON public.shadchanim_info AS PERMISSIVE FOR UPDATE TO public USING (auth.uid() = user_id);
 
 CREATE TABLE IF NOT EXISTS public.system_settings (key text NOT NULL, value boolean NOT NULL, updated_at timestamptz DEFAULT now() NOT NULL);
 DO $$ BEGIN ALTER TABLE public.system_settings ADD CONSTRAINT system_settings_pkey PRIMARY KEY (key); EXCEPTION WHEN others THEN NULL; END $$;
@@ -154,6 +165,15 @@ BEGIN
   RETURN new_student_id;
 END;
 $func$;
+
+-- Ensure shadchanim_info has all required columns (in case table was created without them)
+DO $$ BEGIN ALTER TABLE public.shadchanim_info ADD COLUMN IF NOT EXISTS application_status text; EXCEPTION WHEN others THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.shadchanim_info ADD COLUMN IF NOT EXISTS submitted_at timestamptz; EXCEPTION WHEN others THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.shadchanim_info ADD COLUMN IF NOT EXISTS approved_at timestamptz; EXCEPTION WHEN others THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.shadchanim_info ADD COLUMN IF NOT EXISTS rejected_at timestamptz; EXCEPTION WHEN others THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE public.shadchanim_info ADD COLUMN IF NOT EXISTS rejected_reason text; EXCEPTION WHEN others THEN NULL; END $$;
+
+GRANT EXECUTE ON FUNCTION public.create_full_student_profile TO authenticated;
 
 DROP POLICY IF EXISTS "Users can read profiles of users they chat with" ON public.user_profiles;
 CREATE POLICY "Users can read profiles of users they chat with" ON public.user_profiles AS PERMISSIVE FOR SELECT TO authenticated USING (auth.uid() = id);

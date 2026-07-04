@@ -14,6 +14,7 @@ import { studentFields } from "@/features/students/components/create-form/fileds
 import { DynamicField } from "@/features/students/components/create-form/fields/dynamic-field";
 import { createClient } from "@/lib/supabase/client";
 import { studentFormSchema, type StudentFormValues } from "@/features/students/components/create-form/schema";
+import { toast } from "sonner";
 
 type Step = (typeof studentFields)[number];
 
@@ -385,7 +386,7 @@ export default function CreateStudentPage() {
 
       if (authError || !user) {
         console.error("User not authenticated", authError);
-        alert("שגיאה: יש להתחבר למערכת");
+        toast.error("שגיאה: יש להתחבר למערכת");
         return;
       }
 
@@ -400,7 +401,7 @@ export default function CreateStudentPage() {
       if (!values.city) missingFields.push("עיר");
       
       if (missingFields.length > 0) {
-        alert(`שגיאה: יש למלא את השדות החובה הבאים:\n${missingFields.join(", ")}`);
+        toast.error(`שגיאה: יש למלא את השדות החובה הבאים:\n${missingFields.join(", ")}`);
         setIsSubmitting(false);
         return;
       }
@@ -425,11 +426,10 @@ export default function CreateStudentPage() {
       };
 
       const mapPersonalStatus = (status: string): string => {
-        // personal_status_enum: single, divorced, widower
-        // בטופס יש "divorce" אבל ב-enum זה "divorced"
         const normalized = normalizeEnumInput(status);
         if (normalized === "divorce") return "divorced";
-        return normalized; // single, widower כבר תואמים
+        if (normalized === "widower") return "widowed";
+        return normalized;
       };
 
       const mapCellphoneType = (value: unknown): string | null => {
@@ -446,7 +446,7 @@ export default function CreateStudentPage() {
 
       const mappedCellphoneType = mapCellphoneType(values.cellphoneType);
       if (!mappedCellphoneType) {
-        alert("שגיאה: יש לבחור סוג טלפון תקין עבור המיועד.ת");
+        toast.error("שגיאה: יש לבחור סוג טלפון תקין עבור המיועד.ת");
         setIsSubmitting(false);
         return;
       }
@@ -743,7 +743,7 @@ export default function CreateStudentPage() {
           hint: createError.hint,
           code: createError.code,
         });
-        alert(`שגיאה בשמירת הקו״ח: ${createError.message}\n\nפרטים: ${JSON.stringify(createError)}`);
+        toast.error(`שגיאה בשמירת הקו״ח: ${createError.message}\n\nפרטים: ${JSON.stringify(createError)}`);
         setIsSubmitting(false);
         return;
       }
@@ -752,7 +752,7 @@ export default function CreateStudentPage() {
       const studentId = studentData;
       if (!studentId) {
         console.error("No student ID returned from function");
-        alert("שגיאה: לא התקבל מזהה סטודנט");
+        toast.error("שגיאה: לא התקבל מזהה סטודנט");
         setIsSubmitting(false);
         return;
       }
@@ -889,9 +889,7 @@ export default function CreateStudentPage() {
 
         if (updateError) {
           console.error("Error updating student with file URLs:", updateError);
-          alert(
-            "הקו״ח נוצר בהצלחה, אבל הייתה בעיה בעדכון כתובות הקבצים. אנא עדכן ידנית.",
-          );
+          toast.error("הקו״ח נוצר בהצלחה, אבל הייתה בעיה בעדכון כתובות הקבצים. אנא עדכן ידנית.");
         }
       }
 
@@ -931,9 +929,7 @@ export default function CreateStudentPage() {
             );
             console.error("Update data:", updateData);
             console.error("Student ID:", studentId);
-            alert(
-              `הקו״ח נשמר, אבל הייתה בעיה בעדכון מסמכים רפואיים: ${medicalUpdateError.message}`,
-            );
+            toast.error(`הקו״ח נשמר, אבל הייתה בעיה בעדכון מסמכים רפואיים: ${medicalUpdateError.message}`);
           } else {
             console.log(
               "Medical records updated successfully:",
@@ -951,17 +947,15 @@ export default function CreateStudentPage() {
       console.log("Student created and files uploaded successfully");
 
       if (hasUploadErrors) {
-        alert(
-          "הקו״ח נשמר בהצלחה, אבל היו בעיות בהעלאת חלק מהקבצים. ניתן לעדכן את הקבצים מאוחר יותר.",
-        );
+        toast.warning("הקו״ח נשמר בהצלחה, אבל היו בעיות בהעלאת חלק מהקבצים. ניתן לעדכן את הקבצים מאוחר יותר.");
       } else {
-        alert("הקו״ח נשמר בהצלחה!");
+        toast.success("הקו״ח נשמר בהצלחה!");
       }
 
       router.push(`/app/students/${studentId}`);
     } catch (error) {
       console.error("Unexpected error:", error);
-      alert("אירעה שגיאה לא צפויה");
+      toast.error("אירעה שגיאה לא צפויה");
     } finally {
       setIsSubmitting(false);
     }

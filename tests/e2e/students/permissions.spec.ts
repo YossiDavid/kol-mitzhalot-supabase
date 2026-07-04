@@ -13,8 +13,8 @@ test.describe("הרשאות שדכן — גישה לרשימת מועמדים", 
     await expect(page).not.toHaveURL(/\/auth\/login/);
     await expect(page).not.toHaveURL(/\/auth\/sign-in/);
 
-    // כותרת הדף צריכה להיות נראית
-    await expect(page.locator("h1, h2, h3").first()).toBeVisible({ timeout: 10_000 });
+    // כותרת הדף צריכה להיות נראית (מחפש h1/h2/h3 visible — לא כולל אלמנטים מוסתרים)
+    await expect(page.locator("h1, h2, h3").filter({ visible: true }).first()).toBeVisible({ timeout: 10_000 });
   });
 
   test("שדכן לא מופנה לדף 403 או שגיאה", async ({ page }) => {
