@@ -24,21 +24,12 @@ test.describe("ניהול שדכנים — בדיקות admin", () => {
     const count = await rows.count();
 
     if (count > 0) {
-      // אם יש שורות — וידוא שאף שדכן לא מוצג כ"לא זמין" בעמודת השם הפרטי
-      const firstNames = await page.locator("text=לא זמין").count();
-      // "לא זמין" מותר רק בעמודות תאריך (שאין להן ערך), לא בשמות
-      // הבדיקה: לא כל השורות יכולות להיות "לא זמין"
-      expect(firstNames).toBeLessThan(count);
+      const notAvailableCount = await page.locator("text=לא זמין").count();
+      expect(notAvailableCount).toBeLessThan(count);
     }
   });
 
   test("מונה השדכנים חיובי אחרי הוספת admin test user", async ({ page }) => {
-    // admin test user שנוצר צריך להיות נראה בהכרח
-    // אם העמוד מציג "לא נמצאו שדכנים" — זו תקלה
-    const emptyMsg = page.locator("text=לא נמצאו שדכנים במערכת");
-    // לא אמור להיות ריק לחלוטין (admin user קיים)
-    const isEmpty = await emptyMsg.isVisible();
-    // העברנו — אם ריק זה אוקיי רק אם shadchanim_info ריק
     // הבדיקה העיקרית: הדף נטען ולא קרסה
     await expect(page).toHaveURL(/\/app\/admin\/shadchanim/);
   });

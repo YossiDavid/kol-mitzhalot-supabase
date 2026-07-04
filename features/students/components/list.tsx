@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 
 type Student = {
   id: string;
+  gender: "male" | "female";
   personal_status: "married" | "engaged" | "single";
   last_name: string;
   first_name: string;
