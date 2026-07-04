@@ -33,10 +33,7 @@ test.describe("יצירת תלמיד חדש", () => {
     await expect(page.locator("text=ברוכים הבאים")).toBeVisible();
   });
 
-  test.fail("זרימת יצירה מלאה — 7 שלבים עד Submit", async ({ page }) => {
-    // Known bug: router.push after RPC create_full_student_profile is not triggered.
-    // Marked test.fail() so CI stays green while the root cause is investigated.
-    // Capture browser console errors for diagnosis.
+  test("זרימת יצירה מלאה — 7 שלבים עד Submit", async ({ page }) => {
     const consoleErrors: string[] = [];
     page.on("console", (msg) => {
       if (msg.type() === "error") consoleErrors.push(msg.text());
