@@ -2,12 +2,20 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { WebCta } from "@/components/website/cta";
 import { LogoSvg } from "@/components/website/logo-svg";
+import { createClient } from "@/lib/supabase/server";
 
 const TIME_FILTERS = [
   { label: "היום", value: "today" },
   { label: "השבוע", value: "week" },
   { label: "בחודש האחרון", value: "month" },
 ];
+
+const CATEGORY_LABELS: Record<string, string> = {
+  parents: "להורים",
+  singles: "למיועדים",
+  shadchanim: "לשדכנים",
+  general: "כללי",
+};
 
 async function PeriodFilters({ searchParams }: { searchParams: Promise<{ period?: string }> }) {
   const { period: currentPeriod = "" } = await searchParams;
@@ -33,15 +41,6 @@ async function PeriodFilters({ searchParams }: { searchParams: Promise<{ period?
     </div>
   );
 }
-
-const PLACEHOLDER_ARTICLES = Array.from({ length: 9 }, (_, i) => ({
-  id: i,
-  cat: ["להורים", "כללי", "למיועדים", "לשדכנים"][i % 4],
-  date: 'כ"ב אב תשפ"ו',
-  read: `${4 + (i % 4)} דק׳ קריאה`,
-  title: `מאמר ${i + 1} — כותרת לדוגמה`,
-  excerpt: "תקציר קצר של המאמר שיסביר במה הוא עוסק ולמי הוא מיועד.",
-}));
 
 function ArticleCard({
   cat,
@@ -104,6 +103,80 @@ function ArticleCard({
   );
 }
 
+async function EngagementsSection({ searchParams }: { searchParams: Promise<{ period?: string }> }) {
+  const { period } = await searchParams;
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("engagements")
+    .select("id, groom_name, bride_name, groom_city, bride_city, shadchan_name")
+    .eq("is_published", true)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  if (period === "today") {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    query = query.gte("created_at", today.toISOString());
+  } else if (period === "week") {
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    query = query.gte("created_at", weekAgo.toISOString());
+  } else if (period === "month") {
+    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    query = query.gte("created_at", monthAgo.toISOString());
+  }
+
+  const { data: engagements } = await query;
+
+  if (!engagements?.length) return null;
+
+  return (
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+      {engagements.map((e) => (
+        <div
+          key={e.id}
+          className="flex flex-col items-center justify-center rounded-[14px] border border-[#d9dee0] bg-white p-4 text-center"
+          style={{ aspectRatio: "3/4" }}
+        >
+          <div className="mb-1 text-[13px] font-bold text-[#1b2523]">{e.groom_name}</div>
+          <div className="mb-2 text-[11px] text-[#8a9694]">&</div>
+          <div className="text-[13px] font-bold text-[#1b2523]">{e.bride_name}</div>
+          {e.groom_city && (
+            <div className="mt-3 text-[11px] text-[#8a9694]">{e.groom_city}</div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+async function ArticlesSection() {
+  const supabase = await createClient();
+  const { data: articles } = await supabase
+    .from("articles")
+    .select("id, slug, title, excerpt, category, read_time_minutes, published_at")
+    .eq("is_published", true)
+    .order("published_at", { ascending: false })
+    .limit(9);
+
+  if (!articles?.length) return null;
+
+  return (
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {articles.map((a) => (
+        <ArticleCard
+          key={a.id}
+          cat={CATEGORY_LABELS[a.category] ?? a.category}
+          date={a.published_at ? new Date(a.published_at).toLocaleDateString("he-IL") : ""}
+          read={`${a.read_time_minutes} דק׳ קריאה`}
+          title={a.title}
+          excerpt={a.excerpt}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function WhatsNewPage({
   searchParams,
 }: {
@@ -147,17 +220,15 @@ export default function WhatsNewPage({
             </Suspense>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-center rounded-[14px] border border-dashed border-[#c3ccce] bg-white font-mono text-[12px] text-[#a9b3b3]"
-                style={{ aspectRatio: "3/4" }}
-              >
-                מודעת מאורסים {i + 1}
-              </div>
-            ))}
-          </div>
+          <Suspense fallback={
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="animate-pulse rounded-[14px] bg-[#d9dee0]" style={{ aspectRatio: "3/4" }} />
+              ))}
+            </div>
+          }>
+            <EngagementsSection searchParams={searchParams} />
+          </Suspense>
 
           <div className="mt-8 text-center">
             <Link
@@ -182,11 +253,15 @@ export default function WhatsNewPage({
           >
             חדש בתחום השידוכים
           </h2>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {PLACEHOLDER_ARTICLES.map((article) => (
-              <ArticleCard key={article.id} {...article} />
-            ))}
-          </div>
+          <Suspense fallback={
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-[340px] animate-pulse rounded-2xl bg-[#d9dee0]" />
+              ))}
+            </div>
+          }>
+            <ArticlesSection />
+          </Suspense>
         </div>
       </section>
 

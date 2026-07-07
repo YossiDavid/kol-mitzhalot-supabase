@@ -3,6 +3,14 @@ import { WebStats } from "@/components/website/stats";
 import { RabbinicalEndorsements } from "@/components/website/rabbinical-endorsements";
 import { WebCta } from "@/components/website/cta";
 import { LogoSvg } from "@/components/website/logo-svg";
+import { createClient } from "@/lib/supabase/server";
+
+const CATEGORY_LABELS: Record<string, string> = {
+  parents: "להורים",
+  singles: "למיועדים",
+  shadchanim: "לשדכנים",
+  general: "כללי",
+};
 
 function HighlightSpan({ children }: { children: React.ReactNode }) {
   return (
@@ -110,12 +118,6 @@ const principles = [
   },
 ];
 
-const knowledgeArticles = [
-  { cat: "להורים", date: 'כ"ב אב תשפ"ו', read: "5 דק׳ קריאה", title: "10 נקודות קריטיות שהורים שוכחים לברר", excerpt: "רשימת הבדיקות שכדאי לעשות עוד לפני הפגישה הראשונה — כדי לחסוך זמן ואי-הבנות." },
-  { cat: "כללי", date: 'ט"ו אב תשפ"ו', read: "4 דק׳ קריאה", title: "דמי שדכנות - האם הגיע הזמן לשינוי?", excerpt: "מבט על נורמות התשלום לשדכנים בקהילה, והאם המודל הקיים עדיין מתאים לימינו." },
-  { cat: "למיועדים", date: 'ח׳ אב תשפ"ו', read: "6 דק׳ קריאה", title: "מתי אומרים? הכל על בעיות רפואיות בשידוכים", excerpt: "הדרכה רגישה — מתי, איך ולמי לספר על מידע רפואי במהלך תהליך השידוך." },
-];
-
 function ArticleCard({ cat, date, read, title, excerpt }: { cat: string; date: string; read: string; title: string; excerpt: string }) {
   return (
     <Link
@@ -165,16 +167,39 @@ function ArticleCard({ cat, date, read, title, excerpt }: { cat: string; date: s
   );
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const supabase = await createClient();
+  const [{ data: articles }, { data: engagements }, { data: endorsementCheck }] = await Promise.all([
+    supabase
+      .from("articles")
+      .select("id, slug, title, excerpt, category, read_time_minutes, published_at")
+      .eq("is_published", true)
+      .order("published_at", { ascending: false })
+      .limit(3),
+    supabase
+      .from("engagements")
+      .select("id, groom_name, bride_name, groom_city, bride_city, shadchan_name")
+      .eq("is_published", true)
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase.from("endorsements").select("id").eq("is_published", true).limit(1),
+  ]);
+  const hasEndorsements = !!endorsementCheck?.length;
+
   return (
     <>
       {/* ── 1. HERO ── */}
       <section className="relative overflow-hidden bg-[#2b5a5c] text-[#f4f8f7]">
-        {/* Decorative SVG */}
-        <LogoSvg
-          size={640}
-          className="pointer-events-none absolute text-[rgba(255,255,255,.045)]"
-          style={{ top: -120, left: -80 } as React.CSSProperties}
+        {/* Decorative watermark */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo_negative.svg"
+          alt=""
+          aria-hidden="true"
+          width={640}
+          height={640}
+          className="pointer-events-none absolute select-none"
+          style={{ top: -120, left: -80, opacity: 0.06 }}
         />
 
         <div
@@ -318,7 +343,7 @@ export default function HomePage() {
       {/* ── 2. MISSION ── */}
       <section className="bg-[#ecf0f2]">
         <div
-          className="mx-auto grid grid-cols-1 items-center gap-8 px-6 py-[76px] md:grid-cols-[1.1fr_.9fr] md:gap-14"
+          className={`mx-auto grid grid-cols-1 items-center gap-8 px-6 py-[76px] md:gap-14 ${hasEndorsements ? "md:grid-cols-[1.1fr_.9fr]" : ""}`}
           style={{ maxWidth: 1120 }}
         >
           <div>
@@ -339,44 +364,46 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Endorsement slider placeholder */}
-          <div className="relative">
-            <p className="mb-3 text-center text-[13px] font-bold tracking-[.02em] text-[#2b5a5c]">
-              הסכמות והמלצות רבני קהילתנו הק׳
-            </p>
+          {/* Endorsement slider — hidden when no endorsements */}
+          {hasEndorsements && (
             <div className="relative">
-              <div
-                className="flex items-center justify-center rounded-2xl border border-dashed border-[#c3ccce] bg-white text-center text-[13px] text-[#7c8b89]"
-                style={{
-                  aspectRatio: "4/5",
-                  fontFamily: "ui-monospace,Menlo,monospace",
-                  padding: 22,
-                  backgroundImage: "repeating-linear-gradient(135deg,transparent 0 12px,rgba(43,90,92,.05) 12px 24px)",
-                  boxShadow: "0 1px 3px rgba(20,40,40,.06)",
-                }}
-              >
-                [ תמונת הסכמת רב · סליידר ]
-              </div>
-              {/* Nav arrows */}
-              {[{ side: "left", d: "m15 18-6-6 6-6" }, { side: "right", d: "m9 18 6-6-6-6" }].map(({ side, d }) => (
-                <button
-                  key={side}
-                  aria-label={side === "right" ? "הבא" : "הקודם"}
-                  className="absolute top-1/2 flex h-[40px] w-[40px] -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[#d9dee0] bg-white text-[#2b5a5c] shadow-[0_8px_18px_-8px_rgba(0,0,0,.35)] transition-colors hover:bg-[#f2f6f6]"
-                  style={{ [side]: -16 }}
+              <p className="mb-3 text-center text-[13px] font-bold tracking-[.02em] text-[#2b5a5c]">
+                הסכמות והמלצות רבני קהילתנו הק׳
+              </p>
+              <div className="relative">
+                <div
+                  className="flex items-center justify-center rounded-2xl border border-dashed border-[#c3ccce] bg-white text-center text-[13px] text-[#7c8b89]"
+                  style={{
+                    aspectRatio: "4/5",
+                    fontFamily: "ui-monospace,Menlo,monospace",
+                    padding: 22,
+                    backgroundImage: "repeating-linear-gradient(135deg,transparent 0 12px,rgba(43,90,92,.05) 12px 24px)",
+                    boxShadow: "0 1px 3px rgba(20,40,40,.06)",
+                  }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <path d={d} />
-                  </svg>
-                </button>
-              ))}
+                  [ תמונת הסכמת רב · סליידר ]
+                </div>
+                {/* Nav arrows */}
+                {[{ side: "left", d: "m15 18-6-6 6-6" }, { side: "right", d: "m9 18 6-6-6-6" }].map(({ side, d }) => (
+                  <button
+                    key={side}
+                    aria-label={side === "right" ? "הבא" : "הקודם"}
+                    className="absolute top-1/2 flex h-[40px] w-[40px] -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[#d9dee0] bg-white text-[#2b5a5c] shadow-[0_8px_18px_-8px_rgba(0,0,0,.35)] transition-colors hover:bg-[#f2f6f6]"
+                    style={{ [side]: -16 }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d={d} />
+                    </svg>
+                  </button>
+                ))}
+              </div>
+              {/* Dots */}
+              <div className="mt-4 flex justify-center gap-[7px]">
+                <span className="h-[7px] rounded-full bg-[#2b5a5c]" style={{ width: 22 }} />
+                {[1, 2, 3].map((d) => <span key={d} className="h-[7px] w-[7px] rounded-full bg-[#c3ccce]" />)}
+              </div>
             </div>
-            {/* Dots */}
-            <div className="mt-4 flex justify-center gap-[7px]">
-              <span className="h-[7px] rounded-full bg-[#2b5a5c]" style={{ width: 22 }} />
-              {[1, 2, 3].map((d) => <span key={d} className="h-[7px] w-[7px] rounded-full bg-[#c3ccce]" />)}
-            </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -585,66 +612,82 @@ export default function HomePage() {
       {/* ── 8. ENDORSEMENTS ── */}
       <RabbinicalEndorsements />
 
-      {/* ── 9. RECENT ENGAGEMENTS ── */}
-      <section className="bg-[#ecf0f2]">
-        <div className="mx-auto px-6" style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}>
-          <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-            <h2
-              className="font-bold text-[#2b5a5c]"
-              style={{ fontSize: "clamp(28px,3.2vw,36px)", lineHeight: 1.1, margin: 0 }}
-            >
-              שידוכים שנסגרו<br /><HighlightSpan>למזל טוב</HighlightSpan>
-            </h2>
-            <div className="flex gap-[10px]">
-              {[
-                { label: "לכל מה שחדש", href: "/whats-new" as any },
-                { label: "לעדכון מודעת מאורסים", href: "/contact" as any },
-              ].map(({ label, href }) => (
-                <Link
-                  key={label}
-                  href={href}
-                  className="rounded-[8px] border border-[#cfd8d8] px-4 py-[9px] text-[14px] font-bold text-[#2b5a5c] no-underline transition-colors hover:bg-[#e3e9eb]"
+      {/* ── 9. RECENT ENGAGEMENTS — hidden when no data ── */}
+      {!!engagements?.length && (
+        <section className="bg-[#ecf0f2]">
+          <div className="mx-auto px-6" style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}>
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+              <h2
+                className="font-bold text-[#2b5a5c]"
+                style={{ fontSize: "clamp(28px,3.2vw,36px)", lineHeight: 1.1, margin: 0 }}
+              >
+                שידוכים שנסגרו<br /><HighlightSpan>למזל טוב</HighlightSpan>
+              </h2>
+              <div className="flex gap-[10px]">
+                {[
+                  { label: "לכל מה שחדש", href: "/whats-new" as any },
+                  { label: "לעדכון מודעת מאורסים", href: "/contact" as any },
+                ].map(({ label, href }) => (
+                  <Link
+                    key={label}
+                    href={href}
+                    className="rounded-[8px] border border-[#cfd8d8] px-4 py-[9px] text-[14px] font-bold text-[#2b5a5c] no-underline transition-colors hover:bg-[#e3e9eb]"
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+              {engagements.map((e) => (
+                <div
+                  key={e.id}
+                  className="flex flex-col items-center justify-center rounded-[14px] border border-[#d9dee0] bg-white p-4 text-center"
+                  style={{ aspectRatio: "3/4" }}
                 >
-                  {label}
-                </Link>
+                  <div className="mb-1 text-[13px] font-bold text-[#1b2523]">{e.groom_name}</div>
+                  <div className="mb-2 text-[11px] text-[#8a9694]">&</div>
+                  <div className="text-[13px] font-bold text-[#1b2523]">{e.bride_name}</div>
+                  {e.groom_city && (
+                    <div className="mt-3 text-[11px] text-[#8a9694]">{e.groom_city}</div>
+                  )}
+                </div>
               ))}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-center rounded-[14px] border border-dashed border-[#c3ccce] bg-white font-mono text-[12px] text-[#a9b3b3]"
-                style={{ aspectRatio: "3/4" }}
-              >
-                מודעת מאורסים
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* ── 10. KNOWLEDGE PREVIEW ── */}
-      <section className="bg-[#e3e9eb]">
-        <div className="mx-auto px-6" style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}>
-          <div className="mx-auto mb-12 max-w-[640px] text-center">
-            <h2
-              className="font-bold text-[#2b5a5c]"
-              style={{ fontSize: "clamp(28px,3.2vw,36px)", lineHeight: 1.1, marginBottom: 12 }}
-            >
-              מרכז הידע של<br /><HighlightSpan>קול מצהלות</HighlightSpan>
-            </h2>
-            <p className="text-[17px] text-[#5c6a68]" style={{ margin: 0 }}>
-              כל מה שחשוב לדעת על שידוכים, בירורים, פגישות, אירוסין ומה שביניהם.
-            </p>
+      {/* ── 10. KNOWLEDGE PREVIEW — hidden when no data ── */}
+      {!!articles?.length && (
+        <section className="bg-[#e3e9eb]">
+          <div className="mx-auto px-6" style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}>
+            <div className="mx-auto mb-12 max-w-[640px] text-center">
+              <h2
+                className="font-bold text-[#2b5a5c]"
+                style={{ fontSize: "clamp(28px,3.2vw,36px)", lineHeight: 1.1, marginBottom: 12 }}
+              >
+                מרכז הידע של<br /><HighlightSpan>קול מצהלות</HighlightSpan>
+              </h2>
+              <p className="text-[17px] text-[#5c6a68]" style={{ margin: 0 }}>
+                כל מה שחשוב לדעת על שידוכים, בירורים, פגישות, אירוסין ומה שביניהם.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {articles.map((a) => (
+                <ArticleCard
+                  key={a.id}
+                  cat={CATEGORY_LABELS[a.category] ?? a.category}
+                  date={a.published_at ? new Date(a.published_at).toLocaleDateString("he-IL") : ""}
+                  read={`${a.read_time_minutes} דק׳ קריאה`}
+                  title={a.title}
+                  excerpt={a.excerpt}
+                />
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {knowledgeArticles.map((article) => (
-              <ArticleCard key={article.title} {...article} />
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── FINAL CTA ── */}
       <div style={{ background: "linear-gradient(180deg,#e3e9eb 0%,#eef2f1 100%)" }}>

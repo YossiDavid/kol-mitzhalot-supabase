@@ -1,4 +1,15 @@
-export function RabbinicalEndorsements() {
+import { createClient } from "@/lib/supabase/server";
+
+export async function RabbinicalEndorsements() {
+  const supabase = await createClient();
+  const { data: endorsements } = await supabase
+    .from("endorsements")
+    .select("id, rav_name, rav_title, image_url, endorsement_text")
+    .eq("is_published", true)
+    .order("sort_order", { ascending: true });
+
+  if (!endorsements?.length) return null;
+
   return (
     <section className="bg-[#ecf0f2]">
       <div className="mx-auto max-w-[1120px] px-6 py-[72px] text-center">
@@ -21,13 +32,39 @@ export function RabbinicalEndorsements() {
           </span>
         </h2>
         <div className="flex flex-wrap justify-center gap-[18px]">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {endorsements.map((item) => (
             <div
-              key={i}
-              className="flex items-center justify-center rounded-[12px] border border-dashed border-[#c3ccce] bg-white font-mono text-[12px] text-[#a9b3b3]"
-              style={{ width: 150, height: 112 }}
+              key={item.id}
+              className="flex flex-col items-center gap-3 rounded-[14px] border border-[#d9dee0] bg-white p-5 shadow-[0_1px_3px_rgba(20,40,40,.06)]"
+              style={{ width: 170 }}
             >
-              המלצה {i + 1}
+              {item.image_url ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={item.image_url}
+                  alt={item.rav_name}
+                  width={72}
+                  height={72}
+                  className="h-[72px] w-[72px] rounded-full object-cover"
+                />
+              ) : (
+                <div
+                  className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-[rgba(43,90,92,.12)] text-[22px] font-bold text-[#2b5a5c]"
+                >
+                  {item.rav_name.charAt(0)}
+                </div>
+              )}
+              <div className="text-center">
+                <p className="text-[14px] font-bold text-[#1b2523]">{item.rav_name}</p>
+                {item.rav_title && (
+                  <p className="mt-0.5 text-[12px] text-[#5c6a68]">{item.rav_title}</p>
+                )}
+                {item.endorsement_text && (
+                  <p className="mt-2 text-[12px] italic leading-relaxed text-[#66716f] line-clamp-3">
+                    {item.endorsement_text}
+                  </p>
+                )}
+              </div>
             </div>
           ))}
         </div>

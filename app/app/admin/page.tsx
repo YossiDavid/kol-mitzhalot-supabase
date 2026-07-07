@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { DashboardSection } from "@/components/layout";
-import { Users, FileText, UserCheck } from "lucide-react";
+import { Users, FileText, UserCheck, BookOpen } from "lucide-react";
 
 export default function AdminPage() {
   return (
@@ -38,6 +38,16 @@ export default function AdminPage() {
               <h3 className="text-lg font-semibold mb-2">הגדרות מערכת</h3>
               <p className="text-sm text-muted-foreground">
                 עריכת תוכן מערכת כמו מדיניות פרטיות
+              </p>
+            </div>
+          </Link>
+
+          <Link href={"/app/admin/content" as any}>
+            <div className="p-6 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
+              <BookOpen className="h-8 w-8 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">ניהול תוכן</h3>
+              <p className="text-sm text-muted-foreground">
+                מאמרים, מאורסים, והמלצות רבנים
               </p>
             </div>
           </Link>

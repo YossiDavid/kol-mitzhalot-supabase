@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { WebCta } from "@/components/website/cta";
 import { LogoSvg } from "@/components/website/logo-svg";
+import { createClient } from "@/lib/supabase/server";
 
 const CATEGORIES = [
   { label: "הכל", value: "" },
@@ -9,6 +10,13 @@ const CATEGORIES = [
   { label: "למיועדים", value: "singles" },
   { label: "לשדכנים", value: "shadchanim" },
 ];
+
+const CATEGORY_LABELS: Record<string, string> = {
+  parents: "להורים",
+  singles: "למיועדים",
+  shadchanim: "לשדכנים",
+  general: "כללי",
+};
 
 async function CategoryFilters({ searchParams }: { searchParams: Promise<{ cat?: string }> }) {
   const { cat: currentCat = "" } = await searchParams;
@@ -34,15 +42,6 @@ async function CategoryFilters({ searchParams }: { searchParams: Promise<{ cat?:
     </div>
   );
 }
-
-const PLACEHOLDER_ARTICLES = Array.from({ length: 12 }, (_, i) => ({
-  id: i,
-  cat: ["להורים", "כללי", "למיועדים", "לשדכנים"][i % 4],
-  date: 'כ"ב אב תשפ"ו',
-  read: `${4 + (i % 4)} דק׳ קריאה`,
-  title: `מאמר ${i + 1} — כותרת לדוגמה`,
-  excerpt: "תקציר קצר של המאמר שיסביר במה הוא עוסק ולמי הוא מיועד.",
-}));
 
 function ArticleCard({
   cat,
@@ -105,6 +104,51 @@ function ArticleCard({
   );
 }
 
+async function ArticleGrid({ searchParams }: { searchParams: Promise<{ cat?: string }> }) {
+  const { cat: currentCat = "" } = await searchParams;
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("articles")
+    .select("id, slug, title, excerpt, category, read_time_minutes, published_at")
+    .eq("is_published", true)
+    .order("published_at", { ascending: false });
+
+  if (currentCat) query = query.eq("category", currentCat);
+
+  const { data: articles } = await query;
+
+  if (!articles?.length) {
+    return (
+      <div className="py-20 text-center">
+        <p className="text-[18px] font-bold text-[#2b5a5c]">עוד לא פורסמו מאמרים בקטגוריה זו</p>
+        <p className="mt-2 text-[15px] text-[#5c6a68]">בקרוב יתווספו מאמרים חדשים. חזרו שוב!</p>
+        <Link
+          href={"/knowledge" as any}
+          className="mt-6 inline-flex rounded-[8px] border border-[#cfd8d8] px-5 py-[10px] text-[14px] font-bold text-[#2b5a5c] no-underline transition-colors hover:bg-[#eef3f3]"
+        >
+          לכל המאמרים
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {articles.map((a) => (
+        <ArticleCard
+          key={a.id}
+          cat={CATEGORY_LABELS[a.category] ?? a.category}
+          date={a.published_at ? new Date(a.published_at).toLocaleDateString("he-IL") : ""}
+          read={`${a.read_time_minutes} דק׳ קריאה`}
+          title={a.title}
+          excerpt={a.excerpt}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function KnowledgePage({
   searchParams,
 }: {
@@ -137,11 +181,15 @@ export default function KnowledgePage({
       {/* Article grid */}
       <section className="bg-[#e3e9eb]">
         <div className="mx-auto px-6 py-16" style={{ maxWidth: 1120 }}>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {PLACEHOLDER_ARTICLES.map((article) => (
-              <ArticleCard key={article.id} {...article} />
-            ))}
-          </div>
+          <Suspense fallback={
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-[340px] animate-pulse rounded-2xl bg-[#d9dee0]" />
+              ))}
+            </div>
+          }>
+            <ArticleGrid searchParams={searchParams} />
+          </Suspense>
         </div>
       </section>
 
