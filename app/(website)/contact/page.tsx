@@ -92,7 +92,7 @@ export default function ContactPage() {
                 className="flex flex-col gap-5 rounded-[14px] border border-[#d9dee0] bg-white p-[32px]"
                 onSubmit={(e) => { e.preventDefault(); console.log("contact submitted"); setContactSent(true); }}
               >
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <Field label="שם" required />
                   <Field label="מייל" required type="email" />
                   <Field label="טלפון" type="tel" />
@@ -122,7 +122,7 @@ export default function ContactPage() {
                 className="flex flex-col gap-6 rounded-[14px] border border-[#d9dee0] bg-white p-[32px]"
                 onSubmit={(e) => { e.preventDefault(); console.log("engagement submitted"); setEngagementSent(true); }}
               >
-                <div className="grid grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                   <div className="flex flex-col gap-4">
                     <p className="font-bold text-[#2b5a5c]" style={{ fontSize: 16 }}>החתן</p>
                     <Field label="שם החתן" required />
@@ -138,7 +138,7 @@ export default function ContactPage() {
                     <Field label="סמינר" />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <Field label="תאריך ושעת סגירת השידוך" required type="datetime-local" />
                   <Field label="שם השדכן" />
                   <Field label="שם השולח" required />
@@ -170,7 +170,7 @@ export default function ContactPage() {
                 className="flex flex-col gap-6 rounded-[14px] border border-[#d9dee0] bg-white p-[32px]"
                 onSubmit={(e) => { e.preventDefault(); console.log("idea submitted"); setIdeaSent(true); }}
               >
-                <div className="grid grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                   <div className="flex flex-col gap-4">
                     <p className="font-bold text-[#2b5a5c]" style={{ fontSize: 16 }}>המיועד</p>
                     <Field label="שם המיועד" required />
@@ -204,7 +204,7 @@ export default function ContactPage() {
                     </label>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <Field label="שמך" required />
                   <Field label="טלפון" required type="tel" />
                   <Field label="מייל" required type="email" />

@@ -9,14 +9,10 @@ function StatCell({
 }) {
   return (
     <div
-      className="px-5 py-1.5"
-      style={
+      className={
         middle
-          ? {
-              borderInlineStart: "1px solid rgba(255,255,255,.14)",
-              borderInlineEnd: "1px solid rgba(255,255,255,.14)",
-            }
-          : undefined
+          ? "px-5 py-1.5 md:[border-inline-start:1px_solid_rgba(255,255,255,.14)] md:[border-inline-end:1px_solid_rgba(255,255,255,.14)]"
+          : "px-5 py-1.5"
       }
     >
       <div
@@ -33,7 +29,7 @@ function StatCell({
 export function WebStats() {
   return (
     <section className="bg-[#123c3b] text-[#f4f8f7]">
-      <div className="mx-auto grid max-w-[1120px] grid-cols-3 px-6 py-14 text-center">
+      <div className="mx-auto grid max-w-[1120px] grid-cols-1 md:grid-cols-3 px-6 py-14 text-center">
         <StatCell num="אלפי" desc="מיועדים מקהילתנו הק׳ מופיעים במערכת" />
         <StatCell
           num="מאות"

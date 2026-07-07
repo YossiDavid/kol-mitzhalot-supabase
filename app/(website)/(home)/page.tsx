@@ -178,19 +178,13 @@ export default function HomePage() {
         />
 
         <div
-          className="relative mx-auto grid items-center px-6 text-right"
-          style={{
-            maxWidth: 1200,
-            paddingTop: 74,
-            paddingBottom: 84,
-            gridTemplateColumns: "1.05fr .95fr",
-            gap: 56,
-          }}
+          className="relative mx-auto grid grid-cols-1 items-center gap-8 px-6 pt-[74px] pb-[84px] text-right md:grid-cols-[1.05fr_.95fr] md:gap-14"
+          style={{ maxWidth: 1200 }}
         >
-          {/* Floating gold badge */}
+          {/* Floating gold badge — hidden on mobile */}
           <Link
             href={"/contact" as any}
-            className="absolute flex flex-col items-center justify-center gap-1 rounded-full border-[3px] border-white text-center text-[14px] font-extrabold text-[#123331] no-underline transition-transform hover:scale-[1.06]"
+            className="absolute hidden flex-col items-center justify-center gap-1 rounded-full border-[3px] border-white text-center text-[14px] font-extrabold text-[#123331] no-underline transition-transform hover:scale-[1.06] md:flex"
             style={{
               top: 24,
               left: 24,
@@ -294,9 +288,9 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Floating toast */}
+            {/* Floating toast — hidden on mobile */}
             <div
-              className="absolute flex items-center gap-[10px] rounded-[12px] bg-white"
+              className="absolute hidden items-center gap-[10px] rounded-[12px] bg-white md:flex"
               style={{
                 bottom: -18,
                 left: -16,
@@ -324,8 +318,8 @@ export default function HomePage() {
       {/* ── 2. MISSION ── */}
       <section className="bg-[#ecf0f2]">
         <div
-          className="mx-auto grid items-center px-6"
-          style={{ maxWidth: 1120, paddingTop: 76, paddingBottom: 76, gridTemplateColumns: "1.1fr .9fr", gap: 56 }}
+          className="mx-auto grid grid-cols-1 items-center gap-8 px-6 py-[76px] md:grid-cols-[1.1fr_.9fr] md:gap-14"
+          style={{ maxWidth: 1120 }}
         >
           <div>
             <h2
@@ -393,7 +387,7 @@ export default function HomePage() {
       <section className="bg-[#e3e9eb]">
         <div className="mx-auto px-6" style={{ maxWidth: 1160, paddingTop: 90, paddingBottom: 90 }}>
           {/* Section header */}
-          <div className="mb-[52px] grid items-end" style={{ gridTemplateColumns: "1.35fr 1fr", gap: 44 }}>
+          <div className="mb-[52px] grid grid-cols-1 items-end gap-6 md:grid-cols-[1.35fr_1fr] md:gap-11">
             <div>
               <div className="mb-4 text-[13px] font-bold tracking-[.16em] text-[#2b5a5c]">— איך זה עובד</div>
               <h2
@@ -414,13 +408,12 @@ export default function HomePage() {
             {steps.map(({ num, title, desc }) => (
               <div
                 key={num}
-                className="grid items-baseline border-b border-[#c8d1d0]"
-                style={{ gridTemplateColumns: "96px 1fr", gap: 28, padding: "28px 0" }}
+                className="grid grid-cols-[64px_1fr] items-baseline border-b border-[#c8d1d0] gap-5 py-7 md:grid-cols-[96px_1fr] md:gap-7"
               >
                 <div className="font-normal leading-none text-[#9fb2af]" style={{ fontSize: "clamp(38px,3.6vw,50px)" }}>
                   {num}
                 </div>
-                <div className="grid items-baseline" style={{ gridTemplateColumns: "minmax(200px,280px) 1fr", gap: 28 }}>
+                <div className="grid grid-cols-1 items-baseline gap-3 md:grid-cols-[minmax(200px,280px)_1fr] md:gap-7">
                   <h3 className="font-bold text-[#1b2523]" style={{ fontSize: "clamp(18px,1.9vw,22px)", margin: 0, lineHeight: 1.3 }}>
                     {title}
                   </h3>
@@ -431,7 +424,7 @@ export default function HomePage() {
           </div>
 
           {/* Photo strip */}
-          <div className="mt-[52px] grid grid-cols-3 gap-4">
+          <div className="mt-[52px] grid grid-cols-1 gap-4 sm:grid-cols-3">
             {[1, 2, 3].map((i) => (
               <div key={i} className="rounded-2xl bg-[#dbe3e2]" style={{ aspectRatio: "4/3" }} />
             ))}
@@ -452,7 +445,7 @@ export default function HomePage() {
             <p className="text-[17px] text-[#5c6a68]" style={{ margin: 0 }}>לכל העוסקים בתחום כמקצוע, כשליחות, או עבור עצמם, ילדיהם ותלמידיהם.</p>
           </div>
 
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {audiences.map(({ title, desc, features, cta, href }) => (
               <div
                 key={title}
@@ -487,7 +480,7 @@ export default function HomePage() {
       {/* ── 6. PRINCIPLES ── */}
       <section className="bg-[#f3f6f5]">
         <div className="mx-auto px-6" style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}>
-          <div className="mb-[52px] grid items-end" style={{ gridTemplateColumns: "1fr auto", gap: 32 }}>
+          <div className="mb-[52px] grid grid-cols-1 items-end gap-6 md:grid-cols-[1fr_auto] md:gap-8">
             <div style={{ maxWidth: 660 }}>
               <span className="mb-5 inline-block rounded-[8px] bg-[#e4ebe9] px-[14px] py-1.5 text-[12.5px] font-bold tracking-[.14em] text-[#2b5a5c]">
                 עקרונות
@@ -516,7 +509,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-3 gap-[22px]">
+          <div className="grid grid-cols-1 gap-[22px] md:grid-cols-3">
             {principles.map(({ bg, svgColor, h3Color, pColor, title, desc }) => (
               <div
                 key={title}
@@ -548,7 +541,7 @@ export default function HomePage() {
             </h2>
             <p className="text-[17px] text-[#5c6a68]" style={{ margin: 0 }}>מה בדיוק עושים? מה האפשרויות שם? כנסו לראות!</p>
           </div>
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {[
               { title: "מערכת קול מצהלות להורים ולמיועדים", href: "/parents" as any },
               { title: "מערכת קול מצהלות לשדכנים", href: "/shadchanim" as any },
@@ -617,7 +610,7 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
             {Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}
@@ -645,7 +638,7 @@ export default function HomePage() {
               כל מה שחשוב לדעת על שידוכים, בירורים, פגישות, אירוסין ומה שביניהם.
             </p>
           </div>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {knowledgeArticles.map((article) => (
               <ArticleCard key={article.title} {...article} />
             ))}

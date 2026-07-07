@@ -83,7 +83,7 @@ export default function ParentsPage() {
       {FEATURES.map((f, i) => (
         <section key={i} className={SECTION_BG[i % 2]}>
           <div
-            className="mx-auto grid grid-cols-2 items-center gap-12 px-6"
+            className="mx-auto grid grid-cols-1 items-center gap-8 px-6 md:grid-cols-2 md:gap-12"
             style={{ maxWidth: 1120, paddingTop: 70, paddingBottom: 70 }}
           >
             {i % 2 === 0 ? (

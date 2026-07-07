@@ -137,7 +137,7 @@ export default function KnowledgePage({
       {/* Article grid */}
       <section className="bg-[#e3e9eb]">
         <div className="mx-auto px-6 py-16" style={{ maxWidth: 1120 }}>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {PLACEHOLDER_ARTICLES.map((article) => (
               <ArticleCard key={article.id} {...article} />
             ))}

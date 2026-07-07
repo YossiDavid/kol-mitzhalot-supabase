@@ -68,7 +68,7 @@ export default function AboutPage() {
           >
             קול מצהלות הוקמה<br /><HighlightSpan>בזכותכם</HighlightSpan>
           </h1>
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {stories.map(({ title, desc }) => (
               <div
                 key={title}
@@ -120,13 +120,12 @@ export default function AboutPage() {
             {processSteps.map(({ num, title, desc }) => (
               <div
                 key={num}
-                className="grid items-baseline border-b border-[#c8d1d0]"
-                style={{ gridTemplateColumns: "96px 1fr", gap: 28, padding: "28px 0" }}
+                className="grid grid-cols-[64px_1fr] items-baseline border-b border-[#c8d1d0] gap-5 py-7 md:grid-cols-[96px_1fr] md:gap-7"
               >
                 <div className="font-normal leading-none text-[#9fb2af]" style={{ fontSize: "clamp(38px,3.6vw,50px)" }}>
                   {num}
                 </div>
-                <div className="grid items-baseline" style={{ gridTemplateColumns: "minmax(200px,280px) 1fr", gap: 28 }}>
+                <div className="grid grid-cols-1 items-baseline gap-3 md:grid-cols-[minmax(200px,280px)_1fr] md:gap-7">
                   <h3 className="font-bold text-[#1b2523]" style={{ fontSize: "clamp(18px,1.9vw,22px)", margin: 0, lineHeight: 1.3 }}>
                     {title}
                   </h3>

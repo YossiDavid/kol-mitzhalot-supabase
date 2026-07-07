@@ -13,7 +13,7 @@ export default async function Footer({
     return (
       <footer className="border-t border-[#dbe2e1] bg-[#eef2f1] text-[14px] text-[#5c6a68]">
         <div className="mx-auto max-w-[1120px] px-6 pb-[30px] pt-12">
-          <div className="grid grid-cols-[1.5fr_1fr_1fr_1.4fr] gap-9 border-b border-[#dbe2e1] pb-8">
+          <div className="grid grid-cols-1 gap-9 border-b border-[#dbe2e1] pb-8 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1.4fr]">
             {/* Col 1 — Brand */}
             <div style={{ maxWidth: 340 }}>
               <div className="mb-[14px] flex items-center gap-[10px]">
@@ -64,7 +64,7 @@ export default async function Footer({
             </nav>
 
             {/* Col 4 — Newsletter */}
-            <div>
+            <div className="sm:col-span-2 lg:col-span-1">
               <div className="mb-3 text-[15px] font-bold text-[#1b2523]">רשימת תפוצה</div>
               <p className="mb-[14px] text-[13.5px] leading-[1.6] text-[#66716f]">
                 עדכונים ומאמרים מעולם השידוכים — ישירות אליכם למייל.

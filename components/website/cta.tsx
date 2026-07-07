@@ -50,7 +50,7 @@ export function WebCta() {
           />
 
           {/* Inner grid */}
-          <div className="relative grid items-center gap-8 p-14" style={{ gridTemplateColumns: "1.15fr .85fr" }}>
+          <div className="relative grid grid-cols-1 items-center gap-8 p-8 md:grid-cols-[1.15fr_.85fr] md:p-14">
             {/* Text column */}
             <div>
               <h2
@@ -103,8 +103,8 @@ export function WebCta() {
               </p>
             </div>
 
-            {/* Floating cards column */}
-            <div className="relative min-h-[200px]">
+            {/* Floating cards column — hidden on mobile */}
+            <div className="relative hidden min-h-[200px] md:block">
               {/* Card A — top right, rotated -3deg */}
               <div
                 className="absolute flex items-center gap-[13px] rounded-2xl bg-white"

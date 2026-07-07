@@ -147,7 +147,7 @@ export default function WhatsNewPage({
             </Suspense>
           </div>
 
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
             {Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}
@@ -182,7 +182,7 @@ export default function WhatsNewPage({
           >
             חדש בתחום השידוכים
           </h2>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {PLACEHOLDER_ARTICLES.map((article) => (
               <ArticleCard key={article.id} {...article} />
             ))}

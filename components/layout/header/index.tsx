@@ -11,6 +11,7 @@ import { Separator } from "../../ui/separator";
 import Image from "next/image";
 import Logo from "@/assets/images/logo-text.svg";
 import { LogoSvg } from "@/components/website/logo-svg";
+import { WebMobileNav } from "./mobile-nav";
 
 export default async function Header({ variant }: { variant: "app" | "website" }) {
   const supabase = await createClient();
@@ -65,9 +66,10 @@ export default async function Header({ variant }: { variant: "app" | "website" }
 
         {/* Auth */}
         <div className="flex shrink-0 items-center gap-[10px]">
+          <WebMobileNav />
           <Link
             href={"/auth/login" as any}
-            className="px-1.5 py-2 text-[15px] font-semibold text-[#2b5a5c] no-underline transition-colors hover:text-[#234a4b]"
+            className="hidden px-1.5 py-2 text-[15px] font-semibold text-[#2b5a5c] no-underline transition-colors hover:text-[#234a4b] lg:block"
           >
             כניסה
           </Link>
