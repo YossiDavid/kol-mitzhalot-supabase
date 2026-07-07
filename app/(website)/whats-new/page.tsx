@@ -1,14 +1,38 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { WebCta } from "@/components/website/cta";
 import { LogoSvg } from "@/components/website/logo-svg";
-
-export const dynamic = "force-dynamic";
 
 const TIME_FILTERS = [
   { label: "היום", value: "today" },
   { label: "השבוע", value: "week" },
   { label: "בחודש האחרון", value: "month" },
 ];
+
+async function PeriodFilters({ searchParams }: { searchParams: Promise<{ period?: string }> }) {
+  const { period: currentPeriod = "" } = await searchParams;
+  return (
+    <div className="flex flex-wrap gap-2">
+      {TIME_FILTERS.map((f) => {
+        const isActive = currentPeriod === f.value;
+        return (
+          <Link
+            key={f.value}
+            href={`/whats-new?period=${f.value}` as any}
+            className="rounded-full px-4 py-1.5 text-[14px] font-semibold no-underline transition-colors"
+            style={{
+              background: isActive ? "#2b5a5c" : "#fff",
+              color: isActive ? "#f4f8f7" : "#5c6a68",
+              border: "1px solid #d9dee0",
+            }}
+          >
+            {f.label}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
 
 const PLACEHOLDER_ARTICLES = Array.from({ length: 9 }, (_, i) => ({
   id: i,
@@ -80,13 +104,11 @@ function ArticleCard({
   );
 }
 
-export default async function WhatsNewPage({
+export default function WhatsNewPage({
   searchParams,
 }: {
   searchParams: Promise<{ period?: string }>;
 }) {
-  const { period: currentPeriod = "" } = await searchParams;
-
   return (
     <>
       {/* Hero */}
@@ -114,25 +136,15 @@ export default async function WhatsNewPage({
             >
               שידוכים שנסגרו למזל טוב
             </h2>
-            <div className="flex flex-wrap gap-2">
-              {TIME_FILTERS.map((f) => {
-                const isActive = currentPeriod === f.value;
-                return (
-                  <Link
-                    key={f.value}
-                    href={`/whats-new?period=${f.value}` as any}
-                    className="rounded-full px-4 py-1.5 text-[14px] font-semibold no-underline transition-colors"
-                    style={{
-                      background: isActive ? "#2b5a5c" : "#fff",
-                      color: isActive ? "#f4f8f7" : "#5c6a68",
-                      border: "1px solid #d9dee0",
-                    }}
-                  >
-                    {f.label}
-                  </Link>
-                );
-              })}
-            </div>
+            <Suspense fallback={
+              <div className="flex flex-wrap gap-2 opacity-50">
+                {TIME_FILTERS.map((f) => (
+                  <span key={f.value} className="rounded-full border border-[#d9dee0] bg-white px-4 py-1.5 text-[14px] font-semibold text-[#5c6a68]">{f.label}</span>
+                ))}
+              </div>
+            }>
+              <PeriodFilters searchParams={searchParams} />
+            </Suspense>
           </div>
 
           <div className="grid grid-cols-5 gap-4">

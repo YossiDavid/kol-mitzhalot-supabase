@@ -1,8 +1,7 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { WebCta } from "@/components/website/cta";
 import { LogoSvg } from "@/components/website/logo-svg";
-
-export const dynamic = "force-dynamic";
 
 const CATEGORIES = [
   { label: "הכל", value: "" },
@@ -10,6 +9,31 @@ const CATEGORIES = [
   { label: "למיועדים", value: "singles" },
   { label: "לשדכנים", value: "shadchanim" },
 ];
+
+async function CategoryFilters({ searchParams }: { searchParams: Promise<{ cat?: string }> }) {
+  const { cat: currentCat = "" } = await searchParams;
+  return (
+    <div className="flex flex-wrap justify-center gap-2">
+      {CATEGORIES.map((cat) => {
+        const isActive = currentCat === cat.value;
+        return (
+          <Link
+            key={cat.value}
+            href={(cat.value ? `/knowledge?cat=${cat.value}` : "/knowledge") as any}
+            className="rounded-full px-4 py-1.5 text-[14px] font-semibold no-underline transition-colors"
+            style={{
+              background: isActive ? "#2b5a5c" : "#fff",
+              color: isActive ? "#f4f8f7" : "#5c6a68",
+              border: "1px solid #d9dee0",
+            }}
+          >
+            {cat.label}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
 
 const PLACEHOLDER_ARTICLES = Array.from({ length: 12 }, (_, i) => ({
   id: i,
@@ -81,13 +105,11 @@ function ArticleCard({
   );
 }
 
-export default async function KnowledgePage({
+export default function KnowledgePage({
   searchParams,
 }: {
   searchParams: Promise<{ cat?: string }>;
 }) {
-  const { cat: currentCat = "" } = await searchParams;
-
   return (
     <>
       {/* Hero + filters */}
@@ -102,25 +124,13 @@ export default async function KnowledgePage({
           <p className="mb-8 text-[17px] text-[#5c6a68]">
             כל מה שחשוב לדעת על שידוכים, בירורים, פגישות, אירוסין ומה שביניהם.
           </p>
-          <div className="flex flex-wrap justify-center gap-2">
-            {CATEGORIES.map((cat) => {
-              const isActive = currentCat === cat.value;
-              return (
-                <Link
-                  key={cat.value}
-                  href={(cat.value ? `/knowledge?cat=${cat.value}` : "/knowledge") as any}
-                  className="rounded-full px-4 py-1.5 text-[14px] font-semibold no-underline transition-colors"
-                  style={{
-                    background: isActive ? "#2b5a5c" : "#fff",
-                    color: isActive ? "#f4f8f7" : "#5c6a68",
-                    border: "1px solid #d9dee0",
-                  }}
-                >
-                  {cat.label}
-                </Link>
-              );
-            })}
-          </div>
+          <Suspense fallback={<div className="flex flex-wrap justify-center gap-2 opacity-50">
+            {CATEGORIES.map((cat) => (
+              <span key={cat.value} className="rounded-full border border-[#d9dee0] bg-white px-4 py-1.5 text-[14px] font-semibold text-[#5c6a68]">{cat.label}</span>
+            ))}
+          </div>}>
+            <CategoryFilters searchParams={searchParams} />
+          </Suspense>
         </div>
       </section>
 
