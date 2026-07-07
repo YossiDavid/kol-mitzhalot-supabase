@@ -2,6 +2,8 @@ import Link from "next/link";
 import { WebCta } from "@/components/website/cta";
 import { LogoSvg } from "@/components/website/logo-svg";
 
+export const dynamic = "force-dynamic";
+
 const CATEGORIES = [
   { label: "הכל", value: "" },
   { label: "להורים", value: "parents" },

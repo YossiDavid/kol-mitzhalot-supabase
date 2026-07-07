@@ -2,6 +2,8 @@ import Link from "next/link";
 import { WebCta } from "@/components/website/cta";
 import { LogoSvg } from "@/components/website/logo-svg";
 
+export const dynamic = "force-dynamic";
+
 const TIME_FILTERS = [
   { label: "היום", value: "today" },
   { label: "השבוע", value: "week" },
