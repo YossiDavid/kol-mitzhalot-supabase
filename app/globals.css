@@ -157,6 +157,16 @@
   }
 }
 
+@keyframes roll {
+  0%,15%{transform:translateY(0)}
+  18%,33%{transform:translateY(-44px)}
+  36%,51%{transform:translateY(-88px)}
+  54%,69%{transform:translateY(-132px)}
+  72%,87%{transform:translateY(-176px)}
+  90%,100%{transform:translateY(-220px)}
+}
+@media(prefers-reduced-motion:reduce){.ticker-roller{animation:none!important}}
+
 @layer utilities {
   .CollapsibleContent {
     overflow: hidden;

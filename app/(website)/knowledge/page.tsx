@@ -1,9 +1,6 @@
-import Section from "@/components/layout/section";
-import Box from "@/components/layout/box";
-import { WebCta } from "@/components/website/cta";
-import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { WebCta } from "@/components/website/cta";
+import { LogoSvg } from "@/components/website/logo-svg";
 
 const CATEGORIES = [
   { label: "הכל", value: "" },
@@ -14,65 +11,129 @@ const CATEGORIES = [
 
 const PLACEHOLDER_ARTICLES = Array.from({ length: 12 }, (_, i) => ({
   id: i,
-  title: `מאמר ${i + 1}`,
+  cat: ["להורים", "כללי", "למיועדים", "לשדכנים"][i % 4],
+  date: 'כ"ב אב תשפ"ו',
+  read: `${4 + (i % 4)} דק׳ קריאה`,
+  title: `מאמר ${i + 1} — כותרת לדוגמה`,
+  excerpt: "תקציר קצר של המאמר שיסביר במה הוא עוסק ולמי הוא מיועד.",
 }));
 
-export default function KnowledgePage({
+function ArticleCard({
+  cat,
+  date,
+  read,
+  title,
+  excerpt,
+}: {
+  cat: string;
+  date: string;
+  read: string;
+  title: string;
+  excerpt: string;
+}) {
+  return (
+    <Link
+      href={"/knowledge" as any}
+      className="flex flex-col overflow-hidden rounded-2xl border border-[#d9dee0] bg-white no-underline shadow-[0_1px_3px_rgba(20,40,40,.06)] transition-all hover:-translate-y-1 hover:shadow-[0_18px_40px_-18px_rgba(20,40,40,.28)]"
+    >
+      <div
+        className="relative flex items-center justify-center"
+        style={{
+          aspectRatio: "16/10",
+          background: "#e8eeed",
+          backgroundImage: "repeating-linear-gradient(135deg,transparent 0 13px,rgba(43,90,92,.06) 13px 26px)",
+          color: "#9fb0ad",
+          fontFamily: "ui-monospace,Menlo,monospace",
+          fontSize: 11.5,
+        }}
+      >
+        [ תמונת נושא ]
+        <span className="absolute right-[14px] top-[14px] rounded-full bg-[rgba(255,255,255,.94)] px-3 py-[5px] text-[12px] font-bold text-[#2b5a5c] shadow-[0_2px_6px_rgba(20,40,40,.12)]">
+          {cat}
+        </span>
+      </div>
+      <div className="flex flex-1 flex-col gap-[10px] p-[22px_24px]">
+        <div className="flex items-center gap-2 text-[12.5px] text-[#8a9694]">
+          <span>{date}</span>
+          <span className="h-[3px] w-[3px] rounded-full bg-[#c3ccce]" />
+          <span>{read}</span>
+        </div>
+        <h3 className="text-[17px] font-bold leading-[1.35] text-[#1b2523]" style={{ margin: 0 }}>{title}</h3>
+        <p className="text-[14px] leading-[1.6] text-[#66716f]" style={{ margin: 0 }}>{excerpt}</p>
+        <div className="mt-auto flex items-center justify-between border-t border-[#eef2f2] pt-4">
+          <div className="flex items-center gap-[9px]">
+            <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[rgba(43,90,92,.12)]">
+              <LogoSvg size={15} className="text-[#2b5a5c]" />
+            </span>
+            <span className="text-[12.5px] font-semibold text-[#66716f]">מערכת קול מצהלות</span>
+          </div>
+          <span className="inline-flex items-center gap-[5px] text-[13.5px] font-bold text-[#2b5a5c]">
+            לקריאה{" "}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5" /><path d="m12 19-7-7 7-7" />
+            </svg>
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+export default async function KnowledgePage({
   searchParams,
 }: {
   searchParams: Promise<{ cat?: string }>;
 }) {
+  const { cat: currentCat = "" } = await searchParams;
+
   return (
-    <div className="flex flex-col">
-      <Section containerClassName="py-16 md:py-24">
-        <div className="space-y-10">
-          {/* Header + tabs */}
-          <div className="space-y-6 text-center">
-            <div className="space-y-2">
-              <h1>מרכז הידע של קול מצהלות</h1>
-              <p className="text-muted-foreground">
-                כל מה שחשוב לדעת על שידוכים, בירורים, פגישות, אירוסין ומה שביניהם.
-              </p>
-            </div>
-            <div className="flex flex-wrap justify-center gap-2">
-              {CATEGORIES.map((cat) => (
+    <>
+      {/* Hero + filters */}
+      <section className="bg-[#ecf0f2]">
+        <div className="mx-auto px-6 py-[72px] text-center" style={{ maxWidth: 1120 }}>
+          <h1
+            className="font-bold text-[#2b5a5c]"
+            style={{ fontSize: "clamp(30px,3.8vw,46px)", marginBottom: 12, lineHeight: 1.1 }}
+          >
+            מרכז הידע של קול מצהלות
+          </h1>
+          <p className="mb-8 text-[17px] text-[#5c6a68]">
+            כל מה שחשוב לדעת על שידוכים, בירורים, פגישות, אירוסין ומה שביניהם.
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {CATEGORIES.map((cat) => {
+              const isActive = currentCat === cat.value;
+              return (
                 <Link
                   key={cat.value}
                   href={(cat.value ? `/knowledge?cat=${cat.value}` : "/knowledge") as any}
-                  className={cn(
-                    "rounded-full border px-4 py-1.5 text-sm transition-colors",
-                    "bg-card hover:bg-muted",
-                  )}
+                  className="rounded-full px-4 py-1.5 text-[14px] font-semibold no-underline transition-colors"
+                  style={{
+                    background: isActive ? "#2b5a5c" : "#fff",
+                    color: isActive ? "#f4f8f7" : "#5c6a68",
+                    border: "1px solid #d9dee0",
+                  }}
                 >
                   {cat.label}
                 </Link>
-              ))}
-            </div>
+              );
+            })}
           </div>
+        </div>
+      </section>
 
-          {/* Article grid */}
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Article grid */}
+      <section className="bg-[#e3e9eb]">
+        <div className="mx-auto px-6 py-16" style={{ maxWidth: 1120 }}>
+          <div className="grid grid-cols-3 gap-6">
             {PLACEHOLDER_ARTICLES.map((article) => (
-              <Box
-                key={article.id}
-                asChild
-                className="flex cursor-pointer flex-col gap-3 p-6 transition-shadow hover:shadow-md"
-              >
-                <Link href={"/knowledge" as any}>
-                  <div className="aspect-video rounded-lg bg-muted" />
-                  <p className="font-semibold leading-snug">{article.title}</p>
-                  <span className="mt-auto flex items-center gap-1 text-sm text-primary">
-                    לקריאה
-                    <ArrowLeft className="h-3.5 w-3.5" />
-                  </span>
-                </Link>
-              </Box>
+              <ArticleCard key={article.id} {...article} />
             ))}
           </div>
         </div>
-      </Section>
+      </section>
 
       <WebCta />
-    </div>
+    </>
   );
 }

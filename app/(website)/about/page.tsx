@@ -1,47 +1,56 @@
-import Section from "@/components/layout/section";
-import Box from "@/components/layout/box";
+import Link from "next/link";
 import { WebStats } from "@/components/website/stats";
 import { RabbinicalEndorsements } from "@/components/website/rabbinical-endorsements";
 import { WebCta } from "@/components/website/cta";
-import { Heart, Users, BookOpen, Crown } from "lucide-react";
+
+function HighlightSpan({ children }: { children: React.ReactNode }) {
+  return (
+    <span
+      className="inline-block rounded-[11px]"
+      style={{ background: "#2b5a5c", color: "#f4f8f7", padding: "1px 14px 4px", transform: "rotate(-1.5deg)" }}
+    >
+      {children}
+    </span>
+  );
+}
 
 const stories = [
   {
-    icon: Heart,
     title: "בזכות שיחות עם הורים דואגים",
     desc: "שלא מקבלים הצעות רלוונטיות, שמרגישים שהשדכנים לא מכירים את הבן או הבת שלהם, שהצעות טובות נתקעות להם פשוט בגלל תקשורת לקויה וחוסר הבנה מול השדכנים.",
   },
   {
-    icon: Users,
     title: "בזכות בקשות של עלטערע בחורים ומיועדי פרק ב' כאובים",
     desc: 'שהולכים ומתבגרים, כמעט ולא מקבלים הצעות למרות היותם מצוינים ואיכותיים, אך רוב השדכנים מעדיפים להתעסק עם השידוכים הקלים בלבד והם כבר מתחילים לאבד את התקווה.',
   },
   {
-    icon: Crown,
     title: "בזכות דיונים עם שדכנים מותשים",
     desc: "שמתמודדים עם מקצוע שוחק ולא מתגמל, עומס אדיר של מידע שקשה לזכור, הורים שלא מגיבים להצעות, קושי לברר על מיועדים ואתגר אדיר בניהול תהליך מורכב מול 2 הצדדים.",
   },
   {
-    icon: BookOpen,
     title: "ובזכות התייעצויות עם רבנים, דיינים וצוותי חינוך",
     desc: "שרואים את המצב הקשה ההולך ומחמיר בקהילתנו הק' וביקשו למצוא פתרון יסודי ויצירתי לבעיה, שיסייע הן להורים, הן למיועדים והן לשדכנים, בהקמת בתים נאמנים בישראל.",
   },
 ];
 
-const howItWorks = [
+const processSteps = [
   {
+    num: "01",
     title: "הורים או מיועדים בוגרים",
     desc: 'ממלאים כרטיס קו"ח מפורט שעולה למערכת ומוצג לשדכנים מורשים בלבד, מקבלים הצעות ומגיבים עליהם בקלות, וכך מסייעים לשדכנים להציע הצעות רבות יותר ומתאימות יותר.',
   },
   {
+    num: "02",
     title: "רבנים, דיינים וצוותי החינוך במוסדות",
     desc: 'כותבים על כרטיסי הקו"ח א גוט ווארט ומחמאות מהכירותם האישית עם המיועדים, ובכך מסייעים לשדכנים להכיר אותם טוב יותר.',
   },
   {
+    num: "03",
     title: "השדכנים והשדכניות במערכת",
-    desc: "מקבלים את כל המידע בצורה מסודרת, צופים ומכירים לעומק את המיועדים, יוצרים הצעות שידוכים, שולחים אותן לצדדים ישירות מתוך המערכת ומקבלים תגובות מהירות, ויכולים להתייעץ ולדון זה עם זה בפורום סגור לשדכנים בלבד.",
+    desc: "מקבלים את כל המידע בצורה מסודרת, צופים ומכירים לעומק את המיועדים, יוצרים הצעות שידוכים, שולחים אותן לצדדים ישירות מתוך המערכת ומקבלים תגובות מהירות.",
   },
   {
+    num: "04",
     title: "השידוכים עצמם",
     desc: 'מתקדמים ומתנהלים בצורה יעילה, מהירה וקלה יותר לכל הצדדים, בתקשורת נוחה תוך שמירה על פרטיות וצניעות עד למציאת הבאשערטע וסגירת השידוך למזל טוב בעז"ה.',
   },
@@ -49,70 +58,89 @@ const howItWorks = [
 
 export default function AboutPage() {
   return (
-    <div className="flex flex-col">
-      {/* Opening story */}
-      <Section containerClassName="py-16 md:py-24">
-        <div className="space-y-10">
-          <div className="space-y-2 text-center">
-            <h1>קול מצהלות הוקמה בזכותכם</h1>
-          </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {stories.map((s) => {
-              const Icon = s.icon;
-              return (
-                <Box key={s.title} className="flex flex-col gap-4 p-6">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                    <Icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="font-bold">{s.title}</h3>
-                  <p className="text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
-                </Box>
-              );
-            })}
-          </div>
-        </div>
-      </Section>
-
-      {/* Summary */}
-      <Section className="bg-muted/40" containerClassName="py-16 md:py-24">
-        <div className="mx-auto max-w-3xl space-y-6">
-          <h2 className="text-center">בזכותכם, יצאנו לדרך.</h2>
-          <p className="leading-relaxed text-muted-foreground">
-            לא מתוך מחשבה להמציא מחדש את עולם השידוכים, המתנהל בדרך אבותינו הק' מזה דורי דורות,
-            אלא במטרה לשמור על הקיים ולהכניס לתוכו כלי עזר וסיוע הנצרך בעקבות המצב, לבנות מערכת
-            טכנולוגית שתקל על ההורים, על המיועדים ובעיקר על השדכנים, מבלי לפגום במעמד הקדוש של
-            הקמת בית בישראל.
-          </p>
-          <p className="leading-relaxed text-muted-foreground">
-            וכך, בברכת הקודש של כ"ק מרן אדמו"ר שליט"א ובהכוונתם של רבני קהילתנו הק' ובראשם
-            הגה"צ ר' שמאי גרוס שליט"א והגה"צ ר' שמואל יעקב לנדאו שליט"א, עם תכנון ומחשבה על כל
-            פרט ופרט, ועם צוות מסור של אנשי מעשה מומחים ויראי שמיים – נרתמנו למלאכה.
-          </p>
-          <p className="text-center font-bold text-primary">
-            מערכת קול מצהלות — הפתרון המושלם לנושא השידוכים בקהילתנו הק'.
-          </p>
-        </div>
-      </Section>
-
-      {/* How it works */}
-      <Section containerClassName="py-16 md:py-24">
-        <div className="space-y-10">
-          <h2 className="text-center">כך עובדת המערכת</h2>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {howItWorks.map((step, i) => (
-              <Box key={i} className="flex flex-col gap-3 p-6 text-center">
-                <span className="text-5xl font-black leading-none text-primary/20">{i + 1}</span>
-                <h3 className="text-sm font-bold">{step.title}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">{step.desc}</p>
-              </Box>
+    <>
+      {/* ── 1. OPENING STORY ── */}
+      <section className="bg-[#ecf0f2]">
+        <div className="mx-auto px-6" style={{ maxWidth: 1120, paddingTop: 72, paddingBottom: 72 }}>
+          <h1
+            className="text-center font-bold text-[#2b5a5c]"
+            style={{ fontSize: "clamp(32px,4vw,46px)", marginBottom: 48, lineHeight: 1.1 }}
+          >
+            קול מצהלות הוקמה<br /><HighlightSpan>בזכותכם</HighlightSpan>
+          </h1>
+          <div className="grid grid-cols-2 gap-6">
+            {stories.map(({ title, desc }) => (
+              <div
+                key={title}
+                className="flex flex-col gap-4 rounded-[14px] border border-[#d9dee0] bg-white p-[30px]"
+                style={{ boxShadow: "0 4px 14px -8px rgba(20,40,40,.12)" }}
+              >
+                <h3 className="text-[18px] font-bold text-[#2b5a5c]" style={{ margin: 0, lineHeight: 1.3 }}>{title}</h3>
+                <p className="text-[15px] leading-[1.7] text-[#5c6a68]" style={{ margin: 0 }}>{desc}</p>
+              </div>
             ))}
           </div>
         </div>
-      </Section>
+      </section>
+
+      {/* ── 2. SUMMARY ── */}
+      <section className="bg-[#e3e9eb]">
+        <div className="mx-auto max-w-3xl px-6 py-16">
+          <h2
+            className="text-center font-bold text-[#2b5a5c]"
+            style={{ fontSize: "clamp(26px,3vw,34px)", marginBottom: 24, lineHeight: 1.2 }}
+          >
+            בזכותכם, יצאנו לדרך.
+          </h2>
+          <p className="mb-4 text-[16.5px] leading-[1.75] text-[#5c6a68]">
+            לא מתוך מחשבה להמציא מחדש את עולם השידוכים, המתנהל בדרך אבותינו הק' מזה דורי דורות, אלא במטרה לשמור על הקיים ולהכניס לתוכו כלי עזר וסיוע הנצרך בעקבות המצב, לבנות מערכת טכנולוגית שתקל על ההורים, על המיועדים ובעיקר על השדכנים, מבלי לפגום במעמד הקדוש של הקמת בית בישראל.
+          </p>
+          <p className="text-[16.5px] leading-[1.75] text-[#5c6a68]">
+            וכך, בברכת הקודש של כ"ק מרן אדמו"ר שליט"א ובהכוונתם של רבני קהילתנו הק' ובראשם הגה"צ ר' שמאי גרוס שליט"א והגה"צ ר' שמואל יעקב לנדאו שליט"א, עם תכנון ומחשבה על כל פרט ופרט, ועם צוות מסור של אנשי מעשה מומחים ויראי שמיים – נרתמנו למלאכה.
+          </p>
+          <p className="mt-6 text-center text-[17px] font-bold text-[#2b5a5c]">
+            מערכת קול מצהלות — הפתרון המושלם לנושא השידוכים בקהילתנו הק'.
+          </p>
+        </div>
+      </section>
+
+      {/* ── 3. HOW IT WORKS (ProcessRows) ── */}
+      <section className="bg-[#e3e9eb]">
+        <div className="mx-auto px-6" style={{ maxWidth: 1160, paddingTop: 80, paddingBottom: 80 }}>
+          <div className="mb-[52px] text-center">
+            <h2
+              className="font-bold text-[#1b2523]"
+              style={{ fontSize: "clamp(28px,3.4vw,40px)", lineHeight: 1.1, margin: 0 }}
+            >
+              כך עובדת<br />
+              <span className="text-[#2b5a5c]">המערכת</span>
+            </h2>
+          </div>
+          <div className="border-t border-[#c8d1d0]">
+            {processSteps.map(({ num, title, desc }) => (
+              <div
+                key={num}
+                className="grid items-baseline border-b border-[#c8d1d0]"
+                style={{ gridTemplateColumns: "96px 1fr", gap: 28, padding: "28px 0" }}
+              >
+                <div className="font-normal leading-none text-[#9fb2af]" style={{ fontSize: "clamp(38px,3.6vw,50px)" }}>
+                  {num}
+                </div>
+                <div className="grid items-baseline" style={{ gridTemplateColumns: "minmax(200px,280px) 1fr", gap: 28 }}>
+                  <h3 className="font-bold text-[#1b2523]" style={{ fontSize: "clamp(18px,1.9vw,22px)", margin: 0, lineHeight: 1.3 }}>
+                    {title}
+                  </h3>
+                  <p className="text-[15px] leading-[1.65] text-[#5c6a68]" style={{ margin: 0 }}>{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <WebStats />
       <RabbinicalEndorsements />
       <WebCta />
-    </div>
+    </>
   );
 }

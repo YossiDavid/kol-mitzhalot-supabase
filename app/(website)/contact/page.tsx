@@ -1,38 +1,63 @@
 "use client";
-import Section from "@/components/layout/section";
-import Box from "@/components/layout/box";
-import { Button } from "@/components/ui/button";
 import { useState } from "react";
+
+const INPUT =
+  "w-full border border-[#d7dcdd] rounded-[8px] px-3 py-[9px] text-[14px] text-[#212927] outline-none transition bg-white focus:border-[#2b5a5c] focus:shadow-[0_0_0_2px_rgba(43,90,92,.3)]";
+const LABEL = "block text-[14px] font-semibold text-[#1b2523] mb-1.5";
+const SUBMIT =
+  "border-0 cursor-pointer bg-[#2b5a5c] text-[#f4f8f7] rounded-[8px] px-[26px] py-[11px] text-[15px] font-bold transition-colors hover:bg-[#234a4b]";
 
 function Field({
   label,
   required,
   type = "text",
   placeholder,
+  rows,
 }: {
   label: string;
   required?: boolean;
   type?: string;
   placeholder?: string;
+  rows?: number;
 }) {
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-sm font-medium">
-        {required && <span className="text-destructive">*</span>}
-        {label}
+    <div>
+      <label className={LABEL}>
+        {required && <span className="text-[#c0362c]">*</span>} {label}
       </label>
       {type === "textarea" ? (
         <textarea
-          className="min-h-[100px] rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          className={INPUT}
           placeholder={placeholder}
+          rows={rows ?? 5}
+          style={{ resize: "vertical", minHeight: 100 }}
         />
       ) : (
-        <input
-          type={type}
-          className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          placeholder={placeholder}
-        />
+        <input type={type} className={INPUT} placeholder={placeholder} />
       )}
+    </div>
+  );
+}
+
+function SectionHeading({ children, sub }: { children: React.ReactNode; sub?: string }) {
+  return (
+    <div className="mb-10 text-center">
+      <h2
+        className="font-bold text-[#2b5a5c]"
+        style={{ fontSize: "clamp(26px,3.2vw,38px)", marginBottom: 10, lineHeight: 1.15 }}
+      >
+        {children}
+      </h2>
+      {sub && <p className="text-[16.5px] text-[#5c6a68]">{sub}</p>}
+    </div>
+  );
+}
+
+function SuccessBox({ title, sub }: { title: string; sub: string }) {
+  return (
+    <div className="rounded-[14px] border border-[#d9dee0] bg-white p-10 text-center">
+      <p className="text-[18px] font-bold text-[#2b5a5c]">{title}</p>
+      <p className="mt-2 text-[15px] text-[#5c6a68]">{sub}</p>
     </div>
   );
 }
@@ -43,171 +68,156 @@ export default function ContactPage() {
   const [ideaSent, setIdeaSent] = useState(false);
 
   return (
-    <div className="flex flex-col">
-      {/* Contact */}
-      <Section containerClassName="py-16 md:py-24">
-        <div className="mx-auto max-w-2xl space-y-8">
-          <div className="space-y-2 text-center">
-            <h1>צרו קשר</h1>
-            <p className="text-muted-foreground">
-              לכל שאלה ובקשה בנושא המערכת ובתחום השידוכים — אנחנו כאן בשבילכם!
-            </p>
-            <p className="text-sm font-medium">
-              במייל:{" "}
-              <a href="mailto:0000000@km.com" className="text-primary hover:underline">
-                0000000@km.com
-              </a>
-            </p>
-          </div>
+    <>
+      {/* Section 1 — General contact */}
+      <section className="bg-[#ecf0f2]">
+        <div className="mx-auto px-6 py-[72px]" style={{ maxWidth: 1120 }}>
+          <div className="mx-auto" style={{ maxWidth: 640 }}>
+            <div className="mb-10 text-center">
+              <h1
+                className="font-bold text-[#2b5a5c]"
+                style={{ fontSize: "clamp(30px,3.8vw,46px)", marginBottom: 12, lineHeight: 1.1 }}
+              >
+                צרו קשר
+              </h1>
+              <p className="text-[17px] text-[#5c6a68]">
+                לכל שאלה ובקשה בנושא המערכת ובתחום השידוכים — אנחנו כאן בשבילכם!
+              </p>
+            </div>
 
-          <Box className="flex flex-col gap-4 p-6">
-            <p className="font-semibold">ניתן גם להשאיר פנייה ונחזור אליכם:</p>
             {contactSent ? (
-              <p className="text-center text-green-600">הפנייה נשלחה בהצלחה! נחזור אליכם בקרוב.</p>
+              <SuccessBox title="הפנייה נשלחה בהצלחה!" sub="נחזור אליכם בקרוב." />
             ) : (
-              <>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <form
+                className="flex flex-col gap-5 rounded-[14px] border border-[#d9dee0] bg-white p-[32px]"
+                onSubmit={(e) => { e.preventDefault(); console.log("contact submitted"); setContactSent(true); }}
+              >
+                <div className="grid grid-cols-2 gap-4">
                   <Field label="שם" required />
                   <Field label="מייל" required type="email" />
                   <Field label="טלפון" type="tel" />
                   <Field label="נושא" required />
                 </div>
-                <Field label="מה תרצו לומר לנו?" type="textarea" />
-                <Button onClick={() => setContactSent(true)} className="w-full sm:w-auto sm:self-start">
-                  שליחה
-                </Button>
-              </>
+                <Field label="הודעה" required type="textarea" rows={5} />
+                <div>
+                  <button type="submit" className={SUBMIT}>שליחה</button>
+                  <p className="mt-2 text-[12.5px] text-[#889492]">נחזור אליכם תוך 24 שעות בימי עסקים.</p>
+                </div>
+              </form>
             )}
-          </Box>
-        </div>
-      </Section>
-
-      {/* Engagement announcement */}
-      <Section id="engagement" className="bg-muted/40" containerClassName="py-16 md:py-24">
-        <div className="mx-auto max-w-3xl space-y-8">
-          <div className="space-y-2 text-center">
-            <h2>עדכון מאורסים</h2>
-            <p className="text-muted-foreground">מגיע מזל טוב? עדכנו את כולם!</p>
           </div>
+        </div>
+      </section>
 
-          <Box className="flex flex-col gap-6 p-6">
+      {/* Section 2 — Engagement announcement */}
+      <section id="engagement" className="bg-[#e3e9eb]">
+        <div className="mx-auto px-6 py-[72px]" style={{ maxWidth: 1120 }}>
+          <div className="mx-auto" style={{ maxWidth: 760 }}>
+            <SectionHeading sub="מגיע מזל טוב? עדכנו את כולם!">פרסום מודעת מאורסים</SectionHeading>
+
             {engagementSent ? (
-              <p className="text-center text-green-600">
-                המודעה התקבלה! תפורסם לאחר בדיקה.
-              </p>
+              <SuccessBox title="המודעה התקבלה!" sub="תפורסם לאחר בדיקה ואישור." />
             ) : (
-              <>
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  {/* Groom */}
-                  <div className="space-y-3">
-                    <p className="font-bold text-primary">החתן</p>
+              <form
+                className="flex flex-col gap-6 rounded-[14px] border border-[#d9dee0] bg-white p-[32px]"
+                onSubmit={(e) => { e.preventDefault(); console.log("engagement submitted"); setEngagementSent(true); }}
+              >
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="flex flex-col gap-4">
+                    <p className="font-bold text-[#2b5a5c]" style={{ fontSize: 16 }}>החתן</p>
                     <Field label="שם החתן" required />
                     <Field label="שם אביו" required />
                     <Field label="עיר" required />
-                    <Field label="מישיבת" required />
+                    <Field label="מישיבת" />
                   </div>
-                  {/* Bride */}
-                  <div className="space-y-3">
-                    <p className="font-bold text-primary">הכלה</p>
+                  <div className="flex flex-col gap-4">
+                    <p className="font-bold text-[#2b5a5c]" style={{ fontSize: 16 }}>הכלה</p>
                     <Field label="שם הכלה" required />
                     <Field label="שם אביה" required />
                     <Field label="עיר" required />
-                    <Field label="מסמינר" />
+                    <Field label="סמינר" />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-2 gap-4">
                   <Field label="תאריך ושעת סגירת השידוך" required type="datetime-local" />
                   <Field label="שם השדכן" />
                   <Field label="שם השולח" required />
                   <Field label="טלפון השולח" required type="tel" />
                   <Field label="מייל השולח" required type="email" />
                 </div>
-                <div className="flex flex-col gap-2">
-                  <Button onClick={() => setEngagementSent(true)} className="w-full sm:w-auto sm:self-start">
-                    שליחה
-                  </Button>
-                  <p className="text-xs text-muted-foreground">המודעה תפורסם באתר לאחר בדיקה</p>
+                <div>
+                  <button type="submit" className={SUBMIT}>שליחה</button>
+                  <p className="mt-2 text-[12.5px] text-[#889492]">המודעה תפורסם באתר לאחר בדיקה ואישור.</p>
                 </div>
-              </>
+              </form>
             )}
-          </Box>
-        </div>
-      </Section>
-
-      {/* Shidduch idea */}
-      <Section containerClassName="py-16 md:py-24">
-        <div className="mx-auto max-w-3xl space-y-8">
-          <div className="space-y-2 text-center">
-            <h2>יש לכם רעיון לשידוך? תבורכו!</h2>
-            <p className="text-muted-foreground">
-              ניתן למלא את פרטי ההצעה כאן בטופס. המערכת תבחן את ההצעה ובמידה והיא תמצא מתאימה
-              היא תוצע לצדדים ע"י שדכני קול מצהלות ואולי תקחו חלק בהקמת בית נאמן בישראל!
-            </p>
           </div>
+        </div>
+      </section>
 
-          <Box className="flex flex-col gap-6 p-6">
+      {/* Section 3 — Shidduch idea */}
+      <section className="bg-[#ecf0f2]">
+        <div className="mx-auto px-6 py-[72px]" style={{ maxWidth: 1120 }}>
+          <div className="mx-auto" style={{ maxWidth: 760 }}>
+            <SectionHeading sub='ניתן למלא את פרטי ההצעה כאן בטופס. המערכת תבחן את ההצעה ובמידה והיא תמצא מתאימה היא תוצע לצדדים ע"י שדכני קול מצהלות!'>
+              יש לכם רעיון לשידוך? תבורכו!
+            </SectionHeading>
+
             {ideaSent ? (
-              <p className="text-center text-green-600">
-                ההצעה התקבלה! תשובה תישלח למייל שציינת.
-              </p>
+              <SuccessBox title="ההצעה התקבלה!" sub="תשובה תישלח למייל שציינת." />
             ) : (
-              <>
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  {/* Male */}
-                  <div className="space-y-3">
-                    <p className="font-bold text-primary">המיועד</p>
+              <form
+                className="flex flex-col gap-6 rounded-[14px] border border-[#d9dee0] bg-white p-[32px]"
+                onSubmit={(e) => { e.preventDefault(); console.log("idea submitted"); setIdeaSent(true); }}
+              >
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="flex flex-col gap-4">
+                    <p className="font-bold text-[#2b5a5c]" style={{ fontSize: 16 }}>המיועד</p>
                     <Field label="שם המיועד" required />
                     <Field label="שם אביו" required />
                     <Field label="עיר" required />
-                    <Field label="מישיבת" required />
+                    <Field label="מישיבת" />
                     <Field label="גיל" required type="number" />
-                    <Field label="סטטוס (רווק / גרוש / אלמן)" required />
-                    <Field label="הקשר שלך למיועד" />
+                    <Field label="סטטוס" required placeholder="רווק / גרוש / אלמן" />
                   </div>
-                  {/* Female */}
-                  <div className="space-y-3">
-                    <p className="font-bold text-primary">המיועדת</p>
+                  <div className="flex flex-col gap-4">
+                    <p className="font-bold text-[#2b5a5c]" style={{ fontSize: 16 }}>המיועדת</p>
                     <Field label="שם המיועדת" required />
                     <Field label="שם אביה" required />
                     <Field label="עיר" required />
-                    <Field label="מסמינר" />
+                    <Field label="סמינר" />
                     <Field label="גיל" required type="number" />
-                    <Field label="סטטוס (רווקה / גרושה / אלמנה)" required />
-                    <Field label="הקשר שלך למיועדת" />
+                    <Field label="סטטוס" required placeholder="רווקה / גרושה / אלמנה" />
                   </div>
                 </div>
-                <Field label="סיבת ההתאמה לדעתך" type="textarea" />
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium">רוצה ללוות את השדכנים בקידום ההצעה?</span>
-                    <label className="flex cursor-pointer items-center gap-1 text-sm">
-                      <input type="radio" name="accompany" value="yes" className="accent-primary" />
+                <Field label="סיבת ההתאמה לדעתך" type="textarea" rows={4} />
+                <div>
+                  <p className={LABEL}>רוצה ללוות את השדכנים בקידום ההצעה?</p>
+                  <div className="flex gap-6">
+                    <label className="flex cursor-pointer items-center gap-2 text-[14px]">
+                      <input type="radio" name="accompany" value="yes" className="accent-[#2b5a5c]" />
                       כן
                     </label>
-                    <label className="flex cursor-pointer items-center gap-1 text-sm">
-                      <input type="radio" name="accompany" value="no" className="accent-primary" />
+                    <label className="flex cursor-pointer items-center gap-2 text-[14px]">
+                      <input type="radio" name="accompany" value="no" className="accent-[#2b5a5c]" />
                       לא
                     </label>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="grid grid-cols-3 gap-4">
                   <Field label="שמך" required />
                   <Field label="טלפון" required type="tel" />
                   <Field label="מייל" required type="email" />
                 </div>
-                <div className="flex flex-col gap-2">
-                  <Button onClick={() => setIdeaSent(true)} className="w-full sm:w-auto sm:self-start">
-                    שליחת הרעיון לשידוך
-                  </Button>
-                  <p className="text-xs text-muted-foreground">
-                    ההצעה תיבדק על ידי המערכת ותשובה תישלח למייל שציינת.
-                  </p>
+                <div>
+                  <button type="submit" className={SUBMIT}>שליחת הרעיון לשידוך</button>
+                  <p className="mt-2 text-[12.5px] text-[#889492]">ההצעה תיבדק על ידי המערכת ותשובה תישלח למייל שציינת.</p>
                 </div>
-              </>
+              </form>
             )}
-          </Box>
+          </div>
         </div>
-      </Section>
-    </div>
+      </section>
+    </>
   );
 }

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { AuthButton } from "@/components/auth-button";
-import { ThemeSwitcher } from "@/components/theme-switcher";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/server";
 import { getEffectiveRole } from "@/lib/user";
@@ -10,13 +9,12 @@ import { UserMenu } from "./user-menu";
 import { Button } from "../../ui/button";
 import { Separator } from "../../ui/separator";
 import Image from "next/image";
-import Logo from "@/assets/images/logo-text.svg"
-
+import Logo from "@/assets/images/logo-text.svg";
+import { LogoSvg } from "@/components/website/logo-svg";
 
 export default async function Header({ variant }: { variant: "app" | "website" }) {
   const supabase = await createClient();
 
-  // You can also use getUser() which will be slower.
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -27,71 +25,105 @@ export default async function Header({ variant }: { variant: "app" | "website" }
   const showShadchanJoin =
     role === "user" || (role !== "admin" && role !== "shadchan");
 
+  if (variant === "website") {
+    return (
+      <header
+        className="sticky top-0 z-40 flex h-[69px] items-center justify-between gap-5 border-b border-[rgba(43,90,92,.13)]"
+        style={{
+          background: "rgba(236,240,242,.82)",
+          backdropFilter: "saturate(180%) blur(10px)",
+          WebkitBackdropFilter: "saturate(180%) blur(10px)",
+          paddingInline: "clamp(20px,4vw,56px)",
+        }}
+      >
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-[10px] no-underline">
+          <LogoSvg size={34} className="text-[#2b5a5c]" />
+          <span className="text-[20px] font-bold text-[#1b2523] tracking-[-0.01em]">קול מצהלות</span>
+        </Link>
+
+        {/* Nav */}
+        <nav className="hidden items-center gap-[22px] lg:flex">
+          {[
+            { label: "בית", href: "/" },
+            { label: "אודות", href: "/about" },
+            { label: "מרכז הידע", href: "/knowledge" },
+            { label: "מה חדש", href: "/whats-new" },
+            { label: "קול מצהלות לשדכנים", href: "/shadchanim" },
+            { label: "קול מצהלות להורים ומיועדים", href: "/parents" },
+            { label: "צרו קשר", href: "/contact" },
+          ].map(({ label, href }) => (
+            <Link
+              key={href}
+              href={href as any}
+              className="text-[15px] font-medium text-[#5c6a68] no-underline transition-colors hover:text-[#1b2523]"
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Auth */}
+        <div className="flex shrink-0 items-center gap-[10px]">
+          <Link
+            href={"/auth/login" as any}
+            className="px-1.5 py-2 text-[15px] font-semibold text-[#2b5a5c] no-underline transition-colors hover:text-[#234a4b]"
+          >
+            כניסה
+          </Link>
+          <Link
+            href={"/auth/sign-up" as any}
+            className="rounded-full bg-[#2b5a5c] px-5 py-[10px] text-[14px] font-bold text-[#f7faf9] no-underline shadow-[0_6px_16px_-8px_rgba(43,90,92,.7)] transition-colors hover:bg-[#234a4b]"
+          >
+            הרשמה חינם
+          </Link>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <header className="border-b-foreground/10 container sticky top-0 z-30 flex h-16 items-center justify-between gap-5 border-b bg-background/95 font-semibold backdrop-blur-sm supports-[backdrop-filter]:bg-background/80">
       <div className="flex items-center gap-2">
-        {variant === "app" && (
-          <>
-            {/* מובייל: לוגו */}
-            <Link href="/app" className="md:hidden">
-              <Image src={Logo.src} alt="קול מצהלות" width={140} height={40} className="h-8 w-auto" />
-            </Link>
-            {/* דסקטופ: טריגר + ברכה */}
-            <SidebarTrigger className="z-20 -ms-1 hidden md:inline-flex" />
-            <Separator
-              orientation="vertical"
-              className="bg-primary mx-2 hidden data-[orientation=vertical]:h-4 md:block"
-            />
-            <div className="hidden items-center gap-5 font-semibold md:flex">
-              שלום וברכה, {firstName} {lastName}!
-            </div>
-            {user?.user_metadata?.role === "admin" && (
-              <Button variant={"link"} asChild className="hidden md:inline-flex">
-                <Link href="/app/admin">למערכת ניהול</Link>
-              </Button>
-            )}
-          </>
-        )}
-        {variant === "website" && (
-          <div className="flex items-center gap-6 font-semibold">
-            <Link href="/"><Image src={Logo.src} alt="logo" width={200} height={100} /></Link>
-            <nav className="hidden items-center gap-4 text-sm font-medium lg:flex">
-              <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">בית</Link>
-              <Link href={"/about" as any} className="text-muted-foreground hover:text-foreground transition-colors">אודות</Link>
-              <Link href={"/knowledge" as any} className="text-muted-foreground hover:text-foreground transition-colors">מרכז הידע</Link>
-              <Link href={"/whats-new" as any} className="text-muted-foreground hover:text-foreground transition-colors">מה חדש</Link>
-              <Link href={"/shadchanim" as any} className="text-muted-foreground hover:text-foreground transition-colors">לשדכנים</Link>
-              <Link href={"/parents" as any} className="text-muted-foreground hover:text-foreground transition-colors">להורים ומיועדים</Link>
-              <Link href={"/contact" as any} className="text-muted-foreground hover:text-foreground transition-colors">צרו קשר</Link>
-            </nav>
+        <>
+          {/* מובייל: לוגו */}
+          <Link href="/app" className="md:hidden">
+            <Image src={Logo.src} alt="קול מצהלות" width={140} height={40} className="h-8 w-auto" />
+          </Link>
+          {/* דסקטופ: טריגר + ברכה */}
+          <SidebarTrigger className="z-20 -ms-1 hidden md:inline-flex" />
+          <Separator
+            orientation="vertical"
+            className="bg-primary mx-2 hidden data-[orientation=vertical]:h-4 md:block"
+          />
+          <div className="hidden items-center gap-5 font-semibold md:flex">
+            שלום וברכה, {firstName} {lastName}!
           </div>
-        )}
+          {user?.user_metadata?.role === "admin" && (
+            <Button variant={"link"} asChild className="hidden md:inline-flex">
+              <Link href="/app/admin">למערכת ניהול</Link>
+            </Button>
+          )}
+        </>
       </div>
 
       <div className="flex gap-2">
-        <HeaderIcons hasUserMenu={variant === "app" && !!user} />
+        <HeaderIcons hasUserMenu={!!user} />
 
-        {variant === "app" && user ? (
+        {user ? (
           <UserMenu showShadchanJoin={showShadchanJoin} />
         ) : (
           <Suspense>
             <AuthButton />
           </Suspense>
         )}
-        {variant === "app" && (
-          <Button asChild className="hidden md:flex">
-            {user?.user_metadata?.role !== "shadchan" ? (
-              <Link href={"/app/students/create"}>הוספת מיועדים למערכת</Link>
-            ) : (
-              <Link href={"/"}>לרשימת המיועדים</Link>
-            )}
-          </Button>
-        )}
-        {variant === "website" && user && (
-          <Button asChild>
-            <Link href="/app">לכניסה למערכת</Link>
-          </Button>
-        )}
+        <Button asChild className="hidden md:flex">
+          {user?.user_metadata?.role !== "shadchan" ? (
+            <Link href={"/app/students/create"}>הוספת מיועדים למערכת</Link>
+          ) : (
+            <Link href={"/"}>לרשימת המיועדים</Link>
+          )}
+        </Button>
       </div>
     </header>
   );

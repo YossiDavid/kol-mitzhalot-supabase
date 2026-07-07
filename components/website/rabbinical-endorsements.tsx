@@ -1,21 +1,37 @@
-import Section from "@/components/layout/section";
-
 export function RabbinicalEndorsements() {
   return (
-    <Section containerClassName="py-16">
-      <div className="space-y-8 text-center">
-        <h2>הסכמות והמלצות רבני קהילתנו הק'</h2>
-        <div className="flex flex-wrap justify-center gap-4">
+    <section className="bg-[#ecf0f2]">
+      <div className="mx-auto max-w-[1120px] px-6 py-[72px] text-center">
+        <h2
+          className="font-bold text-[#2b5a5c]"
+          style={{ fontSize: "clamp(28px,3.4vw,42px)", lineHeight: 1.18, marginBottom: 40 }}
+        >
+          הסכמות והמלצות
+          <br />
+          <span
+            className="inline-block rounded-[11px]"
+            style={{
+              background: "#2b5a5c",
+              color: "#f4f8f7",
+              padding: "1px 14px 4px",
+              transform: "rotate(-1.5deg)",
+            }}
+          >
+            רבני קהילתנו הק׳
+          </span>
+        </h2>
+        <div className="flex flex-wrap justify-center gap-[18px]">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="flex h-24 w-32 items-center justify-center rounded-xl border border-border bg-muted text-xs text-muted-foreground/40"
+              className="flex items-center justify-center rounded-[12px] border border-dashed border-[#c3ccce] bg-white font-mono text-[12px] text-[#a9b3b3]"
+              style={{ width: 150, height: 112 }}
             >
               המלצה {i + 1}
             </div>
           ))}
         </div>
       </div>
-    </Section>
+    </section>
   );
 }

@@ -1,38 +1,56 @@
-import Section from "@/components/layout/section";
-import Box from "@/components/layout/box";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import {
-  CheckCircle,
-  Lock,
-  BookOpen,
-  Users,
-  ArrowLeft,
-} from "lucide-react";
+import { WebStats } from "@/components/website/stats";
+import { RabbinicalEndorsements } from "@/components/website/rabbinical-endorsements";
+import { WebCta } from "@/components/website/cta";
+import { LogoSvg } from "@/components/website/logo-svg";
+
+function HighlightSpan({ children }: { children: React.ReactNode }) {
+  return (
+    <span
+      className="inline-block rounded-[11px]"
+      style={{ background: "#2b5a5c", color: "#f4f8f7", padding: "1px 14px 4px", transform: "rotate(-1.5deg)" }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function CheckSvg({ size = 18, stroke = "#2b5a5c", strokeWidth = "2.5" }: { size?: number; stroke?: string; strokeWidth?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}>
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
+
+function ArrowSmall() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 12H5" /><path d="m12 19-7-7 7-7" />
+    </svg>
+  );
+}
+
+const tickerItems = [
+  "מערכת חדשנית להצעות וניהול שידוכים",
+  'מאגר מתעדכן ונוח עם מיועדים ומיועדות מאנ"ש',
+  "רשימת שדכנים נבחרים בקהילתנו הק׳",
+  "פורום שדכנים מתקדם לשיתוף מידע והתייעצות",
+  "בהמלצת ובפיקוח רבני קהילתינו הק׳",
+  "מערכת חדשנית להצעות וניהול שידוכים",
+];
 
 const steps = [
-  {
-    audience: "הורים או מיועדים בוגרים",
-    desc: 'ממלאים כרטיס קו"ח מפורט שעולה למערכת ומוצג לשדכנים מורשים בלבד.',
-  },
-  {
-    audience: "רבנים, משפיעים וצוות מוסדות החינוך",
-    desc: "כותבים על הכרטיס א גוט ווארט ומחמאות, מהכירותם האישית עם המיועדים.",
-  },
-  {
-    audience: "השדכנים והשדכניות במערכת",
-    desc: "צופים ומכירים לעומק את המיועדים, יוצרים הצעות שידוכים ושולחים אותן ישירות מהמערכת.",
-  },
-  {
-    audience: "שני הצדדים שקיבלו את ההצעה",
-    desc: "מגיבים ישירות לשדכנים במקום ובזמן שנוח, ומקדמים את השידוך המתאים בקלות.",
-  },
+  { num: "01", title: "הורים או מיועדים בוגרים", desc: 'ממלאים כרטיס קו"ח מפורט שעולה למערכת ומוצג לשדכנים מורשים בלבד.' },
+  { num: "02", title: "רבנים, משפיעים וצוות מוסדות החינוך", desc: "כותבים על הכרטיס א גוט ווארט ומחמאות, מהכירותם האישית עם המיועדים." },
+  { num: "03", title: "השדכנים והשדכניות במערכת", desc: "צופים ומכירים לעומק את המיועדים, יוצרים הצעות שידוכים ושולחים אותן ישירות מהמערכת." },
+  { num: "04", title: "שני הצדדים שקיבלו את ההצעה", desc: "מגיבים ישירות לשדכנים במקום ובזמן שנוח, ומקדמים את השידוך המתאים בקלות." },
 ];
 
 const audiences = [
   {
     title: "הורים ומיועדים",
-    desc: 'שדכנים לא מתקשרים להציע? רוצים שעוד שדכנים מקצועיים יכירו אתכם? מערכת קול מצהלות עוזרת לשדכנים להכיר אתכם ולהציע לכם הצעות שמתאימות בדיוק לכם!',
+    desc: 'שדכנים לא מתקשרים להציע? רוצים שעוד שדכנים מקצועיים יכירו אתכם? מערכת קול מצהלות עוזרת לשדכנים להכיר אתכם ולהציע לכם הצעות שמתאימות בדיוק לכם! מלאו עכשיו כרטיסי קו"ח מלאים ומפורטים, קבלו הצעות מדויקות משדכנים ובעז"ה תמצאו את הזיווג בקרוב ממש!',
     features: [
       { title: "פרטיות מובטחת!", desc: "רק שדכנים מורשים חשופים למידע שלכם" },
       { title: "שיח פתוח ומהיר!", desc: "מתכתבים עם השדכן ישירות מתוך המערכת" },
@@ -43,10 +61,10 @@ const audiences = [
   },
   {
     title: "שדכנים ושדכניות",
-    desc: 'שורפים שעות על בירורים בסיסיים? הולכים לאיבוד בתוך ים הניירת? הצטרפו לקול מצהלות ותהנו ממאגר מידע עדכני עם קו"ח מפורטים!',
+    desc: 'שורפים שעות על בירורים בסיסיים? הולכים לאיבוד בתוך ים הניירת? הצטרפו לקול מצהלות ותהנו ממאגר מידע עדכני עם קו"ח מפורטים של כלל המיועדים בבעלזא, אפשרויות חיפוש ומיון מתקדמות, שמירת שמות מועדפים, שליחת הצעות וניהול השידוכים ישירות מתוך המערכת!',
     features: [
-      { title: "מאגר מתעדכן!", desc: "עם אפשרויות חיפוש, סינון, מיון ושיתוף מהיר" },
-      { title: "ניהול שידוכים!", desc: "יוצרים הצעות שידוך, שולחים לצדדים ומקבלים משוב" },
+      { title: "מאגר מתעדכן!", desc: "עם אפשרויות חיפוש, סינון, מיון, שיתוף וייעוץ מהיר" },
+      { title: "ניהול שידוכים!", desc: "יוצרים הצעות שידוך, שולחים לצדדים ומקבלים משוב בקלות" },
       { title: "בדיקת הצעות", desc: "בדיקה אוטומטית חכמה לפני שליחת ההצעה" },
     ],
     cta: "לקול מצהלות לשדכנים",
@@ -54,358 +72,591 @@ const audiences = [
   },
   {
     title: "רבנים וצוותי חינוך",
-    desc: "רוצים לסייע לתלמידים ולתלמידות שלכם במציאת שידוך מתאים? הירשמו לקול מצהלות וכתבו מחמאות ותשבחות על כרטיסי המיועדים המתחנכים אצלכם.",
+    desc: "רוצים לסייע לתלמידים ולתלמידות שלכם במציאת שידוך מתאים בקלות? הירשמו עכשיו למערכת קול מצהלות וקבלו גישה אישית לכתיבת מחמאות ותשבחות על כרטיסי המיועדים המתחנכים אצלכם, ובכך תסייעו לשדכנים להכיר אותם טוב יותר, להבריק את הרעיון הנכון ולמצוא להם את הבאשערטע!",
     features: [
       { title: "פרטיות מובטחת!", desc: "רק שדכנים מורשים חשופים למה שכתבתם" },
       { title: "חיסכון בזמן!", desc: "במקום לענות לכל המבררים כותבים פעם אחת וזהו" },
       { title: "חסד אמיתי!", desc: "המחמאה שלכם יכולה לגרום לשידוך להגיע" },
     ],
     cta: "להרשמה מהירה ללא עלות",
-    href: "/auth/sign-up" as const,
+    href: "/auth/sign-up" as any,
   },
 ];
 
 const principles = [
   {
-    icon: Users,
+    bg: "#d6e6e4",
+    svgColor: "rgba(43,90,92,.06)",
+    h3Color: "#173e3d",
+    pColor: "#3f5250",
     title: 'הכוונה וליווי מקיף של רבני הארגון שליט"א',
-    desc: 'הארגון הוקם על ידי שדכנים ועסקנים יר"ש, ומתנהל בליווי והכוונה שוטפים של הגה"צ ר\' שמאי גרוס והגה"צ ר\' שמואל יעקב לנדאו.',
+    desc: 'הארגון הוקם על ידי שדכנים ועסקנים יר"ש, ומתנהל בליווי והכוונה שוטפים של הגה"צ ר׳ שמאי גרוס והגה"צ ר׳ שמואל יעקב לנדאו.',
   },
   {
-    icon: Lock,
+    bg: "#f0e6cd",
+    svgColor: "rgba(160,120,40,.09)",
+    h3Color: "#4a3c17",
+    pColor: "#5c5030",
     title: "פרטיות ואבטחת מידע ללא פשרות",
     desc: "אנו מתייחסים במלוא הרצינות לפרטיות שלכם! המערכת משתמשת בתקני אבטחה מתקדמים במיוחד, וההנהלה בודקת לעומק כל שדכן לפני מתן גישה למידע.",
   },
   {
-    icon: BookOpen,
+    bg: "#e2e9e8",
+    svgColor: "rgba(43,90,92,.05)",
+    h3Color: "#1b2523",
+    pColor: "#4a5654",
     title: 'התנהלות ערכית וללא חשש לשה"ר',
     desc: "המערכת בנויה ברוח התורה והחסידות: אין אפשרות לכתוב מידע שלילי, כל תגובה נבדקת לפני פרסומה ותמונות נשלחות תוך שמירה מוקפדת על פרטיות וצניעות.",
   },
 ];
 
-const articles = [
-  "10 נקודות קריטיות שהורים שוכחים לברר",
-  "דמי שדכנות - האם הגיע הזמן לשינוי?",
-  "מתי אומרים? הכל על בעיות רפואיות בשידוכים",
+const knowledgeArticles = [
+  { cat: "להורים", date: 'כ"ב אב תשפ"ו', read: "5 דק׳ קריאה", title: "10 נקודות קריטיות שהורים שוכחים לברר", excerpt: "רשימת הבדיקות שכדאי לעשות עוד לפני הפגישה הראשונה — כדי לחסוך זמן ואי-הבנות." },
+  { cat: "כללי", date: 'ט"ו אב תשפ"ו', read: "4 דק׳ קריאה", title: "דמי שדכנות - האם הגיע הזמן לשינוי?", excerpt: "מבט על נורמות התשלום לשדכנים בקהילה, והאם המודל הקיים עדיין מתאים לימינו." },
+  { cat: "למיועדים", date: 'ח׳ אב תשפ"ו', read: "6 דק׳ קריאה", title: "מתי אומרים? הכל על בעיות רפואיות בשידוכים", excerpt: "הדרכה רגישה — מתי, איך ולמי לספר על מידע רפואי במהלך תהליך השידוך." },
 ];
+
+function ArticleCard({ cat, date, read, title, excerpt }: { cat: string; date: string; read: string; title: string; excerpt: string }) {
+  return (
+    <Link
+      href={"/knowledge" as any}
+      className="flex flex-col overflow-hidden rounded-2xl border border-[#d9dee0] bg-white no-underline shadow-[0_1px_3px_rgba(20,40,40,.06)] transition-all hover:-translate-y-1 hover:shadow-[0_18px_40px_-18px_rgba(20,40,40,.28)]"
+    >
+      <div
+        className="relative flex items-center justify-center"
+        style={{
+          aspectRatio: "16/10",
+          background: "#e8eeed",
+          backgroundImage: "repeating-linear-gradient(135deg,transparent 0 13px,rgba(43,90,92,.06) 13px 26px)",
+          color: "#9fb0ad",
+          fontFamily: "ui-monospace,Menlo,monospace",
+          fontSize: 11.5,
+        }}
+      >
+        [ תמונת נושא ]
+        <span className="absolute right-[14px] top-[14px] rounded-full bg-[rgba(255,255,255,.94)] px-3 py-[5px] text-[12px] font-bold text-[#2b5a5c] shadow-[0_2px_6px_rgba(20,40,40,.12)]">
+          {cat}
+        </span>
+      </div>
+      <div className="flex flex-1 flex-col gap-[10px] p-[22px_24px]">
+        <div className="flex items-center gap-2 text-[12.5px] text-[#8a9694]">
+          <span>{date}</span>
+          <span className="h-[3px] w-[3px] rounded-full bg-[#c3ccce]" />
+          <span>{read}</span>
+        </div>
+        <h3 className="text-[19px] font-bold leading-[1.35] text-[#1b2523]" style={{ margin: 0 }}>{title}</h3>
+        <p className="text-[14px] leading-[1.6] text-[#66716f]" style={{ margin: 0 }}>{excerpt}</p>
+        <div className="mt-auto flex items-center justify-between border-t border-[#eef2f2] pt-4">
+          <div className="flex items-center gap-[9px]">
+            <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[rgba(43,90,92,.12)]">
+              <LogoSvg size={15} className="text-[#2b5a5c]" />
+            </span>
+            <span className="text-[12.5px] font-semibold text-[#66716f]">מערכת קול מצהלות</span>
+          </div>
+          <span className="inline-flex items-center gap-[5px] text-[13.5px] font-bold text-[#2b5a5c]">
+            לקריאה{" "}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5" /><path d="m12 19-7-7 7-7" />
+            </svg>
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col">
-      {/* 1. HERO */}
-      <Section
-        className="bg-primary text-primary-foreground"
-        containerClassName="py-20 md:py-32"
-      >
-        <div className="mx-auto max-w-3xl space-y-8 text-center">
+    <>
+      {/* ── 1. HERO ── */}
+      <section className="relative overflow-hidden bg-[#2b5a5c] text-[#f4f8f7]">
+        {/* Decorative SVG */}
+        <LogoSvg
+          size={640}
+          className="pointer-events-none absolute text-[rgba(255,255,255,.045)]"
+          style={{ top: -120, left: -80 } as React.CSSProperties}
+        />
+
+        <div
+          className="relative mx-auto grid items-center px-6 text-right"
+          style={{
+            maxWidth: 1200,
+            paddingTop: 74,
+            paddingBottom: 84,
+            gridTemplateColumns: "1.05fr .95fr",
+            gap: 56,
+          }}
+        >
+          {/* Floating gold badge */}
           <Link
-            href="/auth/sign-up"
-            className="inline-flex items-center gap-1 rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-4 py-1.5 text-sm font-medium transition-colors hover:bg-primary-foreground/20"
+            href={"/contact" as any}
+            className="absolute flex flex-col items-center justify-center gap-1 rounded-full border-[3px] border-white text-center text-[14px] font-extrabold text-[#123331] no-underline transition-transform hover:scale-[1.06]"
+            style={{
+              top: 24,
+              left: 24,
+              width: 118,
+              height: 118,
+              background: "radial-gradient(circle at 33% 27%,#f4dd93,#d8ac44)",
+              boxShadow: "0 4px 0 rgba(20,50,48,.18),0 22px 36px -14px rgba(0,0,0,.6)",
+              transform: "rotate(-8deg)",
+              zIndex: 4,
+            }}
           >
-            יש לי רעיון לשידוך
-            <ArrowLeft className="h-3.5 w-3.5" />
+            <span style={{ lineHeight: 1.18 }}>יש לי<br />רעיון<br />לשידוך</span>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5" /><path d="m12 19-7-7 7-7" />
+            </svg>
           </Link>
 
-          <div className="space-y-2">
-            <p className="text-lg font-medium opacity-80">
-              שדכנים, הורים, אנשי ונשות חינוך, מחפשי שידוך בוגרים — ברוכים הבאים
+          {/* Text column */}
+          <div>
+            <p className="mb-[18px] max-w-[540px] leading-[1.6] opacity-80" style={{ fontSize: "clamp(16px,1.6vw,18px)", fontWeight: 500 }}>
+              שדכנים, הורים, אנשי ונשות חינוך, מחפשי שידוך בוגרים או בזיווג שני, וכל מי שיש לו רעיון לשידוך ורוצה לסייע להקים עוד בית נאמן בישראל:
             </p>
-            <h1 className="text-5xl font-extrabold leading-tight text-primary-foreground md:text-7xl">
+            <p className="mb-1 font-medium opacity-90" style={{ fontSize: "clamp(19px,2.4vw,26px)" }}>ברוכים הבאים ל</p>
+            <h1
+              className="font-bold leading-none tracking-[-0.02em] text-[#f4f8f7]"
+              style={{ fontSize: "clamp(52px,8vw,80px)", marginBottom: 12 }}
+            >
               קול מצהלות
             </h1>
-            <p className="text-xl font-semibold opacity-90 md:text-2xl">
+            <p className="font-bold opacity-[.92]" style={{ fontSize: "clamp(20px,2.4vw,26px)", marginBottom: 32 }}>
               הארגון לקידום שידוכים בבעלזא
             </p>
+
+            {/* Animated ticker */}
+            <div className="mb-[34px] flex max-w-[560px] items-center gap-[11px]">
+              <CheckSvg size={22} stroke="currentColor" strokeWidth="2.4" />
+              <div className="h-[44px] flex-1 overflow-hidden">
+                <div
+                  className="ticker-roller"
+                  style={{ animation: "roll 16s cubic-bezier(.7,0,.3,1) infinite", willChange: "transform" }}
+                >
+                  {tickerItems.map((item, i) => (
+                    <div
+                      key={i}
+                      className="overflow-hidden text-ellipsis whitespace-nowrap font-semibold"
+                      style={{ height: 44, lineHeight: "44px", fontSize: 18.5 }}
+                    >
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* CTA buttons */}
+            <div className="flex flex-wrap justify-start gap-3">
+              <Link
+                href={"/auth/sign-up" as any}
+                className="rounded-full px-7 py-[14px] text-[16px] font-bold text-[#234a4b] no-underline transition-colors hover:bg-white"
+                style={{ background: "#f4f8f7", boxShadow: "0 10px 26px -12px rgba(0,0,0,.5)" }}
+              >
+                הירשמו עכשיו ללא עלות
+              </Link>
+              <Link
+                href={"/contact" as any}
+                className="rounded-full border border-[rgba(255,255,255,.42)] bg-transparent px-7 py-[14px] text-[16px] font-bold text-[#f4f8f7] no-underline transition-colors hover:bg-[rgba(255,255,255,.1)]"
+              >
+                דברו איתנו
+              </Link>
+            </div>
           </div>
 
-          <ul className="mx-auto inline-flex max-w-xl flex-col gap-3 text-start text-base">
-            {[
-              "מערכת חדשנית להצעות וניהול שידוכים",
-              'מאגר מתעדכן ונוח עם מיועדים ומיועדות מאנ"ש',
-              "רשימת שדכנים נבחרים בקהילתנו הק'",
-              "פורום שדכנים מתקדם לשיתוף מידע והתייעצות",
-              "בהמלצת ובפיקוח רבני קהילתינו הק'",
-            ].map((item) => (
-              <li key={item} className="flex items-start gap-2">
-                <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 opacity-90" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-
-          <div className="flex flex-wrap justify-center gap-3">
-            <Button asChild size="lg" variant="secondary">
-              <Link href="/auth/sign-up">הירשמו עכשיו ללא עלות</Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+          {/* Visual column */}
+          <div className="relative">
+            <div
+              className="overflow-hidden rounded-[18px] bg-white"
+              style={{
+                boxShadow: "0 34px 80px -34px rgba(0,0,0,.6)",
+                border: "1px solid rgba(255,255,255,.16)",
+                transform: "rotate(-1.2deg)",
+              }}
             >
-              <Link href={"/contact" as any}>דברו איתנו</Link>
-            </Button>
+              {/* Browser chrome */}
+              <div className="flex gap-[6px] border-b border-[#e6eded] bg-[#f1f5f5] px-4 py-[13px]">
+                {[1, 2, 3].map((d) => (
+                  <span key={d} className="h-[9px] w-[9px] rounded-full bg-[#d3dcdc]" />
+                ))}
+              </div>
+              <div className="p-4">
+                <div
+                  className="flex items-center justify-center rounded-[10px] border border-[#e6eded] text-center text-[12.5px] text-[#7c8b89]"
+                  style={{
+                    aspectRatio: "4/3",
+                    fontFamily: "ui-monospace,Menlo,monospace",
+                    padding: 18,
+                    backgroundImage: "repeating-linear-gradient(135deg,transparent 0 12px,rgba(43,90,92,.06) 12px 24px)",
+                  }}
+                >
+                  [ צילום מסך · ממשק<br />ניהול השידוכים ]
+                </div>
+              </div>
+            </div>
+
+            {/* Floating toast */}
+            <div
+              className="absolute flex items-center gap-[10px] rounded-[12px] bg-white"
+              style={{
+                bottom: -18,
+                left: -16,
+                border: "1px solid #e6eded",
+                boxShadow: "0 18px 40px -18px rgba(0,0,0,.4)",
+                padding: "12px 16px",
+                transform: "rotate(2deg)",
+              }}
+            >
+              <span
+                className="flex items-center justify-center rounded-[9px]"
+                style={{ width: 30, height: 30, background: "rgba(43,90,92,.1)" }}
+              >
+                <CheckSvg size={17} strokeWidth="2.6" />
+              </span>
+              <span className="text-right">
+                <span className="block text-[13px] font-bold text-[#1b2523]">הצעה נשלחה</span>
+                <span className="block text-[11.5px] text-[#889492]">ממתינה לתגובת הצדדים</span>
+              </span>
+            </div>
           </div>
         </div>
-      </Section>
+      </section>
 
-      {/* 2. MISSION + STATS */}
-      <Section containerClassName="py-16 md:py-24">
-        <div className="grid gap-12 md:grid-cols-2 md:items-center">
-          <div className="space-y-4">
-            <h2>המטרה שלנו ושלכם</h2>
-            <p className="text-muted-foreground leading-relaxed">
-              לקדם שידוכים ולהקים בתים נאמנים בישראל. בסייעתא דשמיא, בברכת הקודש ובהכוונת רבנים
-              חשובים בקהילתינו הק', הושקעו משאבים רבים בסיוע נדיבים על מנת להקים את מערכת קול
-              מצהלות, מתוך תחושת שליחות, אחריות ורצון לקדם את ענייני השידוכים בקהילתנו.
+      {/* ── 2. MISSION ── */}
+      <section className="bg-[#ecf0f2]">
+        <div
+          className="mx-auto grid items-center px-6"
+          style={{ maxWidth: 1120, paddingTop: 76, paddingBottom: 76, gridTemplateColumns: "1.1fr .9fr", gap: 56 }}
+        >
+          <div>
+            <h2
+              className="font-bold text-[#2b5a5c]"
+              style={{ fontSize: "clamp(28px,3.2vw,36px)", lineHeight: 1.1, marginBottom: 18 }}
+            >
+              המטרה<br /><HighlightSpan>שלנו ושלכם</HighlightSpan>
+            </h2>
+            <p className="mb-4 text-[16.5px] leading-[1.75] text-[#5c6a68]">
+              לקדם שידוכים ולהקים בתים נאמנים בישראל. בסייעתא דשמיא, בברכת הקודש ובהכוונת רבנים חשובים בקהילתינו הק׳, הושקעו משאבים רבים בסיוע נדיבים על מנת להקים את מערכת קול מצהלות, מתוך תחושת שליחות, אחריות ורצון לקדם את ענייני השידוכים בקהילתנו.
             </p>
-            <p className="text-muted-foreground leading-relaxed">
-              המערכת נועדה לשמש ככתובת לכל נושא השידוכים בקהילתנו הק' וככלי עזר נוח להורים,
-              שדכנים, רבנים ואנשי ונשות החינוך במוסדותינו ברחבי העולם, במטרה לסייע במציאת זיווג
-              הגון בדרך קלה ונוחה, תוך שמירה על ערכי הקדושה וצנעת הפרט.
+            <p className="mb-5 text-[16.5px] leading-[1.75] text-[#5c6a68]">
+              המערכת נועדה לשמש ככתובת לכל נושא השידוכים בקהילתנו הק׳ וככלי עזר נוח להורים, שדכנים, רבנים ואנשי ונשות החינוך במוסדותינו ברחבי העולם, במטרה לסייע במציאת זיווג הגון בדרך קלה ונוחה, תוך שמירה על ערכי הקדושה וצנעת הפרט, ללא חשש לשה"ר ובליווי הלכתי ורוחני מלא.
             </p>
-            <Button asChild variant="link" className="px-0">
-              <Link href={"/about" as any} className="flex items-center gap-1">
-                עוד על קול מצהלות
-                <ArrowLeft className="h-4 w-4" />
-              </Link>
-            </Button>
+            <Link href={"/about" as any} className="inline-flex items-center gap-[6px] text-[16px] font-bold text-[#2b5a5c] no-underline">
+              עוד על קול מצהלות <ArrowSmall />
+            </Link>
           </div>
 
-          <div className="grid grid-cols-3 gap-6 text-center">
-            {[
-              { num: "אלפי", desc: "מיועדים ומיועדות מבעלזא מופיעים במערכת" },
-              { num: "מאות", desc: 'כרטיסי קו"ח מפורטים ומלאים ע"י ההורים' },
-              { num: "עשרות", desc: 'שדכנים מובילים מאנ"ש כבר עובדים עם המערכת' },
-            ].map(({ num, desc }) => (
-              <div key={num} className="space-y-2">
-                <p className="text-4xl font-extrabold text-primary md:text-5xl">{num}</p>
-                <p className="text-xs leading-snug text-muted-foreground md:text-sm">{desc}</p>
+          {/* Endorsement slider placeholder */}
+          <div className="relative">
+            <p className="mb-3 text-center text-[13px] font-bold tracking-[.02em] text-[#2b5a5c]">
+              הסכמות והמלצות רבני קהילתנו הק׳
+            </p>
+            <div className="relative">
+              <div
+                className="flex items-center justify-center rounded-2xl border border-dashed border-[#c3ccce] bg-white text-center text-[13px] text-[#7c8b89]"
+                style={{
+                  aspectRatio: "4/5",
+                  fontFamily: "ui-monospace,Menlo,monospace",
+                  padding: 22,
+                  backgroundImage: "repeating-linear-gradient(135deg,transparent 0 12px,rgba(43,90,92,.05) 12px 24px)",
+                  boxShadow: "0 1px 3px rgba(20,40,40,.06)",
+                }}
+              >
+                [ תמונת הסכמת רב · סליידר ]
+              </div>
+              {/* Nav arrows */}
+              {[{ side: "left", d: "m15 18-6-6 6-6" }, { side: "right", d: "m9 18 6-6-6-6" }].map(({ side, d }) => (
+                <button
+                  key={side}
+                  aria-label={side === "right" ? "הבא" : "הקודם"}
+                  className="absolute top-1/2 flex h-[40px] w-[40px] -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[#d9dee0] bg-white text-[#2b5a5c] shadow-[0_8px_18px_-8px_rgba(0,0,0,.35)] transition-colors hover:bg-[#f2f6f6]"
+                  style={{ [side]: -16 }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d={d} />
+                  </svg>
+                </button>
+              ))}
+            </div>
+            {/* Dots */}
+            <div className="mt-4 flex justify-center gap-[7px]">
+              <span className="h-[7px] rounded-full bg-[#2b5a5c]" style={{ width: 22 }} />
+              {[1, 2, 3].map((d) => <span key={d} className="h-[7px] w-[7px] rounded-full bg-[#c3ccce]" />)}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 3. STATS ── */}
+      <WebStats />
+
+      {/* ── 4. HOW IT WORKS ── */}
+      <section className="bg-[#e3e9eb]">
+        <div className="mx-auto px-6" style={{ maxWidth: 1160, paddingTop: 90, paddingBottom: 90 }}>
+          {/* Section header */}
+          <div className="mb-[52px] grid items-end" style={{ gridTemplateColumns: "1.35fr 1fr", gap: 44 }}>
+            <div>
+              <div className="mb-4 text-[13px] font-bold tracking-[.16em] text-[#2b5a5c]">— איך זה עובד</div>
+              <h2
+                className="font-bold text-[#1b2523]"
+                style={{ fontSize: "clamp(34px,5vw,58px)", lineHeight: 1.02, letterSpacing: "-.02em", margin: 0 }}
+              >
+                איך עובדת מערכת<br />
+                <span className="text-[#2b5a5c]">קול מצהלות?</span>
+              </h2>
+            </div>
+            <p className="mb-[10px] text-[16px] leading-[1.7] text-[#5c6a68]" style={{ margin: 0 }}>
+              בשילוב מושלם של טכנולוגיה, מידע, שיתוף ובברכת רבני קהילתינו הק׳.
+            </p>
+          </div>
+
+          {/* Step rows */}
+          <div className="border-t border-[#c8d1d0]">
+            {steps.map(({ num, title, desc }) => (
+              <div
+                key={num}
+                className="grid items-baseline border-b border-[#c8d1d0]"
+                style={{ gridTemplateColumns: "96px 1fr", gap: 28, padding: "28px 0" }}
+              >
+                <div className="font-normal leading-none text-[#9fb2af]" style={{ fontSize: "clamp(38px,3.6vw,50px)" }}>
+                  {num}
+                </div>
+                <div className="grid items-baseline" style={{ gridTemplateColumns: "minmax(200px,280px) 1fr", gap: 28 }}>
+                  <h3 className="font-bold text-[#1b2523]" style={{ fontSize: "clamp(18px,1.9vw,22px)", margin: 0, lineHeight: 1.3 }}>
+                    {title}
+                  </h3>
+                  <p className="text-[15px] leading-[1.65] text-[#5c6a68]" style={{ margin: 0 }}>{desc}</p>
+                </div>
               </div>
             ))}
           </div>
-        </div>
-      </Section>
 
-      {/* 3. HOW IT WORKS */}
-      <Section className="bg-muted/40" containerClassName="py-16 md:py-24">
-        <div className="space-y-10">
-          <div className="space-y-2 text-center">
-            <h2>איך עובדת מערכת קול מצהלות?</h2>
-            <p className="text-muted-foreground">
-              בשילוב מושלם של טכנולוגיה, מידע, שיתוף ובברכת רבני קהילתינו הק'.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {steps.map((step, i) => (
-              <Box key={i} className="flex flex-col gap-3 p-6 text-center">
-                <span className="text-5xl font-black leading-none text-primary/20">{i + 1}</span>
-                <h3 className="text-sm font-bold">{step.audience}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">{step.desc}</p>
-              </Box>
+          {/* Photo strip */}
+          <div className="mt-[52px] grid grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-2xl bg-[#dbe3e2]" style={{ aspectRatio: "4/3" }} />
             ))}
           </div>
         </div>
-      </Section>
+      </section>
 
-      {/* 4. WHO IS IT FOR */}
-      <Section containerClassName="py-16 md:py-24">
-        <div className="space-y-10">
-          <div className="space-y-2 text-center">
-            <h2>למי המערכת מתאימה?</h2>
-            <p className="text-muted-foreground">
-              לכל העוסקים בתחום כמקצוע, כשליחות, או עבור עצמם, ילדיהם ותלמידיהם.
-            </p>
+      {/* ── 5. WHO IS IT FOR ── */}
+      <section className="bg-[#ecf0f2]">
+        <div className="mx-auto px-6" style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}>
+          <div className="mx-auto mb-12 max-w-[640px] text-center">
+            <h2
+              className="font-bold text-[#2b5a5c]"
+              style={{ fontSize: "clamp(28px,3.2vw,36px)", lineHeight: 1.1, marginBottom: 12 }}
+            >
+              למי המערכת<br /><HighlightSpan>מתאימה?</HighlightSpan>
+            </h2>
+            <p className="text-[17px] text-[#5c6a68]" style={{ margin: 0 }}>לכל העוסקים בתחום כמקצוע, כשליחות, או עבור עצמם, ילדיהם ותלמידיהם.</p>
           </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {audiences.map((aud) => (
-              <Box key={aud.title} className="flex flex-col gap-4 p-6">
-                <h3 className="text-xl font-bold text-primary">{aud.title}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">{aud.desc}</p>
-                <ul className="flex flex-col gap-3">
-                  {aud.features.map((f) => (
-                    <li key={f.title} className="flex items-start gap-2 text-sm">
-                      <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                      <span>
-                        <span className="font-semibold">{f.title}</span>
-                        <br />
-                        <span className="text-muted-foreground">{f.desc}</span>
+
+          <div className="grid grid-cols-3 gap-6">
+            {audiences.map(({ title, desc, features, cta, href }) => (
+              <div
+                key={title}
+                className="flex flex-col gap-4 rounded-[14px] border border-[#d9dee0] bg-white p-[30px]"
+                style={{ boxShadow: "0 4px 14px -8px rgba(20,40,40,.12)" }}
+              >
+                <h3 className="text-[22px] font-bold text-[#2b5a5c]" style={{ margin: 0 }}>{title}</h3>
+                <p className="text-[14.5px] leading-[1.65] text-[#5c6a68]" style={{ margin: 0 }}>{desc}</p>
+                <ul className="flex flex-col gap-3 list-none p-0 m-0">
+                  {features.map(({ title: ft, desc: fd }) => (
+                    <li key={ft} className="flex items-start gap-[9px]">
+                      <CheckSvg />
+                      <span className="text-[14.5px]">
+                        <b className="text-[#1b2523]">{ft}</b><br />
+                        <span className="text-[#5c6a68]">{fd}</span>
                       </span>
                     </li>
                   ))}
                 </ul>
-                <div className="mt-auto pt-2">
-                  <Button asChild className="w-full">
-                    <Link href={aud.href}>{aud.cta}</Link>
-                  </Button>
-                </div>
-              </Box>
-            ))}
-          </div>
-        </div>
-      </Section>
-
-      {/* 5. PRINCIPLES */}
-      <Section className="bg-muted/40" containerClassName="py-16 md:py-24">
-        <div className="space-y-10">
-          <div className="space-y-2 text-center">
-            <h2>העקרונות של קול מצהלות</h2>
-            <p className="text-muted-foreground">
-              הכללים שלנו נוסחו מתוך הבנת האחריות העצומה והרגישות הנדרשת בתחום.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {principles.map((p) => {
-              const Icon = p.icon;
-              return (
-                <Box key={p.title} className="flex flex-col gap-4 p-6">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                    <Icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="font-bold">{p.title}</h3>
-                  <p className="text-sm leading-relaxed text-muted-foreground">{p.desc}</p>
-                </Box>
-              );
-            })}
-          </div>
-        </div>
-      </Section>
-
-      {/* 6. SCREENSHOTS */}
-      <Section containerClassName="py-16 md:py-24">
-        <div className="space-y-10">
-          <div className="space-y-2 text-center">
-            <h2>איך זה נראה מבפנים?</h2>
-            <p className="text-muted-foreground">מה בדיוק עושים? מה האפשרויות שם? כנסו לראות!</p>
-          </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {[
-              { label: "מערכת קול מצהלות להורים ולמיועדים", href: "/parents" as any },
-              { label: "מערכת קול מצהלות לשדכנים", href: "/shadchanim" as any },
-            ].map((item) => (
-              <Box key={item.label} className="flex flex-col gap-4 p-6">
-                <div className="aspect-video rounded-lg bg-muted" />
-                <div className="flex items-center justify-between">
-                  <p className="font-semibold">{item.label}</p>
-                  <Button asChild variant="outline" size="sm">
-                    <Link href={item.href} className="flex items-center gap-1">
-                      כנסו לראות
-                      <ArrowLeft className="h-3.5 w-3.5" />
-                    </Link>
-                  </Button>
-                </div>
-              </Box>
-            ))}
-          </div>
-        </div>
-      </Section>
-
-      {/* 7. RABBINICAL ENDORSEMENTS */}
-      <Section className="bg-muted/40" containerClassName="py-16 md:py-24">
-        <div className="space-y-8 text-center">
-          <h2>הסכמות והמלצות רבני קהילתנו הק'</h2>
-          <div className="flex flex-wrap justify-center gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="flex h-24 w-32 items-center justify-center rounded-xl border border-border bg-muted text-xs text-muted-foreground/40"
-              >
-                המלצה {i + 1}
+                <Link
+                  href={href}
+                  className="mt-auto rounded-[10px] bg-[#2b5a5c] px-[18px] py-3 text-center text-[15px] font-bold text-[#f4f8f7] no-underline transition-colors hover:bg-[#234a4b]"
+                >
+                  {cta}
+                </Link>
               </div>
             ))}
           </div>
         </div>
-      </Section>
+      </section>
 
-      {/* 8. RECENT ENGAGEMENTS */}
-      <Section containerClassName="py-16 md:py-24">
-        <div className="space-y-8">
-          <div className="flex items-center justify-between">
-            <h2>שידוכים שנסגרו למזל טוב</h2>
-            <div className="hidden gap-2 md:flex">
-              <Button asChild variant="outline" size="sm">
-                <Link href={"/whats-new" as any}>לכל מה שחדש</Link>
-              </Button>
-              <Button asChild variant="outline" size="sm">
-                <Link href={"/whats-new#update" as any}>לעדכון מודעת מאורסים</Link>
-              </Button>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Box
-                key={i}
-                className="flex aspect-[3/4] items-center justify-center text-center text-xs text-muted-foreground"
+      {/* ── 6. PRINCIPLES ── */}
+      <section className="bg-[#f3f6f5]">
+        <div className="mx-auto px-6" style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}>
+          <div className="mb-[52px] grid items-end" style={{ gridTemplateColumns: "1fr auto", gap: 32 }}>
+            <div style={{ maxWidth: 660 }}>
+              <span className="mb-5 inline-block rounded-[8px] bg-[#e4ebe9] px-[14px] py-1.5 text-[12.5px] font-bold tracking-[.14em] text-[#2b5a5c]">
+                עקרונות
+              </span>
+              <h2
+                className="font-bold text-[#1b2523]"
+                style={{ fontSize: "clamp(30px,4.2vw,52px)", lineHeight: 1.12, letterSpacing: "-.01em", marginBottom: 18, marginTop: 0 }}
               >
-                מודעת מאורסים
-              </Box>
+                העקרונות של<br />
+                <span
+                  className="inline-block rounded-[12px]"
+                  style={{ background: "#2b5a5c", color: "#f4f8f7", padding: "1px 16px 5px", transform: "rotate(-1.5deg)" }}
+                >
+                  קול מצהלות
+                </span>
+              </h2>
+              <p className="max-w-[520px] text-[16.5px] leading-[1.7] text-[#5c6a68]" style={{ margin: 0 }}>
+                הכללים שלנו נוסחו מתוך הבנת האחריות העצומה והרגישות הנדרשת בתחום.
+              </p>
+            </div>
+            <Link
+              href={"/auth/sign-up" as any}
+              className="inline-flex items-center gap-2 whitespace-nowrap rounded-[11px] bg-[#1b2523] px-[30px] py-[15px] text-[15px] font-bold text-[#f4f8f7] no-underline transition-colors hover:bg-[#2b5a5c]"
+            >
+              הצטרפו עכשיו <ArrowSmall />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-3 gap-[22px]">
+            {principles.map(({ bg, svgColor, h3Color, pColor, title, desc }) => (
+              <div
+                key={title}
+                className="relative flex flex-col items-center justify-center overflow-hidden rounded-[18px] p-[40px_30px] text-center"
+                style={{ background: bg, minHeight: 236 }}
+              >
+                <LogoSvg
+                  size={220}
+                  className="pointer-events-none absolute"
+                  style={{ color: svgColor, bottom: -60, left: -50 } as React.CSSProperties}
+                />
+                <h3 className="relative font-bold leading-[1.3]" style={{ fontSize: 21, margin: "0 0 14px", color: h3Color }}>{title}</h3>
+                <p className="relative text-[14.5px] leading-[1.7]" style={{ color: pColor, margin: 0 }}>{desc}</p>
+              </div>
             ))}
           </div>
-          <div className="flex flex-wrap gap-2 md:hidden">
-            <Button asChild variant="outline" size="sm">
-              <Link href={"/whats-new" as any}>לכל מה שחדש</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href={"/whats-new#update" as any}>לעדכון מודעת מאורסים</Link>
-            </Button>
+        </div>
+      </section>
+
+      {/* ── 7. SCREENSHOTS ── */}
+      <section className="bg-[#ecf0f2]">
+        <div className="mx-auto px-6" style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}>
+          <div className="mx-auto mb-12 max-w-[640px] text-center">
+            <h2
+              className="font-bold text-[#2b5a5c]"
+              style={{ fontSize: "clamp(28px,3.2vw,36px)", lineHeight: 1.1, marginBottom: 12 }}
+            >
+              איך זה נראה<br /><HighlightSpan>מבפנים?</HighlightSpan>
+            </h2>
+            <p className="text-[17px] text-[#5c6a68]" style={{ margin: 0 }}>מה בדיוק עושים? מה האפשרויות שם? כנסו לראות!</p>
+          </div>
+          <div className="grid grid-cols-2 gap-6">
+            {[
+              { title: "מערכת קול מצהלות להורים ולמיועדים", href: "/parents" as any },
+              { title: "מערכת קול מצהלות לשדכנים", href: "/shadchanim" as any },
+            ].map(({ title, href }) => (
+              <div
+                key={title}
+                className="flex flex-col gap-4 rounded-[14px] border border-[#d9dee0] bg-white p-[22px]"
+                style={{ boxShadow: "0 1px 3px rgba(20,40,40,.06)" }}
+              >
+                <div className="overflow-hidden rounded-[10px] border border-[#e2e8e8]">
+                  <div className="flex gap-[6px] border-b border-[#e6eded] bg-[#f1f5f5] px-[14px] py-[10px]">
+                    {[1, 2, 3].map((d) => <span key={d} className="h-[9px] w-[9px] rounded-full bg-[#d3dcdc]" />)}
+                  </div>
+                  <div
+                    className="flex items-center justify-center text-center text-[12.5px] text-[#7c8b89]"
+                    style={{
+                      aspectRatio: "16/9",
+                      fontFamily: "ui-monospace,Menlo,monospace",
+                      padding: 16,
+                      backgroundImage: "repeating-linear-gradient(135deg,transparent 0 11px,rgba(43,90,92,.05) 11px 22px)",
+                    }}
+                  >
+                    [ צילום מסך ]
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[15px] font-bold text-[#1b2523]" style={{ margin: 0 }}>{title}</p>
+                  <Link
+                    href={href}
+                    className="inline-flex shrink-0 items-center gap-[5px] rounded-[8px] border border-[#cfd8d8] px-[14px] py-2 text-[13.5px] font-bold text-[#2b5a5c] no-underline transition-colors hover:bg-[#eef3f3]"
+                  >
+                    כנסו לראות <ArrowSmall />
+                  </Link>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      </Section>
+      </section>
 
-      {/* 9. KNOWLEDGE CENTER */}
-      <Section className="bg-muted/40" containerClassName="py-16 md:py-24">
-        <div className="space-y-8">
-          <div className="space-y-2 text-center">
-            <h2>מרכז הידע של קול מצהלות</h2>
-            <p className="text-muted-foreground">
+      {/* ── 8. ENDORSEMENTS ── */}
+      <RabbinicalEndorsements />
+
+      {/* ── 9. RECENT ENGAGEMENTS ── */}
+      <section className="bg-[#ecf0f2]">
+        <div className="mx-auto px-6" style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}>
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+            <h2
+              className="font-bold text-[#2b5a5c]"
+              style={{ fontSize: "clamp(28px,3.2vw,36px)", lineHeight: 1.1, margin: 0 }}
+            >
+              שידוכים שנסגרו<br /><HighlightSpan>למזל טוב</HighlightSpan>
+            </h2>
+            <div className="flex gap-[10px]">
+              {[
+                { label: "לכל מה שחדש", href: "/whats-new" as any },
+                { label: "לעדכון מודעת מאורסים", href: "/contact" as any },
+              ].map(({ label, href }) => (
+                <Link
+                  key={label}
+                  href={href}
+                  className="rounded-[8px] border border-[#cfd8d8] px-4 py-[9px] text-[14px] font-bold text-[#2b5a5c] no-underline transition-colors hover:bg-[#e3e9eb]"
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-5 gap-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-center rounded-[14px] border border-dashed border-[#c3ccce] bg-white font-mono text-[12px] text-[#a9b3b3]"
+                style={{ aspectRatio: "3/4" }}
+              >
+                מודעת מאורסים
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 10. KNOWLEDGE PREVIEW ── */}
+      <section className="bg-[#e3e9eb]">
+        <div className="mx-auto px-6" style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}>
+          <div className="mx-auto mb-12 max-w-[640px] text-center">
+            <h2
+              className="font-bold text-[#2b5a5c]"
+              style={{ fontSize: "clamp(28px,3.2vw,36px)", lineHeight: 1.1, marginBottom: 12 }}
+            >
+              מרכז הידע של<br /><HighlightSpan>קול מצהלות</HighlightSpan>
+            </h2>
+            <p className="text-[17px] text-[#5c6a68]" style={{ margin: 0 }}>
               כל מה שחשוב לדעת על שידוכים, בירורים, פגישות, אירוסין ומה שביניהם.
             </p>
           </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {articles.map((title) => (
-              <Box
-                key={title}
-                asChild
-                className="flex cursor-pointer flex-col gap-3 p-6 transition-shadow hover:shadow-md"
-              >
-                <Link href={"/knowledge" as any}>
-                  <p className="font-semibold leading-snug">{title}</p>
-                  <span className="mt-auto flex items-center gap-1 text-sm text-primary">
-                    לקריאה
-                    <ArrowLeft className="h-3.5 w-3.5" />
-                  </span>
-                </Link>
-              </Box>
+          <div className="grid grid-cols-3 gap-6">
+            {knowledgeArticles.map((article) => (
+              <ArticleCard key={article.title} {...article} />
             ))}
           </div>
         </div>
-      </Section>
+      </section>
 
-      {/* 10. FINAL CTA */}
-      <Section
-        className="bg-primary text-primary-foreground"
-        containerClassName="py-16 md:py-24"
-      >
-        <div className="mx-auto max-w-2xl space-y-8 text-center">
-          <div className="space-y-2">
-            <h2 className="text-primary-foreground">רוצים פשוט להתחיל?</h2>
-            <p className="opacity-85">
-              הירשמו עכשיו ללא עלות ותהנו מכל מה שיש לקול מצהלות להציע לכם!
-            </p>
-          </div>
-          <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-            <Button asChild size="lg" variant="secondary">
-              <Link href="/auth/sign-up">הרשמת הורים ומיועדים</Link>
-            </Button>
-            <Button asChild size="lg" variant="secondary">
-              <Link href="/auth/sign-up">הרשמת שדכנים ושדכניות</Link>
-            </Button>
-            <Button asChild size="lg" variant="secondary">
-              <Link href="/auth/sign-up">הרשמת רבנים וצוותי חינוך</Link>
-            </Button>
-          </div>
-        </div>
-      </Section>
-    </div>
+      {/* ── FINAL CTA ── */}
+      <div style={{ background: "linear-gradient(180deg,#e3e9eb 0%,#eef2f1 100%)" }}>
+        <WebCta />
+      </div>
+    </>
   );
 }

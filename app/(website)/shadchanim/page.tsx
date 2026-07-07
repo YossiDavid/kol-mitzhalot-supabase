@@ -1,9 +1,6 @@
-import Section from "@/components/layout/section";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { WebStats } from "@/components/website/stats";
 import { RabbinicalEndorsements } from "@/components/website/rabbinical-endorsements";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
 
 const FEATURES = [
   {
@@ -15,12 +12,12 @@ const FEATURES = [
     a: 'בקול מצהלות תהנו מכרטיסי קו"ח מסודרים ומפורטים במיוחד עם מספר ההצעות שכבר התקבלו ועם כל המידע האישי, המשפחתי והתעסוקתי של המיועד או המיועדת, שמולאו על ידי ההורים או המיועדים בעצמם!',
   },
   {
-    q: "לא עוד: \"איך לא חשבתי על ההצעה הזו בעצמי\"",
+    q: 'לא עוד: "איך לא חשבתי על ההצעה הזו בעצמי"',
     a: "קול מצהלות מביאה לכם פתרון מושלם עם לוח עבודה חדשני שיעזור לכם ליצור יותר הצעות! פשוט מסמנים שמות מעניינים מתוך המאגר, בוחרים מתוכם את המיועדים המועדפים, חושבים על הצעות מתאימות, יוצרים אותם בקלות ואפילו מקבלים פידבק אוטומטי חכם שבודק אם ההצעה הוצעה בעבר.",
   },
   {
     q: "הצעות טובות נופלות לכם בין הכסאות?",
-    a: "אין יותר הצעות שסתם יורדות! שולחים את ההצעות ישירות מהמערכת, מקבלים תגובה מהירה משני הצדדים אם הם רוצים להתקדם או לא ומדוע, וכך עוקבים אחרי כל הצעה ומדייקים את ההצעות הבאות עד לסגירת שידוך בעז\"ה!",
+    a: 'אין יותר הצעות שסתם יורדות! שולחים את ההצעות ישירות מהמערכת, מקבלים תגובה מהירה משני הצדדים אם הם רוצים להתקדם או לא ומדוע, וכך עוקבים אחרי כל הצעה ומדייקים את ההצעות הבאות עד לסגירת שידוך בעז"ה!',
   },
   {
     q: "צריכים דעה נוספת? עזרה בבירורים? ייעוץ בהתנהלות?",
@@ -28,56 +25,120 @@ const FEATURES = [
   },
 ];
 
+const SECTION_BG = ["bg-[#ecf0f2]", "bg-[#e3e9eb]"];
+
+function ArrowIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 12H5" /><path d="m12 19-7-7 7-7" />
+    </svg>
+  );
+}
+
+function ImagePlaceholder() {
+  return (
+    <div
+      className="rounded-2xl border border-dashed border-[#c3ccce] bg-white"
+      style={{
+        aspectRatio: "16/9",
+        backgroundImage: "repeating-linear-gradient(135deg,transparent 0 13px,rgba(43,90,92,.06) 13px 26px)",
+      }}
+    />
+  );
+}
+
 export default function ShadchanPage() {
   return (
-    <div className="flex flex-col">
+    <>
       {/* Hero */}
-      <Section
-        className="bg-primary text-primary-foreground"
-        containerClassName="py-20 md:py-28 text-center space-y-6"
-      >
-        <h1 className="text-primary-foreground">שדכנים ושדכניות</h1>
-        <p className="text-xl opacity-90">קול מצהלות כאן עבורכם!</p>
-        <p className="mx-auto max-w-2xl opacity-80">
-          מערכת קול מצהלות תוכננה ונבנתה במיוחד עבורכם, והיא כאן כדי לפתור את כל האתגרים שאתם
-          מתמודדים איתם בהצעת וניהול שידוכים.
-        </p>
-        <Button asChild size="lg" variant="secondary">
-          <Link href="/auth/sign-up">הירשמו עכשיו</Link>
-        </Button>
-      </Section>
-
-      {/* Problem-Solution sections */}
-      {FEATURES.map((f, i) => (
-        <Section
-          key={i}
-          className={cn(i % 2 === 1 && "bg-muted/40")}
-          containerClassName="py-16 md:py-20"
-        >
-          <div
-            className={cn(
-              "grid items-center gap-10 md:grid-cols-2",
-              i % 2 === 1 && "md:[direction:rtl]",
-            )}
+      <section className="bg-[#2b5a5c] text-[#f4f8f7]">
+        <div className="mx-auto px-6 py-24 text-center" style={{ maxWidth: 1120 }}>
+          <h1
+            className="font-bold text-[#f4f8f7]"
+            style={{ fontSize: "clamp(32px,4.5vw,52px)", marginBottom: 20, lineHeight: 1.1 }}
           >
-            <div className="aspect-video rounded-2xl bg-muted" />
-            <div className={cn("space-y-4", i % 2 === 1 && "[direction:rtl]")}>
-              <h2 className="text-2xl">{f.q}</h2>
-              <p className="leading-relaxed text-muted-foreground">{f.a}</p>
-            </div>
+            שדכנים ושדכניות
+          </h1>
+          <p className="mx-auto mb-10 text-[18px] leading-[1.65] opacity-90" style={{ maxWidth: 640 }}>
+            מערכת קול מצהלות תוכננה ונבנתה במיוחד עבורכם, והיא כאן כדי לפתור את כל האתגרים שאתם מתמודדים איתם בהצעת וניהול שידוכים.
+          </p>
+          <Link
+            href={"/auth/sign-up" as any}
+            className="inline-flex items-center gap-[9px] rounded-full no-underline transition-transform hover:-translate-y-0.5"
+            style={{
+              background: "linear-gradient(145deg,#f2dc8f,#dcb149)",
+              color: "#123331",
+              padding: "16px 34px",
+              fontSize: 17,
+              fontWeight: 800,
+              boxShadow: "0 20px 40px -16px rgba(0,0,0,.55)",
+            }}
+          >
+            הירשמו עכשיו ללא עלות <ArrowIcon />
+          </Link>
+        </div>
+      </section>
+
+      {/* Feature sections — alternating layout */}
+      {FEATURES.map((f, i) => (
+        <section key={i} className={SECTION_BG[i % 2]}>
+          <div
+            className="mx-auto grid grid-cols-2 items-center gap-12 px-6"
+            style={{ maxWidth: 1120, paddingTop: 70, paddingBottom: 70 }}
+          >
+            {i % 2 === 0 ? (
+              <>
+                <div>
+                  <h2
+                    className="font-bold text-[#2b5a5c]"
+                    style={{ fontSize: "clamp(22px,2.6vw,28px)", marginBottom: 16, lineHeight: 1.3 }}
+                  >
+                    {f.q}
+                  </h2>
+                  <p className="text-[16.5px] leading-[1.75] text-[#5c6a68]">{f.a}</p>
+                </div>
+                <ImagePlaceholder />
+              </>
+            ) : (
+              <>
+                <ImagePlaceholder />
+                <div>
+                  <h2
+                    className="font-bold text-[#2b5a5c]"
+                    style={{ fontSize: "clamp(22px,2.6vw,28px)", marginBottom: 16, lineHeight: 1.3 }}
+                  >
+                    {f.q}
+                  </h2>
+                  <p className="text-[16.5px] leading-[1.75] text-[#5c6a68]">{f.a}</p>
+                </div>
+              </>
+            )}
           </div>
-        </Section>
+        </section>
       ))}
 
       <WebStats />
       <RabbinicalEndorsements />
 
-      {/* Simple CTA */}
-      <Section className="bg-primary text-primary-foreground" containerClassName="py-12 text-center">
-        <Button asChild size="lg" variant="secondary">
-          <Link href="/auth/sign-up">הירשמו עכשיו</Link>
-        </Button>
-      </Section>
-    </div>
+      {/* Bottom CTA */}
+      <section className="bg-[#ecf0f2]">
+        <div className="mx-auto px-6 py-16 text-center" style={{ maxWidth: 1120 }}>
+          <Link
+            href={"/auth/sign-up" as any}
+            className="inline-flex items-center gap-[9px] rounded-full no-underline transition-transform hover:-translate-y-0.5"
+            style={{
+              background: "#2b5a5c",
+              color: "#f4f8f7",
+              padding: "16px 34px",
+              fontSize: 17,
+              fontWeight: 800,
+              boxShadow: "0 10px 24px -10px rgba(43,90,92,.6)",
+            }}
+          >
+            הירשמו עכשיו ללא עלות <ArrowIcon />
+          </Link>
+        </div>
+      </section>
+    </>
   );
 }
