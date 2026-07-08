@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { WebStats } from "@/components/website/stats";
 import { RabbinicalEndorsements } from "@/components/website/rabbinical-endorsements";
 
@@ -134,7 +135,7 @@ export default function ParentsPage() {
       ))}
 
       <WebStats />
-      <RabbinicalEndorsements />
+      <Suspense><RabbinicalEndorsements /></Suspense>
 
       {/* Bottom CTA */}
       <section className="bg-[#ecf0f2]">

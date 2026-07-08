@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { WebStats } from "@/components/website/stats";
 import { RabbinicalEndorsements } from "@/components/website/rabbinical-endorsements";
 import { WebCta } from "@/components/website/cta";
@@ -138,7 +139,7 @@ export default function AboutPage() {
       </section>
 
       <WebStats />
-      <RabbinicalEndorsements />
+      <Suspense><RabbinicalEndorsements /></Suspense>
       <WebCta />
     </>
   );
