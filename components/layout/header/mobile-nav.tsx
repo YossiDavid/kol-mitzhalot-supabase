@@ -34,9 +34,8 @@ export function WebMobileNav() {
         )}
       </button>
 
-      {open && (
-        <div
-          className="absolute inset-x-0 top-[69px] z-50 border-b border-[rgba(43,90,92,.13)] px-6 py-4 shadow-lg lg:hidden"
+      <div
+          className={`absolute inset-x-0 top-[69px] z-50 border-b border-[rgba(43,90,92,.13)] px-6 py-4 shadow-lg lg:hidden transition-all duration-200 ease-out${open ? " opacity-100 translate-y-0 pointer-events-auto" : " opacity-0 -translate-y-2 pointer-events-none"}`}
           style={{ background: "rgba(236,240,242,.97)", backdropFilter: "saturate(180%) blur(10px)" }}
         >
           <ul className="m-0 flex list-none flex-col gap-0 p-0">
@@ -69,7 +68,6 @@ export function WebMobileNav() {
             </Link>
           </div>
         </div>
-      )}
     </>
   );
 }

@@ -45,8 +45,8 @@ export function WebCta() {
           {/* Brand SVG watermark */}
           <LogoSvg
             size={500}
-            className="pointer-events-none absolute text-[rgba(231,200,120,.07)]"
-            style={{ bottom: -160, left: -90 } as React.CSSProperties}
+            className="pointer-events-none absolute"
+            style={{ bottom: -160, left: -90, color: "rgba(231,200,120,.12)" } as React.CSSProperties}
           />
 
           {/* Inner grid */}

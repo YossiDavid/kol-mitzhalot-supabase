@@ -10,7 +10,6 @@ import { Button } from "../../ui/button";
 import { Separator } from "../../ui/separator";
 import Image from "next/image";
 import Logo from "@/assets/images/logo-text.svg";
-import { LogoSvg } from "@/components/website/logo-svg";
 import { WebMobileNav } from "./mobile-nav";
 
 export default async function Header({ variant }: { variant: "app" | "website" }) {
@@ -38,9 +37,8 @@ export default async function Header({ variant }: { variant: "app" | "website" }
         }}
       >
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-[10px] no-underline">
-          <LogoSvg size={34} className="text-[#2b5a5c]" />
-          <span className="text-[20px] font-bold text-[#1b2523] tracking-[-0.01em]">קול מצהלות</span>
+        <Link href="/" className="flex items-center no-underline">
+          <Image src={Logo.src} alt="קול מצהלות" width={160} height={45} className="h-[38px] w-auto" priority />
         </Link>
 
         {/* Nav */}
