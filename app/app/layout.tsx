@@ -46,8 +46,10 @@ async function SidebarLayout({ children }: { children: React.ReactNode }) {
         <ImpersonationBanner />
         <div className="flex flex-1 flex-col">
           <Header variant="app" />
-          <main className="container flex-1 px-3 py-4 pb-24 md:px-4 md:py-5 md:pb-5">{children}</main>
-          <Footer className="hidden md:block" />
+          <main className="container flex-1 px-3 py-4 pb-24 md:px-4 md:py-5 md:pb-5">
+            {children}
+          </main>
+          <Footer className="hidden md:flex" />
         </div>
         <BottomNav role={role} />
         <Toaster

@@ -2,6 +2,8 @@
 
 מסמך זה מתאר את השפה העיצובית **כפי שהיא ממומשת היום** בקוד (Tailwind v4, משתני CSS, רכיבי shadcn/ui). השימוש בו מיועד לעקביות בין מסכים חדשים לבין המערכת הקיימת.
 
+**מקור האמת ל־CSS של ה־Design System:** [`app/design-system.css`](../app/design-system.css) — צבעים, טיפוגרפיה, רדיוס, fonts, light/dark. `globals.css` רק מייבא אותו ומוסיף utilities ספציפיים לאפליקציה.
+
 ---
 
 ## עקרונות
@@ -15,31 +17,43 @@
 
 ## טיפוגרפיה
 
-| שימוש | מימוש |
-|--------|--------|
-| גוף האפליקציה | פונט מקומי **Ploni** (משקלים 400, 700), עם `antialiased` על `body` — ראו `app/layout.tsx`. |
-| כותרות בסיס ב־CSS | `h1`: `text-primary`, `text-4xl`, `font-extrabold`. `h2`: `text-primary`, `text-3xl`, `font-bold` — ראו `app/globals.css` ב־`@layer base`. |
-| הודעות Toast | משפחה `ploni` מוגדרת בסגנון ה־Toaster ב־`app/app/layout.tsx`. |
+| טוקן | מחלקה | גודל | שימוש |
+|------|--------|------|--------|
+| display | `text-display` | 2.25rem (36px) | כותרת עמוד (h1) |
+| heading | `text-heading` | 1.875rem (30px) | כותרת מקטע (h2) |
+| title | `text-title` | 1.5rem (24px) | כותרת משנית (h3) |
+| subtitle | `text-subtitle` | 1.25rem (20px) | כותרת קטנה / כרטיס |
+| body | `text-body` | 1rem (16px) | טקסט גוף |
+| body-sm | `text-body-sm` | 0.875rem (14px) | טקסט משני |
+| label | `text-label` | 0.875rem (14px) | תוויות שדות |
+| caption | `text-caption` | 0.75rem (12px) | הערות / מטא |
 
-**הערה:** ב־`app/layout.tsx` מוגדר גם משתנה ל־Heebo (`--font-heebo-sans`) אך הוא לא מחובר כרגע ל־`className` של `body`. ב־`@theme inline` ב־`globals.css` ממופים `--font-sans` / `--font-mono` ל־Geist — אם אין טעינה של Geist, עדיף ליישר את זה לפונטים שבאמת בשימוש בעתיד.
+- **פונט:** Ploni (400, 700) דרך `app/layout.tsx` — `--font-ploni` ממופה ל־`--font-sans`.
+- **Showcase חי (dev בלבד):** `/dev/design-system` — נחסם ב־`proxy.ts` וב־`notFound()` מחוץ ל־`NODE_ENV=development`.
+- **קטלוג טוקנים:** `lib/design-system/tokens.ts`
+
+**בסיס CSS:** `h1` → `text-display`, `h2` → `text-heading`, `h3` → `text-title` — ראו `app/globals.css`.
 
 ---
 
 ## צבעים וטוקנים
 
-הטוקנים המרכזיים מוגדרים ב־`:root` ו־`.dark` ב־`app/globals.css` וממופים ל־Tailwind תחת `@theme inline`.
+הטוקנים המרכזיים מוגדרים ב־`:root` ו־`.dark` ב־`app/design-system.css` וממופים ל־Tailwind תחת `@theme inline`.
 
 | טוקן | תפקיד |
 |------|--------|
 | `--background` / `--foreground` | רקע דף וטקסט ראשי |
 | `--card` / `--card-foreground` | כרטיסים, פאנלים |
 | `--primary` / `--primary-foreground` | פעולות ראשיות, כותרות ברירת מחדל (`h1`/`h2`) |
+| `--primary-hover` / `--primary-active` / `--primary-muted` | מצבי אינטראקציה למותג (לא opacity כמו `primary/40`) |
 | `--muted` / `--muted-foreground` | רקע/טקסט משני |
 | `--border`, `--input`, `--ring` | גבולות, שדות, פוקוס |
-| `--destructive` | מחיקות ושגיאות |
+| `--destructive` / `--destructive-hover` / `--destructive-active` | מחיקות ושגיאות + מצבי hover/active |
 | `--sidebar-*` | סרגל צד (תואם ל־primary במצב בהיר) |
 | `--favorite` | צבע ייעודי למועדפים (כתום־זהוב ב־oklch) |
 | `--chart-1` … `--chart-5` | סדרות צבע לגרפים (אם יש שימוש) |
+
+**מצבי אינטראקציה:** השתמשו בטוקנים (`bg-primary-hover`) ולא ב־opacity על צבע המותג (`bg-primary/40`). ערכי light/dark מוגדרים בנפרד.
 
 **רדיוס ברירת מחדל:** `--radius: 0.625rem` (כ־10px), עם נגזרות `sm` / `md` / `lg` / `xl` ב־theme.
 
@@ -59,7 +73,7 @@
 
 ### כפתורים (`Button`)
 
-וריאנטים מוגדרים ב־`components/ui/button.tsx`: `default`, `destructive`, `outline`, `secondary`, `ghost`, `link`, ו־`destructiveOutline` (מותאם לפרויקט). גדלים: `default`, `sm`, `lg`, `icon`, `icon-sm`, `icon-lg`. פוקוס: טבעת `ring` סביב `ring`, גבול פוקוס על `border-ring`.
+וריאנטים מוגדרים ב־`components/ui/button.tsx`: `default`, `destructive`, `outline`, `secondary`, `ghost`, `link`, ו־`destructiveOutline` (מותאם לפרויקט). גדלים: `default`, `sm`, `lg`, `icon`, `icon-sm`, `icon-lg`. Hover/active של `default` ו־`destructive` נשענים על `--primary-hover` / `--primary-active` ו־`--destructive-hover` / `--destructive-active`. פוקוס: טבעת `ring` סביב `ring`, גבול פוקוס על `border-ring`.
 
 ### כרטיסים (`Card`)
 
@@ -91,7 +105,10 @@
 
 | נושא | קובץ |
 |------|------|
-| משתני צבע, רדיוס, utilities | `app/globals.css` |
+| **Design System (CSS)** | `app/design-system.css` |
+| Utilities / אנימציות אפליקציה | `app/globals.css` |
+| קטלוג טוקנים (showcase) | `lib/design-system/tokens.ts` |
+| Showcase חי (dev) | `/dev/design-system` |
 | פונט גוף, ThemeProvider | `app/layout.tsx` |
 | מבנה אפליקציה, Toaster | `app/app/layout.tsx` |
 | הגדרת shadcn | `components.json` |

@@ -12,7 +12,11 @@ import Image from "next/image";
 import Logo from "@/assets/images/logo-text.svg";
 import { WebMobileNav } from "./mobile-nav";
 
-export default async function Header({ variant }: { variant: "app" | "website" }) {
+export default async function Header({
+  variant,
+}: {
+  variant: "app" | "website";
+}) {
   const supabase = await createClient();
 
   const {
@@ -38,7 +42,14 @@ export default async function Header({ variant }: { variant: "app" | "website" }
       >
         {/* Logo */}
         <Link href="/" className="flex items-center no-underline">
-          <Image src={Logo.src} alt="קול מצהלות" width={160} height={45} className="h-[38px] w-auto" priority />
+          <Image
+            src={Logo.src}
+            alt="קול מצהלות"
+            width={160}
+            height={45}
+            className="h-[38px] w-auto"
+            priority
+          />
         </Link>
 
         {/* Nav */}
@@ -83,12 +94,18 @@ export default async function Header({ variant }: { variant: "app" | "website" }
   }
 
   return (
-    <header className="border-b-foreground/10 container sticky top-0 z-30 flex h-16 items-center justify-between gap-5 border-b bg-background/95 font-semibold backdrop-blur-sm supports-[backdrop-filter]:bg-background/80">
+    <header className="border-b-foreground/10 bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-30 container flex h-16 items-center justify-between gap-5 border-b font-semibold backdrop-blur-sm">
       <div className="flex items-center gap-2">
         <>
           {/* מובייל: לוגו */}
           <Link href="/app" className="md:hidden">
-            <Image src={Logo.src} alt="קול מצהלות" width={140} height={40} className="h-8 w-auto" />
+            <Image
+              src={Logo.src}
+              alt="קול מצהלות"
+              width={140}
+              height={40}
+              className="h-8 w-auto"
+            />
           </Link>
           {/* דסקטופ: טריגר + ברכה */}
           <SidebarTrigger className="z-20 -ms-1 hidden md:inline-flex" />

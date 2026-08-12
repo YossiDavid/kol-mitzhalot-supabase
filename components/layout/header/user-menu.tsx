@@ -27,7 +27,7 @@ export function UserMenu({ showShadchanJoin = false }: UserMenuProps) {
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu dir="rtl">
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" title="תפריט משתמש">
           <CircleUser className="h-5 w-5" />
@@ -42,7 +42,10 @@ export function UserMenu({ showShadchanJoin = false }: UserMenuProps) {
         </DropdownMenuItem>
         {showShadchanJoin && (
           <DropdownMenuItem asChild>
-            <Link href="/app/settings/shadchan" className="flex items-center gap-2">
+            <Link
+              href="/app/settings/shadchan"
+              className="flex items-center gap-2"
+            >
               <UserPlus className="h-4 w-4" />
               הצטרפות כשדכן
             </Link>

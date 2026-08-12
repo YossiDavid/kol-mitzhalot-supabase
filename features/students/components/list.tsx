@@ -98,8 +98,14 @@ export default function StudentsList() {
         let q = supabase
           .from("students")
           .select("*")
+          // Active cards, or recently engaged (status_changed_at may be null on older rows)
           .or(
-            `in_shidduchim.eq.true,in_shidduchim.is.null,and(personal_status.eq.engaged,status_changed_at.gte.${oneMonthAgoStr})`,
+            [
+              "in_shidduchim.eq.true",
+              "in_shidduchim.is.null",
+              `and(personal_status.eq.engaged,status_changed_at.gte.${oneMonthAgoStr})`,
+              "and(personal_status.eq.engaged,status_changed_at.is.null)",
+            ].join(","),
           );
 
         if (query.first_name)
@@ -133,7 +139,12 @@ export default function StudentsList() {
 
         const { data, error } = await q;
         if (!isMounted) return;
-        if (error) { setStudents([]); return; }
+        if (error) {
+          console.error("[students/list] query failed:", error.message);
+          toast.error("לא הצלחנו לטעון את רשימת הכרטיסים");
+          setStudents([]);
+          return;
+        }
         setStudents(data || []);
       } catch {
         if (isMounted) setStudents([]);
@@ -294,12 +305,12 @@ export default function StudentsList() {
                 <div>{student.last_name}</div>
                 <div>{student.first_name}</div>
                 <div>
-                  {student.parents_info.father.self.prefix}{" "}
-                  {student.parents_info.father.self.name}
+                  {student.parents_info?.father?.self?.prefix}{" "}
+                  {student.parents_info?.father?.self?.name}
                 </div>
                 <div>
-                  {student.parents_info.mother.self.prefix}{" "}
-                  {student.parents_info.mother.self.name}
+                  {student.parents_info?.mother?.self?.prefix}{" "}
+                  {student.parents_info?.mother?.self?.name}
                 </div>
                 <div>{student.city}</div>
                 <div>{calculateAge(student.birth_date || "")}</div>

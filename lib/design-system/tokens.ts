@@ -1,0 +1,328 @@
+/**
+ * Design system catalog — mirrors app/design-system.css for the showcase UI.
+ * Edit CSS tokens in app/design-system.css; keep this list in sync for labels.
+ */
+
+export const typographyScale = [
+  {
+    token: "display",
+    className: "text-display font-extrabold",
+    size: "2.25rem / 36px",
+    weight: "800",
+    usage: "כותרת עמוד ראשית (h1)",
+    sample: "קול מצהלות",
+  },
+  {
+    token: "heading",
+    className: "text-heading font-bold",
+    size: "1.875rem / 30px",
+    weight: "700",
+    usage: "כותרת מקטע (h2)",
+    sample: "ניהול שידוכים",
+  },
+  {
+    token: "title",
+    className: "text-title font-bold",
+    size: "1.5rem / 24px",
+    weight: "700",
+    usage: "כותרת משנית (h3)",
+    sample: "פרטי מועמד",
+  },
+  {
+    token: "subtitle",
+    className: "text-subtitle font-bold",
+    size: "1.25rem / 20px",
+    weight: "700",
+    usage: "כותרת קטנה / כרטיס",
+    sample: "הצעות פעילות",
+  },
+  {
+    token: "body",
+    className: "text-body font-normal",
+    size: "1rem / 16px",
+    weight: "400",
+    usage: "טקסט גוף",
+    sample: "מערכת לניהול שידוכים במגזר החסידי — ברורה, יעילה ומכבדת.",
+  },
+  {
+    token: "body-sm",
+    className: "text-body-sm font-normal",
+    size: "0.875rem / 14px",
+    weight: "400",
+    usage: "טקסט משני, טבלאות",
+    sample: "עודכן לאחרונה לפני שעתיים",
+  },
+  {
+    token: "label",
+    className: "text-label font-medium",
+    size: "0.875rem / 14px",
+    weight: "500",
+    usage: "תוויות שדות, כפתורים",
+    sample: "שם פרטי",
+  },
+  {
+    token: "caption",
+    className: "text-caption font-normal",
+    size: "0.75rem / 12px",
+    weight: "400",
+    usage: "הערות, מטא־דאטה",
+    sample: "נדרש · עד 50 תווים",
+  },
+] as const;
+
+export type ColorSwatch = {
+  name: string;
+  cssVar: string;
+  className: string;
+  fgClassName?: string;
+  group: "surface" | "brand" | "chrome" | "semantic" | "chart" | "sidebar";
+  description: string;
+};
+
+export const colorTokens: ColorSwatch[] = [
+  {
+    name: "background",
+    cssVar: "--background",
+    className: "bg-background",
+    fgClassName: "text-foreground",
+    group: "surface",
+    description: "רקע דף",
+  },
+  {
+    name: "foreground",
+    cssVar: "--foreground",
+    className: "bg-foreground",
+    fgClassName: "text-background",
+    group: "surface",
+    description: "טקסט ראשי",
+  },
+  {
+    name: "card",
+    cssVar: "--card",
+    className: "bg-card",
+    fgClassName: "text-card-foreground",
+    group: "surface",
+    description: "כרטיסים ופאנלים",
+  },
+  {
+    name: "popover",
+    cssVar: "--popover",
+    className: "bg-popover",
+    fgClassName: "text-popover-foreground",
+    group: "surface",
+    description: "תפריטים נפתחים",
+  },
+  {
+    name: "primary",
+    cssVar: "--primary",
+    className: "bg-primary",
+    fgClassName: "text-primary-foreground",
+    group: "brand",
+    description: "מותג / פעולות ראשיות (לוגו #275252 / #39989D)",
+  },
+  {
+    name: "primary-hover",
+    cssVar: "--primary-hover",
+    className: "bg-primary-hover",
+    fgClassName: "text-primary-foreground",
+    group: "brand",
+    description: "מצב hover לפעולות ראשיות",
+  },
+  {
+    name: "primary-active",
+    cssVar: "--primary-active",
+    className: "bg-primary-active",
+    fgClassName: "text-primary-foreground",
+    group: "brand",
+    description: "מצב active / pressed",
+  },
+  {
+    name: "primary-muted",
+    cssVar: "--primary-muted",
+    className: "bg-primary-muted",
+    fgClassName: "text-primary",
+    group: "brand",
+    description: "משטח רך בגוון המותג",
+  },
+  {
+    name: "secondary",
+    cssVar: "--secondary",
+    className: "bg-secondary",
+    fgClassName: "text-secondary-foreground",
+    group: "brand",
+    description: "פעולות משניות (גוון מותג רך)",
+  },
+  {
+    name: "secondary-hover",
+    cssVar: "--secondary-hover",
+    className: "bg-secondary-hover",
+    fgClassName: "text-secondary-foreground",
+    group: "brand",
+    description: "hover לפעולות secondary",
+  },
+  {
+    name: "secondary-active",
+    cssVar: "--secondary-active",
+    className: "bg-secondary-active",
+    fgClassName: "text-secondary-foreground",
+    group: "brand",
+    description: "active / pressed ל־secondary",
+  },
+  {
+    name: "accent",
+    cssVar: "--accent",
+    className: "bg-accent",
+    fgClassName: "text-accent-foreground",
+    group: "brand",
+    description: "הדגשה / hover כללי",
+  },
+  {
+    name: "muted",
+    cssVar: "--muted",
+    className: "bg-muted",
+    fgClassName: "text-muted-foreground",
+    group: "chrome",
+    description: "רקע עדין",
+  },
+  {
+    name: "border",
+    cssVar: "--border",
+    className: "bg-border",
+    group: "chrome",
+    description: "גבולות",
+  },
+  {
+    name: "input",
+    cssVar: "--input",
+    className: "bg-input",
+    group: "chrome",
+    description: "גבול שדות",
+  },
+  {
+    name: "ring",
+    cssVar: "--ring",
+    className: "bg-ring",
+    group: "chrome",
+    description: "טבעת פוקוס",
+  },
+  {
+    name: "destructive",
+    cssVar: "--destructive",
+    className: "bg-destructive",
+    fgClassName: "text-white",
+    group: "semantic",
+    description: "מחיקה / שגיאה",
+  },
+  {
+    name: "destructive-hover",
+    cssVar: "--destructive-hover",
+    className: "bg-destructive-hover",
+    fgClassName: "text-white",
+    group: "semantic",
+    description: "hover לפעולות destructive",
+  },
+  {
+    name: "destructive-active",
+    cssVar: "--destructive-active",
+    className: "bg-destructive-active",
+    fgClassName: "text-white",
+    group: "semantic",
+    description: "active / pressed ל־destructive",
+  },
+  {
+    name: "destructive-muted",
+    cssVar: "--destructive-muted",
+    className: "bg-destructive-muted",
+    fgClassName: "text-destructive",
+    group: "semantic",
+    description: "משטח רך ל־destructive outline / ghost",
+  },
+  {
+    name: "favorite",
+    cssVar: "--favorite",
+    className: "bg-favorite",
+    fgClassName: "text-foreground",
+    group: "semantic",
+    description: "מועדפים",
+  },
+  {
+    name: "chart-1",
+    cssVar: "--chart-1",
+    className: "bg-chart-1",
+    group: "chart",
+    description: "סדרה 1",
+  },
+  {
+    name: "chart-2",
+    cssVar: "--chart-2",
+    className: "bg-chart-2",
+    group: "chart",
+    description: "סדרה 2",
+  },
+  {
+    name: "chart-3",
+    cssVar: "--chart-3",
+    className: "bg-chart-3",
+    group: "chart",
+    description: "סדרה 3",
+  },
+  {
+    name: "chart-4",
+    cssVar: "--chart-4",
+    className: "bg-chart-4",
+    group: "chart",
+    description: "סדרה 4",
+  },
+  {
+    name: "chart-5",
+    cssVar: "--chart-5",
+    className: "bg-chart-5",
+    group: "chart",
+    description: "סדרה 5",
+  },
+  {
+    name: "sidebar",
+    cssVar: "--sidebar",
+    className: "bg-sidebar",
+    fgClassName: "text-sidebar-foreground",
+    group: "sidebar",
+    description: "רקע סרגל צד",
+  },
+  {
+    name: "sidebar-accent",
+    cssVar: "--sidebar-accent",
+    className: "bg-sidebar-accent",
+    fgClassName: "text-sidebar-accent-foreground",
+    group: "sidebar",
+    description: "הדגשה בסרגל",
+  },
+];
+
+export const colorGroupLabels: Record<ColorSwatch["group"], string> = {
+  surface: "משטחים",
+  brand: "מותג",
+  chrome: "ממשק",
+  semantic: "סמנטי",
+  chart: "גרפים",
+  sidebar: "סרגל צד",
+};
+
+export const radiusTokens = [
+  { name: "sm", className: "rounded-sm", value: "calc(var(--radius) - 4px)" },
+  { name: "md", className: "rounded-md", value: "calc(var(--radius) - 2px)" },
+  { name: "lg", className: "rounded-lg", value: "var(--radius) · 0.625rem" },
+  { name: "xl", className: "rounded-xl", value: "calc(var(--radius) + 4px)" },
+] as const;
+
+export const spacingSamples = [
+  { name: "1", className: "w-1", rem: "0.25rem" },
+  { name: "2", className: "w-2", rem: "0.5rem" },
+  { name: "3", className: "w-3", rem: "0.75rem" },
+  { name: "4", className: "w-4", rem: "1rem" },
+  { name: "5", className: "w-5", rem: "1.25rem" },
+  { name: "6", className: "w-6", rem: "1.5rem" },
+  { name: "8", className: "w-8", rem: "2rem" },
+  { name: "10", className: "w-10", rem: "2.5rem" },
+  { name: "12", className: "w-12", rem: "3rem" },
+  { name: "16", className: "w-16", rem: "4rem" },
+] as const;

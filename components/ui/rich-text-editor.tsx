@@ -97,7 +97,7 @@ export function RichTextEditor({
           size="sm"
           onClick={() => editor.chain().focus().toggleBold().run()}
           disabled={!editor.can().chain().focus().toggleBold().run()}
-          className={editor.isActive("bold") ? "bg-accent" : ""}
+          className={editor.isActive("bold") ? "bg-primary-muted text-primary" : ""}
           title="Bold (Ctrl+B)"
         >
           <Bold className="h-4 w-4" />
@@ -108,7 +108,7 @@ export function RichTextEditor({
           size="sm"
           onClick={() => editor.chain().focus().toggleItalic().run()}
           disabled={!editor.can().chain().focus().toggleItalic().run()}
-          className={editor.isActive("italic") ? "bg-accent" : ""}
+          className={editor.isActive("italic") ? "bg-primary-muted text-primary" : ""}
           title="Italic (Ctrl+I)"
         >
           <Italic className="h-4 w-4" />
@@ -119,7 +119,7 @@ export function RichTextEditor({
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          className={editor.isActive("heading", { level: 1 }) ? "bg-accent" : ""}
+          className={editor.isActive("heading", { level: 1 }) ? "bg-primary-muted text-primary" : ""}
           title="Heading 1"
         >
           <Heading1 className="h-4 w-4" />
@@ -129,7 +129,7 @@ export function RichTextEditor({
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={editor.isActive("heading", { level: 2 }) ? "bg-accent" : ""}
+          className={editor.isActive("heading", { level: 2 }) ? "bg-primary-muted text-primary" : ""}
           title="Heading 2"
         >
           <Heading2 className="h-4 w-4" />
@@ -139,7 +139,7 @@ export function RichTextEditor({
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          className={editor.isActive("heading", { level: 3 }) ? "bg-accent" : ""}
+          className={editor.isActive("heading", { level: 3 }) ? "bg-primary-muted text-primary" : ""}
           title="Heading 3"
         >
           <Heading3 className="h-4 w-4" />
@@ -153,7 +153,7 @@ export function RichTextEditor({
             e.preventDefault();
             editor.chain().focus().toggleBulletList().run();
           }}
-          className={editor.isActive("bulletList") ? "bg-accent" : ""}
+          className={editor.isActive("bulletList") ? "bg-primary-muted text-primary" : ""}
           title="Bullet List"
         >
           <List className="h-4 w-4" />
@@ -166,7 +166,7 @@ export function RichTextEditor({
             e.preventDefault();
             editor.chain().focus().toggleOrderedList().run();
           }}
-          className={editor.isActive("orderedList") ? "bg-accent" : ""}
+          className={editor.isActive("orderedList") ? "bg-primary-muted text-primary" : ""}
           title="Ordered List"
         >
           <ListOrdered className="h-4 w-4" />
@@ -179,7 +179,7 @@ export function RichTextEditor({
             e.preventDefault();
             editor.chain().focus().toggleBlockquote().run();
           }}
-          className={editor.isActive("blockquote") ? "bg-accent" : ""}
+          className={editor.isActive("blockquote") ? "bg-primary-muted text-primary" : ""}
           title="Quote"
         >
           <Quote className="h-4 w-4" />

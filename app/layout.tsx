@@ -34,7 +34,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="he" dir="rtl" suppressHydrationWarning>
-      <body className={`${ploni.className} antialiased`}>
+      <body className={`${ploni.variable} ${ploni.className} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

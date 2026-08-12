@@ -28,14 +28,18 @@ export default function DashboardSection({
         )}
       >
         <div>
-          <h2 className="text-xl! font-bold! leading-tight! text-foreground! md:text-2xl!">
+          <h2>
             {props.title}
-            {props.titleNumber && (
-              <span className="text-sm! font-normal! text-muted-foreground ms-1.5">({props.titleNumber})</span>
+            {props.titleNumber && Number(props.titleNumber) > 0 && (
+              <span className="ms-1.5 font-normal">
+                {`(${props.titleNumber})`}
+              </span>
             )}
           </h2>
           {props.subTitle && (
-            <p className="mt-0.5 text-sm text-muted-foreground">{props.subTitle}</p>
+            <p className="text-muted-foreground mt-0.5 text-sm">
+              {props.subTitle}
+            </p>
           )}
         </div>
         {props.button ?? null}

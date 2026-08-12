@@ -1,0 +1,301 @@
+/**
+ * Design System — קול מצהלות
+ * ─────────────────────────────────────────────────────────────
+ * מקור האמת היחיד לטוקני עיצוב.
+ * נערך כאן בלבד; globals.css מייבא את הקובץ ומוסיף utilities ספציפיים לאפליקציה.
+ *
+ * Showcase (dev): /dev/design-system
+ * Docs:           docs/DESIGN.md
+ * Catalog:        lib/design-system/tokens.ts
+ * ─────────────────────────────────────────────────────────────
+ */
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * hover: applies on real :hover (devices that support hover)
+ * OR when [data-hover] is set — used by the design-system showcase
+ * to pin the hover look without duplicating class names.
+ */
+@custom-variant hover {
+  &:hover {
+    @media (hover: hover) {
+      @slot;
+    }
+  }
+  &[data-hover] {
+    @slot;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   1. THEME SCALE — breakpoints, typography, container
+   ═══════════════════════════════════════════════════════════ */
+
+@theme {
+  /* Breakpoints */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1556px;
+  --breakpoint-3xl: 1920px;
+
+  /* Container */
+  --container: auto;
+  --container-center: true;
+
+  /*
+   * Typography (Ploni) — ratio ~1.2
+   * Classes: text-display | text-heading | text-title | text-subtitle
+   *          text-body | text-body-sm | text-caption | text-label
+   */
+  --text-display: 4rem; /* 36px — h1 */
+  --text-display--line-height: 1.1;
+  --text-heading: 3rem; /* 30px — h2 */
+  --text-heading--line-height: 1.15;
+  --text-title: 2.5rem; /* 24px — h3 */
+  --text-title--line-height: 1.25;
+  --text-subtitle: 2rem; /* 20px */
+  --text-subtitle--line-height: 1.35;
+  --text-body: 1.5rem; /* 16px */
+  --text-body--line-height: 1.5;
+  --text-body-sm: 1.25rem; /* 14px */
+  --text-body-sm--line-height: 1.45;
+  --text-caption: 1rem; /* 12px */
+  --text-caption--line-height: 1.4;
+  --text-label: 1.25rem; /* 14px */
+  --text-label--line-height: 1.25;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   2. TAILWIND BRIDGE — map CSS vars → utility classes
+   ═══════════════════════════════════════════════════════════ */
+
+@theme inline {
+  /* Fonts (Ploni loaded in app/layout.tsx as --font-ploni) */
+  --font-sans: var(--font-ploni), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Surfaces */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  /* Brand */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-muted: var(--primary-muted);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-secondary-active: var(--secondary-active);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  /* Chrome */
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Semantic */
+  --color-destructive: var(--destructive);
+  --color-destructive-hover: var(--destructive-hover);
+  --color-destructive-active: var(--destructive-active);
+  --color-destructive-muted: var(--destructive-muted);
+  --color-favorite: var(--favorite);
+
+  /* Charts */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Sidebar */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Radius scale (base = --radius in :root) */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   3. LIGHT THEME
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* Radius */
+  --radius: 0.625rem;
+
+  /* Logo brand primitives — exact logo colors */
+  --brand-teal: #39989d;
+  --brand-teal-deep: #275252;
+
+  /* Surfaces */
+  --background: #ecf0f2;
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+
+  /* Brand — deep for filled actions; bright teal for hover lift */
+  --primary: var(--brand-teal-deep);
+  --primary-foreground: #ffffff;
+  --primary-hover: var(--brand-teal);
+  --primary-active: color-mix(in oklab, var(--brand-teal-deep) 82%, black);
+  --primary-muted: color-mix(in oklab, var(--brand-teal) 14%, white);
+  --secondary: color-mix(in oklab, var(--brand-teal) 18%, white);
+  --secondary-foreground: var(--brand-teal-deep);
+  --secondary-hover: color-mix(in oklab, var(--brand-teal) 30%, white);
+  --secondary-active: color-mix(in oklab, var(--brand-teal) 40%, white);
+  --accent: oklch(0.95 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+
+  /* Chrome */
+  --muted: oklch(0.945 0 0);
+  --muted-foreground: oklch(0.5 0 0);
+  --border: oklch(0.875 0 0);
+  --input: oklch(0.875 0 0);
+  --ring: var(--brand-teal);
+
+  /* Semantic */
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-hover: oklch(0.4 0.27 27.325);
+  --destructive-active: oklch(0.3 0.24 27.325);
+  --destructive-muted: color-mix(in oklab, var(--destructive) 14%, white);
+  --favorite: oklch(77.753% 0.17192 66.883);
+
+  /* Charts */
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+
+  /* Sidebar */
+  --sidebar: var(--brand-teal-deep);
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: var(--brand-teal);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: color-mix(in oklab, white 8%, transparent);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: var(--brand-teal);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   4. DARK THEME
+   ═══════════════════════════════════════════════════════════ */
+
+.dark {
+  /* Surfaces */
+  --background: oklch(0.18 0.01 266);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.22 0.018 282);
+  --card-foreground: oklch(0.98 0 0);
+  --popover: oklch(0.22 0.018 282);
+  --popover-foreground: oklch(0.98 0 0);
+
+  /* Brand — bright logo teal on dark surfaces */
+  --primary: var(--brand-teal);
+  --primary-foreground: #ffffff;
+  --primary-hover: color-mix(in oklab, var(--brand-teal) 72%, white);
+  --primary-active: color-mix(in oklab, var(--brand-teal) 48%, white);
+  --primary-muted: color-mix(in oklab, var(--brand-teal) 24%, black);
+  --secondary: color-mix(in oklab, var(--brand-teal) 28%, black);
+  --secondary-foreground: color-mix(in oklab, var(--brand-teal) 78%, white);
+  --secondary-hover: color-mix(in oklab, var(--brand-teal) 42%, black);
+  --secondary-active: color-mix(in oklab, var(--brand-teal) 54%, black);
+  --accent: oklch(0.34 0.023 263);
+  --accent-foreground: oklch(0.98 0 0);
+
+  /* Chrome */
+  --muted: oklch(0.23 0.007 266);
+  --muted-foreground: oklch(0.7 0.02 262);
+  --border: oklch(0.3 0.008 266);
+  --input: oklch(0.3 0.008 266);
+  --ring: var(--brand-teal);
+
+  /* Semantic */
+  --destructive: oklch(0.5 0.23 27.3);
+  --destructive-hover: oklch(0.72 0.22 27.3);
+  --destructive-active: oklch(0.82 0.18 27.3);
+  --destructive-muted: color-mix(in oklab, var(--destructive) 28%, black);
+
+  /* Charts */
+  --chart-1: oklch(0.606 0.222 41.116);
+  --chart-2: oklch(0.36 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.498 0.189 84.429);
+  --chart-5: oklch(0.469 0.188 70.08);
+
+  /* Sidebar */
+  --sidebar: oklch(0.22 0.018 282);
+  --sidebar-foreground: oklch(0.985 0.01 0);
+  --sidebar-primary: var(--brand-teal);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: oklch(0.18 0.01 266 / 0.076);
+  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(0.3 0.008 266);
+  --sidebar-ring: var(--brand-teal);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   5. BASE ELEMENT STYLES
+   ═══════════════════════════════════════════════════════════ */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground text-body;
+  }
+
+  h1 {
+    @apply text-primary text-display font-extrabold;
+  }
+
+  h2 {
+    @apply text-primary text-heading font-bold;
+  }
+
+  h3 {
+    @apply text-foreground text-title font-bold;
+  }
+
+  button:not([disabled]),
+  [role="button"]:not([disabled]) {
+    cursor: pointer;
+    transition:
+      background-color 150ms ease,
+      color 150ms ease,
+      border-color 150ms ease,
+      box-shadow 150ms ease,
+      opacity 150ms ease;
+  }
+
+  /* Content panel pattern */
+  .box {
+    @apply bg-card rounded-xl;
+  }
+}

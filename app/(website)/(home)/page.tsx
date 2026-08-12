@@ -17,16 +17,39 @@ function HighlightSpan({ children }: { children: React.ReactNode }) {
   return (
     <span
       className="inline-block rounded-[11px]"
-      style={{ background: "#2b5a5c", color: "#f4f8f7", padding: "1px 14px 4px", transform: "rotate(-1.5deg)" }}
+      style={{
+        background: "#2b5a5c",
+        color: "#f4f8f7",
+        padding: "1px 14px 4px",
+        transform: "rotate(-1.5deg)",
+      }}
     >
       {children}
     </span>
   );
 }
 
-function CheckSvg({ size = 18, stroke = "#2b5a5c", strokeWidth = "2.5" }: { size?: number; stroke?: string; strokeWidth?: string }) {
+function CheckSvg({
+  size = 18,
+  stroke = "#2b5a5c",
+  strokeWidth = "2.5",
+}: {
+  size?: number;
+  stroke?: string;
+  strokeWidth?: string;
+}) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}>
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={stroke}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ flexShrink: 0, marginTop: 2 }}
+    >
       <path d="M20 6 9 17l-5-5" />
     </svg>
   );
@@ -34,8 +57,18 @@ function CheckSvg({ size = 18, stroke = "#2b5a5c", strokeWidth = "2.5" }: { size
 
 function ArrowSmall() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 12H5" /><path d="m12 19-7-7 7-7" />
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M19 12H5" />
+      <path d="m12 19-7-7 7-7" />
     </svg>
   );
 }
@@ -50,10 +83,26 @@ const tickerItems = [
 ];
 
 const steps = [
-  { num: "01", title: "הורים או מיועדים בוגרים", desc: 'ממלאים כרטיס קו"ח מפורט שעולה למערכת ומוצג לשדכנים מורשים בלבד.' },
-  { num: "02", title: "רבנים, משפיעים וצוות מוסדות החינוך", desc: "כותבים על הכרטיס א גוט ווארט ומחמאות, מהכירותם האישית עם המיועדים." },
-  { num: "03", title: "השדכנים והשדכניות במערכת", desc: "צופים ומכירים לעומק את המיועדים, יוצרים הצעות שידוכים ושולחים אותן ישירות מהמערכת." },
-  { num: "04", title: "שני הצדדים שקיבלו את ההצעה", desc: "מגיבים ישירות לשדכנים במקום ובזמן שנוח, ומקדמים את השידוך המתאים בקלות." },
+  {
+    num: "01",
+    title: "הורים או מיועדים בוגרים",
+    desc: 'ממלאים כרטיס קו"ח מפורט שעולה למערכת ומוצג לשדכנים מורשים בלבד.',
+  },
+  {
+    num: "02",
+    title: "רבנים, משפיעים וצוות מוסדות החינוך",
+    desc: "כותבים על הכרטיס א גוט ווארט ומחמאות, מהכירותם האישית עם המיועדים.",
+  },
+  {
+    num: "03",
+    title: "השדכנים והשדכניות במערכת",
+    desc: "צופים ומכירים לעומק את המיועדים, יוצרים הצעות שידוכים ושולחים אותן ישירות מהמערכת.",
+  },
+  {
+    num: "04",
+    title: "שני הצדדים שקיבלו את ההצעה",
+    desc: "מגיבים ישירות לשדכנים במקום ובזמן שנוח, ומקדמים את השידוך המתאים בקלות.",
+  },
 ];
 
 const audiences = [
@@ -63,7 +112,10 @@ const audiences = [
     features: [
       { title: "פרטיות מובטחת!", desc: "רק שדכנים מורשים חשופים למידע שלכם" },
       { title: "שיח פתוח ומהיר!", desc: "מתכתבים עם השדכן ישירות מתוך המערכת" },
-      { title: "קידום VIP!", desc: 'מצטרפים למנוי פרימיום ונהנים מקידום הקו"ח לכל השדכנים' },
+      {
+        title: "קידום VIP!",
+        desc: 'מצטרפים למנוי פרימיום ונהנים מקידום הקו"ח לכל השדכנים',
+      },
     ],
     cta: "לקול מצהלות להורים ומיועדים",
     href: "/parents" as any,
@@ -72,8 +124,14 @@ const audiences = [
     title: "שדכנים ושדכניות",
     desc: 'שורפים שעות על בירורים בסיסיים? הולכים לאיבוד בתוך ים הניירת? הצטרפו לקול מצהלות ותהנו ממאגר מידע עדכני עם קו"ח מפורטים של כלל המיועדים בבעלזא, אפשרויות חיפוש ומיון מתקדמות, שמירת שמות מועדפים, שליחת הצעות וניהול השידוכים ישירות מתוך המערכת!',
     features: [
-      { title: "מאגר מתעדכן!", desc: "עם אפשרויות חיפוש, סינון, מיון, שיתוף וייעוץ מהיר" },
-      { title: "ניהול שידוכים!", desc: "יוצרים הצעות שידוך, שולחים לצדדים ומקבלים משוב בקלות" },
+      {
+        title: "מאגר מתעדכן!",
+        desc: "עם אפשרויות חיפוש, סינון, מיון, שיתוף וייעוץ מהיר",
+      },
+      {
+        title: "ניהול שידוכים!",
+        desc: "יוצרים הצעות שידוך, שולחים לצדדים ומקבלים משוב בקלות",
+      },
       { title: "בדיקת הצעות", desc: "בדיקה אוטומטית חכמה לפני שליחת ההצעה" },
     ],
     cta: "לקול מצהלות לשדכנים",
@@ -84,7 +142,10 @@ const audiences = [
     desc: "רוצים לסייע לתלמידים ולתלמידות שלכם במציאת שידוך מתאים בקלות? הירשמו עכשיו למערכת קול מצהלות וקבלו גישה אישית לכתיבת מחמאות ותשבחות על כרטיסי המיועדים המתחנכים אצלכם, ובכך תסייעו לשדכנים להכיר אותם טוב יותר, להבריק את הרעיון הנכון ולמצוא להם את הבאשערטע!",
     features: [
       { title: "פרטיות מובטחת!", desc: "רק שדכנים מורשים חשופים למה שכתבתם" },
-      { title: "חיסכון בזמן!", desc: "במקום לענות לכל המבררים כותבים פעם אחת וזהו" },
+      {
+        title: "חיסכון בזמן!",
+        desc: "במקום לענות לכל המבררים כותבים פעם אחת וזהו",
+      },
       { title: "חסד אמיתי!", desc: "המחמאה שלכם יכולה לגרום לשידוך להגיע" },
     ],
     cta: "להרשמה מהירה ללא עלות",
@@ -119,7 +180,19 @@ const principles = [
   },
 ];
 
-function ArticleCard({ cat, date, read, title, excerpt }: { cat: string; date: string; read: string; title: string; excerpt: string }) {
+function ArticleCard({
+  cat,
+  date,
+  read,
+  title,
+  excerpt,
+}: {
+  cat: string;
+  date: string;
+  read: string;
+  title: string;
+  excerpt: string;
+}) {
   return (
     <Link
       href={"/knowledge" as any}
@@ -130,14 +203,15 @@ function ArticleCard({ cat, date, read, title, excerpt }: { cat: string; date: s
         style={{
           aspectRatio: "16/10",
           background: "#e8eeed",
-          backgroundImage: "repeating-linear-gradient(135deg,transparent 0 13px,rgba(43,90,92,.06) 13px 26px)",
+          backgroundImage:
+            "repeating-linear-gradient(135deg,transparent 0 13px,rgba(43,90,92,.06) 13px 26px)",
           color: "#9fb0ad",
           fontFamily: "ui-monospace,Menlo,monospace",
           fontSize: 11.5,
         }}
       >
         [ תמונת נושא ]
-        <span className="absolute right-[14px] top-[14px] rounded-full bg-[rgba(255,255,255,.94)] px-3 py-[5px] text-[12px] font-bold text-[#2b5a5c] shadow-[0_2px_6px_rgba(20,40,40,.12)]">
+        <span className="absolute top-[14px] right-[14px] rounded-full bg-[rgba(255,255,255,.94)] px-3 py-[5px] text-[12px] font-bold text-[#2b5a5c] shadow-[0_2px_6px_rgba(20,40,40,.12)]">
           {cat}
         </span>
       </div>
@@ -147,19 +221,41 @@ function ArticleCard({ cat, date, read, title, excerpt }: { cat: string; date: s
           <span className="h-[3px] w-[3px] rounded-full bg-[#c3ccce]" />
           <span>{read}</span>
         </div>
-        <h3 className="text-[19px] font-bold leading-[1.35] text-[#1b2523]" style={{ margin: 0 }}>{title}</h3>
-        <p className="text-[14px] leading-[1.6] text-[#66716f]" style={{ margin: 0 }}>{excerpt}</p>
+        <h3
+          className="text-[19px] leading-[1.35] font-bold text-[#1b2523]"
+          style={{ margin: 0 }}
+        >
+          {title}
+        </h3>
+        <p
+          className="text-[14px] leading-[1.6] text-[#66716f]"
+          style={{ margin: 0 }}
+        >
+          {excerpt}
+        </p>
         <div className="mt-auto flex items-center justify-between border-t border-[#eef2f2] pt-4">
           <div className="flex items-center gap-[9px]">
             <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[rgba(43,90,92,.12)]">
               <LogoSvg size={15} className="text-[#2b5a5c]" />
             </span>
-            <span className="text-[12.5px] font-semibold text-[#66716f]">מערכת קול מצהלות</span>
+            <span className="text-[12.5px] font-semibold text-[#66716f]">
+              מערכת קול מצהלות
+            </span>
           </div>
           <span className="inline-flex items-center gap-[5px] text-[13.5px] font-bold text-[#2b5a5c]">
             לקריאה{" "}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5" /><path d="m12 19-7-7 7-7" />
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M19 12H5" />
+              <path d="m12 19-7-7 7-7" />
             </svg>
           </span>
         </div>
@@ -181,13 +277,22 @@ async function HomepageEngagements() {
 
   return (
     <section className="bg-[#ecf0f2]">
-      <div className="mx-auto px-6" style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}>
+      <div
+        className="mx-auto px-6"
+        style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}
+      >
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <h2
             className="font-bold text-[#2b5a5c]"
-            style={{ fontSize: "clamp(28px,3.2vw,36px)", lineHeight: 1.1, margin: 0 }}
+            style={{
+              fontSize: "clamp(28px,3.2vw,36px)",
+              lineHeight: 1.1,
+              margin: 0,
+            }}
           >
-            שידוכים שנסגרו<br /><HighlightSpan>למזל טוב</HighlightSpan>
+            שידוכים שנסגרו
+            <br />
+            <HighlightSpan>למזל טוב</HighlightSpan>
           </h2>
           <div className="flex gap-[10px]">
             {[
@@ -211,11 +316,17 @@ async function HomepageEngagements() {
               className="flex flex-col items-center justify-center rounded-[14px] border border-[#d9dee0] bg-white p-4 text-center"
               style={{ aspectRatio: "3/4" }}
             >
-              <div className="mb-1 text-[13px] font-bold text-[#1b2523]">{e.groom_name}</div>
+              <div className="mb-1 text-[13px] font-bold text-[#1b2523]">
+                {e.groom_name}
+              </div>
               <div className="mb-2 text-[11px] text-[#8a9694]">&</div>
-              <div className="text-[13px] font-bold text-[#1b2523]">{e.bride_name}</div>
+              <div className="text-[13px] font-bold text-[#1b2523]">
+                {e.bride_name}
+              </div>
               {e.groom_city && (
-                <div className="mt-3 text-[11px] text-[#8a9694]">{e.groom_city}</div>
+                <div className="mt-3 text-[11px] text-[#8a9694]">
+                  {e.groom_city}
+                </div>
               )}
             </div>
           ))}
@@ -229,7 +340,9 @@ async function HomepageKnowledge() {
   const supabase = await createClient();
   const { data: articles } = await supabase
     .from("articles")
-    .select("id, slug, title, excerpt, category, read_time_minutes, published_at")
+    .select(
+      "id, slug, title, excerpt, category, read_time_minutes, published_at",
+    )
     .eq("is_published", true)
     .order("published_at", { ascending: false })
     .limit(3);
@@ -238,13 +351,22 @@ async function HomepageKnowledge() {
 
   return (
     <section className="bg-[#e3e9eb]">
-      <div className="mx-auto px-6" style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}>
+      <div
+        className="mx-auto px-6"
+        style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}
+      >
         <div className="mx-auto mb-12 max-w-[640px] text-center">
           <h2
             className="font-bold text-[#2b5a5c]"
-            style={{ fontSize: "clamp(28px,3.2vw,36px)", lineHeight: 1.1, marginBottom: 12 }}
+            style={{
+              fontSize: "clamp(28px,3.2vw,36px)",
+              lineHeight: 1.1,
+              marginBottom: 12,
+            }}
           >
-            מרכז הידע של<br /><HighlightSpan>קול מצהלות</HighlightSpan>
+            מרכז הידע של
+            <br />
+            <HighlightSpan>קול מצהלות</HighlightSpan>
           </h2>
           <p className="text-[17px] text-[#5c6a68]" style={{ margin: 0 }}>
             כל מה שחשוב לדעת על שידוכים, בירורים, פגישות, אירוסין ומה שביניהם.
@@ -255,7 +377,11 @@ async function HomepageKnowledge() {
             <ArticleCard
               key={a.id}
               cat={CATEGORY_LABELS[a.category] ?? a.category}
-              date={a.published_at ? new Date(a.published_at).toLocaleDateString("he-IL") : ""}
+              date={
+                a.published_at
+                  ? new Date(a.published_at).toLocaleDateString("he-IL")
+                  : ""
+              }
               read={`${a.read_time_minutes} דק׳ קריאה`}
               title={a.title}
               excerpt={a.excerpt}
@@ -298,30 +424,59 @@ export default function HomePage() {
               width: 118,
               height: 118,
               background: "radial-gradient(circle at 33% 27%,#f4dd93,#d8ac44)",
-              boxShadow: "0 4px 0 rgba(20,50,48,.18),0 22px 36px -14px rgba(0,0,0,.6)",
+              boxShadow:
+                "0 4px 0 rgba(20,50,48,.18),0 22px 36px -14px rgba(0,0,0,.6)",
               transform: "rotate(-8deg)",
               zIndex: 4,
             }}
           >
-            <span style={{ lineHeight: 1.18 }}>יש לי<br />רעיון<br />לשידוך</span>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5" /><path d="m12 19-7-7 7-7" />
+            <span style={{ lineHeight: 1.18 }}>
+              יש לי
+              <br />
+              רעיון
+              <br />
+              לשידוך
+            </span>
+            <svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M19 12H5" />
+              <path d="m12 19-7-7 7-7" />
             </svg>
           </Link>
 
           {/* Text column */}
           <div>
-            <p className="mb-[18px] max-w-[540px] leading-[1.6] opacity-80" style={{ fontSize: "clamp(16px,1.6vw,18px)", fontWeight: 500 }}>
-              שדכנים, הורים, אנשי ונשות חינוך, מחפשי שידוך בוגרים או בזיווג שני, וכל מי שיש לו רעיון לשידוך ורוצה לסייע להקים עוד בית נאמן בישראל:
+            <p
+              className="mb-[18px] max-w-[540px] leading-[1.6] opacity-80"
+              style={{ fontSize: "clamp(16px,1.6vw,18px)", fontWeight: 500 }}
+            >
+              שדכנים, הורים, אנשי ונשות חינוך, מחפשי שידוך בוגרים או בזיווג שני,
+              וכל מי שיש לו רעיון לשידוך ורוצה לסייע להקים עוד בית נאמן בישראל:
             </p>
-            <p className="mb-1 font-medium opacity-90" style={{ fontSize: "clamp(19px,2.4vw,26px)" }}>ברוכים הבאים ל</p>
+            <p
+              className="mb-1 font-medium opacity-90"
+              style={{ fontSize: "clamp(19px,2.4vw,26px)" }}
+            >
+              ברוכים הבאים ל
+            </p>
             <h1
-              className="font-bold leading-none tracking-[-0.02em] text-[#f4f8f7]"
+              className="leading-none font-bold tracking-[-0.02em] text-[#f4f8f7]"
               style={{ fontSize: "clamp(52px,8vw,80px)", marginBottom: 12 }}
             >
               קול מצהלות
             </h1>
-            <p className="font-bold opacity-[.92]" style={{ fontSize: "clamp(20px,2.4vw,26px)", marginBottom: 32 }}>
+            <p
+              className="font-bold opacity-[.92]"
+              style={{ fontSize: "clamp(20px,2.4vw,26px)", marginBottom: 32 }}
+            >
               הארגון לקידום שידוכים בבעלזא
             </p>
 
@@ -331,12 +486,15 @@ export default function HomePage() {
               <div className="h-[44px] flex-1 overflow-hidden">
                 <div
                   className="ticker-roller"
-                  style={{ animation: "roll 16s cubic-bezier(.7,0,.3,1) infinite", willChange: "transform" }}
+                  style={{
+                    animation: "roll 16s cubic-bezier(.7,0,.3,1) infinite",
+                    willChange: "transform",
+                  }}
                 >
                   {tickerItems.map((item, i) => (
                     <div
                       key={i}
-                      className="overflow-hidden text-ellipsis whitespace-nowrap font-semibold"
+                      className="overflow-hidden font-semibold text-ellipsis whitespace-nowrap"
                       style={{ height: 44, lineHeight: "44px", fontSize: 18.5 }}
                     >
                       {item}
@@ -351,7 +509,10 @@ export default function HomePage() {
               <Link
                 href={"/auth/sign-up" as any}
                 className="rounded-full px-7 py-[14px] text-[16px] font-bold text-[#234a4b] no-underline transition-colors hover:bg-white"
-                style={{ background: "#f4f8f7", boxShadow: "0 10px 26px -12px rgba(0,0,0,.5)" }}
+                style={{
+                  background: "#f4f8f7",
+                  boxShadow: "0 10px 26px -12px rgba(0,0,0,.5)",
+                }}
               >
                 הירשמו עכשיו ללא עלות
               </Link>
@@ -377,7 +538,10 @@ export default function HomePage() {
               {/* Browser chrome */}
               <div className="flex gap-[6px] border-b border-[#e6eded] bg-[#f1f5f5] px-4 py-[13px]">
                 {[1, 2, 3].map((d) => (
-                  <span key={d} className="h-[9px] w-[9px] rounded-full bg-[#d3dcdc]" />
+                  <span
+                    key={d}
+                    className="h-[9px] w-[9px] rounded-full bg-[#d3dcdc]"
+                  />
                 ))}
               </div>
               <div className="p-4">
@@ -387,10 +551,13 @@ export default function HomePage() {
                     aspectRatio: "4/3",
                     fontFamily: "ui-monospace,Menlo,monospace",
                     padding: 18,
-                    backgroundImage: "repeating-linear-gradient(135deg,transparent 0 12px,rgba(43,90,92,.06) 12px 24px)",
+                    backgroundImage:
+                      "repeating-linear-gradient(135deg,transparent 0 12px,rgba(43,90,92,.06) 12px 24px)",
                   }}
                 >
-                  [ צילום מסך · ממשק<br />ניהול השידוכים ]
+                  [ צילום מסך · ממשק
+                  <br />
+                  ניהול השידוכים ]
                 </div>
               </div>
             </div>
@@ -409,13 +576,21 @@ export default function HomePage() {
             >
               <span
                 className="flex items-center justify-center rounded-[9px]"
-                style={{ width: 30, height: 30, background: "rgba(43,90,92,.1)" }}
+                style={{
+                  width: 30,
+                  height: 30,
+                  background: "rgba(43,90,92,.1)",
+                }}
               >
                 <CheckSvg size={17} strokeWidth="2.6" />
               </span>
               <span className="text-right">
-                <span className="block text-[13px] font-bold text-[#1b2523]">הצעה נשלחה</span>
-                <span className="block text-[11.5px] text-[#889492]">ממתינה לתגובת הצדדים</span>
+                <span className="block text-[13px] font-bold text-[#1b2523]">
+                  הצעה נשלחה
+                </span>
+                <span className="block text-[11.5px] text-[#889492]">
+                  ממתינה לתגובת הצדדים
+                </span>
               </span>
             </div>
           </div>
@@ -431,17 +606,32 @@ export default function HomePage() {
           <div>
             <h2
               className="font-bold text-[#2b5a5c]"
-              style={{ fontSize: "clamp(28px,3.2vw,36px)", lineHeight: 1.1, marginBottom: 18 }}
+              style={{
+                fontSize: "clamp(28px,3.2vw,36px)",
+                lineHeight: 1.1,
+                marginBottom: 18,
+              }}
             >
-              המטרה<br /><HighlightSpan>שלנו ושלכם</HighlightSpan>
+              המטרה
+              <br />
+              <HighlightSpan>שלנו ושלכם</HighlightSpan>
             </h2>
             <p className="mb-4 text-[16.5px] leading-[1.75] text-[#5c6a68]">
-              לקדם שידוכים ולהקים בתים נאמנים בישראל. בסייעתא דשמיא, בברכת הקודש ובהכוונת רבנים חשובים בקהילתינו הק׳, הושקעו משאבים רבים בסיוע נדיבים על מנת להקים את מערכת קול מצהלות, מתוך תחושת שליחות, אחריות ורצון לקדם את ענייני השידוכים בקהילתנו.
+              לקדם שידוכים ולהקים בתים נאמנים בישראל. בסייעתא דשמיא, בברכת הקודש
+              ובהכוונת רבנים חשובים בקהילתינו הק׳, הושקעו משאבים רבים בסיוע
+              נדיבים על מנת להקים את מערכת קול מצהלות, מתוך תחושת שליחות, אחריות
+              ורצון לקדם את ענייני השידוכים בקהילתנו.
             </p>
             <p className="mb-5 text-[16.5px] leading-[1.75] text-[#5c6a68]">
-              המערכת נועדה לשמש ככתובת לכל נושא השידוכים בקהילתנו הק׳ וככלי עזר נוח להורים, שדכנים, רבנים ואנשי ונשות החינוך במוסדותינו ברחבי העולם, במטרה לסייע במציאת זיווג הגון בדרך קלה ונוחה, תוך שמירה על ערכי הקדושה וצנעת הפרט, ללא חשש לשה"ר ובליווי הלכתי ורוחני מלא.
+              המערכת נועדה לשמש ככתובת לכל נושא השידוכים בקהילתנו הק׳ וככלי עזר
+              נוח להורים, שדכנים, רבנים ואנשי ונשות החינוך במוסדותינו ברחבי
+              העולם, במטרה לסייע במציאת זיווג הגון בדרך קלה ונוחה, תוך שמירה על
+              ערכי הקדושה וצנעת הפרט, ללא חשש לשה"ר ובליווי הלכתי ורוחני מלא.
             </p>
-            <Link href={"/about" as any} className="inline-flex items-center gap-[6px] text-[16px] font-bold text-[#2b5a5c] no-underline">
+            <Link
+              href={"/about" as any}
+              className="inline-flex items-center gap-[6px] text-[16px] font-bold text-[#2b5a5c] no-underline"
+            >
               עוד על קול מצהלות <ArrowSmall />
             </Link>
           </div>
@@ -458,21 +648,34 @@ export default function HomePage() {
                   aspectRatio: "4/5",
                   fontFamily: "ui-monospace,Menlo,monospace",
                   padding: 22,
-                  backgroundImage: "repeating-linear-gradient(135deg,transparent 0 12px,rgba(43,90,92,.05) 12px 24px)",
+                  backgroundImage:
+                    "repeating-linear-gradient(135deg,transparent 0 12px,rgba(43,90,92,.05) 12px 24px)",
                   boxShadow: "0 1px 3px rgba(20,40,40,.06)",
                 }}
               >
                 [ תמונת הסכמת רב · סליידר ]
               </div>
               {/* Nav arrows */}
-              {[{ side: "left", d: "m15 18-6-6 6-6" }, { side: "right", d: "m9 18 6-6-6-6" }].map(({ side, d }) => (
+              {[
+                { side: "left", d: "m15 18-6-6 6-6" },
+                { side: "right", d: "m9 18 6-6-6-6" },
+              ].map(({ side, d }) => (
                 <button
                   key={side}
                   aria-label={side === "right" ? "הבא" : "הקודם"}
                   className="absolute top-1/2 flex h-[40px] w-[40px] -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[#d9dee0] bg-white text-[#2b5a5c] shadow-[0_8px_18px_-8px_rgba(0,0,0,.35)] transition-colors hover:bg-[#f2f6f6]"
                   style={{ [side]: -16 }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d={d} />
                   </svg>
                 </button>
@@ -480,8 +683,16 @@ export default function HomePage() {
             </div>
             {/* Dots */}
             <div className="mt-4 flex justify-center gap-[7px]">
-              <span className="h-[7px] rounded-full bg-[#2b5a5c]" style={{ width: 22 }} />
-              {[1, 2, 3].map((d) => <span key={d} className="h-[7px] w-[7px] rounded-full bg-[#c3ccce]" />)}
+              <span
+                className="h-[7px] rounded-full bg-[#2b5a5c]"
+                style={{ width: 22 }}
+              />
+              {[1, 2, 3].map((d) => (
+                <span
+                  key={d}
+                  className="h-[7px] w-[7px] rounded-full bg-[#c3ccce]"
+                />
+              ))}
             </div>
           </div>
         </div>
@@ -492,20 +703,34 @@ export default function HomePage() {
 
       {/* ── 4. HOW IT WORKS ── */}
       <section className="bg-[#e3e9eb]">
-        <div className="mx-auto px-6" style={{ maxWidth: 1160, paddingTop: 90, paddingBottom: 90 }}>
+        <div
+          className="mx-auto px-6"
+          style={{ maxWidth: 1160, paddingTop: 90, paddingBottom: 90 }}
+        >
           {/* Section header */}
           <div className="mb-[52px] grid grid-cols-1 items-end gap-6 md:grid-cols-[1.35fr_1fr] md:gap-11">
             <div>
-              <div className="mb-4 text-[13px] font-bold tracking-[.16em] text-[#2b5a5c]">— איך זה עובד</div>
+              <div className="mb-4 text-[13px] font-bold tracking-[.16em] text-[#2b5a5c]">
+                — איך זה עובד
+              </div>
               <h2
                 className="font-bold text-[#1b2523]"
-                style={{ fontSize: "clamp(34px,5vw,58px)", lineHeight: 1.02, letterSpacing: "-.02em", margin: 0 }}
+                style={{
+                  fontSize: "clamp(34px,5vw,58px)",
+                  lineHeight: 1.02,
+                  letterSpacing: "-.02em",
+                  margin: 0,
+                }}
               >
-                איך עובדת מערכת<br />
+                איך עובדת מערכת
+                <br />
                 <span className="text-[#2b5a5c]">קול מצהלות?</span>
               </h2>
             </div>
-            <p className="mb-[10px] text-[16px] leading-[1.7] text-[#5c6a68]" style={{ margin: 0 }}>
+            <p
+              className="mb-[10px] text-[16px] leading-[1.7] text-[#5c6a68]"
+              style={{ margin: 0 }}
+            >
               בשילוב מושלם של טכנולוגיה, מידע, שיתוף ובברכת רבני קהילתינו הק׳.
             </p>
           </div>
@@ -515,16 +740,31 @@ export default function HomePage() {
             {steps.map(({ num, title, desc }) => (
               <div
                 key={num}
-                className="grid grid-cols-[64px_1fr] items-baseline border-b border-[#c8d1d0] gap-5 py-7 md:grid-cols-[96px_1fr] md:gap-7"
+                className="grid grid-cols-[64px_1fr] items-baseline gap-5 border-b border-[#c8d1d0] py-7 md:grid-cols-[96px_1fr] md:gap-7"
               >
-                <div className="font-normal leading-none text-[#9fb2af]" style={{ fontSize: "clamp(38px,3.6vw,50px)" }}>
+                <div
+                  className="leading-none font-normal text-[#9fb2af]"
+                  style={{ fontSize: "clamp(38px,3.6vw,50px)" }}
+                >
                   {num}
                 </div>
                 <div className="grid grid-cols-1 items-baseline gap-3 md:grid-cols-[minmax(200px,280px)_1fr] md:gap-7">
-                  <h3 className="font-bold text-[#1b2523]" style={{ fontSize: "clamp(18px,1.9vw,22px)", margin: 0, lineHeight: 1.3 }}>
+                  <h3
+                    className="font-bold text-[#1b2523]"
+                    style={{
+                      fontSize: "clamp(18px,1.9vw,22px)",
+                      margin: 0,
+                      lineHeight: 1.3,
+                    }}
+                  >
                     {title}
                   </h3>
-                  <p className="text-[15px] leading-[1.65] text-[#5c6a68]" style={{ margin: 0 }}>{desc}</p>
+                  <p
+                    className="text-end text-[15px] leading-[1.65] text-[#5c6a68]"
+                    style={{ margin: 0 }}
+                  >
+                    {desc}
+                  </p>
                 </div>
               </div>
             ))}
@@ -533,7 +773,11 @@ export default function HomePage() {
           {/* Photo strip */}
           <div className="mt-[52px] grid grid-cols-1 gap-4 sm:grid-cols-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-2xl bg-[#dbe3e2]" style={{ aspectRatio: "4/3" }} />
+              <div
+                key={i}
+                className="rounded-2xl bg-[#dbe3e2]"
+                style={{ aspectRatio: "4/3" }}
+              />
             ))}
           </div>
         </div>
@@ -541,15 +785,26 @@ export default function HomePage() {
 
       {/* ── 5. WHO IS IT FOR ── */}
       <section className="bg-[#ecf0f2]">
-        <div className="mx-auto px-6" style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}>
+        <div
+          className="mx-auto px-6"
+          style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}
+        >
           <div className="mx-auto mb-12 max-w-[640px] text-center">
             <h2
               className="font-bold text-[#2b5a5c]"
-              style={{ fontSize: "clamp(28px,3.2vw,36px)", lineHeight: 1.1, marginBottom: 12 }}
+              style={{
+                fontSize: "clamp(28px,3.2vw,36px)",
+                lineHeight: 1.1,
+                marginBottom: 12,
+              }}
             >
-              למי המערכת<br /><HighlightSpan>מתאימה?</HighlightSpan>
+              למי המערכת
+              <br />
+              <HighlightSpan>מתאימה?</HighlightSpan>
             </h2>
-            <p className="text-[17px] text-[#5c6a68]" style={{ margin: 0 }}>לכל העוסקים בתחום כמקצוע, כשליחות, או עבור עצמם, ילדיהם ותלמידיהם.</p>
+            <p className="text-[17px] text-[#5c6a68]" style={{ margin: 0 }}>
+              לכל העוסקים בתחום כמקצוע, כשליחות, או עבור עצמם, ילדיהם ותלמידיהם.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -559,14 +814,25 @@ export default function HomePage() {
                 className="flex flex-col gap-4 rounded-[14px] border border-[#d9dee0] bg-white p-[30px]"
                 style={{ boxShadow: "0 4px 14px -8px rgba(20,40,40,.12)" }}
               >
-                <h3 className="text-[22px] font-bold text-[#2b5a5c]" style={{ margin: 0 }}>{title}</h3>
-                <p className="text-[14.5px] leading-[1.65] text-[#5c6a68]" style={{ margin: 0 }}>{desc}</p>
-                <ul className="flex flex-col gap-3 list-none p-0 m-0">
+                <h3
+                  className="text-[22px] font-bold text-[#2b5a5c]"
+                  style={{ margin: 0 }}
+                >
+                  {title}
+                </h3>
+                <p
+                  className="text-[14.5px] leading-[1.65] text-[#5c6a68]"
+                  style={{ margin: 0 }}
+                >
+                  {desc}
+                </p>
+                <ul className="m-0 flex list-none flex-col gap-3 p-0">
                   {features.map(({ title: ft, desc: fd }) => (
                     <li key={ft} className="flex items-start gap-[9px]">
                       <CheckSvg />
                       <span className="text-[14.5px]">
-                        <b className="text-[#1b2523]">{ft}</b><br />
+                        <b className="text-[#1b2523]">{ft}</b>
+                        <br />
                         <span className="text-[#5c6a68]">{fd}</span>
                       </span>
                     </li>
@@ -586,7 +852,10 @@ export default function HomePage() {
 
       {/* ── 6. PRINCIPLES ── */}
       <section className="bg-[#f3f6f5]">
-        <div className="mx-auto px-6" style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}>
+        <div
+          className="mx-auto px-6"
+          style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}
+        >
           <div className="mb-[52px] grid grid-cols-1 items-end gap-6 md:grid-cols-[1fr_auto] md:gap-8">
             <div style={{ maxWidth: 660 }}>
               <span className="mb-5 inline-block rounded-[8px] bg-[#e4ebe9] px-[14px] py-1.5 text-[12.5px] font-bold tracking-[.14em] text-[#2b5a5c]">
@@ -594,63 +863,111 @@ export default function HomePage() {
               </span>
               <h2
                 className="font-bold text-[#1b2523]"
-                style={{ fontSize: "clamp(30px,4.2vw,52px)", lineHeight: 1.12, letterSpacing: "-.01em", marginBottom: 18, marginTop: 0 }}
+                style={{
+                  fontSize: "clamp(30px,4.2vw,52px)",
+                  lineHeight: 1.12,
+                  letterSpacing: "-.01em",
+                  marginBottom: 18,
+                  marginTop: 0,
+                }}
               >
-                העקרונות של<br />
+                העקרונות של
+                <br />
                 <span
                   className="inline-block rounded-[12px]"
-                  style={{ background: "#2b5a5c", color: "#f4f8f7", padding: "1px 16px 5px", transform: "rotate(-1.5deg)" }}
+                  style={{
+                    background: "#2b5a5c",
+                    color: "#f4f8f7",
+                    padding: "1px 16px 5px",
+                    transform: "rotate(-1.5deg)",
+                  }}
                 >
                   קול מצהלות
                 </span>
               </h2>
-              <p className="max-w-[520px] text-[16.5px] leading-[1.7] text-[#5c6a68]" style={{ margin: 0 }}>
-                הכללים שלנו נוסחו מתוך הבנת האחריות העצומה והרגישות הנדרשת בתחום.
+              <p
+                className="max-w-[520px] text-[16.5px] leading-[1.7] text-[#5c6a68]"
+                style={{ margin: 0 }}
+              >
+                הכללים שלנו נוסחו מתוך הבנת האחריות העצומה והרגישות הנדרשת
+                בתחום.
               </p>
             </div>
             <Link
               href={"/auth/sign-up" as any}
-              className="inline-flex items-center gap-2 whitespace-nowrap rounded-[11px] bg-[#1b2523] px-[30px] py-[15px] text-[15px] font-bold text-[#f4f8f7] no-underline transition-colors hover:bg-[#2b5a5c]"
+              className="inline-flex items-center gap-2 rounded-[11px] bg-[#1b2523] px-[30px] py-[15px] text-[15px] font-bold whitespace-nowrap text-[#f4f8f7] no-underline transition-colors hover:bg-[#2b5a5c]"
             >
               הצטרפו עכשיו <ArrowSmall />
             </Link>
           </div>
 
           <div className="grid grid-cols-1 gap-[22px] md:grid-cols-3">
-            {principles.map(({ bg, svgColor, h3Color, pColor, title, desc }) => (
-              <div
-                key={title}
-                className="relative flex flex-col items-center justify-center overflow-hidden rounded-[18px] p-[40px_30px] text-center"
-                style={{ background: bg, minHeight: 236 }}
-              >
-                <LogoSvg
-                  size={220}
-                  className="pointer-events-none absolute"
-                  style={{ color: svgColor, bottom: -60, left: -50 } as React.CSSProperties}
-                />
-                <h3 className="relative font-bold leading-[1.3]" style={{ fontSize: 21, margin: "0 0 14px", color: h3Color }}>{title}</h3>
-                <p className="relative text-[14.5px] leading-[1.7]" style={{ color: pColor, margin: 0 }}>{desc}</p>
-              </div>
-            ))}
+            {principles.map(
+              ({ bg, svgColor, h3Color, pColor, title, desc }) => (
+                <div
+                  key={title}
+                  className="relative flex flex-col items-center justify-center overflow-hidden rounded-[18px] p-[40px_30px] text-center"
+                  style={{ background: bg, minHeight: 236 }}
+                >
+                  <LogoSvg
+                    size={220}
+                    className="pointer-events-none absolute"
+                    style={
+                      {
+                        color: svgColor,
+                        bottom: -60,
+                        left: -50,
+                      } as React.CSSProperties
+                    }
+                  />
+                  <h3
+                    className="relative leading-[1.3] font-bold"
+                    style={{ fontSize: 21, margin: "0 0 14px", color: h3Color }}
+                  >
+                    {title}
+                  </h3>
+                  <p
+                    className="relative text-[14.5px] leading-[1.7]"
+                    style={{ color: pColor, margin: 0 }}
+                  >
+                    {desc}
+                  </p>
+                </div>
+              ),
+            )}
           </div>
         </div>
       </section>
 
       {/* ── 7. SCREENSHOTS ── */}
       <section className="bg-[#ecf0f2]">
-        <div className="mx-auto px-6" style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}>
+        <div
+          className="mx-auto px-6"
+          style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}
+        >
           <div className="mx-auto mb-12 max-w-[640px] text-center">
             <h2
               className="font-bold text-[#2b5a5c]"
-              style={{ fontSize: "clamp(28px,3.2vw,36px)", lineHeight: 1.1, marginBottom: 12 }}
+              style={{
+                fontSize: "clamp(28px,3.2vw,36px)",
+                lineHeight: 1.1,
+                marginBottom: 12,
+              }}
             >
-              איך זה נראה<br /><HighlightSpan>מבפנים?</HighlightSpan>
+              איך זה נראה
+              <br />
+              <HighlightSpan>מבפנים?</HighlightSpan>
             </h2>
-            <p className="text-[17px] text-[#5c6a68]" style={{ margin: 0 }}>מה בדיוק עושים? מה האפשרויות שם? כנסו לראות!</p>
+            <p className="text-[17px] text-[#5c6a68]" style={{ margin: 0 }}>
+              מה בדיוק עושים? מה האפשרויות שם? כנסו לראות!
+            </p>
           </div>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {[
-              { title: "מערכת קול מצהלות להורים ולמיועדים", href: "/parents" as any },
+              {
+                title: "מערכת קול מצהלות להורים ולמיועדים",
+                href: "/parents" as any,
+              },
               { title: "מערכת קול מצהלות לשדכנים", href: "/shadchanim" as any },
             ].map(({ title, href }) => (
               <div
@@ -660,7 +977,12 @@ export default function HomePage() {
               >
                 <div className="overflow-hidden rounded-[10px] border border-[#e2e8e8]">
                   <div className="flex gap-[6px] border-b border-[#e6eded] bg-[#f1f5f5] px-[14px] py-[10px]">
-                    {[1, 2, 3].map((d) => <span key={d} className="h-[9px] w-[9px] rounded-full bg-[#d3dcdc]" />)}
+                    {[1, 2, 3].map((d) => (
+                      <span
+                        key={d}
+                        className="h-[9px] w-[9px] rounded-full bg-[#d3dcdc]"
+                      />
+                    ))}
                   </div>
                   <div
                     className="flex items-center justify-center text-center text-[12.5px] text-[#7c8b89]"
@@ -668,14 +990,20 @@ export default function HomePage() {
                       aspectRatio: "16/9",
                       fontFamily: "ui-monospace,Menlo,monospace",
                       padding: 16,
-                      backgroundImage: "repeating-linear-gradient(135deg,transparent 0 11px,rgba(43,90,92,.05) 11px 22px)",
+                      backgroundImage:
+                        "repeating-linear-gradient(135deg,transparent 0 11px,rgba(43,90,92,.05) 11px 22px)",
                     }}
                   >
                     [ צילום מסך ]
                   </div>
                 </div>
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-[15px] font-bold text-[#1b2523]" style={{ margin: 0 }}>{title}</p>
+                  <p
+                    className="text-[15px] font-bold text-[#1b2523]"
+                    style={{ margin: 0 }}
+                  >
+                    {title}
+                  </p>
                   <Link
                     href={href}
                     className="inline-flex shrink-0 items-center gap-[5px] rounded-[8px] border border-[#cfd8d8] px-[14px] py-2 text-[13.5px] font-bold text-[#2b5a5c] no-underline transition-colors hover:bg-[#eef3f3]"
@@ -705,7 +1033,11 @@ export default function HomePage() {
       </Suspense>
 
       {/* ── FINAL CTA ── */}
-      <div style={{ background: "linear-gradient(180deg,#e3e9eb 0%,#eef2f1 100%)" }}>
+      <div
+        style={{
+          background: "linear-gradient(180deg,#e3e9eb 0%,#eef2f1 100%)",
+        }}
+      >
         <WebCta />
       </div>
     </>

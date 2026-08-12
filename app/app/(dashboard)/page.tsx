@@ -1,6 +1,11 @@
 import { DashboardSection } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { ActiveShidduchim, Favorites, Chat, Forum } from "@/features/dashboard/components/shadchan";
+import {
+  ActiveShidduchim,
+  Favorites,
+  Chat,
+  Forum,
+} from "@/features/dashboard/components/shadchan";
 import {
   ActiveShidduchim as UserActiveShidduchim,
   ShadchanimList,
@@ -230,8 +235,8 @@ export default async function Home() {
     <div className="space-y-10 py-4">
       {/* ברכה */}
       {user && (
-        <div className="pb-2">
-          <p className="text-2xl font-bold text-foreground">
+        <div className="pb-2 md:hidden">
+          <p className="text-foreground text-2xl font-bold">
             שלום{firstName ? `, ${firstName}` : ""}
           </p>
           <p className="text-muted-foreground mt-1 text-sm">
@@ -244,6 +249,7 @@ export default async function Home() {
         <>
           <DashboardSection
             title="שידוכים באויר"
+            titleNumber={activeShidduchimData.length.toString()}
             subTitle="ההצעות האחרונות שלך"
             button={
               <Button asChild>

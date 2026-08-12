@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { User as LucideUser } from "lucide-react";
+import { FilePlus, User as LucideUser, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 
@@ -18,6 +18,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import calculateAge from "@/lib/calculateAge";
 import { createClient } from "@/lib/supabase/client";
+import { Badge } from "@/components/ui/badge";
 
 type Favorite = {
   id: string;
@@ -37,13 +38,17 @@ type Favorite = {
   cv_url?: string;
 };
 
-function parseStatus(status: string): string {
-  if (status === "married") return "נשוי";
-  if (status === "engaged") return "מאורס";
-  if (status === "single") return "רווק";
-  if (status === "divorced") return "גרוש";
-  if (status === "widowed") return "אלמן";
-  return status;
+function parseBadgeStatus(status: string): React.ReactNode {
+  return <Badge variant={"outline"}>{status}</Badge>;
+}
+
+function parseStatus(status: string): React.ReactNode {
+  if (status === "married") return <Badge variant={"outline"}>נשוי</Badge>;
+  if (status === "engaged") return <Badge variant={"outline"}>מאורס</Badge>;
+  if (status === "single") return <Badge variant={"outline"}>רווק</Badge>;
+  if (status === "divorced") return <Badge variant={"outline"}>גרוש</Badge>;
+  if (status === "widowed") return <Badge variant={"outline"}>אלמן</Badge>;
+  return null;
 }
 
 export default function Favorites({ favorites }: { favorites: Favorite[] }) {
@@ -93,6 +98,26 @@ export default function Favorites({ favorites }: { favorites: Favorite[] }) {
     }
   };
 
+  const handleFavoriteRemove = async (id: string) => {
+    const currentFavs: string[] = user?.user_metadata?.favorites || [];
+    const nextFavs = currentFavs.filter((fid) => fid !== id);
+    const { data, error } = await supabase.auth.updateUser({
+      data: { favorites: nextFavs },
+    });
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
+    if (data) {
+      setUser(data.user || undefined);
+      setLocalFavorites((prev) => prev.filter((fav) => fav.id !== id));
+    }
+
+    toast.success("המיועד הוסר מהמועדפים");
+  };
+
   return (
     <>
       {localFavorites.length > 0 ? (
@@ -106,12 +131,17 @@ export default function Favorites({ favorites }: { favorites: Favorite[] }) {
                 </span>
                 <div className="flex items-center justify-between rounded-md border px-3 py-2">
                   <span className="text-sm">מועדף</span>
-                  <Switch
+                  {/* <Switch
                     checked={true}
                     onCheckedChange={(e) =>
                       handleFavoriteChange(e, favorite.id)
                     }
-                  />
+                  /> */}
+                  <Button
+                    size={"icon"}
+                    variant={"ghost"}
+                    onClick={() => handleFavoriteRemove(favorite.id)}
+                  ></Button>
                 </div>
                 <div className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 text-sm">
                   <span>{parseStatus(favorite.personal_status)}</span>
@@ -156,12 +186,11 @@ export default function Favorites({ favorites }: { favorites: Favorite[] }) {
           </div>
 
           {/* טבלה — דסקטופ */}
-          <div className="hidden md:grid md:grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_3fr] md:gap-4 md:pt-4">
+          <div className="hidden md:grid md:grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_3fr] md:gap-4 md:pt-4">
             <div
               data-slot="table-header"
               className="col-span-full grid grid-cols-subgrid"
             >
-              <div>מועדף</div>
               <div>סטטוס</div>
               <div>שם משפחה</div>
               <div>שם פרטי</div>
@@ -170,20 +199,13 @@ export default function Favorites({ favorites }: { favorites: Favorite[] }) {
               <div>עיר</div>
               <div>גיל</div>
               <div>גובה</div>
+              <div>פעולות</div>
             </div>
             {localFavorites.map((favorite) => (
               <Box
                 key={favorite.id}
                 className="col-span-full grid grid-cols-subgrid items-center p-4"
               >
-                <div>
-                  <Switch
-                    checked={true}
-                    onCheckedChange={(e) =>
-                      handleFavoriteChange(e, favorite.id)
-                    }
-                  />
-                </div>
                 <div>{parseStatus(favorite.personal_status)}</div>
                 <div>{favorite.last_name}</div>
                 <div>{favorite.first_name}</div>
@@ -210,14 +232,32 @@ export default function Favorites({ favorites }: { favorites: Favorite[] }) {
                       </a>
                     </Button>
                   ) : (
-                    <Button asChild className="flex-1" variant="outline">
-                      <Link href={"/" as any}>להוספת קו״ח</Link>
+                    <Button
+                      asChild
+                      // className="flex-1"
+                      variant="outline"
+                      size={"icon"}
+                    >
+                      <Link href={"/" as any}>
+                        <FilePlus />
+                        <span className="sr-only">להוספת קו״ח</span>
+                      </Link>
                     </Button>
                   )}
                   <Button asChild className="flex-1">
                     <Link href={`/app/students/${favorite.id}`}>
                       לצפיה בכרטיס המלא
                     </Link>
+                  </Button>
+                  {/* </div>
+                <div> */}
+                  {/* <Switch checked={true} /> */}
+                  <Button
+                    size={"icon"}
+                    variant={"ghost"}
+                    onClick={() => handleFavoriteRemove(favorite.id)}
+                  >
+                    <Trash2 className="text-red-500" />
                   </Button>
                 </div>
               </Box>
