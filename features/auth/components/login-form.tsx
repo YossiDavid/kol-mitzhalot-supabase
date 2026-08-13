@@ -52,7 +52,7 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">התחברות</CardTitle>
+          <CardTitle className="text-heading">התחברות</CardTitle>
           <CardDescription>
             הכנס את האימייל שלך ונשלח אליך קישור להתחברות (Magic Link)
           </CardDescription>
@@ -75,7 +75,7 @@ export function LoginForm({
                 />
               </div>
               {error && (
-                <p className="text-destructive text-sm" role="alert">
+                <p className="text-destructive text-body-sm" role="alert">
                   {error}
                 </p>
               )}
@@ -83,7 +83,7 @@ export function LoginForm({
                 {isLoading ? "שולח קישור..." : "שלח קישור התחברות"}
               </Button>
             </div>
-            <div className="text-muted-foreground mt-4 text-center text-sm">
+            <div className="text-muted-foreground mt-4 text-center text-body-sm">
               אין לך חשבון?{" "}
               <Link
                 href="/auth/sign-up"

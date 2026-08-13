@@ -298,10 +298,10 @@ export function ChatView({ roomId }: { roomId: string }) {
             <AvatarFallback>{otherUserInitials}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 leading-tight">
-            <div className="truncate text-sm font-semibold">
+            <div className="truncate text-body-sm font-semibold">
               {roomTitle ?? "..."}
             </div>
-            <div className="text-muted-foreground text-xs">
+            <div className="text-muted-foreground text-caption">
               {otherOnline ? "מחובר" : "לא מחובר"}
             </div>
           </div>
@@ -351,7 +351,7 @@ export function ChatView({ roomId }: { roomId: string }) {
 
         {/* Reply / Edit banner */}
         {(replyTo || editTarget) && (
-          <div className="bg-muted/40 mx-3 mt-2 rounded-md border px-3 py-2 text-xs">
+          <div className="bg-muted/40 mx-3 mt-2 rounded-md border px-3 py-2 text-caption">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <div className="text-muted-foreground mb-1">

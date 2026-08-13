@@ -103,7 +103,7 @@ export default function CreateAdminUserPage() {
       >
         <Box className="mt-6 max-w-xl space-y-6">
           {error && (
-            <div className="border-destructive bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-sm">
+            <div className="border-destructive bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-body-sm">
               {error}
             </div>
           )}

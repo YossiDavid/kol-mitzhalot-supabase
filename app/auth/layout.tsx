@@ -29,13 +29,13 @@ export default function AuthLayout({
             height={44}
             className="h-11 w-11"
           />
-          <span className="text-lg font-bold">קול מצהלות</span>
+          <span className="text-subtitle font-bold">קול מצהלות</span>
         </Link>
       </header>
       <main className="flex flex-1 flex-col items-center justify-center px-4 py-8 sm:px-6">
         <div className="w-full max-w-[400px]">{children}</div>
       </main>
-      <footer className="border-border/50 bg-background/60 text-muted-foreground shrink-0 border-t px-4 py-3 text-center text-sm">
+      <footer className="border-border/50 bg-background/60 text-muted-foreground shrink-0 border-t px-4 py-3 text-center text-body-sm">
         <Link href="/" className="hover:underline">
           חזרה לאתר
         </Link>

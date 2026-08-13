@@ -87,7 +87,7 @@ function CandidateSection({
   return (
     <div className="text-center">
       <p className="text-muted-foreground">{title}</p>
-      <p className="mt-1 flex items-center justify-center gap-1.5 text-2xl leading-none font-bold md:text-3xl">
+      <p className="mt-1 flex items-center justify-center gap-1.5 text-heading leading-none font-bold md:text-heading">
         {fullName(student, title.replace("שם ", ""))}
         {student?.cv_url ? (
           <a
@@ -105,14 +105,14 @@ function CandidateSection({
           </span>
         )}
       </p>
-      <p className="text-muted-foreground text-lg md:text-xl">
+      <p className="text-muted-foreground text-subtitle md:text-title">
         {parentName ? `${parentPrefix} ${parentName}` : fallbackParent}
       </p>
-      <p className="text-muted-foreground mt-2 text-base md:text-lg">
+      <p className="text-muted-foreground mt-2 text-body md:text-subtitle">
         {getAge(student)} | {student?.city || "ללא עיר"} |{" "}
         {getLastInstitution(student)} | {getOccupation(student)}
       </p>
-      <p className="bg-muted text-muted-foreground mt-3 inline-flex rounded-lg px-3 py-1 text-base md:text-lg">
+      <p className="bg-muted text-muted-foreground mt-3 inline-flex rounded-lg px-3 py-1 text-body md:text-subtitle">
         {note?.trim() || "ממתינים לעדכון מהשדכן"}
       </p>
     </div>

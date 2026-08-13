@@ -97,12 +97,12 @@ function StudentBox({
         </div>
 
         {subtitleParts.length > 0 && (
-          <div className="text-muted-foreground mt-0.5 text-sm">
+          <div className="text-muted-foreground mt-0.5 text-body-sm">
             {subtitleParts.join(" | ")}
           </div>
         )}
 
-        <div className="bg-muted mt-3 rounded-lg p-2 text-sm">
+        <div className="bg-muted mt-3 rounded-lg p-2 text-body-sm">
           {father && (
             <div>
               <b>אב: </b>

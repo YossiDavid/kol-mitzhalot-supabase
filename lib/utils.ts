@@ -1,5 +1,32 @@
 import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
+
+/**
+ * Custom font-size tokens (`text-display` … `text-caption`) share the `text-*`
+ * namespace with color utilities (`text-primary-foreground`). Without teaching
+ * tailwind-merge they are font-sizes, cn() drops the color class — e.g. black
+ * text on primary buttons.
+ */
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "font-size": [
+        {
+          text: [
+            "display",
+            "heading",
+            "title",
+            "subtitle",
+            "body",
+            "body-sm",
+            "label",
+            "caption",
+          ],
+        },
+      ],
+    },
+  },
+});
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

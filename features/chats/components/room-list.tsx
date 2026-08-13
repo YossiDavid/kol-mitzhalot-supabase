@@ -54,15 +54,15 @@ const RoomRow = React.memo(function RoomRow({
       </Avatar>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <div className="truncate text-sm font-medium">{room.title}</div>
+          <div className="truncate text-body-sm font-medium">{room.title}</div>
           {room.lastAt && (
-            <div className="text-muted-foreground shrink-0 text-xs">
+            <div className="text-muted-foreground shrink-0 text-caption">
               {room.lastAt}
             </div>
           )}
         </div>
         {room.lastMessage && (
-          <div className="text-muted-foreground truncate text-xs">
+          <div className="text-muted-foreground truncate text-caption">
             {room.lastMessage.length > 50
               ? `${room.lastMessage.substring(0, 50)}...`
               : room.lastMessage}
@@ -235,16 +235,16 @@ export function RoomList() {
     >
       <aside>
         <div className="flex h-14 items-center px-4">
-          <div className="text-sm font-semibold">צ׳אטים</div>
+          <div className="text-body-sm font-semibold">צ׳אטים</div>
         </div>
         <Separator />
         <ScrollArea className="h-[calc(100%-56px)]">
           {loading ? (
-            <div className="text-muted-foreground p-4 text-center text-sm">
+            <div className="text-muted-foreground p-4 text-center text-body-sm">
               טוען...
             </div>
           ) : rooms.length === 0 ? (
-            <div className="text-muted-foreground p-4 text-center text-sm">
+            <div className="text-muted-foreground p-4 text-center text-body-sm">
               אין צ׳אטים
             </div>
           ) : (

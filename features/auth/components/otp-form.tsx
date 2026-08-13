@@ -57,7 +57,7 @@ export function OTPForm({
         <form onSubmit={(e: React.FormEvent<HTMLFormElement>) => handleSubmit(e)}>
           <FieldGroup>
             {error && (
-              <p className="text-sm text-destructive" role="alert">
+              <p className="text-body-sm text-destructive" role="alert">
                 {error}
               </p>
             )}

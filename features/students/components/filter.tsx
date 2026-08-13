@@ -38,13 +38,13 @@ export default function FilterSection() {
 
         <button
           onClick={() => setMobileOpen((o) => !o)}
-          className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium shadow-sm"
+          className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-body-sm font-medium shadow-sm"
         >
           <span className="flex items-center gap-2">
             <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
             פילטרים
             {activeFilterCount > 0 && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-caption font-bold text-primary-foreground">
                 {activeFilterCount}
               </span>
             )}

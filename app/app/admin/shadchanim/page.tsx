@@ -62,12 +62,12 @@ export default async function ShadchanimPage({
           }
         >
           <div className="border-destructive bg-destructive/10 mt-6 rounded-lg border p-6">
-            <h3 className="text-destructive mb-2 text-lg font-semibold">
+            <h3 className="text-destructive mb-2 text-subtitle font-semibold">
               שגיאה בהגדרת האדמין
             </h3>
             {isServiceRoleKeyError ? (
               <div className="space-y-4">
-                <p className="text-sm">
+                <p className="text-body-sm">
                   המשתנה{" "}
                   <code className="bg-muted rounded px-2 py-1">
                     SUPABASE_SERVICE_ROLE_KEY
@@ -76,7 +76,7 @@ export default async function ShadchanimPage({
                 </p>
               </div>
             ) : (
-              <p className="text-sm">{error.message}</p>
+              <p className="text-body-sm">{error.message}</p>
             )}
           </div>
         </DashboardSection>

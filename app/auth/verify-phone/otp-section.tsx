@@ -115,7 +115,7 @@ export default function OTPSection({
                   required
                 />
                 {phoneError && (
-                  <p className="text-sm text-destructive">{phoneError}</p>
+                  <p className="text-body-sm text-destructive">{phoneError}</p>
                 )}
               </div>
               <Button type="submit" className="w-full" disabled={addLoading}>
@@ -137,7 +137,7 @@ export default function OTPSection({
           error={sendError}
           onResend={handleSendCode}
         />
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-body-sm text-muted-foreground">
           <Link href="/app/settings" className="underline hover:text-foreground">
             זה לא המספר שלי? לעדכון
           </Link>
@@ -163,13 +163,13 @@ export default function OTPSection({
       <CardContent>
         <div className="space-y-4">
           {sendError && (
-            <p className="text-sm text-destructive">{sendError}</p>
+            <p className="text-body-sm text-destructive">{sendError}</p>
           )}
           <Button onClick={handleSendCode} className="w-full">
             שלח קוד אימות
           </Button>
           {maskedPhone && (
-            <p className="text-center text-sm text-muted-foreground">
+            <p className="text-center text-body-sm text-muted-foreground">
               <Link href="/app/settings" className="underline hover:text-foreground">
                 זה לא המספר שלי? לעדכון
               </Link>

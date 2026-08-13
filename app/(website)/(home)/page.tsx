@@ -18,8 +18,8 @@ function HighlightSpan({ children }: { children: React.ReactNode }) {
     <span
       className="inline-block rounded-[11px]"
       style={{
-        background: "#2b5a5c",
-        color: "#f4f8f7",
+        background: "var(--primary)",
+        color: "var(--primary-foreground)",
         padding: "1px 14px 4px",
         transform: "rotate(-1.5deg)",
       }}
@@ -31,7 +31,7 @@ function HighlightSpan({ children }: { children: React.ReactNode }) {
 
 function CheckSvg({
   size = 18,
-  stroke = "#2b5a5c",
+  stroke = "var(--primary)",
   strokeWidth = "2.5",
 }: {
   size?: number;
@@ -155,38 +155,40 @@ const audiences = [
 
 const principles = [
   {
-    bg: "#d6e6e4",
-    svgColor: "rgba(43,90,92,.06)",
-    h3Color: "#173e3d",
-    pColor: "#3f5250",
+    cardClass: "bg-primary-muted text-primary",
+    svgColor: "color-mix(in oklab, var(--primary) 8%, transparent)",
+    titleClass: "text-primary",
+    descClass: "text-muted-foreground",
     title: 'הכוונה וליווי מקיף של רבני הארגון שליט"א',
     desc: 'הארגון הוקם על ידי שדכנים ועסקנים יר"ש, ומתנהל בליווי והכוונה שוטפים של הגה"צ ר׳ שמאי גרוס והגה"צ ר׳ שמואל יעקב לנדאו.',
   },
   {
-    bg: "#f0e6cd",
-    svgColor: "rgba(160,120,40,.09)",
-    h3Color: "#4a3c17",
-    pColor: "#5c5030",
+    cardClass: "bg-brand-gold-muted text-brand-gold-foreground",
+    svgColor: "color-mix(in oklab, var(--brand-gold) 18%, transparent)",
+    titleClass: "text-brand-gold-foreground",
+    descClass: "text-brand-gold-foreground/80",
     title: "פרטיות ואבטחת מידע ללא פשרות",
     desc: "אנו מתייחסים במלוא הרצינות לפרטיות שלכם! המערכת משתמשת בתקני אבטחה מתקדמים במיוחד, וההנהלה בודקת לעומק כל שדכן לפני מתן גישה למידע.",
   },
   {
-    bg: "#e2e9e8",
-    svgColor: "rgba(43,90,92,.05)",
-    h3Color: "#1b2523",
-    pColor: "#4a5654",
+    cardClass: "bg-muted text-foreground",
+    svgColor: "color-mix(in oklab, var(--primary) 6%, transparent)",
+    titleClass: "text-foreground",
+    descClass: "text-muted-foreground",
     title: 'התנהלות ערכית וללא חשש לשה"ר',
     desc: "המערכת בנויה ברוח התורה והחסידות: אין אפשרות לכתוב מידע שלילי, כל תגובה נבדקת לפני פרסומה ותמונות נשלחות תוך שמירה מוקפדת על פרטיות וצניעות.",
   },
 ];
 
 function ArticleCard({
+  slug,
   cat,
   date,
   read,
   title,
   excerpt,
 }: {
+  slug: string;
   cat: string;
   date: string;
   read: string;
@@ -195,54 +197,45 @@ function ArticleCard({
 }) {
   return (
     <Link
-      href={"/knowledge" as any}
-      className="flex flex-col overflow-hidden rounded-2xl border border-[#d9dee0] bg-white no-underline shadow-[0_1px_3px_rgba(20,40,40,.06)] transition-all hover:-translate-y-1 hover:shadow-[0_18px_40px_-18px_rgba(20,40,40,.28)]"
+      href={`/knowledge/${slug}` as any}
+      className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card no-underline shadow-[0_1px_3px_rgba(20,40,40,.06)] transition-all hover:-translate-y-1 hover:shadow-[0_18px_40px_-18px_rgba(20,40,40,.28)]"
     >
       <div
-        className="relative flex items-center justify-center"
-        style={{
-          aspectRatio: "16/10",
-          background: "#e8eeed",
-          backgroundImage:
-            "repeating-linear-gradient(135deg,transparent 0 13px,rgba(43,90,92,.06) 13px 26px)",
-          color: "#9fb0ad",
-          fontFamily: "ui-monospace,Menlo,monospace",
-          fontSize: 11.5,
-        }}
+        className="bg-primary-stripe relative flex aspect-[16/10] items-center justify-center font-mono text-caption text-muted-foreground"
       >
         [ תמונת נושא ]
-        <span className="absolute top-[14px] right-[14px] rounded-full bg-[rgba(255,255,255,.94)] px-3 py-[5px] text-[12px] font-bold text-[#2b5a5c] shadow-[0_2px_6px_rgba(20,40,40,.12)]">
+        <span className="absolute top-[14px] right-[14px] rounded-full bg-card/94 px-3 py-[5px] text-caption font-bold text-primary shadow-[0_2px_6px_rgba(20,40,40,.12)]">
           {cat}
         </span>
       </div>
       <div className="flex flex-1 flex-col gap-[10px] p-[22px_24px]">
-        <div className="flex items-center gap-2 text-[12.5px] text-[#8a9694]">
+        <div className="flex items-center gap-2 text-caption text-muted-foreground">
           <span>{date}</span>
-          <span className="h-[3px] w-[3px] rounded-full bg-[#c3ccce]" />
+          <span className="h-[3px] w-[3px] rounded-full bg-border" />
           <span>{read}</span>
         </div>
         <h3
-          className="text-[19px] leading-[1.35] font-bold text-[#1b2523]"
+          className="text-subtitle leading-[1.35] font-bold text-foreground"
           style={{ margin: 0 }}
         >
           {title}
         </h3>
         <p
-          className="text-[14px] leading-[1.6] text-[#66716f]"
+          className="text-body-sm leading-[1.6] text-muted-foreground"
           style={{ margin: 0 }}
         >
           {excerpt}
         </p>
-        <div className="mt-auto flex items-center justify-between border-t border-[#eef2f2] pt-4">
+        <div className="mt-auto flex items-center justify-between border-t border-border pt-4">
           <div className="flex items-center gap-[9px]">
-            <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[rgba(43,90,92,.12)]">
-              <LogoSvg size={15} className="text-[#2b5a5c]" />
+            <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-primary/12">
+              <LogoSvg size={15} className="text-primary" />
             </span>
-            <span className="text-[12.5px] font-semibold text-[#66716f]">
+            <span className="text-caption font-semibold text-muted-foreground">
               מערכת קול מצהלות
             </span>
           </div>
-          <span className="inline-flex items-center gap-[5px] text-[13.5px] font-bold text-[#2b5a5c]">
+          <span className="inline-flex items-center gap-[5px] text-body-sm font-bold text-primary">
             לקריאה{" "}
             <svg
               width="14"
@@ -276,19 +269,15 @@ async function HomepageEngagements() {
   if (!engagements?.length) return null;
 
   return (
-    <section className="bg-[#ecf0f2]">
+    <section className="bg-background">
       <div
         className="mx-auto px-6"
         style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}
       >
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <h2
-            className="font-bold text-[#2b5a5c]"
-            style={{
-              fontSize: "clamp(28px,3.2vw,36px)",
-              lineHeight: 1.1,
-              margin: 0,
-            }}
+            className="font-bold text-primary text-display" style={{lineHeight: 1.1,
+              margin: 0}}
           >
             שידוכים שנסגרו
             <br />
@@ -302,7 +291,7 @@ async function HomepageEngagements() {
               <Link
                 key={label}
                 href={href}
-                className="rounded-[8px] border border-[#cfd8d8] px-4 py-[9px] text-[14px] font-bold text-[#2b5a5c] no-underline transition-colors hover:bg-[#e3e9eb]"
+                className="rounded-[8px] border border-border px-4 py-[9px] text-body-sm font-bold text-primary no-underline transition-colors hover:bg-muted"
               >
                 {label}
               </Link>
@@ -313,18 +302,18 @@ async function HomepageEngagements() {
           {engagements.map((e) => (
             <div
               key={e.id}
-              className="flex flex-col items-center justify-center rounded-[14px] border border-[#d9dee0] bg-white p-4 text-center"
+              className="flex flex-col items-center justify-center rounded-[14px] border border-border bg-card p-4 text-center"
               style={{ aspectRatio: "3/4" }}
             >
-              <div className="mb-1 text-[13px] font-bold text-[#1b2523]">
+              <div className="mb-1 text-body-sm font-bold text-foreground">
                 {e.groom_name}
               </div>
-              <div className="mb-2 text-[11px] text-[#8a9694]">&</div>
-              <div className="text-[13px] font-bold text-[#1b2523]">
+              <div className="mb-2 text-caption text-muted-foreground">&</div>
+              <div className="text-body-sm font-bold text-foreground">
                 {e.bride_name}
               </div>
               {e.groom_city && (
-                <div className="mt-3 text-[11px] text-[#8a9694]">
+                <div className="mt-3 text-caption text-muted-foreground">
                   {e.groom_city}
                 </div>
               )}
@@ -350,25 +339,21 @@ async function HomepageKnowledge() {
   if (!articles?.length) return null;
 
   return (
-    <section className="bg-[#e3e9eb]">
+    <section className="bg-muted">
       <div
         className="mx-auto px-6"
         style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}
       >
         <div className="mx-auto mb-12 max-w-[640px] text-center">
           <h2
-            className="font-bold text-[#2b5a5c]"
-            style={{
-              fontSize: "clamp(28px,3.2vw,36px)",
-              lineHeight: 1.1,
-              marginBottom: 12,
-            }}
+            className="font-bold text-primary text-display" style={{lineHeight: 1.1,
+              marginBottom: 12}}
           >
             מרכז הידע של
             <br />
             <HighlightSpan>קול מצהלות</HighlightSpan>
           </h2>
-          <p className="text-[17px] text-[#5c6a68]" style={{ margin: 0 }}>
+          <p className="text-subtitle text-muted-foreground" style={{ margin: 0 }}>
             כל מה שחשוב לדעת על שידוכים, בירורים, פגישות, אירוסין ומה שביניהם.
           </p>
         </div>
@@ -376,6 +361,7 @@ async function HomepageKnowledge() {
           {articles.map((a) => (
             <ArticleCard
               key={a.id}
+          slug={a.slug}
               cat={CATEGORY_LABELS[a.category] ?? a.category}
               date={
                 a.published_at
@@ -397,7 +383,7 @@ export default function HomePage() {
   return (
     <>
       {/* ── 1. HERO ── */}
-      <section className="relative overflow-hidden bg-[#2b5a5c] text-[#f4f8f7]">
+      <section className="relative overflow-hidden bg-primary text-primary-foreground">
         {/* Decorative watermark */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -417,13 +403,13 @@ export default function HomePage() {
           {/* Floating gold badge — hidden on mobile */}
           <Link
             href={"/contact" as any}
-            className="absolute hidden flex-col items-center justify-center gap-1 rounded-full border-[3px] border-white text-center text-[14px] font-extrabold text-[#123331] no-underline transition-transform hover:scale-[1.06] md:flex"
+            className="absolute hidden flex-col items-center justify-center gap-1 rounded-full border-[3px] border-white text-center text-body-sm font-extrabold text-brand-gold-foreground no-underline transition-transform hover:scale-[1.06] md:flex"
             style={{
               top: 24,
               left: 24,
               width: 118,
               height: 118,
-              background: "radial-gradient(circle at 33% 27%,#f4dd93,#d8ac44)",
+              background: "radial-gradient(circle at 33% 27%,var(--brand-gold-soft),var(--brand-gold))",
               boxShadow:
                 "0 4px 0 rgba(20,50,48,.18),0 22px 36px -14px rgba(0,0,0,.6)",
               transform: "rotate(-8deg)",
@@ -455,27 +441,23 @@ export default function HomePage() {
           {/* Text column */}
           <div>
             <p
-              className="mb-[18px] max-w-[540px] leading-[1.6] opacity-80"
-              style={{ fontSize: "clamp(16px,1.6vw,18px)", fontWeight: 500 }}
+              className="mb-[18px] max-w-[540px] leading-[1.6] opacity-80 text-subtitle" style={{fontWeight: 500}}
             >
               שדכנים, הורים, אנשי ונשות חינוך, מחפשי שידוך בוגרים או בזיווג שני,
               וכל מי שיש לו רעיון לשידוך ורוצה לסייע להקים עוד בית נאמן בישראל:
             </p>
             <p
-              className="mb-1 font-medium opacity-90"
-              style={{ fontSize: "clamp(19px,2.4vw,26px)" }}
+              className="mb-1 font-medium opacity-90 text-title"
             >
               ברוכים הבאים ל
             </p>
             <h1
-              className="leading-none font-bold tracking-[-0.02em] text-[#f4f8f7]"
-              style={{ fontSize: "clamp(52px,8vw,80px)", marginBottom: 12 }}
+              className="leading-none font-bold tracking-[-0.02em] text-primary-foreground text-display" style={{marginBottom: 12}}
             >
               קול מצהלות
             </h1>
             <p
-              className="font-bold opacity-[.92]"
-              style={{ fontSize: "clamp(20px,2.4vw,26px)", marginBottom: 32 }}
+              className="font-bold opacity-[.92] text-title" style={{marginBottom: 32}}
             >
               הארגון לקידום שידוכים בבעלזא
             </p>
@@ -494,8 +476,7 @@ export default function HomePage() {
                   {tickerItems.map((item, i) => (
                     <div
                       key={i}
-                      className="overflow-hidden font-semibold text-ellipsis whitespace-nowrap"
-                      style={{ height: 44, lineHeight: "44px", fontSize: 18.5 }}
+                      className="overflow-hidden font-semibold text-ellipsis whitespace-nowrap text-subtitle" style={{height: 44, lineHeight: "44px"}}
                     >
                       {item}
                     </div>
@@ -508,9 +489,9 @@ export default function HomePage() {
             <div className="flex flex-wrap justify-start gap-3">
               <Link
                 href={"/auth/sign-up" as any}
-                className="rounded-full px-7 py-[14px] text-[16px] font-bold text-[#234a4b] no-underline transition-colors hover:bg-white"
+                className="rounded-full px-7 py-[14px] text-body font-bold text-primary no-underline transition-colors hover:bg-card"
                 style={{
-                  background: "#f4f8f7",
+                  background: "var(--primary-foreground)",
                   boxShadow: "0 10px 26px -12px rgba(0,0,0,.5)",
                 }}
               >
@@ -518,7 +499,7 @@ export default function HomePage() {
               </Link>
               <Link
                 href={"/contact" as any}
-                className="rounded-full border border-[rgba(255,255,255,.42)] bg-transparent px-7 py-[14px] text-[16px] font-bold text-[#f4f8f7] no-underline transition-colors hover:bg-[rgba(255,255,255,.1)]"
+                className="rounded-full border border-primary-foreground/40 bg-transparent px-7 py-[14px] text-body font-bold text-primary-foreground no-underline transition-colors hover:bg-primary-foreground/10"
               >
                 דברו איתנו
               </Link>
@@ -528,7 +509,7 @@ export default function HomePage() {
           {/* Visual column */}
           <div className="relative">
             <div
-              className="overflow-hidden rounded-[18px] bg-white"
+              className="overflow-hidden rounded-[18px] bg-card"
               style={{
                 boxShadow: "0 34px 80px -34px rgba(0,0,0,.6)",
                 border: "1px solid rgba(255,255,255,.16)",
@@ -536,25 +517,16 @@ export default function HomePage() {
               }}
             >
               {/* Browser chrome */}
-              <div className="flex gap-[6px] border-b border-[#e6eded] bg-[#f1f5f5] px-4 py-[13px]">
+              <div className="flex gap-[6px] border-b border-border bg-muted px-4 py-[13px]">
                 {[1, 2, 3].map((d) => (
                   <span
                     key={d}
-                    className="h-[9px] w-[9px] rounded-full bg-[#d3dcdc]"
+                    className="h-[9px] w-[9px] rounded-full bg-border"
                   />
                 ))}
               </div>
               <div className="p-4">
-                <div
-                  className="flex items-center justify-center rounded-[10px] border border-[#e6eded] text-center text-[12.5px] text-[#7c8b89]"
-                  style={{
-                    aspectRatio: "4/3",
-                    fontFamily: "ui-monospace,Menlo,monospace",
-                    padding: 18,
-                    backgroundImage:
-                      "repeating-linear-gradient(135deg,transparent 0 12px,rgba(43,90,92,.06) 12px 24px)",
-                  }}
-                >
+                <div className="bg-primary-stripe-sm flex aspect-[4/3] items-center justify-center rounded-[10px] border border-border p-[18px] text-center font-mono text-caption text-muted-foreground">
                   [ צילום מסך · ממשק
                   <br />
                   ניהול השידוכים ]
@@ -564,31 +536,24 @@ export default function HomePage() {
 
             {/* Floating toast — hidden on mobile */}
             <div
-              className="absolute hidden items-center gap-[10px] rounded-[12px] bg-white md:flex"
+              className="absolute hidden items-center gap-[10px] rounded-[12px] bg-card md:flex"
               style={{
                 bottom: -18,
                 left: -16,
-                border: "1px solid #e6eded",
+                border: "1px solid var(--border)",
                 boxShadow: "0 18px 40px -18px rgba(0,0,0,.4)",
                 padding: "12px 16px",
                 transform: "rotate(2deg)",
               }}
             >
-              <span
-                className="flex items-center justify-center rounded-[9px]"
-                style={{
-                  width: 30,
-                  height: 30,
-                  background: "rgba(43,90,92,.1)",
-                }}
-              >
+              <span className="bg-primary-wash flex h-[30px] w-[30px] items-center justify-center rounded-[9px]">
                 <CheckSvg size={17} strokeWidth="2.6" />
               </span>
               <span className="text-right">
-                <span className="block text-[13px] font-bold text-[#1b2523]">
+                <span className="block text-body-sm font-bold text-foreground">
                   הצעה נשלחה
                 </span>
-                <span className="block text-[11.5px] text-[#889492]">
+                <span className="block text-caption text-muted-foreground">
                   ממתינה לתגובת הצדדים
                 </span>
               </span>
@@ -598,31 +563,27 @@ export default function HomePage() {
       </section>
 
       {/* ── 2. MISSION ── */}
-      <section className="bg-[#ecf0f2]">
+      <section className="bg-background">
         <div
           className="mx-auto grid grid-cols-1 items-center gap-8 px-6 py-[76px] md:grid-cols-[1.1fr_.9fr] md:gap-14"
           style={{ maxWidth: 1120 }}
         >
           <div>
             <h2
-              className="font-bold text-[#2b5a5c]"
-              style={{
-                fontSize: "clamp(28px,3.2vw,36px)",
-                lineHeight: 1.1,
-                marginBottom: 18,
-              }}
+              className="font-bold text-primary text-display" style={{lineHeight: 1.1,
+                marginBottom: 18}}
             >
               המטרה
               <br />
               <HighlightSpan>שלנו ושלכם</HighlightSpan>
             </h2>
-            <p className="mb-4 text-[16.5px] leading-[1.75] text-[#5c6a68]">
+            <p className="mb-4 text-body leading-[1.75] text-muted-foreground">
               לקדם שידוכים ולהקים בתים נאמנים בישראל. בסייעתא דשמיא, בברכת הקודש
               ובהכוונת רבנים חשובים בקהילתינו הק׳, הושקעו משאבים רבים בסיוע
               נדיבים על מנת להקים את מערכת קול מצהלות, מתוך תחושת שליחות, אחריות
               ורצון לקדם את ענייני השידוכים בקהילתנו.
             </p>
-            <p className="mb-5 text-[16.5px] leading-[1.75] text-[#5c6a68]">
+            <p className="mb-5 text-body leading-[1.75] text-muted-foreground">
               המערכת נועדה לשמש ככתובת לכל נושא השידוכים בקהילתנו הק׳ וככלי עזר
               נוח להורים, שדכנים, רבנים ואנשי ונשות החינוך במוסדותינו ברחבי
               העולם, במטרה לסייע במציאת זיווג הגון בדרך קלה ונוחה, תוך שמירה על
@@ -630,7 +591,7 @@ export default function HomePage() {
             </p>
             <Link
               href={"/about" as any}
-              className="inline-flex items-center gap-[6px] text-[16px] font-bold text-[#2b5a5c] no-underline"
+              className="inline-flex items-center gap-[6px] text-body font-bold text-primary no-underline"
             >
               עוד על קול מצהלות <ArrowSmall />
             </Link>
@@ -638,21 +599,11 @@ export default function HomePage() {
 
           {/* Endorsement slider placeholder */}
           <div className="relative">
-            <p className="mb-3 text-center text-[13px] font-bold tracking-[.02em] text-[#2b5a5c]">
+            <p className="mb-3 text-center text-body-sm font-bold tracking-[.02em] text-primary">
               הסכמות והמלצות רבני קהילתנו הק׳
             </p>
             <div className="relative">
-              <div
-                className="flex items-center justify-center rounded-2xl border border-dashed border-[#c3ccce] bg-white text-center text-[13px] text-[#7c8b89]"
-                style={{
-                  aspectRatio: "4/5",
-                  fontFamily: "ui-monospace,Menlo,monospace",
-                  padding: 22,
-                  backgroundImage:
-                    "repeating-linear-gradient(135deg,transparent 0 12px,rgba(43,90,92,.05) 12px 24px)",
-                  boxShadow: "0 1px 3px rgba(20,40,40,.06)",
-                }}
-              >
+              <div className="bg-primary-stripe-sm flex aspect-[4/5] items-center justify-center rounded-2xl border border-dashed border-border p-[22px] text-center font-mono text-body-sm text-muted-foreground shadow-sm">
                 [ תמונת הסכמת רב · סליידר ]
               </div>
               {/* Nav arrows */}
@@ -663,7 +614,7 @@ export default function HomePage() {
                 <button
                   key={side}
                   aria-label={side === "right" ? "הבא" : "הקודם"}
-                  className="absolute top-1/2 flex h-[40px] w-[40px] -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[#d9dee0] bg-white text-[#2b5a5c] shadow-[0_8px_18px_-8px_rgba(0,0,0,.35)] transition-colors hover:bg-[#f2f6f6]"
+                  className="absolute top-1/2 flex h-[40px] w-[40px] -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-primary shadow-[0_8px_18px_-8px_rgba(0,0,0,.35)] transition-colors hover:bg-muted"
                   style={{ [side]: -16 }}
                 >
                   <svg
@@ -684,13 +635,13 @@ export default function HomePage() {
             {/* Dots */}
             <div className="mt-4 flex justify-center gap-[7px]">
               <span
-                className="h-[7px] rounded-full bg-[#2b5a5c]"
+                className="h-[7px] rounded-full bg-primary"
                 style={{ width: 22 }}
               />
               {[1, 2, 3].map((d) => (
                 <span
                   key={d}
-                  className="h-[7px] w-[7px] rounded-full bg-[#c3ccce]"
+                  className="h-[7px] w-[7px] rounded-full bg-border"
                 />
               ))}
             </div>
@@ -702,7 +653,7 @@ export default function HomePage() {
       <WebStats />
 
       {/* ── 4. HOW IT WORKS ── */}
-      <section className="bg-[#e3e9eb]">
+      <section className="bg-muted">
         <div
           className="mx-auto px-6"
           style={{ maxWidth: 1160, paddingTop: 90, paddingBottom: 90 }}
@@ -710,25 +661,21 @@ export default function HomePage() {
           {/* Section header */}
           <div className="mb-[52px] grid grid-cols-1 items-end gap-6 md:grid-cols-[1.35fr_1fr] md:gap-11">
             <div>
-              <div className="mb-4 text-[13px] font-bold tracking-[.16em] text-[#2b5a5c]">
+              <div className="mb-4 text-body-sm font-bold tracking-[.16em] text-primary">
                 — איך זה עובד
               </div>
               <h2
-                className="font-bold text-[#1b2523]"
-                style={{
-                  fontSize: "clamp(34px,5vw,58px)",
-                  lineHeight: 1.02,
+                className="font-bold text-foreground text-display" style={{lineHeight: 1.02,
                   letterSpacing: "-.02em",
-                  margin: 0,
-                }}
+                  margin: 0}}
               >
                 איך עובדת מערכת
                 <br />
-                <span className="text-[#2b5a5c]">קול מצהלות?</span>
+                <span className="text-primary">קול מצהלות?</span>
               </h2>
             </div>
             <p
-              className="mb-[10px] text-[16px] leading-[1.7] text-[#5c6a68]"
+              className="mb-[10px] text-body leading-[1.7] text-muted-foreground"
               style={{ margin: 0 }}
             >
               בשילוב מושלם של טכנולוגיה, מידע, שיתוף ובברכת רבני קהילתינו הק׳.
@@ -736,31 +683,26 @@ export default function HomePage() {
           </div>
 
           {/* Step rows */}
-          <div className="border-t border-[#c8d1d0]">
+          <div className="border-t border-border">
             {steps.map(({ num, title, desc }) => (
               <div
                 key={num}
-                className="grid grid-cols-[64px_1fr] items-baseline gap-5 border-b border-[#c8d1d0] py-7 md:grid-cols-[96px_1fr] md:gap-7"
+                className="grid grid-cols-[64px_1fr] items-baseline gap-5 border-b border-border py-7 md:grid-cols-[96px_1fr] md:gap-7"
               >
                 <div
-                  className="leading-none font-normal text-[#9fb2af]"
-                  style={{ fontSize: "clamp(38px,3.6vw,50px)" }}
+                  className="leading-none font-normal text-muted-foreground text-display"
                 >
                   {num}
                 </div>
                 <div className="grid grid-cols-1 items-baseline gap-3 md:grid-cols-[minmax(200px,280px)_1fr] md:gap-7">
                   <h3
-                    className="font-bold text-[#1b2523]"
-                    style={{
-                      fontSize: "clamp(18px,1.9vw,22px)",
-                      margin: 0,
-                      lineHeight: 1.3,
-                    }}
+                    className="font-bold text-foreground text-title" style={{margin: 0,
+                      lineHeight: 1.3}}
                   >
                     {title}
                   </h3>
                   <p
-                    className="text-end text-[15px] leading-[1.65] text-[#5c6a68]"
+                    className="text-end text-body leading-[1.65] text-muted-foreground"
                     style={{ margin: 0 }}
                   >
                     {desc}
@@ -775,7 +717,7 @@ export default function HomePage() {
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="rounded-2xl bg-[#dbe3e2]"
+                className="rounded-2xl bg-muted"
                 style={{ aspectRatio: "4/3" }}
               />
             ))}
@@ -784,25 +726,21 @@ export default function HomePage() {
       </section>
 
       {/* ── 5. WHO IS IT FOR ── */}
-      <section className="bg-[#ecf0f2]">
+      <section className="bg-background">
         <div
           className="mx-auto px-6"
           style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}
         >
           <div className="mx-auto mb-12 max-w-[640px] text-center">
             <h2
-              className="font-bold text-[#2b5a5c]"
-              style={{
-                fontSize: "clamp(28px,3.2vw,36px)",
-                lineHeight: 1.1,
-                marginBottom: 12,
-              }}
+              className="font-bold text-primary text-display" style={{lineHeight: 1.1,
+                marginBottom: 12}}
             >
               למי המערכת
               <br />
               <HighlightSpan>מתאימה?</HighlightSpan>
             </h2>
-            <p className="text-[17px] text-[#5c6a68]" style={{ margin: 0 }}>
+            <p className="text-subtitle text-muted-foreground" style={{ margin: 0 }}>
               לכל העוסקים בתחום כמקצוע, כשליחות, או עבור עצמם, ילדיהם ותלמידיהם.
             </p>
           </div>
@@ -811,17 +749,17 @@ export default function HomePage() {
             {audiences.map(({ title, desc, features, cta, href }) => (
               <div
                 key={title}
-                className="flex flex-col gap-4 rounded-[14px] border border-[#d9dee0] bg-white p-[30px]"
+                className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[30px]"
                 style={{ boxShadow: "0 4px 14px -8px rgba(20,40,40,.12)" }}
               >
                 <h3
-                  className="text-[22px] font-bold text-[#2b5a5c]"
+                  className="text-title font-bold text-primary"
                   style={{ margin: 0 }}
                 >
                   {title}
                 </h3>
                 <p
-                  className="text-[14.5px] leading-[1.65] text-[#5c6a68]"
+                  className="text-body leading-[1.65] text-muted-foreground"
                   style={{ margin: 0 }}
                 >
                   {desc}
@@ -830,17 +768,17 @@ export default function HomePage() {
                   {features.map(({ title: ft, desc: fd }) => (
                     <li key={ft} className="flex items-start gap-[9px]">
                       <CheckSvg />
-                      <span className="text-[14.5px]">
-                        <b className="text-[#1b2523]">{ft}</b>
+                      <span className="text-body">
+                        <b className="text-foreground">{ft}</b>
                         <br />
-                        <span className="text-[#5c6a68]">{fd}</span>
+                        <span className="text-muted-foreground">{fd}</span>
                       </span>
                     </li>
                   ))}
                 </ul>
                 <Link
                   href={href}
-                  className="mt-auto rounded-[10px] bg-[#2b5a5c] px-[18px] py-3 text-center text-[15px] font-bold text-[#f4f8f7] no-underline transition-colors hover:bg-[#234a4b]"
+                  className="mt-auto rounded-[10px] bg-primary px-[18px] py-3 text-center text-body font-bold text-primary-foreground no-underline transition-colors hover:bg-primary-active"
                 >
                   {cta}
                 </Link>
@@ -851,33 +789,29 @@ export default function HomePage() {
       </section>
 
       {/* ── 6. PRINCIPLES ── */}
-      <section className="bg-[#f3f6f5]">
+      <section className="bg-muted">
         <div
           className="mx-auto px-6"
           style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}
         >
           <div className="mb-[52px] grid grid-cols-1 items-end gap-6 md:grid-cols-[1fr_auto] md:gap-8">
             <div style={{ maxWidth: 660 }}>
-              <span className="mb-5 inline-block rounded-[8px] bg-[#e4ebe9] px-[14px] py-1.5 text-[12.5px] font-bold tracking-[.14em] text-[#2b5a5c]">
+              <span className="mb-5 inline-block rounded-[8px] bg-muted px-[14px] py-1.5 text-caption font-bold tracking-[.14em] text-primary">
                 עקרונות
               </span>
               <h2
-                className="font-bold text-[#1b2523]"
-                style={{
-                  fontSize: "clamp(30px,4.2vw,52px)",
-                  lineHeight: 1.12,
+                className="font-bold text-foreground text-display" style={{lineHeight: 1.12,
                   letterSpacing: "-.01em",
                   marginBottom: 18,
-                  marginTop: 0,
-                }}
+                  marginTop: 0}}
               >
                 העקרונות של
                 <br />
                 <span
                   className="inline-block rounded-[12px]"
                   style={{
-                    background: "#2b5a5c",
-                    color: "#f4f8f7",
+                    background: "var(--primary)",
+                    color: "var(--primary-foreground)",
                     padding: "1px 16px 5px",
                     transform: "rotate(-1.5deg)",
                   }}
@@ -886,7 +820,7 @@ export default function HomePage() {
                 </span>
               </h2>
               <p
-                className="max-w-[520px] text-[16.5px] leading-[1.7] text-[#5c6a68]"
+                className="max-w-[520px] text-body leading-[1.7] text-muted-foreground"
                 style={{ margin: 0 }}
               >
                 הכללים שלנו נוסחו מתוך הבנת האחריות העצומה והרגישות הנדרשת
@@ -895,7 +829,7 @@ export default function HomePage() {
             </div>
             <Link
               href={"/auth/sign-up" as any}
-              className="inline-flex items-center gap-2 rounded-[11px] bg-[#1b2523] px-[30px] py-[15px] text-[15px] font-bold whitespace-nowrap text-[#f4f8f7] no-underline transition-colors hover:bg-[#2b5a5c]"
+              className="inline-flex items-center gap-2 rounded-[11px] bg-foreground px-[30px] py-[15px] text-body font-bold whitespace-nowrap text-background no-underline transition-colors hover:bg-primary hover:text-primary-foreground"
             >
               הצטרפו עכשיו <ArrowSmall />
             </Link>
@@ -903,11 +837,10 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 gap-[22px] md:grid-cols-3">
             {principles.map(
-              ({ bg, svgColor, h3Color, pColor, title, desc }) => (
+              ({ cardClass, svgColor, titleClass, descClass, title, desc }) => (
                 <div
                   key={title}
-                  className="relative flex flex-col items-center justify-center overflow-hidden rounded-[18px] p-[40px_30px] text-center"
-                  style={{ background: bg, minHeight: 236 }}
+                  className={`relative flex min-h-[236px] flex-col items-center justify-center overflow-hidden rounded-[18px] p-[40px_30px] text-center ${cardClass}`}
                 >
                   <LogoSvg
                     size={220}
@@ -921,15 +854,11 @@ export default function HomePage() {
                     }
                   />
                   <h3
-                    className="relative leading-[1.3] font-bold"
-                    style={{ fontSize: 21, margin: "0 0 14px", color: h3Color }}
+                    className={`relative mb-3.5 text-subtitle leading-[1.3] font-bold ${titleClass}`}
                   >
                     {title}
                   </h3>
-                  <p
-                    className="relative text-[14.5px] leading-[1.7]"
-                    style={{ color: pColor, margin: 0 }}
-                  >
+                  <p className={`relative m-0 text-body leading-[1.7] ${descClass}`}>
                     {desc}
                   </p>
                 </div>
@@ -940,25 +869,21 @@ export default function HomePage() {
       </section>
 
       {/* ── 7. SCREENSHOTS ── */}
-      <section className="bg-[#ecf0f2]">
+      <section className="bg-background">
         <div
           className="mx-auto px-6"
           style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}
         >
           <div className="mx-auto mb-12 max-w-[640px] text-center">
             <h2
-              className="font-bold text-[#2b5a5c]"
-              style={{
-                fontSize: "clamp(28px,3.2vw,36px)",
-                lineHeight: 1.1,
-                marginBottom: 12,
-              }}
+              className="font-bold text-primary text-display" style={{lineHeight: 1.1,
+                marginBottom: 12}}
             >
               איך זה נראה
               <br />
               <HighlightSpan>מבפנים?</HighlightSpan>
             </h2>
-            <p className="text-[17px] text-[#5c6a68]" style={{ margin: 0 }}>
+            <p className="text-subtitle text-muted-foreground" style={{ margin: 0 }}>
               מה בדיוק עושים? מה האפשרויות שם? כנסו לראות!
             </p>
           </div>
@@ -972,41 +897,32 @@ export default function HomePage() {
             ].map(({ title, href }) => (
               <div
                 key={title}
-                className="flex flex-col gap-4 rounded-[14px] border border-[#d9dee0] bg-white p-[22px]"
+                className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[22px]"
                 style={{ boxShadow: "0 1px 3px rgba(20,40,40,.06)" }}
               >
-                <div className="overflow-hidden rounded-[10px] border border-[#e2e8e8]">
-                  <div className="flex gap-[6px] border-b border-[#e6eded] bg-[#f1f5f5] px-[14px] py-[10px]">
+                <div className="overflow-hidden rounded-[10px] border border-border">
+                  <div className="flex gap-[6px] border-b border-border bg-muted px-[14px] py-[10px]">
                     {[1, 2, 3].map((d) => (
                       <span
                         key={d}
-                        className="h-[9px] w-[9px] rounded-full bg-[#d3dcdc]"
+                        className="h-[9px] w-[9px] rounded-full bg-border"
                       />
                     ))}
                   </div>
-                  <div
-                    className="flex items-center justify-center text-center text-[12.5px] text-[#7c8b89]"
-                    style={{
-                      aspectRatio: "16/9",
-                      fontFamily: "ui-monospace,Menlo,monospace",
-                      padding: 16,
-                      backgroundImage:
-                        "repeating-linear-gradient(135deg,transparent 0 11px,rgba(43,90,92,.05) 11px 22px)",
-                    }}
-                  >
+                  <div className="bg-primary-stripe-xs flex aspect-video items-center justify-center p-4 text-center font-mono text-caption text-muted-foreground">
                     [ צילום מסך ]
                   </div>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <p
-                    className="text-[15px] font-bold text-[#1b2523]"
+                    className="text-body font-bold text-foreground"
                     style={{ margin: 0 }}
                   >
                     {title}
                   </p>
                   <Link
                     href={href}
-                    className="inline-flex shrink-0 items-center gap-[5px] rounded-[8px] border border-[#cfd8d8] px-[14px] py-2 text-[13.5px] font-bold text-[#2b5a5c] no-underline transition-colors hover:bg-[#eef3f3]"
+                    className="inline-flex shrink-0 items-center gap-[5px] rounded-[8px] border border-border px-[14px] py-2 text-body-sm font-bold text-primary no-underline transition-colors hover:bg-muted"
                   >
                     כנסו לראות <ArrowSmall />
                   </Link>
@@ -1035,7 +951,7 @@ export default function HomePage() {
       {/* ── FINAL CTA ── */}
       <div
         style={{
-          background: "linear-gradient(180deg,#e3e9eb 0%,#eef2f1 100%)",
+          background: "linear-gradient(180deg,var(--muted) 0%,var(--background) 100%)",
         }}
       >
         <WebCta />

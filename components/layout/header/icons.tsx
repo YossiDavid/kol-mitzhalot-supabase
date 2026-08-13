@@ -110,7 +110,7 @@ export default function HeaderIcons({ hasUserMenu = false }: HeaderIconsProps) {
         <PopoverContent className="w-80">
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <h1 className="text-lg font-bold">התראות</h1>
+              <h1 className="text-subtitle font-bold">התראות</h1>
             </div>
             <ScrollArea className="h-[300px]">
               <div className="flex flex-col gap-2 **:data-[slot=separator]:last:hidden">
@@ -120,14 +120,14 @@ export default function HeaderIcons({ hasUserMenu = false }: HeaderIconsProps) {
                       key={notification.id}
                       className="flex items-center justify-between"
                     >
-                      <h2 className="text-sm font-bold">
+                      <h2 className="text-body-sm font-bold">
                         {notification.title}
                       </h2>
                       <Button variant="link">
                         <Link href={notification.link as any}>קרא עוד</Link>
                       </Button>
                     </div>
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-muted-foreground text-body-sm">
                       {notification.content}
                     </p>
                     <Separator />

@@ -24,9 +24,9 @@ const buttonVariants = cva(
           "border border-destructive/40 bg-transparent text-destructive shadow-xs hover:bg-destructive-muted focus-visible:ring-destructive/20 active:bg-destructive-muted dark:border-destructive dark:bg-transparent dark:hover:bg-destructive-muted dark:focus-visible:ring-destructive/40 dark:active:bg-destructive-muted",
       },
       size: {
-        sm: "h-7 px-3 text-(length:--text-caption) [&>svg]:size-4",
-        default: "h-9 px-4 text-(length:--text-body-sm) [&>svg]:size-5",
-        lg: "h-12 px-6 text-(length:--text-body) [&>svg]:size-6",
+        sm: "h-7 px-3 text-caption [&>svg]:size-4",
+        default: "h-9 px-4 text-body-sm [&>svg]:size-5",
+        lg: "h-12 px-6 text-body [&>svg]:size-6",
         "icon-sm": "size-7 [&>svg]:size-4",
         icon: "size-9 [&>svg]:size-5",
         "icon-lg": "size-12 [&>svg]:size-6",
@@ -54,7 +54,7 @@ function Button({
   return (
     <Comp
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size }), className)}
       {...props}
     />
   );

@@ -142,7 +142,7 @@ export const DropzoneContent = ({
 			<div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
 				<UploadIcon size={16} />
 			</div>
-			<p className="my-2 w-full truncate font-medium text-sm">
+			<p className="my-2 w-full truncate font-medium text-body-sm">
 				{src.length > maxLabelItems
 					? `${new Intl.ListFormat("he").format(
 							src.slice(0, maxLabelItems).map((file) => file.name)
@@ -151,7 +151,7 @@ export const DropzoneContent = ({
 							src.map((file) => file.name)
 					  )}
 			</p>
-			<p className="w-full text-wrap text-muted-foreground text-xs">
+			<p className="w-full text-wrap text-muted-foreground text-caption">
 				גררו לכאן או לחצו להחלפה
 			</p>
 		</div>
@@ -211,14 +211,14 @@ export const DropzoneEmptyState = ({
 			<div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
 				<UploadIcon size={16} />
 			</div>
-			<p className="my-2 w-full truncate text-wrap font-medium text-sm">
+			<p className="my-2 w-full truncate text-wrap font-medium text-body-sm">
 				העלאת {maxFiles === 1 ? "קובץ" : "קבצים"}
 			</p>
-			<p className="w-full truncate text-wrap text-muted-foreground text-xs">
+			<p className="w-full truncate text-wrap text-muted-foreground text-caption">
 				גררו לכאן תמונות, או לחצו לבחירה מהתיקייה
 			</p>
 			{caption && (
-				<p className="text-wrap text-muted-foreground text-xs">
+				<p className="text-wrap text-muted-foreground text-caption">
 					{caption}.
 				</p>
 			)}

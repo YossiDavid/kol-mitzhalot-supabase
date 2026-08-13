@@ -39,11 +39,11 @@ export default function Chat({ chats }: { chats: Chat[] }) {
               />
               <div className="min-w-0 flex-1">
                 <div className="mb-1 flex items-center justify-between gap-2">
-                  <span className="truncate text-base font-medium">
+                  <span className="truncate text-body font-medium">
                     {chat.name}
                   </span>
                   {/* זמן שליחת ההודעה האחרונה (פורמט יפה) */}
-                  <span className="text-muted-foreground text-xs">
+                  <span className="text-muted-foreground text-caption">
                     {chat.lastMessageTime
                       ? new Date(chat.lastMessageTime).toLocaleTimeString(
                           "he-IL",
@@ -55,7 +55,7 @@ export default function Chat({ chats }: { chats: Chat[] }) {
                       : null}
                   </span>
                 </div>
-                <div className="text-muted-foreground truncate text-sm">
+                <div className="text-muted-foreground truncate text-body-sm">
                   {/* פרטי השולח + תוכן ההודעה האחרונה */}
                   {chat.lastMessageSender && (
                     <span className="font-semibold">

@@ -66,7 +66,7 @@ export default function StatusUpdateButton({
         value={status}
         onValueChange={(v) => setStatus(v as PersonalStatus)}
       >
-        <SelectTrigger className="h-8 w-36 text-sm">
+        <SelectTrigger className="h-8 w-36 text-body-sm">
           <SelectValue placeholder="עדכן סטטוס" />
         </SelectTrigger>
         <SelectContent>

@@ -236,10 +236,10 @@ export default async function Home() {
       {/* ברכה */}
       {user && (
         <div className="pb-2 md:hidden">
-          <p className="text-foreground text-2xl font-bold">
+          <p className="text-foreground text-heading font-bold">
             שלום{firstName ? `, ${firstName}` : ""}
           </p>
-          <p className="text-muted-foreground mt-1 text-sm">
+          <p className="text-muted-foreground mt-1 text-body-sm">
             ברוך הבא למערכת קול מצהלות · {roleLabel}
           </p>
         </div>

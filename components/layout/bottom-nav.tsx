@@ -63,7 +63,7 @@ export function BottomNav({ role }: { role: Role }) {
               href={item.url}
               prefetch={false}
               className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-1.5 py-2 text-[11px] transition-colors",
+                "flex flex-1 flex-col items-center justify-center gap-1.5 py-2 text-caption transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground",
               )}
             >

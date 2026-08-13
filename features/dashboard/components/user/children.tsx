@@ -92,13 +92,13 @@ export default function Children({ childs }: { childs: Child[] }) {
                   {child.first_name} {child.last_name}
                 </span>
                 <div className="flex items-center justify-between rounded-md border px-3 py-2">
-                  <span className="text-sm">פעיל בשידוכים?</span>
+                  <span className="text-body-sm">פעיל בשידוכים?</span>
                   <Switch
                     checked={child.in_shidduchim || false}
                     onCheckedChange={(e) => handleIsInShidduchimChange(e, child.id)}
                   />
                 </div>
-                <div className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 text-sm">
+                <div className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 text-body-sm">
                   <span>{parseStatus(child.personal_status)}</span>
                   <span>גיל {calculateAge(child.birth_date || "")}</span>
                   {child.city && <span>{child.city}</span>}

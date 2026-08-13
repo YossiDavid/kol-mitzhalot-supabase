@@ -171,7 +171,7 @@ export default function EndorsementsAdminPage() {
                   value={form.endorsement_text}
                   onChange={(e) => setForm((f) => ({ ...f, endorsement_text: e.target.value }))}
                   rows={4}
-                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-body-sm outline-none focus:ring-2 focus:ring-ring"
                   style={{ resize: "vertical" }}
                   placeholder="טקסט ההסכמה של הרב (אופציונלי)"
                 />
@@ -182,7 +182,7 @@ export default function EndorsementsAdminPage() {
                   id="is_published"
                   checked={form.is_published}
                   onChange={(e) => setForm((f) => ({ ...f, is_published: e.target.checked }))}
-                  className="h-4 w-4 accent-[#2b5a5c]"
+                  className="h-4 w-4 accent-primary"
                 />
                 <Label htmlFor="is_published" className="cursor-pointer">מפורסם באתר</Label>
               </div>
@@ -201,8 +201,8 @@ export default function EndorsementsAdminPage() {
             <div className="py-10 text-center text-muted-foreground">טוען...</div>
           ) : items.length === 0 ? (
             <div className="py-16 text-center">
-              <p className="text-lg font-semibold text-muted-foreground">אין המלצות עדיין</p>
-              <p className="mt-2 text-sm text-muted-foreground">הוסף המלצות רבנים שיוצגו בדף הבית</p>
+              <p className="text-subtitle font-semibold text-muted-foreground">אין המלצות עדיין</p>
+              <p className="mt-2 text-body-sm text-muted-foreground">הוסף המלצות רבנים שיוצגו בדף הבית</p>
             </div>
           ) : (
             <div className="divide-y">
@@ -212,19 +212,19 @@ export default function EndorsementsAdminPage() {
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img src={item.image_url} alt="" className="h-12 w-12 rounded-full object-cover" />
                   ) : (
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-body-sm font-bold text-muted-foreground">
                       {item.rav_name.charAt(0)}
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold">{item.rav_name}</p>
-                    {item.rav_title && <p className="text-sm text-muted-foreground">{item.rav_title}</p>}
+                    {item.rav_title && <p className="text-body-sm text-muted-foreground">{item.rav_title}</p>}
                     {item.endorsement_text && (
-                      <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{item.endorsement_text}</p>
+                      <p className="mt-1 text-body-sm text-muted-foreground line-clamp-2">{item.endorsement_text}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${item.is_published ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                    <span className={`rounded-full px-2 py-0.5 text-caption font-semibold ${item.is_published ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
                       {item.is_published ? "פורסם" : "מוסתר"}
                     </span>
                     <Button variant="ghost" size="icon" onClick={() => moveOrder(item, "up")} disabled={idx === 0}>

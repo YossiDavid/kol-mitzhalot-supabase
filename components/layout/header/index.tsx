@@ -32,7 +32,7 @@ export default async function Header({
   if (variant === "website") {
     return (
       <header
-        className="sticky top-0 z-40 flex h-[69px] items-center justify-between gap-5 border-b border-[rgba(43,90,92,.13)]"
+        className="sticky top-0 z-40 flex h-[69px] items-center justify-between gap-5 border-b border-primary/13"
         style={{
           background: "rgba(236,240,242,.82)",
           backdropFilter: "saturate(180%) blur(10px)",
@@ -66,7 +66,7 @@ export default async function Header({
             <Link
               key={href}
               href={href as any}
-              className="text-[15px] font-medium text-[#5c6a68] no-underline transition-colors hover:text-[#1b2523]"
+              className="text-body font-medium text-muted-foreground no-underline transition-colors hover:text-foreground"
             >
               {label}
             </Link>
@@ -78,13 +78,13 @@ export default async function Header({
           <WebMobileNav />
           <Link
             href={"/auth/login" as any}
-            className="hidden px-1.5 py-2 text-[15px] font-semibold text-[#2b5a5c] no-underline transition-colors hover:text-[#234a4b] lg:block"
+            className="hidden px-1.5 py-2 text-body font-semibold text-primary no-underline transition-colors hover:text-primary lg:block"
           >
             כניסה
           </Link>
           <Link
             href={"/auth/sign-up" as any}
-            className="rounded-full bg-[#2b5a5c] px-5 py-[10px] text-[14px] font-bold text-[#f7faf9] no-underline shadow-[0_6px_16px_-8px_rgba(43,90,92,.7)] transition-colors hover:bg-[#234a4b]"
+            className="rounded-full bg-primary px-5 py-[10px] text-body-sm font-bold text-primary-foreground no-underline shadow-primary-header transition-colors hover:bg-primary-active"
           >
             הרשמה חינם
           </Link>

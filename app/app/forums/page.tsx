@@ -45,8 +45,8 @@ export default async function ForumsPage() {
     <Section containerClassName="py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">פורום שדכנים</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
+          <h1 className="text-heading font-bold">פורום שדכנים</h1>
+          <p className="text-muted-foreground mt-1 text-body-sm">
             מקום לשאלות, עצות, ושיתוף ידע בין שדכנים
           </p>
         </div>
@@ -56,8 +56,8 @@ export default async function ForumsPage() {
       <div className="mt-8 space-y-4">
         {postList.length === 0 ? (
           <div className="text-muted-foreground rounded-xl border border-dashed p-12 text-center">
-            <p className="text-lg font-medium">אין פוסטים עדיין</p>
-            <p className="mt-1 text-sm">
+            <p className="text-subtitle font-medium">אין פוסטים עדיין</p>
+            <p className="mt-1 text-body-sm">
               {canPost
                 ? "היה הראשון לפרסם!"
                 : "הפורום יתמלא בקרוב בתוכן מהשדכנים."}
@@ -70,11 +70,11 @@ export default async function ForumsPage() {
               className="rounded-xl border bg-card p-5 text-right shadow-sm transition-shadow hover:shadow-md"
               dir="rtl"
             >
-              <h2 className="text-lg font-semibold leading-snug">{post.title}</h2>
-              <p className="text-muted-foreground mt-0.5 text-xs">
+              <h2 className="text-subtitle font-semibold leading-snug">{post.title}</h2>
+              <p className="text-muted-foreground mt-0.5 text-caption">
                 {formatDate(post.created_at)}
               </p>
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed">
+              <p className="mt-3 whitespace-pre-wrap text-body-sm leading-relaxed">
                 {post.body}
               </p>
             </article>

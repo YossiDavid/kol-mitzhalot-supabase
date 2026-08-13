@@ -16,11 +16,11 @@ export function TutorialStep({
       />
       <label
         htmlFor={title}
-        className={`relative text-base text-foreground peer-checked:line-through font-medium`}
+        className={`relative text-body text-foreground peer-checked:line-through font-medium`}
       >
         <span className="ml-8">{title}</span>
         <div
-          className={`ml-8 text-sm peer-checked:line-through font-normal text-muted-foreground`}
+          className={`ml-8 text-body-sm peer-checked:line-through font-normal text-muted-foreground`}
         >
           {children}
         </div>

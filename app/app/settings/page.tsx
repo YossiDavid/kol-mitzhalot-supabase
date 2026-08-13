@@ -43,14 +43,14 @@ export default async function SettingsPage({
     <div className="container mx-auto max-w-2xl py-8">
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">הגדרות</h1>
+          <h1 className="text-heading font-bold">הגדרות</h1>
           <p className="text-muted-foreground mt-2">
             נהל את הגדרות החשבון והפרופיל שלך
           </p>
         </div>
         {nameRequired && (
           <div
-            className="border-primary/30 bg-primary/5 text-foreground rounded-lg border px-4 py-3 text-sm"
+            className="border-primary/30 bg-primary/5 text-foreground rounded-lg border px-4 py-3 text-body-sm"
             role="status"
           >
             נא להשלים שם פרטי ושם משפחה כדי להמשיך לשימוש באפליקציה.

@@ -103,7 +103,7 @@ export default function FavoritesGrid({
           role="tab"
           aria-selected={activeTab === "male"}
           className={cn(
-            "z-10 min-w-32 p-2 text-center text-sm font-medium",
+            "z-10 min-w-32 p-2 text-center text-body-sm font-medium",
             activeTab === "male" ? "text-white" : "text-muted-foreground",
           )}
         >
@@ -113,7 +113,7 @@ export default function FavoritesGrid({
           role="tab"
           aria-selected={activeTab === "female"}
           className={cn(
-            "z-10 min-w-32 p-2 text-center text-sm font-medium",
+            "z-10 min-w-32 p-2 text-center text-body-sm font-medium",
             activeTab === "female" ? "text-white" : "text-muted-foreground",
           )}
         >
@@ -126,7 +126,7 @@ export default function FavoritesGrid({
         {filtered.length === 0 ? (
           <div className="col-span-full flex flex-col items-center gap-2 py-10 text-center">
             <Heart className="text-muted-foreground/30 size-10" />
-            <p className="text-muted-foreground text-sm">
+            <p className="text-muted-foreground text-body-sm">
               אין {activeTab === "male" ? "מיועדים" : "מיועדות"} במועדפים
             </p>
           </div>

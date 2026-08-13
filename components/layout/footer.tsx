@@ -11,18 +11,18 @@ export default async function Footer({
 }) {
   if (variant === "website") {
     return (
-      <footer className="border-t border-[#dbe2e1] bg-[#eef2f1] text-[14px] text-[#5c6a68]">
+      <footer className="border-t border-border bg-muted text-body-sm text-muted-foreground">
         <div className="mx-auto max-w-[1120px] px-6 pt-12 pb-[30px]">
-          <div className="grid grid-cols-2 gap-9 border-b border-[#dbe2e1] pb-8 lg:grid-cols-[1.5fr_1fr_1fr_1.4fr]">
+          <div className="grid grid-cols-2 gap-9 border-b border-border pb-8 lg:grid-cols-[1.5fr_1fr_1fr_1.4fr]">
             {/* Col 1 — Brand */}
             <div className="col-span-2 sm:col-span-1" style={{ maxWidth: 340 }}>
               <div className="mb-[14px] flex items-center gap-[10px]">
-                <LogoSvg size={30} className="text-[#2b5a5c]" />
-                <span className="text-[18px] font-bold text-[#1b2523]">
+                <LogoSvg size={30} className="text-primary" />
+                <span className="text-subtitle font-bold text-foreground">
                   קול מצהלות
                 </span>
               </div>
-              <p className="leading-[1.65] text-[#66716f]">
+              <p className="leading-[1.65] text-muted-foreground">
                 הארגון לקידום שידוכים בבעלזא — מערכת חדשנית להצעות וניהול
                 שידוכים, בהמלצת ובפיקוח רבני קהילתנו הק׳.
               </p>
@@ -41,7 +41,7 @@ export default async function Footer({
                   <li key={label}>
                     <Link
                       href={href as any}
-                      className="text-[#5c6a68] no-underline transition-colors hover:text-[#2b5a5c]"
+                      className="text-muted-foreground no-underline transition-colors hover:text-primary"
                     >
                       {label}
                     </Link>
@@ -63,7 +63,7 @@ export default async function Footer({
                   <li key={label}>
                     <Link
                       href={href as any}
-                      className="text-[#5c6a68] no-underline transition-colors hover:text-[#2b5a5c]"
+                      className="text-muted-foreground no-underline transition-colors hover:text-primary"
                     >
                       {label}
                     </Link>
@@ -74,31 +74,31 @@ export default async function Footer({
 
             {/* Col 4 — Newsletter */}
             <div className="col-span-2 lg:col-span-1">
-              <div className="mb-3 text-[15px] font-bold text-[#1b2523]">
+              <div className="mb-3 text-body font-bold text-foreground">
                 רשימת תפוצה
               </div>
-              <p className="mb-[14px] text-[13.5px] leading-[1.6] text-[#66716f]">
+              <p className="mb-[14px] text-body-sm leading-[1.6] text-muted-foreground">
                 עדכונים ומאמרים מעולם השידוכים — ישירות אליכם למייל.
               </p>
               <div className="flex flex-col gap-[9px]">
                 <input
                   type="email"
                   placeholder="כתובת מייל"
-                  className="w-full rounded-full border border-[#d7dcdd] bg-white px-4 py-[11px] text-[14px] text-[#212927] transition outline-none focus:border-[#2b5a5c] focus:shadow-[0_0_0_2px_rgba(43,90,92,.25)]"
+                  className="w-full rounded-full border border-border bg-card px-4 py-[11px] text-body-sm text-foreground transition outline-none focus:border-primary focus:ring-primary-focus-sm"
                 />
-                <button className="rounded-full border-none bg-[#2b5a5c] px-4 py-[11px] text-[14px] font-bold text-[#f4f8f7] transition hover:bg-[#234a4b]">
+                <button className="rounded-full border-none bg-primary px-4 py-[11px] text-body-sm font-bold text-primary-foreground transition hover:bg-primary-active">
                   הרשמה
                 </button>
               </div>
             </div>
           </div>
 
-          <p className="mt-[22px] text-[13px] leading-[1.6] text-[#889492]">
+          <p className="mt-[22px] text-body-sm leading-[1.6] text-muted-foreground">
             כל הזכויות שמורות © 2026 | קול מצהלות | אפיון וקופי:{" "}
             <Link
               href="https://natikugler.co.il/"
               target="_blank"
-              className="text-[#66716f] no-underline"
+              className="text-muted-foreground no-underline"
             >
               נתי קוגלר
             </Link>{" "}
@@ -106,7 +106,7 @@ export default async function Footer({
             <Link
               href="https://shos.digital/"
               target="_blank"
-              className="text-[#66716f] no-underline"
+              className="text-muted-foreground no-underline"
             >
               שוס דיגיטל
             </Link>

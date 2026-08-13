@@ -55,10 +55,10 @@ export function PhoneVerificationToggle() {
       dir="rtl"
     >
       <div className="space-y-1 text-right flex-1 min-w-0">
-        <Label htmlFor="phone-verification-switch" className="text-base font-semibold">
+        <Label htmlFor="phone-verification-switch" className="text-body font-semibold">
           אימות טלפוני
         </Label>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-body-sm text-muted-foreground">
           כאשר מופעל, משתמשים חייבים לאמת מספר טלפון לפני גישה לאפליקציה. כאשר כבוי, דרישת האימות מבוטלת.
         </p>
       </div>

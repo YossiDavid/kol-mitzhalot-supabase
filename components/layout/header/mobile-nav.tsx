@@ -18,7 +18,7 @@ export function WebMobileNav() {
   return (
     <>
       <button
-        className="flex items-center justify-center rounded-[8px] p-2 text-[#2b5a5c] transition-colors hover:bg-[rgba(43,90,92,.08)] lg:hidden"
+        className="flex items-center justify-center rounded-[8px] p-2 text-primary transition-colors hover:bg-primary/8 lg:hidden"
         onClick={() => setOpen(!open)}
         aria-label="תפריט"
         aria-expanded={open}
@@ -35,7 +35,7 @@ export function WebMobileNav() {
       </button>
 
       <div
-          className={`absolute inset-x-0 top-[69px] z-50 border-b border-[rgba(43,90,92,.13)] px-6 py-4 shadow-lg lg:hidden transition-all duration-200 ease-out${open ? " opacity-100 translate-y-0 pointer-events-auto" : " opacity-0 -translate-y-2 pointer-events-none"}`}
+          className={`absolute inset-x-0 top-[69px] z-50 border-b border-primary/13 px-6 py-4 shadow-lg lg:hidden transition-all duration-200 ease-out${open ? " opacity-100 translate-y-0 pointer-events-auto" : " opacity-0 -translate-y-2 pointer-events-none"}`}
           style={{ background: "rgba(236,240,242,.97)", backdropFilter: "saturate(180%) blur(10px)" }}
         >
           <ul className="m-0 flex list-none flex-col gap-0 p-0">
@@ -43,7 +43,7 @@ export function WebMobileNav() {
               <li key={href}>
                 <Link
                   href={href as any}
-                  className="block border-b border-[rgba(43,90,92,.07)] py-3 text-[15px] font-medium text-[#5c6a68] no-underline transition-colors last:border-b-0 hover:text-[#1b2523]"
+                  className="block border-b border-primary/7 py-3 text-body font-medium text-muted-foreground no-underline transition-colors last:border-b-0 hover:text-foreground"
                   onClick={() => setOpen(false)}
                 >
                   {label}
@@ -54,14 +54,14 @@ export function WebMobileNav() {
           <div className="mt-4 flex gap-3">
             <Link
               href={"/auth/login" as any}
-              className="flex-1 rounded-full border border-[#c3ccce] px-4 py-2 text-center text-[14px] font-semibold text-[#2b5a5c] no-underline"
+              className="flex-1 rounded-full border border-border px-4 py-2 text-center text-body-sm font-semibold text-primary no-underline"
               onClick={() => setOpen(false)}
             >
               כניסה
             </Link>
             <Link
               href={"/auth/sign-up" as any}
-              className="flex-1 rounded-full bg-[#2b5a5c] px-4 py-2 text-center text-[14px] font-bold text-[#f7faf9] no-underline"
+              className="flex-1 rounded-full bg-primary px-4 py-2 text-center text-body-sm font-bold text-primary-foreground no-underline"
               onClick={() => setOpen(false)}
             >
               הרשמה חינם

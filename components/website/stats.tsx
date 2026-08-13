@@ -16,19 +16,18 @@ function StatCell({
       }
     >
       <div
-        className="font-bold leading-none text-[#e7c877]"
-        style={{ fontSize: "clamp(40px,5vw,54px)" }}
+        className="font-bold leading-none text-brand-gold text-display"
       >
         {num}
       </div>
-      <div className="mt-2 text-[15px] leading-[1.45] opacity-[.82]">{desc}</div>
+      <div className="mt-2 text-body leading-[1.45] opacity-[.82]">{desc}</div>
     </div>
   );
 }
 
 export function WebStats() {
   return (
-    <section className="bg-[#123c3b] text-[#f4f8f7]">
+    <section className="bg-primary text-primary-foreground">
       <div className="mx-auto grid max-w-[1120px] grid-cols-1 md:grid-cols-3 px-6 py-14 text-center">
         <StatCell num="אלפי" desc="מיועדים מקהילתנו הק׳ מופיעים במערכת" />
         <StatCell

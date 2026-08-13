@@ -40,8 +40,8 @@ export default function Forum({ posts }: { posts: ForumPost[] }) {
     <div className="space-y-3">
       {posts.slice(0, 3).map((post) => (
         <div key={post.id} className="rounded-lg border p-3 text-right" dir="rtl">
-          <p className="font-semibold text-sm leading-snug">{post.title}</p>
-          <p className="text-muted-foreground mt-1 text-xs line-clamp-2">
+          <p className="font-semibold text-body-sm leading-snug">{post.title}</p>
+          <p className="text-muted-foreground mt-1 text-caption line-clamp-2">
             {post.body}
           </p>
         </div>

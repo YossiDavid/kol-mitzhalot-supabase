@@ -82,7 +82,7 @@ export default function SendProposalModal({
 
         <div className="space-y-6 py-2">
           <div className="space-y-3">
-            <p className="text-sm font-medium">למי לשלוח את ההצעה?</p>
+            <p className="text-body-sm font-medium">למי לשלוח את ההצעה?</p>
             <div
               role="tablist"
               aria-label="בחירת נמעני ההצעה"
@@ -97,7 +97,7 @@ export default function SendProposalModal({
                   disabled={loading}
                   onClick={() => setScope(tabScope)}
                   className={cn(
-                    "min-h-9 flex-1 rounded-md px-2 py-1.5 text-center text-sm font-medium transition-colors",
+                    "min-h-9 flex-1 rounded-md px-2 py-1.5 text-center text-body-sm font-medium transition-colors",
                     scope === tabScope
                       ? "bg-background text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground",
@@ -110,7 +110,7 @@ export default function SendProposalModal({
           </div>
 
           <div className="space-y-4">
-            <p className="text-sm font-medium">
+            <p className="text-body-sm font-medium">
               רוצה להוסיף כמה מילים על השידוך?
             </p>
 

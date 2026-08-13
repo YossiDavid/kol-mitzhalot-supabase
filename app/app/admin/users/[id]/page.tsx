@@ -202,12 +202,12 @@ export default async function UserDetailsPage({
           }
         >
           <div className="border-destructive bg-destructive/10 mt-6 rounded-lg border p-6">
-            <h3 className="text-destructive mb-2 text-lg font-semibold">
+            <h3 className="text-destructive mb-2 text-subtitle font-semibold">
               שגיאה בהגדרת האדמין
             </h3>
             {isServiceRoleKeyError ? (
               <div className="space-y-4">
-                <p className="text-sm">
+                <p className="text-body-sm">
                   המשתנה{" "}
                   <code className="bg-muted rounded px-2 py-1">
                     SUPABASE_SERVICE_ROLE_KEY
@@ -216,7 +216,7 @@ export default async function UserDetailsPage({
                 </p>
                 <div className="bg-muted space-y-2 rounded-lg p-4">
                   <p className="font-semibold">הוראות התקנה:</p>
-                  <ol className="list-inside list-decimal space-y-1 text-sm">
+                  <ol className="list-inside list-decimal space-y-1 text-body-sm">
                     <li>
                       פתח את קובץ{" "}
                       <code className="bg-background rounded px-1">
@@ -250,13 +250,13 @@ export default async function UserDetailsPage({
                     </li>
                   </ol>
                 </div>
-                <p className="text-muted-foreground text-xs">
+                <p className="text-muted-foreground text-caption">
                   ⚠️ ה-Service Role Key רגיש מאוד - אל תחלוק אותו או תעלה אותו
                   ל-Git
                 </p>
               </div>
             ) : (
-              <p className="text-sm">{error.message}</p>
+              <p className="text-body-sm">{error.message}</p>
             )}
           </div>
         </DashboardSection>
@@ -282,7 +282,7 @@ export default async function UserDetailsPage({
         <div className="mt-6 space-y-6">
           {/* מידע בסיסי */}
           <Box>
-            <h3 className="mb-4 text-lg font-semibold">מידע בסיסי</h3>
+            <h3 className="mb-4 text-subtitle font-semibold">מידע בסיסי</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <span className="text-muted-foreground">שם פרטי:</span>{" "}
@@ -317,7 +317,7 @@ export default async function UserDetailsPage({
 
           {/* סטטיסטיקות שידוכים */}
           <Box>
-            <h3 className="mb-4 text-lg font-semibold">סטטיסטיקות שידוכים</h3>
+            <h3 className="mb-4 text-subtitle font-semibold">סטטיסטיקות שידוכים</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <span className="text-muted-foreground">
@@ -336,7 +336,7 @@ export default async function UserDetailsPage({
 
           {/* ילדים */}
           <Box>
-            <h3 className="mb-4 text-lg font-semibold">
+            <h3 className="mb-4 text-subtitle font-semibold">
               ילדים במערכת ({userDetails.children.length})
             </h3>
             {userDetails.children.length === 0 ? (

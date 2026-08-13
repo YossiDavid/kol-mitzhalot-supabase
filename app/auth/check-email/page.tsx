@@ -11,13 +11,13 @@ export default function CheckEmailPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl">בדוק את האימייל שלך</CardTitle>
+        <CardTitle className="text-heading">בדוק את האימייל שלך</CardTitle>
         <CardDescription>
           שלחנו לך קישור להתחברות. לחץ על הקישור באימייל כדי להיכנס.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-muted-foreground text-body-sm">
           לא קיבלת? בדוק בתיקיית ספאם או{" "}
           <Link href="/auth/login" className="underline underline-offset-4">
             נסה שוב

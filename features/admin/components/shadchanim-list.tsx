@@ -25,7 +25,7 @@ function statusClass(status: string): string {
 
 export function ShadchanimListFallback() {
   return (
-    <div className="flex items-center justify-center gap-2 py-16 text-sm">
+    <div className="flex items-center justify-center gap-2 py-16 text-body-sm">
       <Spinner />
       טוען רשימת שדכנים…
     </div>
@@ -46,7 +46,7 @@ export async function ShadchanimList({ query }: { query: AdminShadchanimQuery })
 
   return (
     <>
-      <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-2 pt-6 text-sm">
+      <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-2 pt-6 text-body-sm">
         <span>
           מציג {(page - 1) * perPage + 1}–{Math.min(page * perPage, total)} מתוך{" "}
           {total}
@@ -57,7 +57,7 @@ export async function ShadchanimList({ query }: { query: AdminShadchanimQuery })
           </span>
           <Suspense
             fallback={
-              <span className="text-muted-foreground text-sm">לעמוד…</span>
+              <span className="text-muted-foreground text-body-sm">לעמוד…</span>
             }
           >
             <ShadchanimPerPageSelect />
@@ -86,23 +86,23 @@ export async function ShadchanimList({ query }: { query: AdminShadchanimQuery })
             className="col-span-full grid grid-cols-subgrid items-center"
           >
             <div
-              className={`text-sm font-medium ${statusClass(shadchan.applicationStatusLabel)}`}
+              className={`text-body-sm font-medium ${statusClass(shadchan.applicationStatusLabel)}`}
             >
               {shadchan.applicationStatusLabel}
             </div>
             <div>{shadchan.firstName || "לא זמין"}</div>
             <div>{shadchan.lastName || "לא זמין"}</div>
-            <div className="text-sm">{shadchan.email || "לא זמין"}</div>
-            <div className="text-sm">{formatDate(shadchan.createdAt)}</div>
+            <div className="text-body-sm">{shadchan.email || "לא זמין"}</div>
+            <div className="text-body-sm">{formatDate(shadchan.createdAt)}</div>
             <div className="text-center">{shadchan.totalShidduchim}</div>
             <div className="text-center">{shadchan.completedShidduchim}</div>
-            <div className="text-sm">
+            <div className="text-body-sm">
               {formatDate(shadchan.lastShidduchCreatedAt)}
             </div>
-            <div className="text-sm">
+            <div className="text-body-sm">
               {formatDate(shadchan.lastShidduchCompletedAt)}
             </div>
-            <div className="text-sm">{formatDate(shadchan.lastSignInAt)}</div>
+            <div className="text-body-sm">{formatDate(shadchan.lastSignInAt)}</div>
           </Box>
         ))}
       </div>

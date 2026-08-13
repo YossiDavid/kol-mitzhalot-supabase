@@ -19,8 +19,8 @@ export default function SettingsPage() {
           <Link href="/app/admin/settings/privacy-policy">
             <div className="p-6 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
               <Shield className="h-8 w-8 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">מדיניות פרטיות</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-subtitle font-semibold mb-2">מדיניות פרטיות</h3>
+              <p className="text-body-sm text-muted-foreground">
                 עריכת מדיניות הפרטיות של המערכת
               </p>
             </div>
@@ -29,8 +29,8 @@ export default function SettingsPage() {
           <Link href="/app/admin/settings/terms-of-service">
             <div className="p-6 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
               <FileCheck className="h-8 w-8 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">תנאי שימוש</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-subtitle font-semibold mb-2">תנאי שימוש</h3>
+              <p className="text-body-sm text-muted-foreground">
                 עריכת תנאי השימוש של המערכת
               </p>
             </div>
@@ -39,8 +39,8 @@ export default function SettingsPage() {
           <Link href="/app/admin/settings/accessibility">
             <div className="p-6 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
               <Accessibility className="h-8 w-8 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">הצהרת נגישות</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-subtitle font-semibold mb-2">הצהרת נגישות</h3>
+              <p className="text-body-sm text-muted-foreground">
                 עריכת הצהרת הנגישות של המערכת
               </p>
             </div>

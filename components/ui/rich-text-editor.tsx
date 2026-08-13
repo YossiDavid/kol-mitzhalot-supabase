@@ -77,7 +77,7 @@ export function RichTextEditor({
     },
     editorProps: {
       attributes: {
-        class: "prose prose-sm max-w-none focus:outline-none min-h-[300px] p-4 prose-ul:list-outside prose-ol:list-outside prose-li:ml-0 prose-blockquote:border-r-4 prose-blockquote:border-l-0 prose-blockquote:pr-4 prose-blockquote:pl-0",
+        class: "prose-km max-w-none min-h-[300px] p-4 focus:outline-none",
         dir: "rtl",
       },
     },

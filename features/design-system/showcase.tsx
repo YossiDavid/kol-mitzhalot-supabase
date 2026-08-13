@@ -257,7 +257,7 @@ export function DesignSystemShowcase() {
         <div className="max-w-prose space-y-2">
           <p className="text-body text-muted-foreground">
             קטלוג חי של הטוקנים והרכיבים של קול מצהלות. העמוד זמין רק ב־
-            <code className="mx-1 rounded bg-muted px-1.5 py-0.5 text-sm text-foreground">
+            <code className="mx-1 rounded bg-muted px-1.5 py-0.5 text-body-sm text-foreground">
               next dev
             </code>
             ולא נכלל בפרודקשן.
@@ -270,7 +270,7 @@ export function DesignSystemShowcase() {
         <Section
           id="colors"
           title="צבעוניות"
-          description="טוקני CSS ב־:root / .dark, ממופים ל־Tailwind דרך @theme inline. השתמשו ב־bg-*/text-* ולא בערכים קשיחים."
+          description="טוקני CSS ב־:root / .dark. השתמשו ב־bg-*/text-* (כולל brand-gold) — לא hex במחלקות."
         >
           <div className="space-y-10">
             {groupedColors.map(({ group, tokens }) => (
@@ -284,7 +284,7 @@ export function DesignSystemShowcase() {
         <Section
           id="typography"
           title="טיפוגרפיה"
-          description="סולם סמנטי (~1.2). השתמשו ב־text-display / text-heading / text-body וכו׳ במקום text-4xl אקראי."
+          description="סולם סמנטי (~1.2). רק text-display|heading|title|subtitle|body|body-sm|label|caption — אסור text-sm / text-[Npx]. תוכן ארוך: prose-km. cn() שומר צבע+גודל יחד."
         >
           <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
             {typographyScale.map((row) => (

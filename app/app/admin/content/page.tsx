@@ -19,8 +19,8 @@ export default function ContentHubPage() {
           <Link href={"/app/admin/content/articles" as any}>
             <div className="cursor-pointer rounded-lg border p-6 transition-colors hover:bg-accent">
               <FileText className="mb-4 h-8 w-8" />
-              <h3 className="mb-2 text-lg font-semibold">מאמרים</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="mb-2 text-subtitle font-semibold">מאמרים</h3>
+              <p className="text-body-sm text-muted-foreground">
                 יצירה, עריכה ופרסום מאמרים לכל קטגוריה
               </p>
             </div>
@@ -29,8 +29,8 @@ export default function ContentHubPage() {
           <Link href={"/app/admin/content/engagements" as any}>
             <div className="cursor-pointer rounded-lg border p-6 transition-colors hover:bg-accent">
               <Heart className="mb-4 h-8 w-8" />
-              <h3 className="mb-2 text-lg font-semibold">מודעות מאורסים</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="mb-2 text-subtitle font-semibold">מודעות מאורסים</h3>
+              <p className="text-body-sm text-muted-foreground">
                 אישור ופרסום מודעות שידוכים שנסגרו
               </p>
             </div>
@@ -39,8 +39,8 @@ export default function ContentHubPage() {
           <Link href={"/app/admin/content/endorsements" as any}>
             <div className="cursor-pointer rounded-lg border p-6 transition-colors hover:bg-accent">
               <Star className="mb-4 h-8 w-8" />
-              <h3 className="mb-2 text-lg font-semibold">המלצות רבנים</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="mb-2 text-subtitle font-semibold">המלצות רבנים</h3>
+              <p className="text-body-sm text-muted-foreground">
                 ניהול הסכמות ומלצות רבני הקהילה
               </p>
             </div>

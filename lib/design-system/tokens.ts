@@ -7,7 +7,7 @@ export const typographyScale = [
   {
     token: "display",
     className: "text-display font-extrabold",
-    size: "2.25rem / 36px",
+    size: "2.75rem / 44px",
     weight: "800",
     usage: "כותרת עמוד ראשית (h1)",
     sample: "קול מצהלות",
@@ -15,7 +15,7 @@ export const typographyScale = [
   {
     token: "heading",
     className: "text-heading font-bold",
-    size: "1.875rem / 30px",
+    size: "2.25rem / 36px",
     weight: "700",
     usage: "כותרת מקטע (h2)",
     sample: "ניהול שידוכים",
@@ -23,7 +23,7 @@ export const typographyScale = [
   {
     token: "title",
     className: "text-title font-bold",
-    size: "1.5rem / 24px",
+    size: "1.75rem / 28px",
     weight: "700",
     usage: "כותרת משנית (h3)",
     sample: "פרטי מועמד",
@@ -31,7 +31,7 @@ export const typographyScale = [
   {
     token: "subtitle",
     className: "text-subtitle font-bold",
-    size: "1.25rem / 20px",
+    size: "1.375rem / 22px",
     weight: "700",
     usage: "כותרת קטנה / כרטיס",
     sample: "הצעות פעילות",
@@ -39,7 +39,7 @@ export const typographyScale = [
   {
     token: "body",
     className: "text-body font-normal",
-    size: "1rem / 16px",
+    size: "1.125rem / 18px",
     weight: "400",
     usage: "טקסט גוף",
     sample: "מערכת לניהול שידוכים במגזר החסידי — ברורה, יעילה ומכבדת.",
@@ -47,7 +47,7 @@ export const typographyScale = [
   {
     token: "body-sm",
     className: "text-body-sm font-normal",
-    size: "0.875rem / 14px",
+    size: "1rem / 16px",
     weight: "400",
     usage: "טקסט משני, טבלאות",
     sample: "עודכן לאחרונה לפני שעתיים",
@@ -55,7 +55,7 @@ export const typographyScale = [
   {
     token: "label",
     className: "text-label font-medium",
-    size: "0.875rem / 14px",
+    size: "1rem / 16px",
     weight: "500",
     usage: "תוויות שדות, כפתורים",
     sample: "שם פרטי",
@@ -63,7 +63,7 @@ export const typographyScale = [
   {
     token: "caption",
     className: "text-caption font-normal",
-    size: "0.75rem / 12px",
+    size: "0.875rem / 14px",
     weight: "400",
     usage: "הערות, מטא־דאטה",
     sample: "נדרש · עד 50 תווים",
@@ -244,6 +244,14 @@ export const colorTokens: ColorSwatch[] = [
     fgClassName: "text-foreground",
     group: "semantic",
     description: "מועדפים",
+  },
+  {
+    name: "brand-gold",
+    cssVar: "--brand-gold",
+    className: "bg-brand-gold",
+    fgClassName: "text-brand-gold-foreground",
+    group: "brand",
+    description: "זהב שיווקי (CTA)",
   },
   {
     name: "chart-1",

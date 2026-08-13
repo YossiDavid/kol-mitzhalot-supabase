@@ -60,7 +60,7 @@ export default function StatusSelector({
 
   return (
     <div className="space-y-2">
-      <p className="text-muted-foreground text-sm font-medium">סטטוס</p>
+      <p className="text-muted-foreground text-body-sm font-medium">סטטוס</p>
       <div className="flex flex-wrap items-center gap-3">
         <Badge
           variant="outline"
@@ -73,7 +73,7 @@ export default function StatusSelector({
             value={status}
             onChange={(e) => saveStatus(e.target.value)}
             disabled={!canEdit || isPending}
-            className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-body-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {SHIDDUCH_STATUS_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>

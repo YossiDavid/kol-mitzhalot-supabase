@@ -114,7 +114,7 @@ export function AdminUsersFilters() {
             navigate({ role: e.target.value || null, page: "1" })
           }
           className={cn(
-            "border-input bg-background h-10 w-full rounded-md border px-3 text-sm shadow-xs",
+            "border-input bg-background h-10 w-full rounded-md border px-3 text-body-sm shadow-xs",
           )}
         >
           <option value="">כל התפקידים</option>
@@ -130,7 +130,7 @@ export function AdminUsersFilters() {
           value={sort}
           onChange={(e) => navigate({ sort: e.target.value, page: "1" })}
           className={cn(
-            "border-input bg-background h-10 w-full rounded-md border px-3 text-sm shadow-xs",
+            "border-input bg-background h-10 w-full rounded-md border px-3 text-body-sm shadow-xs",
           )}
         >
           <option value="joined">תאריך הצטרפות</option>
@@ -146,7 +146,7 @@ export function AdminUsersFilters() {
           value={order}
           onChange={(e) => navigate({ order: e.target.value, page: "1" })}
           className={cn(
-            "border-input bg-background h-10 w-full rounded-md border px-3 text-sm shadow-xs",
+            "border-input bg-background h-10 w-full rounded-md border px-3 text-body-sm shadow-xs",
           )}
         >
           <option value="desc">יורד</option>
@@ -162,7 +162,7 @@ export function AdminUsersFilters() {
             navigate({ perPage: e.target.value, page: "1" })
           }
           className={cn(
-            "border-input bg-background h-10 w-full rounded-md border px-3 text-sm shadow-xs",
+            "border-input bg-background h-10 w-full rounded-md border px-3 text-body-sm shadow-xs",
           )}
         >
           {[10, 25, 50, 100].map((n) => (

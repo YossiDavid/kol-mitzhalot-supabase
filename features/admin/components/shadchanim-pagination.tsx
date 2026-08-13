@@ -89,7 +89,7 @@ export function ShadchanimPerPageSelect() {
 
   return (
     <div className="flex items-center gap-2">
-      <Label htmlFor="shadchan-perPage" className="text-muted-foreground text-sm">
+      <Label htmlFor="shadchan-perPage" className="text-muted-foreground text-body-sm">
         לעמוד
       </Label>
       <NativeSelect

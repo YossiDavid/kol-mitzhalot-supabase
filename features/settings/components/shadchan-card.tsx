@@ -136,26 +136,26 @@ export function ShadchanCard() {
         {application?.application_status && (
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">סטטוס הבקשה:</span>
+              <span className="text-body-sm font-medium">סטטוס הבקשה:</span>
               {getStatusBadge()}
             </div>
             {application.submitted_at && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-body-sm text-muted-foreground">
                 תאריך הגשה: {formatDate(application.submitted_at)}
               </p>
             )}
             {application.approved_at && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-body-sm text-muted-foreground">
                 תאריך אישור: {formatDate(application.approved_at)}
               </p>
             )}
             {application.rejected_at && (
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-body-sm text-muted-foreground">
                   תאריך דחייה: {formatDate(application.rejected_at)}
                 </p>
                 {application.rejected_reason && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-body-sm text-destructive">
                     סיבת הדחייה: {application.rejected_reason}
                   </p>
                 )}

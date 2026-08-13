@@ -131,7 +131,7 @@ const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
         ref={ref}
         data-slot="select-trigger"
         className={cn(
-          "flex w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-1.5 text-(length:--text-body-sm) shadow-xs transition-colors outline-none dark:bg-input/30",
+          "flex w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-1.5 text-body-sm shadow-xs transition-colors outline-none dark:bg-input/30",
           "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
           "disabled:cursor-not-allowed disabled:opacity-50",
           className,
@@ -167,7 +167,7 @@ const SelectValue = ({
     <span
       data-slot="select-value"
       className={cn(
-        "truncate text-sm text-foreground",
+        "truncate text-body-sm text-foreground",
         !value && "text-muted-foreground",
         className,
       )}
@@ -193,7 +193,7 @@ const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
         data-slot="select-content"
         hidden={!open}
         className={cn(
-          "absolute z-20 mt-1 w-full overflow-auto rounded-md border bg-popover p-1 text-sm shadow-lg",
+          "absolute z-20 mt-1 w-full overflow-auto rounded-md border bg-popover p-1 text-body-sm shadow-lg",
           className,
         )}
         role="listbox"
@@ -236,7 +236,7 @@ const SelectItem = React.forwardRef<HTMLButtonElement, SelectItemProps>(
         aria-selected={isSelected}
         data-slot="select-item"
         className={cn(
-          "flex w-full cursor-pointer items-center rounded-sm px-2 py-1.5 text-right text-sm",
+          "flex w-full cursor-pointer items-center rounded-sm px-2 py-1.5 text-right text-body-sm",
           isSelected && "bg-primary-muted text-primary",
           !isSelected && "hover:bg-primary-muted hover:text-primary",
           "disabled:cursor-not-allowed disabled:opacity-50",
@@ -276,7 +276,7 @@ const SelectLabel = ({
   <div
     data-slot="select-label"
     className={cn(
-      "px-2 py-1 text-xs font-medium text-muted-foreground",
+      "px-2 py-1 text-caption font-medium text-muted-foreground",
       className,
     )}
     {...props}

@@ -190,7 +190,7 @@ export default function ArticleEditPage({
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
                   placeholder="נוצר אוטומטית מהכותרת"
-                  className="mt-1 font-mono text-sm"
+                  className="mt-1 font-mono text-body-sm"
                   dir="ltr"
                 />
               </div>
@@ -200,7 +200,7 @@ export default function ArticleEditPage({
                   id="category"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-body-sm"
                 >
                   {CATEGORIES.map((c) => (
                     <option key={c.value} value={c.value}>{c.label}</option>
@@ -229,7 +229,7 @@ export default function ArticleEditPage({
                 onChange={(e) => setExcerpt(e.target.value)}
                 placeholder="תקציר קצר שיופיע בכרטיס המאמר"
                 rows={3}
-                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-body-sm outline-none focus:ring-2 focus:ring-ring"
                 style={{ resize: "vertical" }}
               />
             </div>
@@ -252,7 +252,7 @@ export default function ArticleEditPage({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-semibold">סטטוס פרסום</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-body-sm text-muted-foreground">
                     {isPublished ? "המאמר מפורסם ומוצג באתר" : "המאמר בטיוטה ולא מוצג"}
                   </p>
                 </div>

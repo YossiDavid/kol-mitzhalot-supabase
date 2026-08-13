@@ -210,7 +210,7 @@ export default function StudentsList() {
                     <p className="flex items-center gap-1.5 font-semibold">
                       {student.first_name} {student.last_name}
                       {isRecentlyEngaged(student) && (
-                        <span className="text-xs font-medium text-yellow-700 dark:text-yellow-400">
+                        <span className="text-caption font-medium text-yellow-700 dark:text-yellow-400">
                           🎉 מאורס/ת
                         </span>
                       )}
@@ -218,7 +218,7 @@ export default function StudentsList() {
                         <Camera className="text-muted-foreground h-3.5 w-3.5 shrink-0" aria-label="יש תמונה" />
                       )}
                     </p>
-                    <p className="text-muted-foreground mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-sm">
+                    <p className="text-muted-foreground mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-body-sm">
                       <span>{parseStatus(student.personal_status, student.gender)}</span>
                       <span>·</span>
                       <span>גיל {calculateAge(student.birth_date || "")}</span>

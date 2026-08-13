@@ -130,7 +130,7 @@ export default function Favorites({ favorites }: { favorites: Favorite[] }) {
                   {favorite.first_name} {favorite.last_name}
                 </span>
                 <div className="flex items-center justify-between rounded-md border px-3 py-2">
-                  <span className="text-sm">מועדף</span>
+                  <span className="text-body-sm">מועדף</span>
                   {/* <Switch
                     checked={true}
                     onCheckedChange={(e) =>
@@ -143,7 +143,7 @@ export default function Favorites({ favorites }: { favorites: Favorite[] }) {
                     onClick={() => handleFavoriteRemove(favorite.id)}
                   ></Button>
                 </div>
-                <div className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 text-sm">
+                <div className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 text-body-sm">
                   <span>{parseStatus(favorite.personal_status)}</span>
                   <span>
                     גיל {calculateAge(new Date(favorite.birth_date || ""))}

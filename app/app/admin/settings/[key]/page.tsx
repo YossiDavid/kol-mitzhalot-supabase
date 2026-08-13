@@ -145,7 +145,7 @@ export default function EditContentPage({
                 className="min-h-[400px]"
               />
             </div>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-body-sm text-muted-foreground mt-2">
               השתמש בסרגל הכלים לעיצוב התוכן
             </p>
           </div>

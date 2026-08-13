@@ -49,11 +49,11 @@ export function ForgotPasswordForm({
       {success ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">בדוק את האימייל שלך</CardTitle>
+            <CardTitle className="text-heading">בדוק את האימייל שלך</CardTitle>
             <CardDescription>נשלחה לך מייל עם פקודות שחזור סיסמה</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-body-sm text-muted-foreground">
               אם הירשמת באמצעות האימייל והסיסמה, תקבל מייל עם פקודות שחזור סיסמה.
             </p>
           </CardContent>
@@ -61,7 +61,7 @@ export function ForgotPasswordForm({
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">שחזר את הסיסמה שלך</CardTitle>
+            <CardTitle className="text-heading">שחזר את הסיסמה שלך</CardTitle>
             <CardDescription>
               הכנס את האימייל שלך ונשלח לך קישור לשחזור הסיסמה שלך
             </CardDescription>
@@ -80,12 +80,12 @@ export function ForgotPasswordForm({
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
+                {error && <p className="text-body-sm text-red-500">{error}</p>}
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "שולח..." : "שלח מייל שחזור סיסמה"}
                 </Button>
               </div>
-              <div className="mt-4 text-center text-sm">
+              <div className="mt-4 text-center text-body-sm">
                 יש לך חשבון?{" "}
                 <Link
                   href="/auth/login"

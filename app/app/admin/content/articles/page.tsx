@@ -84,8 +84,8 @@ export default function ArticlesAdminPage() {
             <div className="py-10 text-center text-muted-foreground">טוען...</div>
           ) : articles.length === 0 ? (
             <div className="py-16 text-center">
-              <p className="text-lg font-semibold text-muted-foreground">אין מאמרים עדיין</p>
-              <p className="mt-2 text-sm text-muted-foreground">צור את המאמר הראשון</p>
+              <p className="text-subtitle font-semibold text-muted-foreground">אין מאמרים עדיין</p>
+              <p className="mt-2 text-body-sm text-muted-foreground">צור את המאמר הראשון</p>
               <Button asChild className="mt-6">
                 <Link href={"/app/admin/content/articles/new" as any}>
                   <Plus className="me-1 h-4 w-4" /> מאמר חדש
@@ -93,7 +93,7 @@ export default function ArticlesAdminPage() {
               </Button>
             </div>
           ) : (
-            <table className="w-full text-sm">
+            <table className="w-full text-body-sm">
               <thead>
                 <tr className="border-b text-right text-muted-foreground">
                   <th className="py-2 pe-3 font-medium">כותרת</th>
@@ -109,7 +109,7 @@ export default function ArticlesAdminPage() {
                     <td className="py-3 pe-3 font-medium">{a.title}</td>
                     <td className="py-3 pe-3 text-muted-foreground">{CATEGORY_LABELS[a.category] ?? a.category}</td>
                     <td className="py-3 pe-3">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${a.is_published ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-caption font-semibold ${a.is_published ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
                         {a.is_published ? "מפורסם" : "טיוטה"}
                       </span>
                     </td>

@@ -26,7 +26,7 @@ const FEATURES = [
   },
 ];
 
-const SECTION_BG = ["bg-[#ecf0f2]", "bg-[#e3e9eb]"];
+const SECTION_BG = ["bg-background", "bg-muted"];
 
 function ArrowIcon() {
   return (
@@ -38,13 +38,7 @@ function ArrowIcon() {
 
 function ImagePlaceholder() {
   return (
-    <div
-      className="rounded-2xl border border-dashed border-[#c3ccce] bg-white"
-      style={{
-        aspectRatio: "16/9",
-        backgroundImage: "repeating-linear-gradient(135deg,transparent 0 13px,rgba(43,90,92,.06) 13px 26px)",
-      }}
-    />
+    <div className="bg-primary-stripe aspect-video rounded-2xl border border-dashed border-border" />
   );
 }
 
@@ -52,28 +46,19 @@ export default function ParentsPage() {
   return (
     <>
       {/* Hero */}
-      <section className="bg-[#2b5a5c] text-[#f4f8f7]">
+      <section className="bg-primary text-primary-foreground">
         <div className="mx-auto px-6 py-24 text-center" style={{ maxWidth: 1120 }}>
           <h1
-            className="font-bold text-[#f4f8f7]"
-            style={{ fontSize: "clamp(32px,4.5vw,52px)", marginBottom: 20, lineHeight: 1.1 }}
+            className="font-bold text-primary-foreground text-display" style={{marginBottom: 20, lineHeight: 1.1}}
           >
             הורים ומיועדים
           </h1>
-          <p className="mx-auto mb-10 text-[18px] leading-[1.65] opacity-90" style={{ maxWidth: 640 }}>
+          <p className="mx-auto mb-10 text-subtitle leading-[1.65] opacity-90" style={{ maxWidth: 640 }}>
             מערכת קול מצהלות תוכננה ונבנתה במיוחד על מנת לסייע לשדכנים להציע לכם יותר הצעות מתאימות, כך שתוכלו למצוא את הבאשערטע בקלות ובמהירות רבה בעז"ה!
           </p>
           <Link
             href={"/auth/sign-up" as any}
-            className="inline-flex items-center gap-[9px] rounded-full no-underline transition-transform hover:-translate-y-0.5"
-            style={{
-              background: "linear-gradient(145deg,#f2dc8f,#dcb149)",
-              color: "#123331",
-              padding: "16px 34px",
-              fontSize: 17,
-              fontWeight: 800,
-              boxShadow: "0 20px 40px -16px rgba(0,0,0,.55)",
-            }}
+            className="inline-flex items-center gap-[9px] rounded-full bg-brand-gold-gradient px-[34px] py-4 text-body font-extrabold text-brand-gold-foreground no-underline shadow-[0_20px_40px_-16px_rgba(0,0,0,.55)] transition-transform hover:-translate-y-0.5"
           >
             הירשמו עכשיו ללא עלות <ArrowIcon />
           </Link>
@@ -91,20 +76,16 @@ export default function ParentsPage() {
               <>
                 <div>
                   {f.premium && (
-                    <span
-                      className="mb-3 inline-block rounded-full px-3 py-1.5 text-[14px] font-semibold"
-                      style={{ background: "rgba(207,154,60,.14)", color: "#a9772a" }}
-                    >
+                    <span className="mb-3 inline-block rounded-full bg-brand-gold-muted px-3 py-1.5 text-body-sm font-semibold text-brand-gold-foreground">
                       פרימיום
                     </span>
                   )}
                   <h2
-                    className="font-bold text-[#2b5a5c]"
-                    style={{ fontSize: "clamp(22px,2.6vw,28px)", marginBottom: 16, lineHeight: 1.3 }}
+                    className="font-bold text-primary text-heading" style={{marginBottom: 16, lineHeight: 1.3}}
                   >
                     {f.q}
                   </h2>
-                  <p className="text-[16.5px] leading-[1.75] text-[#5c6a68]">{f.a}</p>
+                  <p className="text-body leading-[1.75] text-muted-foreground">{f.a}</p>
                 </div>
                 <ImagePlaceholder />
               </>
@@ -113,20 +94,16 @@ export default function ParentsPage() {
                 <ImagePlaceholder />
                 <div>
                   {f.premium && (
-                    <span
-                      className="mb-3 inline-block rounded-full px-3 py-1.5 text-[14px] font-semibold"
-                      style={{ background: "rgba(207,154,60,.14)", color: "#a9772a" }}
-                    >
+                    <span className="mb-3 inline-block rounded-full bg-brand-gold-muted px-3 py-1.5 text-body-sm font-semibold text-brand-gold-foreground">
                       פרימיום
                     </span>
                   )}
                   <h2
-                    className="font-bold text-[#2b5a5c]"
-                    style={{ fontSize: "clamp(22px,2.6vw,28px)", marginBottom: 16, lineHeight: 1.3 }}
+                    className="font-bold text-primary text-heading" style={{marginBottom: 16, lineHeight: 1.3}}
                   >
                     {f.q}
                   </h2>
-                  <p className="text-[16.5px] leading-[1.75] text-[#5c6a68]">{f.a}</p>
+                  <p className="text-body leading-[1.75] text-muted-foreground">{f.a}</p>
                 </div>
               </>
             )}
@@ -138,19 +115,11 @@ export default function ParentsPage() {
       <Suspense><RabbinicalEndorsements /></Suspense>
 
       {/* Bottom CTA */}
-      <section className="bg-[#ecf0f2]">
+      <section className="bg-background">
         <div className="mx-auto px-6 py-16 text-center" style={{ maxWidth: 1120 }}>
           <Link
             href={"/auth/sign-up" as any}
-            className="inline-flex items-center gap-[9px] rounded-full no-underline transition-transform hover:-translate-y-0.5"
-            style={{
-              background: "#2b5a5c",
-              color: "#f4f8f7",
-              padding: "16px 34px",
-              fontSize: 17,
-              fontWeight: 800,
-              boxShadow: "0 10px 24px -10px rgba(43,90,92,.6)",
-            }}
+            className="inline-flex items-center gap-[9px] rounded-full bg-primary px-[34px] py-4 text-body font-extrabold text-primary-foreground no-underline shadow-primary-cta transition-transform hover:-translate-y-0.5"
           >
             הירשמו עכשיו ללא עלות <ArrowIcon />
           </Link>

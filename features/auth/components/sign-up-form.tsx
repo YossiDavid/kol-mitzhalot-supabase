@@ -78,7 +78,7 @@ export function SignUpForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">הרשמה</CardTitle>
+          <CardTitle className="text-heading">הרשמה</CardTitle>
           {/* <CardDescription>צור חשבון חדש</CardDescription> */}
         </CardHeader>
         <CardContent>
@@ -141,7 +141,7 @@ export function SignUpForm({
                   dir="ltr"
                   className="text-left"
                 />
-                <p className="text-muted-foreground text-xs">
+                <p className="text-muted-foreground text-caption">
                   מספר ישראלי (05…) או בינלאומי עם קידומת (+…)
                 </p>
               </div>
@@ -168,7 +168,7 @@ export function SignUpForm({
                 />
               </div> */}
               {error && (
-                <p className="text-destructive text-sm" role="alert">
+                <p className="text-destructive text-body-sm" role="alert">
                   {error}
                 </p>
               )}
@@ -176,7 +176,7 @@ export function SignUpForm({
                 {isLoading ? "יצירת חשבון..." : "הירשם"}
               </Button>
             </div>
-            <div className="text-muted-foreground mt-4 text-center text-sm">
+            <div className="text-muted-foreground mt-4 text-center text-body-sm">
               יש לך חשבון?{" "}
               <Link href="/auth/login" className="underline underline-offset-4">
                 התחבר

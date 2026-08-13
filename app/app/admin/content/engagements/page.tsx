@@ -125,14 +125,14 @@ export default function EngagementsAdminPage() {
             <form onSubmit={handleCreate} className="space-y-6">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="space-y-4">
-                  <p className="font-semibold text-[#2b5a5c]">החתן</p>
+                  <p className="font-semibold text-primary">החתן</p>
                   {F("groom_name", "שם החתן *")}
                   {F("groom_father", "שם אביו")}
                   {F("groom_city", "עיר")}
                   {F("groom_yeshiva", "מישיבת")}
                 </div>
                 <div className="space-y-4">
-                  <p className="font-semibold text-[#2b5a5c]">הכלה</p>
+                  <p className="font-semibold text-primary">הכלה</p>
                   {F("bride_name", "שם הכלה *")}
                   {F("bride_father", "שם אביה")}
                   {F("bride_city", "עיר")}
@@ -158,11 +158,11 @@ export default function EngagementsAdminPage() {
             <div className="py-10 text-center text-muted-foreground">טוען...</div>
           ) : engagements.length === 0 ? (
             <div className="py-16 text-center">
-              <p className="text-lg font-semibold text-muted-foreground">אין מודעות עדיין</p>
-              <p className="mt-2 text-sm text-muted-foreground">מודעות מהטופס באתר יופיעו כאן לאישור</p>
+              <p className="text-subtitle font-semibold text-muted-foreground">אין מודעות עדיין</p>
+              <p className="mt-2 text-body-sm text-muted-foreground">מודעות מהטופס באתר יופיעו כאן לאישור</p>
             </div>
           ) : (
-            <table className="w-full text-sm">
+            <table className="w-full text-body-sm">
               <thead>
                 <tr className="border-b text-right text-muted-foreground">
                   <th className="py-2 pe-3 font-medium">חתן</th>
@@ -182,7 +182,7 @@ export default function EngagementsAdminPage() {
                       {[e.groom_city, e.bride_city].filter(Boolean).join(" / ")}
                     </td>
                     <td className="py-3 pe-3">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${e.is_published ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-caption font-semibold ${e.is_published ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
                         {e.is_published ? "מפורסם" : "ממתין"}
                       </span>
                     </td>

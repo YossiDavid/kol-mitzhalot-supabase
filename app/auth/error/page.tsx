@@ -21,10 +21,10 @@ async function ErrorContent({
 
   return (
     <>
-      <p className="text-muted-foreground text-sm" dir="rtl">
+      <p className="text-muted-foreground text-body-sm" dir="rtl">
         {message}
       </p>
-      <p className="mt-4 text-sm">
+      <p className="mt-4 text-body-sm">
         <Link href="/auth/login" className="underline underline-offset-4">
           בקשת קישור חדש / התחברות
         </Link>
@@ -41,7 +41,7 @@ export default function Page({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl">מצטערים, משהו השתבש.</CardTitle>
+        <CardTitle className="text-heading">מצטערים, משהו השתבש.</CardTitle>
       </CardHeader>
       <CardContent>
         <Suspense>

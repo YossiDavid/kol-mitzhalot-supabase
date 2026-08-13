@@ -68,7 +68,7 @@ export function MessageBubble({
                 <button
                   type="button"
                   onClick={() => onJumpToReplied(repliedMessage.message_id)}
-                  className="bg-background/60 mb-2 w-full rounded-md border px-2 py-1 text-left text-xs"
+                  className="bg-background/60 mb-2 w-full rounded-md border px-2 py-1 text-left text-caption"
                 >
                   <div className="text-muted-foreground mb-0.5">בתגובה ל:</div>
                   <div className="line-clamp-2 whitespace-pre-wrap">
@@ -77,13 +77,13 @@ export function MessageBubble({
                 </button>
               )}
 
-              <div className="text-sm leading-relaxed whitespace-pre-wrap">
+              <div className="text-body-sm leading-relaxed whitespace-pre-wrap">
                 {message.content}
               </div>
 
               <div
                 className={cn(
-                  "mt-1 text-[11px] opacity-70",
+                  "mt-1 text-caption opacity-70",
                   isMe ? "text-accent-foreground" : "text-muted-foreground",
                 )}
               >

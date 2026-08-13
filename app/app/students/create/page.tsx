@@ -968,7 +968,7 @@ export default function CreateStudentPage() {
   return (
     <Section asChild className="my-4 space-y-4 md:my-10">
       <div>
-        <h1 className="mb-4 text-2xl font-bold md:text-3xl">הוספת קו״ח למערכת</h1>
+        <h1 className="mb-4 text-heading font-bold md:text-heading">הוספת קו״ח למערכת</h1>
         <Box className="p-4 md:p-8">
           <div className="grid gap-4 md:gap-8 md:grid-cols-[220px_minmax(0,1fr)]">
             <StepSidebar
@@ -984,7 +984,7 @@ export default function CreateStudentPage() {
                   className="space-y-8"
                 >
                   <div className="space-y-6">
-                    <h2 className="text-xl font-semibold md:text-2xl">
+                    <h2 className="text-title font-semibold md:text-heading">
                       {getStepTitle(currentStep, gender)}
                     </h2>
                     {currentStep.sections.map((section) => (
@@ -1073,7 +1073,7 @@ function SectionRenderer({
   return (
     <div className="space-y-4">
       {section.title && (
-        <h3 className="text-lg font-semibold">{section.title}</h3>
+        <h3 className="text-subtitle font-semibold">{section.title}</h3>
       )}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
         {section.fields.map((field, index) => (

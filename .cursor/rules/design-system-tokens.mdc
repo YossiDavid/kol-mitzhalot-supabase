@@ -1,0 +1,24 @@
+---
+description: Typography and color tokens — single source of truth, no drift
+globs: "**/*.{tsx,ts,css}"
+alwaysApply: false
+---
+
+# Design system — typography & color
+
+Source of truth: `app/design-system.css` (+ catalog in `lib/design-system/tokens.ts`). Docs: `docs/DESIGN.md`.
+
+## Typography
+
+- Prefer semantic HTML (`h1`–`h6`, `p`, `small`) — sizes come from `@layer base`.
+- Explicit size classes only: `text-display` | `text-heading` | `text-title` | `text-subtitle` | `text-body` | `text-body-sm` | `text-label` | `text-caption`.
+- Long-form content: wrap with `prose-km`.
+- Never use `text-xs` / `text-sm` / `text-base` / `text-lg` / `text-xl` / `text-2xl…`, `text-[Npx]`, or `style={{ fontSize }}`.
+- `cn()` / `tailwind-merge` is configured so size tokens do not strip color utilities (`text-primary-foreground` + `text-body-sm` must coexist). Keep `lib/utils.ts` and `scripts/verify-cn-merge.mjs` in sync (`pnpm test:cn`).
+
+## Color
+
+- Prefer theme tokens: `bg-primary`, `text-muted-foreground`, `border-border`, `bg-card`, `bg-brand-gold`, etc.
+- Avoid hardcoded hex in classNames (`bg-[#2b5a5c]`, `text-[#5c6a68]`). Marketing gold → `brand-gold*`.
+- Marketing gradients / washes: `bg-brand-gold-gradient`, `bg-primary-gradient`, `bg-primary-stripe*`, `bg-primary-wash`, `bg-brand-gold-wash`, `shadow-primary-cta`, `ring-primary-focus*` — not raw hex/`rgba(43,90,92)`.
+- Article / legal HTML: wrap with `prose-km` (see `app/(website)/knowledge/[slug]`, `app/(website)/legal`).

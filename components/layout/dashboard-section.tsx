@@ -37,7 +37,7 @@ export default function DashboardSection({
             )}
           </h2>
           {props.subTitle && (
-            <p className="text-muted-foreground mt-0.5 text-sm">
+            <p className="text-muted-foreground mt-0.5 text-body-sm">
               {props.subTitle}
             </p>
           )}

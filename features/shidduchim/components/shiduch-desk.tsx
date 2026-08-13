@@ -293,7 +293,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
           data-male
         >
           {draggingGender === "female" && (
-            <div className="text-destructive absolute top-2 left-1/2 -translate-x-1/2 text-sm">
+            <div className="text-destructive absolute top-2 left-1/2 -translate-x-1/2 text-body-sm">
               לא ניתן להכניס מיועדת כאן
             </div>
           )}
@@ -324,7 +324,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
                 </div>
               </StudentBox>
               <textarea
-                className="mt-2 w-full resize-none rounded-md border border-sky-200 bg-white/70 p-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-sky-400"
+                className="mt-2 w-full resize-none rounded-md border border-sky-200 bg-white/70 p-2 text-body-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-sky-400"
                 rows={2}
                 placeholder="הערות על המיועד..."
                 value={maleNote}
@@ -333,7 +333,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
               />
             </>
           ) : (
-            <div className="text-muted-foreground absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm">
+            <div className="text-muted-foreground absolute inset-0 flex flex-col items-center justify-center gap-2 text-body-sm">
               <UserIcon className="size-8 opacity-30" />
               <span>גרור מיועד לכאן</span>
             </div>
@@ -350,7 +350,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
           data-female
         >
           {draggingGender === "male" && (
-            <div className="text-destructive absolute top-2 left-1/2 -translate-x-1/2 text-sm">
+            <div className="text-destructive absolute top-2 left-1/2 -translate-x-1/2 text-body-sm">
               לא ניתן להכניס מיועד כאן
             </div>
           )}
@@ -381,7 +381,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
                 </div>
               </StudentBox>
               <textarea
-                className="mt-2 w-full resize-none rounded-md border border-rose-200 bg-white/70 p-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-rose-400"
+                className="mt-2 w-full resize-none rounded-md border border-rose-200 bg-white/70 p-2 text-body-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-rose-400"
                 rows={2}
                 placeholder="הערות על המיועדת..."
                 value={femaleNote}
@@ -390,7 +390,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
               />
             </>
           ) : (
-            <div className="text-muted-foreground absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm">
+            <div className="text-muted-foreground absolute inset-0 flex flex-col items-center justify-center gap-2 text-body-sm">
               <UserIcon className="size-8 opacity-30" />
               <span>גרור מיועדת לכאן</span>
             </div>
@@ -436,7 +436,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
               </div>
 
               {hasBlockingPair && (
-                <p className="text-muted-foreground mt-3 text-center text-sm">
+                <p className="text-muted-foreground mt-3 text-center text-body-sm">
                   לצמד זה כבר קיימת הצעה במערכת — לא ניתן לשמור או לשלוח שוב.
                 </p>
               )}
@@ -444,7 +444,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
           )}
 
           {!canOffer && (
-            <p className="text-muted-foreground mt-4 text-center text-sm">
+            <p className="text-muted-foreground mt-4 text-center text-body-sm">
               שליחת הצעות ושמירת טיוטות זמינות לשדכנים ולמנהלים בלבד.
             </p>
           )}

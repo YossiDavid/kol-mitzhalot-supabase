@@ -111,7 +111,7 @@ export function Combobox({
 
           <CommandList>
             {isLoading ? (
-              <div className="px-2 py-2 text-sm text-muted-foreground text-center">
+              <div className="px-2 py-2 text-body-sm text-muted-foreground text-center">
                 טוען...
               </div>
             ) : options.length === 0 ? (

@@ -79,7 +79,7 @@ export default async function StudentPage({
       <div className="flex min-h-[50vh] items-center justify-center">
         <div className="space-y-2 text-center">
           <p className="text-destructive font-semibold">שגיאה בטעינת הפרופיל</p>
-          <p className="text-muted-foreground text-sm">{error.message}</p>
+          <p className="text-muted-foreground text-body-sm">{error.message}</p>
         </div>
       </div>
     );
@@ -91,7 +91,7 @@ export default async function StudentPage({
       <div className="flex min-h-[50vh] items-center justify-center">
         <div className="space-y-2 text-center">
           <p className="text-foreground font-semibold">מיועד לא נמצא</p>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground text-body-sm">
             הרשומה שחיפשת אינה קיימת במערכת
           </p>
         </div>
@@ -121,7 +121,7 @@ export default async function StudentPage({
         <div className="bg-muted rounded-lg p-2">
           <Icon size={20} className="text-primary" />
         </div>
-        <h2 className="text-xl! font-bold!">{title}</h2>
+        <h2 className="text-title! font-bold!">{title}</h2>
       </div>
       {children}
     </Box>
@@ -137,8 +137,8 @@ export default async function StudentPage({
     if (!value && value !== 0) return null;
     return (
       <div className="flex flex-col">
-        <span className="text-muted-foreground text-xs font-medium">{label}</span>
-        <span className="text-foreground text-sm font-semibold">{value}</span>
+        <span className="text-muted-foreground text-caption font-medium">{label}</span>
+        <span className="text-foreground text-body-sm font-semibold">{value}</span>
       </div>
     );
   };
@@ -166,7 +166,7 @@ export default async function StudentPage({
       {/* Back */}
       <Link
         href="/app/students"
-        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
+        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-body-sm transition-colors"
       >
         <ChevronRight className="h-4 w-4" />
         חזרה לרשימה
@@ -180,7 +180,7 @@ export default async function StudentPage({
             {photoPrivate ? (
               <div className="bg-muted flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-full border sm:h-24 sm:w-24">
                 <Lock className="text-muted-foreground h-6 w-6" />
-                <span className="text-muted-foreground text-[10px]">חסוי</span>
+                <span className="text-muted-foreground text-caption">חסוי</span>
               </div>
             ) : (
               <img
@@ -198,10 +198,10 @@ export default async function StudentPage({
         )}
 
         <div className="min-w-0 flex-1">
-          <h1 className="text-2xl! font-bold! leading-tight!">
+          <h1 className="text-heading! font-bold! leading-tight!">
             {student.first_name} {student.last_name}
           </h1>
-          <p className="text-muted-foreground mt-1.5 flex flex-wrap gap-x-2 gap-y-1 text-sm">
+          <p className="text-muted-foreground mt-1.5 flex flex-wrap gap-x-2 gap-y-1 text-body-sm">
             {genderLabel && <span>{genderLabel}</span>}
             {student.birth_date && (
               <>
@@ -306,12 +306,12 @@ export default async function StudentPage({
               )}
               {student.phone && (
                 <div className="flex flex-col">
-                  <span className="text-muted-foreground text-xs font-medium">
+                  <span className="text-muted-foreground text-caption font-medium">
                     טלפון
                   </span>
                   <a
                     href={`tel:${student.phone}`}
-                    className="text-primary flex items-center gap-1 text-sm font-semibold hover:underline"
+                    className="text-primary flex items-center gap-1 text-body-sm font-semibold hover:underline"
                   >
                     <Phone size={12} /> {student.phone}
                   </a>
@@ -343,7 +343,7 @@ export default async function StudentPage({
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {/* Father */}
                 <div className="border-border bg-muted/30 rounded-lg border p-4">
-                  <p className="text-muted-foreground mb-2 text-xs font-bold uppercase">
+                  <p className="text-muted-foreground mb-2 text-caption font-bold uppercase">
                     אבא
                   </p>
                   <p className="font-bold">
@@ -352,14 +352,14 @@ export default async function StudentPage({
                     {student.parents_info?.father?.self?.suffix || ""}
                   </p>
                   {student.parents_info?.father?.job && (
-                    <p className="text-muted-foreground mt-1 text-sm italic">
+                    <p className="text-muted-foreground mt-1 text-body-sm italic">
                       {student.parents_info.father.job}
                     </p>
                   )}
                   {student.parents_info?.father?.phone && (
                     <a
                       href={`tel:${student.parents_info.father.phone}`}
-                      className="text-muted-foreground hover:text-primary mt-2 flex items-center gap-1 text-xs"
+                      className="text-muted-foreground hover:text-primary mt-2 flex items-center gap-1 text-caption"
                     >
                       <Phone size={12} /> {student.parents_info.father.phone}
                     </a>
@@ -367,7 +367,7 @@ export default async function StudentPage({
                   {student.parents_info?.father?.email && (
                     <a
                       href={`mailto:${student.parents_info.father.email}`}
-                      className="text-muted-foreground hover:text-primary mt-1 flex items-center gap-1 text-xs"
+                      className="text-muted-foreground hover:text-primary mt-1 flex items-center gap-1 text-caption"
                     >
                       <Mail size={12} /> {student.parents_info.father.email}
                     </a>
@@ -375,8 +375,8 @@ export default async function StudentPage({
                   {/* Grandfather */}
                   {student.parents_info?.father?.grandFather && (
                     <div className="border-border mt-3 border-t pt-3">
-                      <p className="text-muted-foreground text-xs">אביו:</p>
-                      <p className="text-sm">
+                      <p className="text-muted-foreground text-caption">אביו:</p>
+                      <p className="text-body-sm">
                         {student.parents_info.father.grandFather.prefix || ""}{" "}
                         {student.parents_info.father.grandFather.name || ""}{" "}
                         {student.parents_info.father.grandFather.suffix || ""}
@@ -386,8 +386,8 @@ export default async function StudentPage({
                   {/* Grandmother */}
                   {student.parents_info?.father?.grandMother && (
                     <div className="mt-2">
-                      <p className="text-muted-foreground text-xs">אמו:</p>
-                      <p className="text-sm">
+                      <p className="text-muted-foreground text-caption">אמו:</p>
+                      <p className="text-body-sm">
                         {student.parents_info.father.grandMother.prefix || ""}{" "}
                         {student.parents_info.father.grandMother.name || ""}{" "}
                         {student.parents_info.father.grandMother.suffix || ""}
@@ -398,7 +398,7 @@ export default async function StudentPage({
 
                 {/* Mother */}
                 <div className="border-border bg-muted/30 rounded-lg border p-4">
-                  <p className="text-muted-foreground mb-2 text-xs font-bold uppercase">
+                  <p className="text-muted-foreground mb-2 text-caption font-bold uppercase">
                     אמא
                   </p>
                   <p className="font-bold">
@@ -406,21 +406,21 @@ export default async function StudentPage({
                     {student.parents_info?.mother?.self?.name || ""}{" "}
                     {student.parents_info?.mother?.self?.suffix || ""}
                     {student.parents_info?.mother?.maidenName && (
-                      <span className="text-muted-foreground text-sm font-normal">
+                      <span className="text-muted-foreground text-body-sm font-normal">
                         {" "}
                         | לבית {student.parents_info.mother.maidenName}
                       </span>
                     )}
                   </p>
                   {student.parents_info?.mother?.job && (
-                    <p className="text-muted-foreground mt-1 text-sm">
+                    <p className="text-muted-foreground mt-1 text-body-sm">
                       {student.parents_info.mother.job}
                     </p>
                   )}
                   {student.parents_info?.mother?.phone && (
                     <a
                       href={`tel:${student.parents_info.mother.phone}`}
-                      className="text-muted-foreground hover:text-primary mt-2 flex items-center gap-1 text-xs"
+                      className="text-muted-foreground hover:text-primary mt-2 flex items-center gap-1 text-caption"
                     >
                       <Phone size={12} /> {student.parents_info.mother.phone}
                     </a>
@@ -428,14 +428,14 @@ export default async function StudentPage({
                   {student.parents_info?.mother?.email && (
                     <a
                       href={`mailto:${student.parents_info.mother.email}`}
-                      className="text-muted-foreground hover:text-primary mt-1 flex items-center gap-1 text-xs"
+                      className="text-muted-foreground hover:text-primary mt-1 flex items-center gap-1 text-caption"
                     >
                       <Mail size={12} /> {student.parents_info.mother.email}
                     </a>
                   )}
                   {student.parents_info?.deadParent === "mother" &&
                     student.parents_info?.motherDeathDate && (
-                      <p className="text-destructive mt-2 text-xs">
+                      <p className="text-destructive mt-2 text-caption">
                         נפטרה ב-
                         {jewishDateHebrew(student.parents_info.motherDeathDate)}
                       </p>
@@ -443,8 +443,8 @@ export default async function StudentPage({
                   {/* Grandfather */}
                   {student.parents_info?.mother?.grandFather && (
                     <div className="border-border mt-3 border-t pt-3">
-                      <p className="text-muted-foreground text-xs">אביה:</p>
-                      <p className="text-sm">
+                      <p className="text-muted-foreground text-caption">אביה:</p>
+                      <p className="text-body-sm">
                         {student.parents_info.mother.grandFather.prefix || ""}{" "}
                         {student.parents_info.mother.grandFather.name || ""}{" "}
                         {student.parents_info.mother.grandFather.suffix || ""}
@@ -454,8 +454,8 @@ export default async function StudentPage({
                   {/* Grandmother */}
                   {student.parents_info?.mother?.grandMother && (
                     <div className="mt-2">
-                      <p className="text-muted-foreground text-xs">אימה:</p>
-                      <p className="text-sm">
+                      <p className="text-muted-foreground text-caption">אימה:</p>
+                      <p className="text-body-sm">
                         {student.parents_info.mother.grandMother.prefix || ""}{" "}
                         {student.parents_info.mother.grandMother.name || ""}{" "}
                         {student.parents_info.mother.grandMother.suffix || ""}
@@ -468,7 +468,7 @@ export default async function StudentPage({
               {/* Parents Status */}
               {student.parents_info?.status && (
                 <div className="border-border bg-muted/50 rounded-lg border p-4">
-                  <h4 className="mb-3 text-sm font-bold">מצב ההורים</h4>
+                  <h4 className="mb-3 text-body-sm font-bold">מצב ההורים</h4>
                   <div className="grid grid-cols-3 gap-4">
                     <InfoTag
                       label="סטטוס"
@@ -534,7 +534,7 @@ export default async function StudentPage({
               {/* Family Info */}
               {student.family_info && (
                 <div className="border-border bg-muted/50 rounded-lg border p-4">
-                  <h4 className="mb-3 text-sm font-bold">פרטים נוספים</h4>
+                  <h4 className="mb-3 text-body-sm font-bold">פרטים נוספים</h4>
                   <div className="grid grid-cols-3 gap-4">
                     {student.family_info.numberOfChildren && (
                       <InfoTag
@@ -562,7 +562,7 @@ export default async function StudentPage({
               {student.family_info?.mechutanim &&
                 student.family_info.mechutanim.length > 0 && (
                   <div>
-                    <h4 className="mb-3 flex items-center gap-2 text-sm font-bold">
+                    <h4 className="mb-3 flex items-center gap-2 text-body-sm font-bold">
                       <Heart size={16} /> מחותנים
                     </h4>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -579,15 +579,15 @@ export default async function StudentPage({
                             key={idx}
                             className="border-border bg-card flex items-center gap-3 rounded-lg border p-3"
                           >
-                            <div className="bg-muted flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold">
+                            <div className="bg-muted flex h-8 w-8 items-center justify-center rounded-full text-caption font-bold">
                               {idx + 1}
                             </div>
                             <div>
-                              <p className="text-sm font-bold">
+                              <p className="text-body-sm font-bold">
                                 {m.firstName} {m.lastName}
                               </p>
                               {m.city && (
-                                <p className="text-muted-foreground text-xs">
+                                <p className="text-muted-foreground text-caption">
                                   {m.city}
                                 </p>
                               )}
@@ -631,28 +631,28 @@ export default async function StudentPage({
                           <div className="flex-1">
                             <p className="font-bold">{p.full_name}</p>
                             {p.marriage_date && (
-                              <p className="text-muted-foreground text-xs">
+                              <p className="text-muted-foreground text-caption">
                                 נישאו: {p.marriage_date}
                               </p>
                             )}
                             {p.separation_type === "divorce" &&
                               p.divorce_date && (
-                                <p className="text-muted-foreground text-xs">
+                                <p className="text-muted-foreground text-caption">
                                   גירושין: {p.divorce_date}
                                 </p>
                               )}
                             {p.separation_type === "death" && p.death_date && (
-                              <p className="text-muted-foreground text-xs">
+                              <p className="text-muted-foreground text-caption">
                                 נפטר/ה ב: {jewishDateHebrew(p.death_date)}
                               </p>
                             )}
                             {p.divorce_details?.reason && (
-                              <p className="mt-2 text-sm">
+                              <p className="mt-2 text-body-sm">
                                 סיבת הגירושין: {p.divorce_details.reason}
                               </p>
                             )}
                             {p.divorce_details?.rabbiName && (
-                              <p className="text-muted-foreground text-xs">
+                              <p className="text-muted-foreground text-caption">
                                 רב מלווה: {p.divorce_details.rabbiName}
                                 {p.divorce_details.rabbiPhone && (
                                   <span>
@@ -671,13 +671,13 @@ export default async function StudentPage({
                           </div>
                           {p.children_number ? (
                             <div className="text-left">
-                              <span className="border-border bg-card rounded-lg border px-2 py-1 text-xs font-bold">
+                              <span className="border-border bg-card rounded-lg border px-2 py-1 text-caption font-bold">
                                 {p.children_number} ילדים
                               </span>
                             </div>
                           ) : (
                             <div className="text-left">
-                              <span className="border-border bg-card rounded-lg border px-2 py-1 text-xs font-bold">
+                              <span className="border-border bg-card rounded-lg border px-2 py-1 text-caption font-bold">
                                 אין ילדים
                               </span>
                             </div>
@@ -710,10 +710,10 @@ export default async function StudentPage({
                   {student.partner_preferences.age_min &&
                     student.partner_preferences.age_max && (
                       <div className="bg-muted/50 rounded-lg p-3">
-                        <p className="text-muted-foreground text-xs">
+                        <p className="text-muted-foreground text-caption">
                           טווח גילאים
                         </p>
-                        <p className="text-sm font-bold">
+                        <p className="text-body-sm font-bold">
                           {student.partner_preferences.age_min} -{" "}
                           {student.partner_preferences.age_max}
                         </p>
@@ -721,10 +721,10 @@ export default async function StudentPage({
                     )}
                   {student.partner_preferences.work_status && (
                     <div className="bg-muted/50 rounded-lg p-3">
-                      <p className="text-muted-foreground text-xs">
+                      <p className="text-muted-foreground text-caption">
                         סטטוס תעסוקתי מבוקש
                       </p>
-                      <p className="text-sm font-bold">
+                      <p className="text-body-sm font-bold">
                         {workStatusToHebrew(
                           student.partner_preferences.work_status,
                         )}
@@ -733,10 +733,10 @@ export default async function StudentPage({
                   )}
                   {student.partner_preferences.head_cover_type && (
                     <div className="bg-muted/50 rounded-lg p-3">
-                      <p className="text-muted-foreground text-xs">
+                      <p className="text-muted-foreground text-caption">
                         סוג כיסוי ראש רצוי
                       </p>
-                      <p className="text-sm font-bold">
+                      <p className="text-body-sm font-bold">
                         {headCoverTypeToHebrew(
                           student.partner_preferences.head_cover_type,
                         )}
@@ -745,10 +745,10 @@ export default async function StudentPage({
                   )}
                   {student.partner_preferences.plan_for_life && (
                     <div className="bg-muted/50 rounded-lg p-3">
-                      <p className="text-muted-foreground text-xs">
+                      <p className="text-muted-foreground text-caption">
                         תכנון לחיים
                       </p>
-                      <p className="text-sm font-bold">
+                      <p className="text-body-sm font-bold">
                         {planForLifeToHebrew(
                           student.partner_preferences.plan_for_life,
                         )}
@@ -757,10 +757,10 @@ export default async function StudentPage({
                   )}
                   {student.partner_preferences.cellphone_type && (
                     <div className="bg-muted/50 rounded-lg p-3">
-                      <p className="text-muted-foreground text-xs">
+                      <p className="text-muted-foreground text-caption">
                         סוג טלפון מקובל
                       </p>
-                      <p className="text-sm font-bold">
+                      <p className="text-body-sm font-bold">
                         {cellphoneTypeToHebrew(
                           student.partner_preferences.cellphone_type,
                         )}
@@ -769,13 +769,13 @@ export default async function StudentPage({
                   )}
                 </div>
                 <div className="bg-muted/50 rounded-lg p-3">
-                  <p className="text-muted-foreground mb-2 text-xs">
+                  <p className="text-muted-foreground mb-2 text-caption">
                     ארץ / מדינות מועדפות
                   </p>
                   {!student.partner_preferences.preferred_countries ||
                   student.partner_preferences.preferred_countries.length ===
                     0 ? (
-                    <p className="text-sm font-bold">ללא העדפה — כל הארצות</p>
+                    <p className="text-body-sm font-bold">ללא העדפה — כל הארצות</p>
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {student.partner_preferences.preferred_countries.map(
@@ -790,10 +790,10 @@ export default async function StudentPage({
                 </div>
                 {student.partner_preferences.about_partner && (
                   <div className="bg-muted/50 rounded-lg p-3">
-                    <p className="text-muted-foreground mb-1 text-xs">
+                    <p className="text-muted-foreground mb-1 text-caption">
                       אופי המבוקש
                     </p>
-                    <p className="text-sm">
+                    <p className="text-body-sm">
                       {student.partner_preferences.about_partner}
                     </p>
                   </div>
@@ -825,8 +825,8 @@ export default async function StudentPage({
                         className="border-border relative border-r-2 py-2 pr-4"
                       >
                         <div className="bg-primary absolute top-2 -right-[5px] h-2 w-2 rounded-full"></div>
-                        <p className="text-sm font-bold">{edu.name}</p>
-                        <div className="text-muted-foreground flex flex-wrap gap-1 text-xs">
+                        <p className="text-body-sm font-bold">{edu.name}</p>
+                        <div className="text-muted-foreground flex flex-wrap gap-1 text-caption">
                           {edu.institution_type && (
                             <span>{eduToHebrew(edu.institution_type)}</span>
                           )}
@@ -872,20 +872,20 @@ export default async function StudentPage({
                         className="border-border bg-muted/50 rounded-lg border p-3"
                       >
                         {job.category && (
-                          <p className="text-muted-foreground mb-1 text-xs font-bold uppercase">
+                          <p className="text-muted-foreground mb-1 text-caption font-bold uppercase">
                             {employmentCategoryToHebrew(job.category)}
                           </p>
                         )}
                         {job.role && (
-                          <p className="text-sm font-bold">{job.role}</p>
+                          <p className="text-body-sm font-bold">{job.role}</p>
                         )}
                         {job.location && (
-                          <p className="text-muted-foreground text-xs">
+                          <p className="text-muted-foreground text-caption">
                             {job.location}
                           </p>
                         )}
                         {job.description && (
-                          <p className="text-muted-foreground mt-1 text-xs">
+                          <p className="text-muted-foreground mt-1 text-caption">
                             {job.description}
                           </p>
                         )}
@@ -914,15 +914,15 @@ export default async function StudentPage({
                       key={idx}
                       className="border-border bg-card hover:bg-muted/50 rounded-lg border p-3 transition-colors"
                     >
-                      <p className="text-primary mb-1 text-xs font-bold">
+                      <p className="text-primary mb-1 text-caption font-bold">
                         {ref.reference_type &&
                           referenceTypeToHebrew(ref.reference_type)}
                       </p>
-                      <p className="text-sm font-bold">{ref.name}</p>
+                      <p className="text-body-sm font-bold">{ref.name}</p>
                       {ref.phone && (
                         <a
                           href={`tel:${ref.phone}`}
-                          className="text-muted-foreground hover:text-primary mt-1 flex items-center gap-1 text-xs"
+                          className="text-muted-foreground hover:text-primary mt-1 flex items-center gap-1 text-caption"
                         >
                           <Phone size={12} /> {ref.phone}
                         </a>
@@ -930,7 +930,7 @@ export default async function StudentPage({
                       {ref.email && (
                         <a
                           href={`mailto:${ref.email}`}
-                          className="text-muted-foreground hover:text-primary mt-1 flex items-center gap-1 text-xs"
+                          className="text-muted-foreground hover:text-primary mt-1 flex items-center gap-1 text-caption"
                         >
                           <Mail size={12} /> {ref.email}
                         </a>
@@ -953,7 +953,7 @@ export default async function StudentPage({
               )}
             >
             {!hasMedicalIssue ? (
-              <p className="text-foreground text-xs leading-relaxed">
+              <p className="text-foreground text-caption leading-relaxed">
                 <strong>מצב בריאותי כללי:</strong>{" "}
                 {student.medical_records?.status === "good"
                   ? medicalStatusToHebrew("good")
@@ -961,17 +961,17 @@ export default async function StudentPage({
               </p>
             ) : (
               <>
-                <p className="text-foreground text-xs leading-relaxed">
+                <p className="text-foreground text-caption leading-relaxed">
                   צוין שיש נושא רפואי (
                   {medicalStatusToHebrew(student.medical_records.status)}):
                 </p>
                 {student.medical_records.details && (
-                  <blockquote className="border-destructive/30 mt-1 mb-2 block rounded-sm border-s-2 bg-white/25 ps-2 text-xs leading-relaxed">
+                  <blockquote className="border-destructive/30 mt-1 mb-2 block rounded-sm border-s-2 bg-white/25 ps-2 text-caption leading-relaxed">
                     {student.medical_records.details}
                   </blockquote>
                 )}
                 {student.medical_records.exposure_level && (
-                  <p className="text-muted-foreground mb-2 text-xs">
+                  <p className="text-muted-foreground mb-2 text-caption">
                     רמת חשיפה:{" "}
                     {exposureLevelToHebrew(
                       student.medical_records.exposure_level,
@@ -979,7 +979,7 @@ export default async function StudentPage({
                   </p>
                 )}
                 {student.medical_records.related_issue_preference && (
-                  <p className="text-muted-foreground text-xs">
+                  <p className="text-muted-foreground text-caption">
                     העדפה לשידוך:{" "}
                     {relatedIssuePreferenceToHebrew(
                       student.medical_records.related_issue_preference,
@@ -988,11 +988,11 @@ export default async function StudentPage({
                 )}
                 {student.medical_records.contact_info && (
                   <div className="border-border mt-3 border-t pt-3">
-                    <p className="text-muted-foreground mb-1 text-xs font-bold">
+                    <p className="text-muted-foreground mb-1 text-caption font-bold">
                       יצירת קשר למידע נוסף:
                     </p>
                     {student.medical_records.contact_info.type ===
-                      "parents" && <p className="text-xs">ההורים</p>}
+                      "parents" && <p className="text-caption">ההורים</p>}
                     {student.medical_records.contact_info.type === "other" &&
                       student.medical_records.contact_info.contacts &&
                       student.medical_records.contact_info.contacts.length >
@@ -1007,7 +1007,7 @@ export default async function StudentPage({
                               },
                               idx: number,
                             ) => (
-                              <div key={idx} className="text-xs">
+                              <div key={idx} className="text-caption">
                                 <p className="font-bold">{contact.name}</p>
                                 {contact.phone && (
                                   <a
@@ -1035,7 +1035,7 @@ export default async function StudentPage({
                 {student.medical_records.documents &&
                   student.medical_records.documents.length > 0 && (
                     <div className="border-border mt-3 border-t pt-3">
-                      <p className="text-muted-foreground mb-2 text-xs font-bold">
+                      <p className="text-muted-foreground mb-2 text-caption font-bold">
                         מסמכים רפואיים:
                       </p>
                       <div className="space-y-1">
@@ -1046,7 +1046,7 @@ export default async function StudentPage({
                               href={doc}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-primary block text-xs hover:underline"
+                              className="text-primary block text-caption hover:underline"
                             >
                               <FileText size={12} className="inline" /> מסמך{" "}
                               {idx + 1}
@@ -1064,14 +1064,14 @@ export default async function StudentPage({
           {/* Author Info */}
           {student.author_info && (
             <div className="border-border bg-card rounded-lg border p-4">
-              <p className="text-muted-foreground mb-1 text-xs font-bold tracking-widest uppercase">
+              <p className="text-muted-foreground mb-1 text-caption font-bold tracking-widest uppercase">
                 הקו״ח מולאו ע"י
               </p>
-              <p className="text-sm font-bold">{student.author_info.name}</p>
+              <p className="text-body-sm font-bold">{student.author_info.name}</p>
               {student.author_info.phone && (
                 <a
                   href={`tel:${student.author_info.phone}`}
-                  className="text-muted-foreground hover:text-primary mt-1 flex items-center gap-1 text-xs"
+                  className="text-muted-foreground hover:text-primary mt-1 flex items-center gap-1 text-caption"
                 >
                   <Phone size={12} /> {student.author_info.phone}
                 </a>

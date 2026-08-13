@@ -60,8 +60,8 @@ async function SidebarLayout({ children }: { children: React.ReactNode }) {
             fontFamily: "ploni",
           }}
           className={cn(
-            "**:data-title:text-lg **:data-title:font-black!",
-            "**:data-description:text-sm",
+            "**:data-title:text-subtitle **:data-title:font-black!",
+            "**:data-description:text-body-sm",
           )}
         />
       </SidebarInset>

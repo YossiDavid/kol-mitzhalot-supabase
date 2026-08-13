@@ -40,17 +40,17 @@ export default function CompatibilityDiagnosis({ issues, onDismiss }: Props) {
             <AlertTriangleIcon className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
           ) : null}
           <div className="min-w-0 flex-1 space-y-2">
-            <h3 className="text-base font-bold">
+            <h3 className="text-body font-bold">
               {hasIssues ? "שים לב:" : "אבחון התאמה"}
             </h3>
             {hasIssues ? (
-              <ol className="list-decimal space-y-1 ps-5 text-sm leading-relaxed">
+              <ol className="list-decimal space-y-1 ps-5 text-body-sm leading-relaxed">
                 {issues.map((issue, i) => (
                   <li key={i}>{issue}</li>
                 ))}
               </ol>
             ) : (
-              <p className="text-sm leading-relaxed">
+              <p className="text-body-sm leading-relaxed">
                 לא זוהו הערות מהותיות באבחון זה. ניתן להמשיך לשמירה או שליחה.
               </p>
             )}

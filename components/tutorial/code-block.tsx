@@ -55,7 +55,7 @@ export function CodeBlock({ code }: { code: string }) {
       >
         {icon}
       </Button>
-      <code className="text-xs p-3">{code}</code>
+      <code className="text-caption p-3">{code}</code>
     </pre>
   );
 }

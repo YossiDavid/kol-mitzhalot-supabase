@@ -15,8 +15,8 @@ export default function AdminPage() {
           <Link href="/app/admin/shadchanim">
             <div className="p-6 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
               <UserCheck className="h-8 w-8 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">כל השדכנים</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-subtitle font-semibold mb-2">כל השדכנים</h3>
+              <p className="text-body-sm text-muted-foreground">
                 ניהול וצפייה בכל השדכנים במערכת
               </p>
             </div>
@@ -25,8 +25,8 @@ export default function AdminPage() {
           <Link href="/app/admin/users">
             <div className="p-6 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
               <Users className="h-8 w-8 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">כל המשתמשים</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-subtitle font-semibold mb-2">כל המשתמשים</h3>
+              <p className="text-body-sm text-muted-foreground">
                 ניהול וצפייה בכל המשתמשים במערכת
               </p>
             </div>
@@ -35,8 +35,8 @@ export default function AdminPage() {
           <Link href="/app/admin/settings">
             <div className="p-6 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
               <FileText className="h-8 w-8 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">הגדרות מערכת</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-subtitle font-semibold mb-2">הגדרות מערכת</h3>
+              <p className="text-body-sm text-muted-foreground">
                 עריכת תוכן מערכת כמו מדיניות פרטיות
               </p>
             </div>
@@ -45,8 +45,8 @@ export default function AdminPage() {
           <Link href={"/app/admin/content" as any}>
             <div className="p-6 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
               <BookOpen className="h-8 w-8 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">ניהול תוכן</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-subtitle font-semibold mb-2">ניהול תוכן</h3>
+              <p className="text-body-sm text-muted-foreground">
                 מאמרים, מאורסים, והמלצות רבנים
               </p>
             </div>

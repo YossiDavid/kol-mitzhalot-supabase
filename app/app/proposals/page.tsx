@@ -68,7 +68,7 @@ export default async function ProposalsPage() {
     return (
       <Section containerClassName="py-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-2xl font-bold">כל ההצעות שלי</h1>
+          <h1 className="text-heading font-bold">כל ההצעות שלי</h1>
           <Button asChild variant="outline">
             <Link href="/app">חזרה לאפליקציה</Link>
           </Button>
@@ -136,7 +136,7 @@ export default async function ProposalsPage() {
   return (
     <Section containerClassName="py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">כל ההצעות שלי</h1>
+        <h1 className="text-heading font-bold">כל ההצעות שלי</h1>
         <Button asChild variant="outline">
           <Link href="/app">חזרה לאפליקציה</Link>
         </Button>
@@ -173,7 +173,7 @@ export default async function ProposalsPage() {
               >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="truncate text-base font-semibold">
+                    <h2 className="truncate text-body font-semibold">
                       {fullName(row.groom)} - {fullName(row.bride)}
                     </h2>
                     <Badge
@@ -184,7 +184,7 @@ export default async function ProposalsPage() {
                     </Badge>
                   </div>
 
-                  <div className="mt-1 text-sm text-muted-foreground">
+                  <div className="mt-1 text-body-sm text-muted-foreground">
                     נוצר:{" "}
                     {new Date(row.created_at).toLocaleDateString("he-IL")}
                     {row.sent_at ? (
@@ -197,7 +197,7 @@ export default async function ProposalsPage() {
                   </div>
 
                   {note ? (
-                    <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground line-clamp-3">
+                    <p className="mt-2 whitespace-pre-wrap text-body-sm text-muted-foreground line-clamp-3">
                       {note}
                     </p>
                   ) : null}

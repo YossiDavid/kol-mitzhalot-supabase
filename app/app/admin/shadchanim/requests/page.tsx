@@ -125,10 +125,10 @@ export default async function ShadchanRequestsPage() {
           }
         >
           <div className="border-destructive bg-destructive/10 mt-6 rounded-lg border p-6">
-            <h3 className="text-destructive mb-2 text-lg font-semibold">
+            <h3 className="text-destructive mb-2 text-subtitle font-semibold">
               שגיאה בטעינת הבקשות
             </h3>
-            <p className="text-sm">{error.message}</p>
+            <p className="text-body-sm">{error.message}</p>
           </div>
         </DashboardSection>
       </div>
@@ -164,12 +164,12 @@ export default async function ShadchanRequestsPage() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-semibold">
+                        <h3 className="text-subtitle font-semibold">
                           {request.user_first_name || request.user_last_name
                             ? `${request.user_first_name || ""} ${request.user_last_name || ""}`.trim()
                             : `בקשה #${request.id.substring(0, 8)}`}
                         </h3>
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-caption font-medium ${
                           request.application_status === "approved"
                             ? "bg-green-100 text-green-800"
                             : request.application_status === "rejected"
@@ -184,27 +184,27 @@ export default async function ShadchanRequestsPage() {
                         </span>
                       </div>
                       {request.user_email && (
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-body-sm text-muted-foreground">
                           אימייל: {request.user_email}
                         </p>
                       )}
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-body-sm text-muted-foreground">
                         תאריך הגשה: {formatDate(request.submitted_at)}
                       </p>
                       {request.application_status === "approved" && request.approved_at && (
-                        <p className="text-sm text-green-700">
+                        <p className="text-body-sm text-green-700">
                           אושר ב: {formatDate(request.approved_at)}
                         </p>
                       )}
                       {request.application_status === "rejected" && (
                         <>
                           {request.rejected_at && (
-                            <p className="text-sm text-red-700">
+                            <p className="text-body-sm text-red-700">
                               נדחה ב: {formatDate(request.rejected_at)}
                             </p>
                           )}
                           {request.rejected_reason && (
-                            <p className="text-sm text-red-700">
+                            <p className="text-body-sm text-red-700">
                               סיבה: {request.rejected_reason}
                             </p>
                           )}
@@ -220,19 +220,19 @@ export default async function ShadchanRequestsPage() {
                     {request.bio && (
                       <div>
                         <h4 className="font-semibold mb-1">ביוגרפיה:</h4>
-                        <p className="text-sm">{request.bio}</p>
+                        <p className="text-body-sm">{request.bio}</p>
                       </div>
                     )}
                     {request.experience_years !== null && (
                       <div>
                         <h4 className="font-semibold mb-1">שנות ניסיון:</h4>
-                        <p className="text-sm">{request.experience_years}</p>
+                        <p className="text-body-sm">{request.experience_years}</p>
                       </div>
                     )}
                     {request.specializations && request.specializations.length > 0 && (
                       <div>
                         <h4 className="font-semibold mb-1">התמחויות:</h4>
-                        <p className="text-sm">
+                        <p className="text-body-sm">
                           {request.specializations.join(", ")}
                         </p>
                       </div>
@@ -240,31 +240,31 @@ export default async function ShadchanRequestsPage() {
                     {request.contact_phone && (
                       <div>
                         <h4 className="font-semibold mb-1">טלפון:</h4>
-                        <p className="text-sm">{request.contact_phone}</p>
+                        <p className="text-body-sm">{request.contact_phone}</p>
                       </div>
                     )}
                     {request.contact_email && (
                       <div>
                         <h4 className="font-semibold mb-1">אימייל:</h4>
-                        <p className="text-sm">{request.contact_email}</p>
+                        <p className="text-body-sm">{request.contact_email}</p>
                       </div>
                     )}
                     {request.location && (
                       <div>
                         <h4 className="font-semibold mb-1">מיקום:</h4>
-                        <p className="text-sm">{request.location}</p>
+                        <p className="text-body-sm">{request.location}</p>
                       </div>
                     )}
                     {request.languages && request.languages.length > 0 && (
                       <div>
                         <h4 className="font-semibold mb-1">שפות:</h4>
-                        <p className="text-sm">{request.languages.join(", ")}</p>
+                        <p className="text-body-sm">{request.languages.join(", ")}</p>
                       </div>
                     )}
                     {request.certifications && request.certifications.length > 0 && (
                       <div>
                         <h4 className="font-semibold mb-1">תעודות:</h4>
-                        <p className="text-sm">
+                        <p className="text-body-sm">
                           {request.certifications.join(", ")}
                         </p>
                       </div>
@@ -272,7 +272,7 @@ export default async function ShadchanRequestsPage() {
                     {request.website_url && (
                       <div>
                         <h4 className="font-semibold mb-1">אתר:</h4>
-                        <p className="text-sm">
+                        <p className="text-body-sm">
                           <a
                             href={request.website_url}
                             target="_blank"

@@ -205,7 +205,7 @@ export default function ShadchanApplicationPage() {
     <div className="container mx-auto max-w-2xl py-8">
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">הצטרפות כשדכן</h1>
+          <h1 className="text-heading font-bold">הצטרפות כשדכן</h1>
           <p className="text-muted-foreground mt-2">
             מלא את הפרטים הבאים כדי להגיש בקשה להצטרפות כשדכן במערכת
           </p>
