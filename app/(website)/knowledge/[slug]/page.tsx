@@ -33,7 +33,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-async function ArticleContent({ slug }: { slug: string }) {
+async function ArticleContent({ params }: Props) {
+  const { slug } = await params;
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("articles")
@@ -104,12 +105,11 @@ function ArticleSkeleton() {
   );
 }
 
-export default async function KnowledgeArticlePage({ params }: Props) {
-  const { slug } = await params;
+export default function KnowledgeArticlePage({ params }: Props) {
   return (
     <>
       <Suspense fallback={<ArticleSkeleton />}>
-        <ArticleContent slug={slug} />
+        <ArticleContent params={params} />
       </Suspense>
       <WebCta />
     </>
