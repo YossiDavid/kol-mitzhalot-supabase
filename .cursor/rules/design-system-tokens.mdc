@@ -11,7 +11,8 @@ Source of truth: `app/design-system.css` (+ catalog in `lib/design-system/tokens
 ## Typography
 
 - Prefer semantic HTML (`h1`–`h6`, `p`, `small`) — sizes come from `@layer base`.
-- Explicit size classes only: `text-display` | `text-heading` | `text-title` | `text-subtitle` | `text-body` | `text-body-sm` | `text-label` | `text-caption`.
+- Explicit size classes only: `text-display` | `text-heading` | `text-title` | `text-subtitle` | `text-body` | `text-body-sm` | `text-label` | `text-caption` | `text-hero` (marketing H1).
+- Marketing site (`.site-marketing`): larger type scale + `shell-site` (~90% width). Do not use `max-w-[1120px]` on marketing pages.
 - Long-form content: wrap with `prose-km`.
 - Never use `text-xs` / `text-sm` / `text-base` / `text-lg` / `text-xl` / `text-2xl…`, `text-[Npx]`, or `style={{ fontSize }}`.
 - `cn()` / `tailwind-merge` is configured so size tokens do not strip color utilities (`text-primary-foreground` + `text-body-sm` must coexist). Keep `lib/utils.ts` and `scripts/verify-cn-merge.mjs` in sync (`pnpm test:cn`).

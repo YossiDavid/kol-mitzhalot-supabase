@@ -37,7 +37,29 @@ export default function EndorsementsAdminPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  // Callers: admin endorsements form. Storage bucket `content`. User: images for endorsements.
+  const [uploading, setUploading] = useState(false);
   const supabase = createClient();
+
+  async function uploadImage(file: File) {
+    setUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `endorsements/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("content").upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type,
+    });
+    if (error) {
+      toast.error(`העלאה נכשלה: ${error.message}`);
+      setUploading(false);
+      return;
+    }
+    const { data } = supabase.storage.from("content").getPublicUrl(path);
+    setForm((f) => ({ ...f, image_url: data.publicUrl }));
+    toast.success("התמונה הועלתה");
+    setUploading(false);
+  }
 
   async function load() {
     setLoading(true);
@@ -152,7 +174,28 @@ export default function EndorsementsAdminPage() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {F("rav_name", "שם הרב *")}
                 {F("rav_title", "תואר / תפקיד")}
-                {F("image_url", "קישור לתמונה (URL)", "url")}
+                <div className="sm:col-span-2 space-y-2">
+                  <Label htmlFor="image_file">תמונת הסכמה</Label>
+                  <Input
+                    id="image_file"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    disabled={uploading}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) void uploadImage(file);
+                    }}
+                  />
+                  {F("image_url", "או קישור לתמונה (URL)", "url")}
+                  {form.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={form.image_url}
+                      alt=""
+                      className="mt-2 h-24 w-24 rounded-lg object-cover"
+                    />
+                  ) : null}
+                </div>
                 <div>
                   <Label htmlFor="sort_order">סדר תצוגה</Label>
                   <Input

@@ -72,6 +72,55 @@
   --text-label--line-height: 1.25;
 }
 
+/* Marketing site — larger type + wide shell (app UI keeps base tokens).
+ * Mobile: body a touch smaller; leading tighter than the old airy scale. */
+.site-marketing {
+  --text-display: clamp(2.75rem, 4.2vw, 3.75rem); /* ~44→60 */
+  --text-display--line-height: 1.08;
+  --text-heading: clamp(2.25rem, 3.2vw, 3rem); /* ~36→48 */
+  --text-heading--line-height: 1.15;
+  --text-title: clamp(1.625rem, 2.2vw, 2.125rem); /* ~26→34 */
+  --text-title--line-height: 1.25;
+  --text-subtitle: 1.25rem; /* 20px mobile */
+  --text-subtitle--line-height: 1.35;
+  --text-body: 1.125rem; /* 18px mobile */
+  --text-body--line-height: 1.5;
+  --text-body-sm: 1rem; /* 16px mobile */
+  --text-body-sm--line-height: 1.45;
+  --text-label: 1rem;
+  --text-caption: 0.9375rem;
+}
+
+@media (min-width: 768px) {
+  .site-marketing {
+    --text-subtitle: clamp(1.375rem, 1.6vw, 1.625rem); /* ~22→26 */
+    --text-subtitle--line-height: 1.4;
+    --text-body: 1.25rem; /* 20px */
+    --text-body--line-height: 1.55;
+    --text-body-sm: 1.125rem; /* 18px */
+    --text-body-sm--line-height: 1.5;
+    --text-label: 1.125rem;
+    --text-caption: 1rem;
+  }
+}
+
+@utility shell-site {
+  width: 90%;
+  max-width: 1760px;
+  margin-inline: auto;
+}
+
+/* Callers: home/about/contact heroes via className text-hero. Existing utility — not a new file.
+ * User screenshot: brand "קול מצהלות" was wrapping mid-word because of overflow-wrap:anywhere. */
+@utility text-hero {
+  font-size: clamp(2.5rem, 5vw + 1.1rem, 5rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: 800;
+  text-wrap: balance;
+  max-width: 100%;
+}
+
 /* ═══════════════════════════════════════════════════════════
    2. TAILWIND BRIDGE — map CSS vars → utility classes
    ═══════════════════════════════════════════════════════════ */

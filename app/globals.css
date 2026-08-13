@@ -24,23 +24,23 @@
   }
   18%,
   33% {
-    transform: translateY(-44px);
+    transform: translateY(-48px);
   }
   36%,
   51% {
-    transform: translateY(-88px);
+    transform: translateY(-96px);
   }
   54%,
   69% {
-    transform: translateY(-132px);
+    transform: translateY(-144px);
   }
   72%,
   87% {
-    transform: translateY(-176px);
+    transform: translateY(-192px);
   }
   90%,
   100% {
-    transform: translateY(-220px);
+    transform: translateY(-240px);
   }
 }
 

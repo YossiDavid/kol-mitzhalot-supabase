@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { WebCta } from "@/components/website/cta";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -64,27 +65,26 @@ async function ArticleContent({ slug }: { slug: string }) {
   const cat = CATEGORY_LABELS[data.category] ?? data.category;
 
   return (
-    <article className="mx-auto max-w-[760px] px-6 py-12" dir="rtl">
-      <Link
-        href={"/knowledge" as any}
-        className="mb-8 inline-flex text-body-sm font-semibold text-primary no-underline hover:underline"
-      >
-        ← חזרה למרכז הידע
-      </Link>
-      <div className="mb-4 flex flex-wrap items-center gap-2 text-caption text-muted-foreground">
-        <span className="rounded-full bg-primary-muted px-3 py-1 font-bold text-primary">
-          {cat}
-        </span>
-        {date ? <span>{date}</span> : null}
-        <span className="h-[3px] w-[3px] rounded-full bg-border" />
-        <span>{data.read_time_minutes} דק׳ קריאה</span>
-      </div>
-      <div className="prose-km">
-        <h1>{data.title}</h1>
-        {data.excerpt ? (
-          <p className="text-subtitle text-muted-foreground">{data.excerpt}</p>
-        ) : null}
-        <div dangerouslySetInnerHTML={{ __html: data.content }} />
+    <article className="shell-site py-16 md:py-20" dir="rtl">
+      <div className="mx-auto max-w-3xl">
+        <Button asChild variant="ghost" className="mb-8 px-0">
+          <Link href={"/knowledge" as any}>← חזרה למרכז הידע</Link>
+        </Button>
+        <div className="mb-4 flex flex-wrap items-center gap-2 text-caption text-muted-foreground">
+          <span className="rounded-md bg-primary-muted px-3 py-1 font-bold text-primary">
+            {cat}
+          </span>
+          {date ? <span>{date}</span> : null}
+          <span className="h-[3px] w-[3px] rounded-full bg-border" />
+          <span>{data.read_time_minutes} דק׳ קריאה</span>
+        </div>
+        <div className="prose-km">
+          <h1>{data.title}</h1>
+          {data.excerpt ? (
+            <p className="text-subtitle text-muted-foreground">{data.excerpt}</p>
+          ) : null}
+          <div dangerouslySetInnerHTML={{ __html: data.content }} />
+        </div>
       </div>
     </article>
   );
@@ -92,7 +92,7 @@ async function ArticleContent({ slug }: { slug: string }) {
 
 function ArticleSkeleton() {
   return (
-    <div className="mx-auto max-w-[760px] animate-pulse space-y-6 px-6 py-12">
+    <div className="shell-site animate-pulse space-y-6 py-16 md:py-20">
       <div className="h-4 w-40 rounded bg-muted" />
       <div className="h-10 w-2/3 rounded bg-muted" />
       <div className="space-y-3">

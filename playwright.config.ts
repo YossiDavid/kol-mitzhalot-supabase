@@ -25,6 +25,14 @@ export default defineConfig({
       name: "setup-admin",
       testMatch: "**/auth.setup.admin.ts",
     },
+    // User: "9. אתה יכול להוסיף גם טסטים." — marketing project needs no auth.
+    {
+      name: "marketing",
+      use: {
+        ...devices["Desktop Chrome"],
+      },
+      testMatch: "**/marketing/**/*.spec.ts",
+    },
     {
       name: "chromium",
       use: {
@@ -32,7 +40,7 @@ export default defineConfig({
         storageState: "playwright/.auth/user.json",
       },
       dependencies: ["setup"],
-      testIgnore: "**/admin/**/*.spec.ts",
+      testIgnore: ["**/admin/**/*.spec.ts", "**/marketing/**/*.spec.ts"],
     },
     {
       name: "chromium-admin",

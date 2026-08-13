@@ -143,5 +143,6 @@ ESLint (`no-restricted-syntax` ב־`eslint.config.mjs`) אוכף את החוזה
 2. לשמור על **מיכל** ועל **מרווחי אנכיים** (`py-5`) כמו בשאר האפליקציה, אלא אם יש סיבה מוצרתית אחרת.
 3. לכבד **RTL**: יישור, סדר אלמנטים, ומיקום תפריטים נפתחים (`align` ב־Dropdown וכדומה).
 4. לרכיבים חדשים — להרחיב את **shadcn** הקיים ואת `cn()` מ־`lib/utils.ts` לשילוב מחלקות.
-5. **טיפוגרפיה:** רק טוקני `text-display`…`text-caption` / HTML סמנטי / `prose-km` — לא `text-sm` ולא `fontSize` inline.
+5. **טיפוגרפיה:** רק טוקני `text-display`…`text-caption` / HTML סמנטי / `prose-km` — לא `text-sm` ולא `fontSize` inline. באתר תדמית (`.site-marketing`) הסולם מוגדל אוטומטית; כותרת הירו: `text-hero`.
 6. **צבעים:** `bg-primary` / `text-muted-foreground` / `border-border` / `bg-brand-gold` — לא hex קשיח במחלקות. הרצת `pnpm test:cn` אחרי שינוי ב־`cn()`.
+7. **רוחב אתר תדמית:** `shell-site` ≈ 90% מרוחב העמוד (עד 1760px) — לא `max-w-[1120px]`.

@@ -1,10 +1,39 @@
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, type FC, type SVGProps } from "react";
 import { WebStats } from "@/components/website/stats";
-import { RabbinicalEndorsements } from "@/components/website/rabbinical-endorsements";
+import { EndorsementsCarousel } from "@/components/website/endorsements-carousel";
 import { WebCta } from "@/components/website/cta";
 import { LogoSvg } from "@/components/website/logo-svg";
+import {
+  DirectoryProductPreview,
+  ParentsProductPreview,
+  ShadchanimProductPreview,
+  ArticleCover,
+} from "@/components/website/product-previews";
+import SignsSvg from "@/assets/icons/signs.svg";
+import TrustSvg from "@/assets/icons/trust.svg";
+import PrizeSvg from "@/assets/icons/prize.svg";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
+
+type SvgIcon = FC<SVGProps<SVGSVGElement>>;
+
+function asSvgIcon(mod: unknown): SvgIcon {
+  if (typeof mod === "function") return mod as SvgIcon;
+  if (
+    mod &&
+    typeof mod === "object" &&
+    "default" in mod &&
+    typeof mod.default === "function"
+  ) {
+    return mod.default as SvgIcon;
+  }
+  throw new Error("SVG import did not resolve to a React component");
+}
+
+const SignsIcon = asSvgIcon(SignsSvg);
+const TrustIcon = asSvgIcon(TrustSvg);
+const PrizeIcon = asSvgIcon(PrizeSvg);
 
 const CATEGORY_LABELS: Record<string, string> = {
   parents: "להורים",
@@ -155,26 +184,17 @@ const audiences = [
 
 const principles = [
   {
-    cardClass: "bg-primary-muted text-primary",
-    svgColor: "color-mix(in oklab, var(--primary) 8%, transparent)",
-    titleClass: "text-primary",
-    descClass: "text-muted-foreground",
+    Icon: SignsIcon,
     title: 'הכוונה וליווי מקיף של רבני הארגון שליט"א',
     desc: 'הארגון הוקם על ידי שדכנים ועסקנים יר"ש, ומתנהל בליווי והכוונה שוטפים של הגה"צ ר׳ שמאי גרוס והגה"צ ר׳ שמואל יעקב לנדאו.',
   },
   {
-    cardClass: "bg-brand-gold-muted text-brand-gold-foreground",
-    svgColor: "color-mix(in oklab, var(--brand-gold) 18%, transparent)",
-    titleClass: "text-brand-gold-foreground",
-    descClass: "text-brand-gold-foreground/80",
+    Icon: TrustIcon,
     title: "פרטיות ואבטחת מידע ללא פשרות",
     desc: "אנו מתייחסים במלוא הרצינות לפרטיות שלכם! המערכת משתמשת בתקני אבטחה מתקדמים במיוחד, וההנהלה בודקת לעומק כל שדכן לפני מתן גישה למידע.",
   },
   {
-    cardClass: "bg-muted text-foreground",
-    svgColor: "color-mix(in oklab, var(--primary) 6%, transparent)",
-    titleClass: "text-foreground",
-    descClass: "text-muted-foreground",
+    Icon: PrizeIcon,
     title: 'התנהלות ערכית וללא חשש לשה"ר',
     desc: "המערכת בנויה ברוח התורה והחסידות: אין אפשרות לכתוב מידע שלילי, כל תגובה נבדקת לפני פרסומה ותמונות נשלחות תוך שמירה מוקפדת על פרטיות וצניעות.",
   },
@@ -183,6 +203,7 @@ const principles = [
 function ArticleCard({
   slug,
   cat,
+  category,
   date,
   read,
   title,
@@ -190,6 +211,7 @@ function ArticleCard({
 }: {
   slug: string;
   cat: string;
+  category: string;
   date: string;
   read: string;
   title: string;
@@ -200,14 +222,7 @@ function ArticleCard({
       href={`/knowledge/${slug}` as any}
       className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card no-underline shadow-[0_1px_3px_rgba(20,40,40,.06)] transition-all hover:-translate-y-1 hover:shadow-[0_18px_40px_-18px_rgba(20,40,40,.28)]"
     >
-      <div
-        className="bg-primary-stripe relative flex aspect-[16/10] items-center justify-center font-mono text-caption text-muted-foreground"
-      >
-        [ תמונת נושא ]
-        <span className="absolute top-[14px] right-[14px] rounded-full bg-card/94 px-3 py-[5px] text-caption font-bold text-primary shadow-[0_2px_6px_rgba(20,40,40,.12)]">
-          {cat}
-        </span>
-      </div>
+      <ArticleCover category={category} badge={cat} />
       <div className="flex flex-1 flex-col gap-[10px] p-[22px_24px]">
         <div className="flex items-center gap-2 text-caption text-muted-foreground">
           <span>{date}</span>
@@ -221,7 +236,7 @@ function ArticleCard({
           {title}
         </h3>
         <p
-          className="text-body-sm leading-[1.6] text-muted-foreground"
+          className="text-body-sm text-muted-foreground"
           style={{ margin: 0 }}
         >
           {excerpt}
@@ -270,14 +285,11 @@ async function HomepageEngagements() {
 
   return (
     <section className="bg-background">
-      <div
-        className="mx-auto px-6"
-        style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}
-      >
+      <div className="shell-site py-20">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <h2
-            className="font-bold text-primary text-display" style={{lineHeight: 1.1,
-              margin: 0}}
+            className="text-display font-bold text-primary"
+            style={{ lineHeight: 1.1, margin: 0 }}
           >
             שידוכים שנסגרו
             <br />
@@ -340,20 +352,20 @@ async function HomepageKnowledge() {
 
   return (
     <section className="bg-muted">
-      <div
-        className="mx-auto px-6"
-        style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}
-      >
-        <div className="mx-auto mb-12 max-w-[640px] text-center">
+      <div className="shell-site py-20">
+        <div className="mb-14 w-full max-w-5xl text-start md:mx-auto md:text-center">
           <h2
-            className="font-bold text-primary text-display" style={{lineHeight: 1.1,
-              marginBottom: 12}}
+            className="text-display font-bold text-primary"
+            style={{ lineHeight: 1.1, marginBottom: 12 }}
           >
             מרכז הידע של
             <br />
             <HighlightSpan>קול מצהלות</HighlightSpan>
           </h2>
-          <p className="text-subtitle text-muted-foreground" style={{ margin: 0 }}>
+          <p
+            className="text-subtitle text-muted-foreground"
+            style={{ margin: 0 }}
+          >
             כל מה שחשוב לדעת על שידוכים, בירורים, פגישות, אירוסין ומה שביניהם.
           </p>
         </div>
@@ -361,8 +373,9 @@ async function HomepageKnowledge() {
           {articles.map((a) => (
             <ArticleCard
               key={a.id}
-          slug={a.slug}
+              slug={a.slug}
               cat={CATEGORY_LABELS[a.category] ?? a.category}
+              category={a.category}
               date={
                 a.published_at
                   ? new Date(a.published_at).toLocaleDateString("he-IL")
@@ -379,6 +392,21 @@ async function HomepageKnowledge() {
   );
 }
 
+async function MissionEndorsementsCarousel() {
+  const supabase = await createClient();
+  const { data: endorsements } = await supabase
+    .from("endorsements")
+    .select("id, rav_name, rav_title, image_url, endorsement_text")
+    .eq("is_published", true)
+    .order("sort_order", { ascending: true });
+
+  if (!endorsements?.length) {
+    return null;
+  }
+
+  return <EndorsementsCarousel items={endorsements} />;
+}
+
 export default function HomePage() {
   return (
     <>
@@ -390,82 +418,46 @@ export default function HomePage() {
           src="/logo_negative.svg"
           alt=""
           aria-hidden="true"
-          width={640}
-          height={640}
-          className="pointer-events-none absolute select-none"
-          style={{ top: -120, left: -80, opacity: 0.06 }}
+          width={720}
+          height={720}
+          className="pointer-events-none absolute -top-28 -left-24 opacity-[0.07] select-none"
         />
 
-        <div
-          className="relative mx-auto grid grid-cols-1 items-center gap-8 px-6 pt-[74px] pb-[84px] text-right md:grid-cols-[1.05fr_.95fr] md:gap-14"
-          style={{ maxWidth: 1200 }}
-        >
-          {/* Floating gold badge — hidden on mobile */}
+        <div className="relative shell-site grid grid-cols-1 items-center gap-12 py-16 text-right md:grid-cols-[1.1fr_0.9fr] md:gap-16 md:py-24 lg:gap-20">
+          {/* Floating gold badge — keep clear of copy on narrow screens */}
           <Link
             href={"/contact" as any}
-            className="absolute hidden flex-col items-center justify-center gap-1 rounded-full border-[3px] border-white text-center text-body-sm font-extrabold text-brand-gold-foreground no-underline transition-transform hover:scale-[1.06] md:flex"
-            style={{
-              top: 24,
-              left: 24,
-              width: 118,
-              height: 118,
-              background: "radial-gradient(circle at 33% 27%,var(--brand-gold-soft),var(--brand-gold))",
-              boxShadow:
-                "0 4px 0 rgba(20,50,48,.18),0 22px 36px -14px rgba(0,0,0,.6)",
-              transform: "rotate(-8deg)",
-              zIndex: 4,
-            }}
+            className="absolute top-4 left-2 z-10 flex size-[5.75rem] -rotate-[8deg] flex-col items-center justify-center gap-0.5 rounded-full border-[3px] border-white bg-[radial-gradient(circle_at_33%_27%,var(--brand-gold-soft),var(--brand-gold))] text-center text-body-sm leading-none font-extrabold text-brand-gold-foreground no-underline shadow-[0_4px_0_rgba(20,50,48,.18),0_22px_36px_-14px_rgba(0,0,0,.6)] transition-transform hover:scale-[1.06] md:top-8 md:left-3 md:size-35 md:gap-1 md:text-body"
           >
-            <span style={{ lineHeight: 1.18 }}>
+            <span>
               יש לי
               <br />
               רעיון
               <br />
-              לשידוך
+              לשידוך!
             </span>
-            <svg
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M19 12H5" />
-              <path d="m12 19-7-7 7-7" />
-            </svg>
           </Link>
 
           {/* Text column */}
-          <div>
-            <p
-              className="mb-[18px] max-w-[540px] leading-[1.6] opacity-80 text-subtitle" style={{fontWeight: 500}}
-            >
+          <div className="min-w-0">
+            <p className="mb-6 max-w-2xl pe-[6.75rem] text-subtitle leading-[1.2] font-medium text-primary-foreground/85 md:pe-0">
               שדכנים, הורים, אנשי ונשות חינוך, מחפשי שידוך בוגרים או בזיווג שני,
               וכל מי שיש לו רעיון לשידוך ורוצה לסייע להקים עוד בית נאמן בישראל:
             </p>
-            <p
-              className="mb-1 font-medium opacity-90 text-title"
-            >
+            <p className="mb-2 text-title font-medium text-primary-foreground/90">
               ברוכים הבאים ל
             </p>
-            <h1
-              className="leading-none font-bold tracking-[-0.02em] text-primary-foreground text-display" style={{marginBottom: 12}}
-            >
+            <h1 className="mb-3 text-hero whitespace-nowrap text-primary-foreground">
               קול מצהלות
             </h1>
-            <p
-              className="font-bold opacity-[.92] text-title" style={{marginBottom: 32}}
-            >
+            <p className="mb-10 text-title font-bold text-primary-foreground/95">
               הארגון לקידום שידוכים בבעלזא
             </p>
 
             {/* Animated ticker */}
-            <div className="mb-[34px] flex max-w-[560px] items-center gap-[11px]">
-              <CheckSvg size={22} stroke="currentColor" strokeWidth="2.4" />
-              <div className="h-[44px] flex-1 overflow-hidden">
+            <div className="mb-10 flex min-w-0 max-w-3xl items-center gap-3">
+              <CheckSvg size={26} stroke="currentColor" strokeWidth="2.4" />
+              <div className="h-12 min-w-0 flex-1 overflow-hidden">
                 <div
                   className="ticker-roller"
                   style={{
@@ -476,7 +468,8 @@ export default function HomePage() {
                   {tickerItems.map((item, i) => (
                     <div
                       key={i}
-                      className="overflow-hidden font-semibold text-ellipsis whitespace-nowrap text-subtitle" style={{height: 44, lineHeight: "44px"}}
+                      className="overflow-hidden text-body font-semibold text-ellipsis whitespace-nowrap md:text-subtitle"
+                      style={{ height: 48, lineHeight: "48px" }}
                     >
                       {item}
                     </div>
@@ -485,69 +478,38 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* CTA buttons */}
-            <div className="flex flex-wrap justify-start gap-3">
-              <Link
-                href={"/auth/sign-up" as any}
-                className="rounded-full px-7 py-[14px] text-body font-bold text-primary no-underline transition-colors hover:bg-card"
-                style={{
-                  background: "var(--primary-foreground)",
-                  boxShadow: "0 10px 26px -12px rgba(0,0,0,.5)",
-                }}
+            {/* CTA buttons — DS Button (rounded-md, no marketing pill/shadow) */}
+            <div className="flex flex-wrap items-center justify-start gap-3">
+              <Button
+                asChild
+                size="lg"
+                className="bg-primary-foreground text-primary hover:bg-card hover:text-primary active:bg-card"
               >
-                הירשמו עכשיו ללא עלות
-              </Link>
-              <Link
-                href={"/contact" as any}
-                className="rounded-full border border-primary-foreground/40 bg-transparent px-7 py-[14px] text-body font-bold text-primary-foreground no-underline transition-colors hover:bg-primary-foreground/10"
+                <Link href={"/auth/sign-up" as any}>הירשמו עכשיו ללא עלות</Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="border-primary-foreground/50 text-primary-foreground shadow-none hover:bg-primary-foreground/10 hover:text-primary-foreground active:bg-primary-foreground/15"
               >
-                דברו איתנו
-              </Link>
+                <Link href={"/contact" as any}>דברו איתנו</Link>
+              </Button>
             </div>
           </div>
 
           {/* Visual column */}
-          <div className="relative">
-            <div
-              className="overflow-hidden rounded-[18px] bg-card"
-              style={{
-                boxShadow: "0 34px 80px -34px rgba(0,0,0,.6)",
-                border: "1px solid rgba(255,255,255,.16)",
-                transform: "rotate(-1.2deg)",
-              }}
-            >
-              {/* Browser chrome */}
-              <div className="flex gap-[6px] border-b border-border bg-muted px-4 py-[13px]">
-                {[1, 2, 3].map((d) => (
-                  <span
-                    key={d}
-                    className="h-[9px] w-[9px] rounded-full bg-border"
-                  />
-                ))}
-              </div>
-              <div className="p-4">
-                <div className="bg-primary-stripe-sm flex aspect-[4/3] items-center justify-center rounded-[10px] border border-border p-[18px] text-center font-mono text-caption text-muted-foreground">
-                  [ צילום מסך · ממשק
-                  <br />
-                  ניהול השידוכים ]
-                </div>
-              </div>
+          <div className="relative min-w-0">
+            <div className="-rotate-[1.2deg]">
+              {/* גרסה קודמת — לוח עבודה (אותו צילום כמו בהמשך העמוד)
+              <ShadchanimProductPreview className="min-h-0 border-white/15 shadow-[0_34px_80px_-34px_rgba(0,0,0,.55)]" />
+              */}
+              <DirectoryProductPreview className="min-h-0 border-white/15 shadow-[0_34px_80px_-34px_rgba(0,0,0,.55)]" />
             </div>
 
-            {/* Floating toast — hidden on mobile */}
-            <div
-              className="absolute hidden items-center gap-[10px] rounded-[12px] bg-card md:flex"
-              style={{
-                bottom: -18,
-                left: -16,
-                border: "1px solid var(--border)",
-                boxShadow: "0 18px 40px -18px rgba(0,0,0,.4)",
-                padding: "12px 16px",
-                transform: "rotate(2deg)",
-              }}
-            >
-              <span className="bg-primary-wash flex h-[30px] w-[30px] items-center justify-center rounded-[9px]">
-                <CheckSvg size={17} strokeWidth="2.6" />
+            <div className="absolute -bottom-5 -left-4 hidden rotate-[2deg] items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-[0_18px_40px_-18px_rgba(0,0,0,.4)] md:flex">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-wash">
+                <CheckSvg size={18} strokeWidth="2.6" />
               </span>
               <span className="text-right">
                 <span className="block text-body-sm font-bold text-foreground">
@@ -562,90 +524,53 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── 2. MISSION ── */}
+      {/* ── 2. MISSION + ENDORSEMENTS ── */}
       <section className="bg-background">
-        <div
-          className="mx-auto grid grid-cols-1 items-center gap-8 px-6 py-[76px] md:grid-cols-[1.1fr_.9fr] md:gap-14"
-          style={{ maxWidth: 1120 }}
-        >
-          <div>
-            <h2
-              className="font-bold text-primary text-display" style={{lineHeight: 1.1,
-                marginBottom: 18}}
-            >
+        <div className="shell-site flex flex-col gap-14 py-20 md:gap-16 md:py-24">
+          <div className="mx-auto w-[65vw] max-w-5xl text-center max-md:w-[92%]">
+            <h2 className="mb-6 text-display font-bold text-primary">
               המטרה
               <br />
               <HighlightSpan>שלנו ושלכם</HighlightSpan>
             </h2>
-            <p className="mb-4 text-body leading-[1.75] text-muted-foreground">
+            <p className="mb-5 text-body text-foreground/80">
               לקדם שידוכים ולהקים בתים נאמנים בישראל. בסייעתא דשמיא, בברכת הקודש
               ובהכוונת רבנים חשובים בקהילתינו הק׳, הושקעו משאבים רבים בסיוע
               נדיבים על מנת להקים את מערכת קול מצהלות, מתוך תחושת שליחות, אחריות
               ורצון לקדם את ענייני השידוכים בקהילתנו.
             </p>
-            <p className="mb-5 text-body leading-[1.75] text-muted-foreground">
+            <p className="mb-8 text-body text-foreground/80">
               המערכת נועדה לשמש ככתובת לכל נושא השידוכים בקהילתנו הק׳ וככלי עזר
               נוח להורים, שדכנים, רבנים ואנשי ונשות החינוך במוסדותינו ברחבי
               העולם, במטרה לסייע במציאת זיווג הגון בדרך קלה ונוחה, תוך שמירה על
               ערכי הקדושה וצנעת הפרט, ללא חשש לשה"ר ובליווי הלכתי ורוחני מלא.
             </p>
-            <Link
-              href={"/about" as any}
-              className="inline-flex items-center gap-[6px] text-body font-bold text-primary no-underline"
-            >
-              עוד על קול מצהלות <ArrowSmall />
-            </Link>
+            <Button asChild size="lg" variant="outline">
+              <Link href={"/about" as any}>
+                עוד על קול מצהלות <ArrowSmall />
+              </Link>
+            </Button>
           </div>
 
-          {/* Endorsement slider placeholder */}
-          <div className="relative">
-            <p className="mb-3 text-center text-body-sm font-bold tracking-[.02em] text-primary">
-              הסכמות והמלצות רבני קהילתנו הק׳
-            </p>
-            <div className="relative">
-              <div className="bg-primary-stripe-sm flex aspect-[4/5] items-center justify-center rounded-2xl border border-dashed border-border p-[22px] text-center font-mono text-body-sm text-muted-foreground shadow-sm">
-                [ תמונת הסכמת רב · סליידר ]
+          <Suspense
+            fallback={
+              <div className="w-full">
+                <p className="mb-6 text-center text-body-sm font-bold tracking-[0.08em] text-primary">
+                  הסכמות והמלצות רבני קהילתנו הק׳
+                </p>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="aspect-[4/5] animate-pulse rounded-2xl bg-muted"
+                    />
+                  ))}
+                </div>
               </div>
-              {/* Nav arrows */}
-              {[
-                { side: "left", d: "m15 18-6-6 6-6" },
-                { side: "right", d: "m9 18 6-6-6-6" },
-              ].map(({ side, d }) => (
-                <button
-                  key={side}
-                  aria-label={side === "right" ? "הבא" : "הקודם"}
-                  className="absolute top-1/2 flex h-[40px] w-[40px] -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-primary shadow-[0_8px_18px_-8px_rgba(0,0,0,.35)] transition-colors hover:bg-muted"
-                  style={{ [side]: -16 }}
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d={d} />
-                  </svg>
-                </button>
-              ))}
-            </div>
-            {/* Dots */}
-            <div className="mt-4 flex justify-center gap-[7px]">
-              <span
-                className="h-[7px] rounded-full bg-primary"
-                style={{ width: 22 }}
-              />
-              {[1, 2, 3].map((d) => (
-                <span
-                  key={d}
-                  className="h-[7px] w-[7px] rounded-full bg-border"
-                />
-              ))}
-            </div>
-          </div>
+            }
+          >
+            <MissionEndorsementsCarousel />
+          </Suspense>
         </div>
       </section>
 
@@ -653,58 +578,41 @@ export default function HomePage() {
       <WebStats />
 
       {/* ── 4. HOW IT WORKS ── */}
-      <section className="bg-muted">
-        <div
-          className="mx-auto px-6"
-          style={{ maxWidth: 1160, paddingTop: 90, paddingBottom: 90 }}
-        >
-          {/* Section header */}
-          <div className="mb-[52px] grid grid-cols-1 items-end gap-6 md:grid-cols-[1.35fr_1fr] md:gap-11">
+      <section className="bg-secondary">
+        <div className="shell-site py-20 md:py-24">
+          <div className="mb-14 grid grid-cols-1 items-end gap-8 md:mb-16 md:grid-cols-[1.4fr_1fr] md:gap-16 lg:gap-20">
             <div>
-              <div className="mb-4 text-body-sm font-bold tracking-[.16em] text-primary">
+              <p className="mb-4 text-body-sm font-bold tracking-[0.16em] text-primary">
                 — איך זה עובד
-              </div>
-              <h2
-                className="font-bold text-foreground text-display" style={{lineHeight: 1.02,
-                  letterSpacing: "-.02em",
-                  margin: 0}}
-              >
+              </p>
+              <h2 className="text-display leading-[1.05] font-bold tracking-[-0.02em] text-foreground">
                 איך עובדת מערכת
                 <br />
-                <span className="text-primary">קול מצהלות?</span>
+                <HighlightSpan>קול מצהלות?</HighlightSpan>
               </h2>
             </div>
-            <p
-              className="mb-[10px] text-body leading-[1.7] text-muted-foreground"
-              style={{ margin: 0 }}
-            >
+            <p className="text-subtitle text-foreground/80 md:pb-1">
               בשילוב מושלם של טכנולוגיה, מידע, שיתוף ובברכת רבני קהילתינו הק׳.
             </p>
           </div>
 
-          {/* Step rows */}
           <div className="border-t border-border">
             {steps.map(({ num, title, desc }) => (
               <div
                 key={num}
-                className="grid grid-cols-[64px_1fr] items-baseline gap-5 border-b border-border py-7 md:grid-cols-[96px_1fr] md:gap-7"
+                className="grid grid-cols-[4.5rem_1fr] items-baseline gap-5 border-b border-border py-10 md:grid-cols-[7.5rem_1fr] md:gap-12 md:py-12"
               >
                 <div
-                  className="leading-none font-normal text-muted-foreground text-display"
+                  className="text-display leading-none font-normal text-primary/35"
+                  aria-hidden="true"
                 >
                   {num}
                 </div>
-                <div className="grid grid-cols-1 items-baseline gap-3 md:grid-cols-[minmax(200px,280px)_1fr] md:gap-7">
-                  <h3
-                    className="font-bold text-foreground text-title" style={{margin: 0,
-                      lineHeight: 1.3}}
-                  >
+                <div className="grid grid-cols-1 items-baseline gap-4 md:grid-cols-[minmax(16rem,38%)_1fr] md:gap-12">
+                  <h3 className="text-title leading-snug font-bold text-foreground">
                     {title}
                   </h3>
-                  <p
-                    className="text-end text-body leading-[1.65] text-muted-foreground"
-                    style={{ margin: 0 }}
-                  >
+                  <p className="text-start text-body text-foreground/80 md:text-end">
                     {desc}
                   </p>
                 </div>
@@ -712,63 +620,47 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* Photo strip */}
-          <div className="mt-[52px] grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {/* <div className="mt-14 grid grid-cols-1 gap-4 sm:grid-cols-3 md:mt-16 md:gap-5">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="rounded-2xl bg-muted"
-                style={{ aspectRatio: "4/3" }}
+                className="aspect-[4/3] overflow-hidden rounded-2xl border border-border bg-background bg-primary-stripe-sm"
+                aria-hidden="true"
               />
             ))}
-          </div>
+          </div> */}
         </div>
       </section>
 
       {/* ── 5. WHO IS IT FOR ── */}
       <section className="bg-background">
-        <div
-          className="mx-auto px-6"
-          style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}
-        >
-          <div className="mx-auto mb-12 max-w-[640px] text-center">
-            <h2
-              className="font-bold text-primary text-display" style={{lineHeight: 1.1,
-                marginBottom: 12}}
-            >
+        <div className="shell-site py-20 md:py-24">
+          <div className="mb-14 text-center md:mb-16">
+            <h2 className="mb-4 text-display leading-[1.08] font-bold text-primary">
               למי המערכת
               <br />
               <HighlightSpan>מתאימה?</HighlightSpan>
             </h2>
-            <p className="text-subtitle text-muted-foreground" style={{ margin: 0 }}>
+            <p className="mx-auto max-w-3xl text-subtitle text-foreground/80">
               לכל העוסקים בתחום כמקצוע, כשליחות, או עבור עצמם, ילדיהם ותלמידיהם.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
             {audiences.map(({ title, desc, features, cta, href }) => (
-              <div
+              <article
                 key={title}
-                className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[30px]"
-                style={{ boxShadow: "0 4px 14px -8px rgba(20,40,40,.12)" }}
+                className="flex flex-col gap-6 rounded-2xl border border-border bg-card p-8 md:p-9"
               >
-                <h3
-                  className="text-title font-bold text-primary"
-                  style={{ margin: 0 }}
-                >
-                  {title}
-                </h3>
-                <p
-                  className="text-body leading-[1.65] text-muted-foreground"
-                  style={{ margin: 0 }}
-                >
+                <h3 className="text-title font-bold text-primary">{title}</h3>
+                <p className="text-body text-foreground/80">
                   {desc}
                 </p>
-                <ul className="m-0 flex list-none flex-col gap-3 p-0">
+                <ul className="flex flex-col gap-4">
                   {features.map(({ title: ft, desc: fd }) => (
-                    <li key={ft} className="flex items-start gap-[9px]">
+                    <li key={ft} className="flex items-start gap-3">
                       <CheckSvg />
-                      <span className="text-body">
+                      <span className="text-body leading-snug">
                         <b className="text-foreground">{ft}</b>
                         <br />
                         <span className="text-muted-foreground">{fd}</span>
@@ -776,186 +668,113 @@ export default function HomePage() {
                     </li>
                   ))}
                 </ul>
-                <Link
-                  href={href}
-                  className="mt-auto rounded-[10px] bg-primary px-[18px] py-3 text-center text-body font-bold text-primary-foreground no-underline transition-colors hover:bg-primary-active"
-                >
-                  {cta}
-                </Link>
-              </div>
+                <Button asChild size="lg" className="mt-auto w-full">
+                  <Link href={href}>{cta}</Link>
+                </Button>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
       {/* ── 6. PRINCIPLES ── */}
-      <section className="bg-muted">
-        <div
-          className="mx-auto px-6"
-          style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}
-        >
-          <div className="mb-[52px] grid grid-cols-1 items-end gap-6 md:grid-cols-[1fr_auto] md:gap-8">
-            <div style={{ maxWidth: 660 }}>
-              <span className="mb-5 inline-block rounded-[8px] bg-muted px-[14px] py-1.5 text-caption font-bold tracking-[.14em] text-primary">
-                עקרונות
-              </span>
-              <h2
-                className="font-bold text-foreground text-display" style={{lineHeight: 1.12,
-                  letterSpacing: "-.01em",
-                  marginBottom: 18,
-                  marginTop: 0}}
-              >
+      <section className="bg-secondary">
+        <div className="shell-site py-20 md:py-24">
+          <div className="mb-14 grid grid-cols-1 items-end gap-8 md:mb-16 md:grid-cols-[1fr_auto] md:gap-10">
+            <div>
+              <h2 className="mb-5 text-display leading-[1.08] font-bold tracking-[-0.01em] text-foreground">
                 העקרונות של
                 <br />
-                <span
-                  className="inline-block rounded-[12px]"
-                  style={{
-                    background: "var(--primary)",
-                    color: "var(--primary-foreground)",
-                    padding: "1px 16px 5px",
-                    transform: "rotate(-1.5deg)",
-                  }}
-                >
-                  קול מצהלות
-                </span>
+                <HighlightSpan>קול מצהלות</HighlightSpan>
               </h2>
-              <p
-                className="max-w-[520px] text-body leading-[1.7] text-muted-foreground"
-                style={{ margin: 0 }}
-              >
+              <p className="max-w-2xl text-body text-foreground/80">
                 הכללים שלנו נוסחו מתוך הבנת האחריות העצומה והרגישות הנדרשת
                 בתחום.
               </p>
             </div>
-            <Link
-              href={"/auth/sign-up" as any}
-              className="inline-flex items-center gap-2 rounded-[11px] bg-foreground px-[30px] py-[15px] text-body font-bold whitespace-nowrap text-background no-underline transition-colors hover:bg-primary hover:text-primary-foreground"
-            >
-              הצטרפו עכשיו <ArrowSmall />
-            </Link>
+            <Button asChild size="lg">
+              <Link href={"/auth/sign-up" as any}>
+                הצטרפו עכשיו <ArrowSmall />
+              </Link>
+            </Button>
           </div>
 
-          <div className="grid grid-cols-1 gap-[22px] md:grid-cols-3">
-            {principles.map(
-              ({ cardClass, svgColor, titleClass, descClass, title, desc }) => (
-                <div
-                  key={title}
-                  className={`relative flex min-h-[236px] flex-col items-center justify-center overflow-hidden rounded-[18px] p-[40px_30px] text-center ${cardClass}`}
-                >
-                  <LogoSvg
-                    size={220}
-                    className="pointer-events-none absolute"
-                    style={
-                      {
-                        color: svgColor,
-                        bottom: -60,
-                        left: -50,
-                      } as React.CSSProperties
-                    }
-                  />
-                  <h3
-                    className={`relative mb-3.5 text-subtitle leading-[1.3] font-bold ${titleClass}`}
-                  >
-                    {title}
-                  </h3>
-                  <p className={`relative m-0 text-body leading-[1.7] ${descClass}`}>
-                    {desc}
-                  </p>
-                </div>
-              ),
-            )}
+          <div className="grid grid-cols-1 gap-12 md:grid-cols-3 md:gap-16">
+            {principles.map(({ Icon, title, desc }) => (
+              <article
+                key={title}
+                className="relative flex flex-col items-center text-center"
+              >
+                <Icon className="relative mb-5 size-14 text-primary" />
+                <h3 className="relative mb-4 text-subtitle leading-snug font-bold text-primary">
+                  {title}
+                </h3>
+                <p className="relative text-body text-foreground/80">
+                  {desc}
+                </p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
 
       {/* ── 7. SCREENSHOTS ── */}
       <section className="bg-background">
-        <div
-          className="mx-auto px-6"
-          style={{ maxWidth: 1120, paddingTop: 80, paddingBottom: 80 }}
-        >
-          <div className="mx-auto mb-12 max-w-[640px] text-center">
-            <h2
-              className="font-bold text-primary text-display" style={{lineHeight: 1.1,
-                marginBottom: 12}}
-            >
+        <div className="shell-site py-20 md:py-24">
+          <div className="mb-14 text-center md:mb-16">
+            <h2 className="mb-5 text-display leading-[1.08] font-bold text-primary text-balance">
               איך זה נראה
               <br />
               <HighlightSpan>מבפנים?</HighlightSpan>
             </h2>
-            <p className="text-subtitle text-muted-foreground" style={{ margin: 0 }}>
+            <p className="mx-auto max-w-3xl text-subtitle text-foreground/80">
               מה בדיוק עושים? מה האפשרויות שם? כנסו לראות!
             </p>
           </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {[
-              {
-                title: "מערכת קול מצהלות להורים ולמיועדים",
-                href: "/parents" as any,
-              },
-              { title: "מערכת קול מצהלות לשדכנים", href: "/shadchanim" as any },
-            ].map(({ title, href }) => (
-              <div
-                key={title}
-                className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[22px]"
-                style={{ boxShadow: "0 1px 3px rgba(20,40,40,.06)" }}
-              >
-                <div className="overflow-hidden rounded-[10px] border border-border">
-                  <div className="flex gap-[6px] border-b border-border bg-muted px-[14px] py-[10px]">
-                    {[1, 2, 3].map((d) => (
-                      <span
-                        key={d}
-                        className="h-[9px] w-[9px] rounded-full bg-border"
-                      />
-                    ))}
-                  </div>
-                  <div className="bg-primary-stripe-xs flex aspect-video items-center justify-center p-4 text-center font-mono text-caption text-muted-foreground">
-                    [ צילום מסך ]
-                  </div>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <p
-                    className="text-body font-bold text-foreground"
-                    style={{ margin: 0 }}
-                  >
-                    {title}
-                  </p>
-                  <Link
-                    href={href}
-                    className="inline-flex shrink-0 items-center gap-[5px] rounded-[8px] border border-border px-[14px] py-2 text-body-sm font-bold text-primary no-underline transition-colors hover:bg-muted"
-                  >
-                    כנסו לראות <ArrowSmall />
-                  </Link>
-                </div>
-              </div>
-            ))}
+
+          <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2 lg:gap-x-10">
+            <div className="order-1 h-full min-h-0">
+              <ParentsProductPreview />
+            </div>
+            <div className="order-3 h-full min-h-0 md:order-2">
+              <ShadchanimProductPreview />
+            </div>
+            <div className="order-2 flex flex-col items-start gap-4 md:order-3 sm:flex-row sm:items-center sm:justify-between">
+              <h3 className="text-subtitle leading-snug font-bold text-foreground">
+                מערכת קול מצהלות להורים ולמיועדים
+              </h3>
+              <Button asChild size="lg" variant="outline">
+                <Link href={"/parents" as any}>
+                  כנסו לראות <ArrowSmall />
+                </Link>
+              </Button>
+            </div>
+            <div className="order-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <h3 className="text-subtitle leading-snug font-bold text-foreground">
+                מערכת קול מצהלות לשדכנים
+              </h3>
+              <Button asChild size="lg" variant="outline">
+                <Link href={"/shadchanim" as any}>
+                  כנסו לראות <ArrowSmall />
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── 8. ENDORSEMENTS ── */}
-      <Suspense>
-        <RabbinicalEndorsements />
-      </Suspense>
-
-      {/* ── 9. RECENT ENGAGEMENTS — hidden when no data ── */}
+      {/* ── 8. RECENT ENGAGEMENTS — hidden when no data ── */}
       <Suspense>
         <HomepageEngagements />
       </Suspense>
 
-      {/* ── 10. KNOWLEDGE PREVIEW — hidden when no data ── */}
+      {/* ── 9. KNOWLEDGE PREVIEW — hidden when no data ── */}
       <Suspense>
         <HomepageKnowledge />
       </Suspense>
 
       {/* ── FINAL CTA ── */}
-      <div
-        style={{
-          background: "linear-gradient(180deg,var(--muted) 0%,var(--background) 100%)",
-        }}
-      >
-        <WebCta />
-      </div>
+      <WebCta />
     </>
   );
 }

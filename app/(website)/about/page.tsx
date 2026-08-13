@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { WebStats } from "@/components/website/stats";
 import { RabbinicalEndorsements } from "@/components/website/rabbinical-endorsements";
@@ -8,7 +7,12 @@ function HighlightSpan({ children }: { children: React.ReactNode }) {
   return (
     <span
       className="inline-block rounded-[11px]"
-      style={{ background: "var(--primary)", color: "var(--primary-foreground)", padding: "1px 14px 4px", transform: "rotate(-1.5deg)" }}
+      style={{
+        background: "var(--primary)",
+        color: "var(--primary-foreground)",
+        padding: "1px 14px 4px",
+        transform: "rotate(-1.5deg)",
+      }}
     >
       {children}
     </span>
@@ -22,7 +26,7 @@ const stories = [
   },
   {
     title: "בזכות בקשות של עלטערע בחורים ומיועדי פרק ב' כאובים",
-    desc: 'שהולכים ומתבגרים, כמעט ולא מקבלים הצעות למרות היותם מצוינים ואיכותיים, אך רוב השדכנים מעדיפים להתעסק עם השידוכים הקלים בלבד והם כבר מתחילים לאבד את התקווה.',
+    desc: "שהולכים ומתבגרים, כמעט ולא מקבלים הצעות למרות היותם מצוינים ואיכותיים, אך רוב השדכנים מעדיפים להתעסק עם השידוכים הקלים בלבד והם כבר מתחילים לאבד את התקווה.",
   },
   {
     title: "בזכות דיונים עם שדכנים מותשים",
@@ -60,74 +64,118 @@ const processSteps = [
 export default function AboutPage() {
   return (
     <>
-      {/* ── 1. OPENING STORY ── */}
-      <section className="bg-background">
-        <div className="mx-auto px-6" style={{ maxWidth: 1120, paddingTop: 72, paddingBottom: 72 }}>
-          <h1
-            className="text-center font-bold text-primary text-display" style={{marginBottom: 48, lineHeight: 1.1}}
-          >
-            קול מצהלות הוקמה<br /><HighlightSpan>בזכותכם</HighlightSpan>
+      {/* ── 1. HERO ── */}
+      <section className="relative overflow-hidden bg-primary text-primary-foreground">
+        <div className="bg-brand-gold-wash pointer-events-none absolute inset-0" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo_negative.svg"
+          alt=""
+          aria-hidden="true"
+          width={720}
+          height={720}
+          className="pointer-events-none absolute -top-28 -left-24 opacity-[0.07] select-none"
+        />
+
+        <div className="relative shell-site flex flex-col items-center justify-center py-28 text-center md:py-36">
+          <h1 className="max-w-5xl text-hero text-balance text-primary-foreground">
+            קול מצהלות הוקמה
+            <br />
+            <span
+              className="mt-3 inline-block rounded-xl"
+              style={{
+                background: "var(--brand-gold)",
+                color: "var(--brand-gold-foreground)",
+                padding: "1px 20px 6px",
+                transform: "rotate(-1.5deg)",
+              }}
+            >
+              בזכותכם
+            </span>
           </h1>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        </div>
+      </section>
+
+      {/* ── 2. OPENING STORIES ── */}
+      <section className="bg-background">
+        <div className="shell-site py-20 md:py-24">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
             {stories.map(({ title, desc }) => (
-              <div
+              <article
                 key={title}
-                className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[30px]"
-                style={{ boxShadow: "0 4px 14px -8px rgba(20,40,40,.12)" }}
+                className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-8 md:p-9"
               >
-                <h3 className="text-subtitle font-bold text-primary" style={{ margin: 0, lineHeight: 1.3 }}>{title}</h3>
-                <p className="text-body leading-[1.7] text-muted-foreground" style={{ margin: 0 }}>{desc}</p>
-              </div>
+                <h2 className="text-title leading-snug font-bold text-primary">
+                  {title}
+                </h2>
+                <p className="text-body text-foreground/80">
+                  {desc}
+                </p>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── 2. SUMMARY ── */}
-      <section className="bg-muted">
-        <div className="mx-auto max-w-3xl px-6 py-16">
-          <h2
-            className="text-center font-bold text-primary text-heading" style={{marginBottom: 24, lineHeight: 1.2}}
-          >
-            בזכותכם, יצאנו לדרך.
-          </h2>
-          <p className="mb-4 text-body leading-[1.75] text-muted-foreground">
-            לא מתוך מחשבה להמציא מחדש את עולם השידוכים, המתנהל בדרך אבותינו הק' מזה דורי דורות, אלא במטרה לשמור על הקיים ולהכניס לתוכו כלי עזר וסיוע הנצרך בעקבות המצב, לבנות מערכת טכנולוגית שתקל על ההורים, על המיועדים ובעיקר על השדכנים, מבלי לפגום במעמד הקדוש של הקמת בית בישראל.
-          </p>
-          <p className="text-body leading-[1.75] text-muted-foreground">
-            וכך, בברכת הקודש של כ"ק מרן אדמו"ר שליט"א ובהכוונתם של רבני קהילתנו הק' ובראשם הגה"צ ר' שמאי גרוס שליט"א והגה"צ ר' שמואל יעקב לנדאו שליט"א, עם תכנון ומחשבה על כל פרט ופרט, ועם צוות מסור של אנשי מעשה מומחים ויראי שמיים – נרתמנו למלאכה.
-          </p>
-          <p className="mt-6 text-center text-subtitle font-bold text-primary">
-            מערכת קול מצהלות — הפתרון המושלם לנושא השידוכים בקהילתנו הק'.
-          </p>
+      {/* ── 3. SUMMARY ── */}
+      <section className="bg-secondary">
+        <div className="shell-site py-20 md:py-24">
+          <div className="mx-auto w-[65vw] max-w-5xl text-center max-md:w-[92%]">
+            <h2 className="mb-8 text-display font-bold text-primary">
+              בזכותכם,
+              <br />
+              <HighlightSpan>יצאנו לדרך.</HighlightSpan>
+            </h2>
+            <p className="mb-5 text-body text-foreground/80">
+              לא מתוך מחשבה להמציא מחדש את עולם השידוכים, המתנהל בדרך אבותינו הק'
+              מזה דורי דורות, אלא במטרה לשמור על הקיים ולהכניס לתוכו כלי עזר
+              וסיוע הנצרך בעקבות המצב, לבנות מערכת טכנולוגית שתקל על ההורים, על
+              המיועדים ובעיקר על השדכנים, מבלי לפגום במעמד הקדוש של הקמת בית
+              בישראל.
+            </p>
+            <p className="mb-8 text-body text-foreground/80">
+              וכך, בברכת הקודש של כ"ק מרן אדמו"ר שליט"א ובהכוונתם של רבני
+              קהילתנו הק' ובראשם הגה"צ ר' שמאי גרוס שליט"א והגה"צ ר' שמואל יעקב
+              לנדאו שליט"א, עם תכנון ומחשבה על כל פרט ופרט, ועם צוות מסור של
+              אנשי מעשה מומחים ויראי שמיים – נרתמנו למלאכה.
+            </p>
+            <p className="text-subtitle font-bold text-primary">
+              מערכת קול מצהלות — הפתרון המושלם לנושא השידוכים בקהילתנו הק'.
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* ── 3. HOW IT WORKS (ProcessRows) ── */}
-      <section className="bg-muted">
-        <div className="mx-auto px-6" style={{ maxWidth: 1160, paddingTop: 80, paddingBottom: 80 }}>
-          <div className="mb-[52px] text-center">
-            <h2
-              className="font-bold text-foreground text-display" style={{lineHeight: 1.1, margin: 0}}
-            >
-              כך עובדת<br />
-              <span className="text-primary">המערכת</span>
+      {/* ── 4. HOW IT WORKS ── */}
+      <section className="bg-background">
+        <div className="shell-site py-20 md:py-24">
+          <div className="mb-14 text-center md:mb-16">
+            <h2 className="text-display leading-[1.08] font-bold text-foreground">
+              כך עובדת
+              <br />
+              <HighlightSpan>המערכת</HighlightSpan>
             </h2>
           </div>
+
           <div className="border-t border-border">
             {processSteps.map(({ num, title, desc }) => (
               <div
                 key={num}
-                className="grid grid-cols-[64px_1fr] items-baseline border-b border-border gap-5 py-7 md:grid-cols-[96px_1fr] md:gap-7"
+                className="grid grid-cols-[4.5rem_1fr] items-baseline gap-5 border-b border-border py-10 md:grid-cols-[7.5rem_1fr] md:gap-12 md:py-12"
               >
-                <div className="font-normal leading-none text-muted-foreground text-display">
+                <div
+                  className="text-display leading-none font-normal text-primary/35"
+                  aria-hidden="true"
+                >
                   {num}
                 </div>
-                <div className="grid grid-cols-1 items-baseline gap-3 md:grid-cols-[minmax(200px,280px)_1fr] md:gap-7">
-                  <h3 className="font-bold text-foreground text-title" style={{margin: 0, lineHeight: 1.3}}>
+                <div className="grid grid-cols-1 items-baseline gap-4 md:grid-cols-[minmax(16rem,38%)_1fr] md:gap-12">
+                  <h3 className="text-title leading-snug font-bold text-foreground">
                     {title}
                   </h3>
-                  <p className="text-body leading-[1.65] text-muted-foreground" style={{ margin: 0 }}>{desc}</p>
+                  <p className="text-start text-body text-foreground/80 md:text-end">
+                    {desc}
+                  </p>
                 </div>
               </div>
             ))}
@@ -136,7 +184,11 @@ export default function AboutPage() {
       </section>
 
       <WebStats />
-      <Suspense><RabbinicalEndorsements /></Suspense>
+
+      <Suspense>
+        <RabbinicalEndorsements />
+      </Suspense>
+
       <WebCta />
     </>
   );

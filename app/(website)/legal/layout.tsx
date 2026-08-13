@@ -6,7 +6,7 @@ export default function LegalLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="prose-km mx-auto max-w-[1000px] py-8 text-justify">
+    <div className="prose-km shell-site py-16 text-justify md:py-20">
       {children}
     </div>
   );

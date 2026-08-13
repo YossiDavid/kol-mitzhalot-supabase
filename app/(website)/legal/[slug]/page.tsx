@@ -51,7 +51,7 @@ async function LegalContent({ slug }: { slug: string }) {
   }
 
   return (
-    <article className="px-6" dir="rtl">
+    <article dir="rtl">
       <h1 className="mb-8">{data.title}</h1>
       <div dangerouslySetInnerHTML={{ __html: data.content }} />
     </article>
@@ -60,7 +60,7 @@ async function LegalContent({ slug }: { slug: string }) {
 
 function LegalPageSkeleton() {
   return (
-    <div className="mx-auto max-w-4xl px-6 py-12" dir="rtl">
+    <div className="shell-site py-16 md:py-20" dir="rtl">
       <div className="animate-pulse space-y-6">
         <div className="h-10 w-2/3 rounded bg-muted" />
         <div className="space-y-3">

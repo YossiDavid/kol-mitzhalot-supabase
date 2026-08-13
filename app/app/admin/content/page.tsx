@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { DashboardSection } from "@/components/layout";
-import { FileText, Heart, Star } from "lucide-react";
+import { FileText, Heart, Star, Inbox, Mail } from "lucide-react";
+
+// Callers: admin dashboard. User: "1. להוסיף אזורים במערכת הניהול" + forms inbox links.
 
 export default function ContentHubPage() {
   return (
     <div className="space-y-10 py-4">
       <DashboardSection
         title="ניהול תוכן"
-        subTitle="מאמרים, מאורסים, והמלצות רבנים"
+        subTitle="מאמרים, מאורסים, המלצות רבנים ופניות מהאתר"
         button={
           <Button asChild variant="outline">
             <Link href={"/app/admin" as any}>חזרה לדשבורד</Link>
@@ -42,6 +44,26 @@ export default function ContentHubPage() {
               <h3 className="mb-2 text-subtitle font-semibold">המלצות רבנים</h3>
               <p className="text-body-sm text-muted-foreground">
                 ניהול הסכמות ומלצות רבני הקהילה
+              </p>
+            </div>
+          </Link>
+
+          <Link href={"/app/admin/content/submissions" as any}>
+            <div className="cursor-pointer rounded-lg border p-6 transition-colors hover:bg-accent">
+              <Inbox className="mb-4 h-8 w-8" />
+              <h3 className="mb-2 text-subtitle font-semibold">פניות מהאתר</h3>
+              <p className="text-body-sm text-muted-foreground">
+                צור קשר ורעיונות לשידוך מהטפסים הציבוריים
+              </p>
+            </div>
+          </Link>
+
+          <Link href={"/app/admin/content/newsletter" as any}>
+            <div className="cursor-pointer rounded-lg border p-6 transition-colors hover:bg-accent">
+              <Mail className="mb-4 h-8 w-8" />
+              <h3 className="mb-2 text-subtitle font-semibold">רשימת תפוצה</h3>
+              <p className="text-body-sm text-muted-foreground">
+                נרשמים מהפוטר עד חיבור למסוף ניוזלטרים
               </p>
             </div>
           </Link>

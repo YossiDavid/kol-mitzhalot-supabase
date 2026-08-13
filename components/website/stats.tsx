@@ -11,16 +11,16 @@ function StatCell({
     <div
       className={
         middle
-          ? "px-5 py-1.5 md:[border-inline-start:1px_solid_rgba(255,255,255,.14)] md:[border-inline-end:1px_solid_rgba(255,255,255,.14)]"
-          : "px-5 py-1.5"
+          ? "px-6 py-2 md:border-s md:border-e md:border-primary-foreground/15 md:px-10"
+          : "px-6 py-2 md:px-10"
       }
     >
-      <div
-        className="font-bold leading-none text-brand-gold text-display"
-      >
+      <div className="text-hero font-extrabold leading-none text-brand-gold">
         {num}
       </div>
-      <div className="mt-2 text-body leading-[1.45] opacity-[.82]">{desc}</div>
+      <p className="mt-4 text-subtitle leading-[1.45] text-primary-foreground/80">
+        {desc}
+      </p>
     </div>
   );
 }
@@ -28,7 +28,7 @@ function StatCell({
 export function WebStats() {
   return (
     <section className="bg-primary text-primary-foreground">
-      <div className="mx-auto grid max-w-[1120px] grid-cols-1 md:grid-cols-3 px-6 py-14 text-center">
+      <div className="shell-site grid grid-cols-1 gap-12 py-20 text-center md:grid-cols-3 md:gap-0 md:py-24">
         <StatCell num="אלפי" desc="מיועדים מקהילתנו הק׳ מופיעים במערכת" />
         <StatCell
           num="מאות"

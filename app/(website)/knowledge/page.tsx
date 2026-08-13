@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { WebCta } from "@/components/website/cta";
 import { LogoSvg } from "@/components/website/logo-svg";
+import { ArticleCover } from "@/components/website/product-previews";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 
 const CATEGORIES = [
@@ -18,24 +20,29 @@ const CATEGORY_LABELS: Record<string, string> = {
   general: "כללי",
 };
 
-async function CategoryFilters({ searchParams }: { searchParams: Promise<{ cat?: string }> }) {
+async function CategoryFilters({
+  searchParams,
+}: {
+  searchParams: Promise<{ cat?: string }>;
+}) {
   const { cat: currentCat = "" } = await searchParams;
   return (
     <div className="flex flex-wrap justify-center gap-2">
       {CATEGORIES.map((cat) => {
         const isActive = currentCat === cat.value;
         return (
-          <Link
+          <Button
             key={cat.value}
-            href={(cat.value ? `/knowledge?cat=${cat.value}` : "/knowledge") as any}
-            className={
-              isActive
-                ? "rounded-full border border-primary bg-primary px-4 py-1.5 text-body-sm font-semibold text-primary-foreground no-underline transition-colors"
-                : "rounded-full border border-border bg-card px-4 py-1.5 text-body-sm font-semibold text-muted-foreground no-underline transition-colors"
-            }
+            asChild
+            size="sm"
+            variant={isActive ? "default" : "outline"}
           >
-            {cat.label}
-          </Link>
+            <Link
+              href={(cat.value ? `/knowledge?cat=${cat.value}` : "/knowledge") as any}
+            >
+              {cat.label}
+            </Link>
+          </Button>
         );
       })}
     </div>
@@ -45,6 +52,7 @@ async function CategoryFilters({ searchParams }: { searchParams: Promise<{ cat?:
 function ArticleCard({
   slug,
   cat,
+  category,
   date,
   read,
   title,
@@ -52,6 +60,7 @@ function ArticleCard({
 }: {
   slug: string;
   cat: string;
+  category: string;
   date: string;
   read: string;
   title: string;
@@ -60,35 +69,44 @@ function ArticleCard({
   return (
     <Link
       href={`/knowledge/${slug}` as any}
-      className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card no-underline shadow-[0_1px_3px_rgba(20,40,40,.06)] transition-all hover:-translate-y-1 hover:shadow-[0_18px_40px_-18px_rgba(20,40,40,.28)]"
+      className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card no-underline transition-transform hover:-translate-y-0.5"
     >
-      <div
-        className="bg-primary-stripe relative flex aspect-[16/10] items-center justify-center font-mono text-caption text-muted-foreground"
-      >
-        [ תמונת נושא ]
-        <span className="absolute right-[14px] top-[14px] rounded-full bg-card/94 px-3 py-[5px] text-caption font-bold text-primary shadow-[0_2px_6px_rgba(20,40,40,.12)]">
-          {cat}
-        </span>
-      </div>
-      <div className="flex flex-1 flex-col gap-[10px] p-[22px_24px]">
+      <ArticleCover category={category} badge={cat} />
+      <div className="flex flex-1 flex-col gap-2.5 p-6">
         <div className="flex items-center gap-2 text-caption text-muted-foreground">
           <span>{date}</span>
           <span className="h-[3px] w-[3px] rounded-full bg-border" />
           <span>{read}</span>
         </div>
-        <h3 className="text-subtitle font-bold leading-[1.35] text-foreground" style={{ margin: 0 }}>{title}</h3>
-        <p className="text-body-sm leading-[1.6] text-muted-foreground" style={{ margin: 0 }}>{excerpt}</p>
+        <h3 className="text-subtitle leading-[1.35] font-bold text-foreground">
+          {title}
+        </h3>
+        <p className="text-body-sm text-muted-foreground">
+          {excerpt}
+        </p>
         <div className="mt-auto flex items-center justify-between border-t border-border pt-4">
-          <div className="flex items-center gap-[9px]">
-            <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-primary/12">
+          <div className="flex items-center gap-2.5">
+            <span className="flex size-8 items-center justify-center rounded-md bg-primary-muted">
               <LogoSvg size={15} className="text-primary" />
             </span>
-            <span className="text-caption font-semibold text-muted-foreground">מערכת קול מצהלות</span>
+            <span className="text-caption font-semibold text-muted-foreground">
+              מערכת קול מצהלות
+            </span>
           </div>
-          <span className="inline-flex items-center gap-[5px] text-body-sm font-bold text-primary">
+          <span className="inline-flex items-center gap-1 text-body-sm font-bold text-primary">
             לקריאה{" "}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5" /><path d="m12 19-7-7 7-7" />
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M19 12H5" />
+              <path d="m12 19-7-7 7-7" />
             </svg>
           </span>
         </div>
@@ -97,7 +115,11 @@ function ArticleCard({
   );
 }
 
-async function ArticleGrid({ searchParams }: { searchParams: Promise<{ cat?: string }> }) {
+async function ArticleGrid({
+  searchParams,
+}: {
+  searchParams: Promise<{ cat?: string }>;
+}) {
   const { cat: currentCat = "" } = await searchParams;
   const supabase = await createClient();
 
@@ -114,14 +136,15 @@ async function ArticleGrid({ searchParams }: { searchParams: Promise<{ cat?: str
   if (!articles?.length) {
     return (
       <div className="py-20 text-center">
-        <p className="text-subtitle font-bold text-primary">עוד לא פורסמו מאמרים בקטגוריה זו</p>
-        <p className="mt-2 text-body text-muted-foreground">בקרוב יתווספו מאמרים חדשים. חזרו שוב!</p>
-        <Link
-          href={"/knowledge" as any}
-          className="mt-6 inline-flex rounded-[8px] border border-border px-5 py-[10px] text-body-sm font-bold text-primary no-underline transition-colors hover:bg-muted"
-        >
-          לכל המאמרים
-        </Link>
+        <p className="text-subtitle font-bold text-primary">
+          עוד לא פורסמו מאמרים בקטגוריה זו
+        </p>
+        <p className="mt-2 text-body text-muted-foreground">
+          בקרוב יתווספו מאמרים חדשים. חזרו שוב!
+        </p>
+        <Button asChild variant="outline" className="mt-6">
+          <Link href={"/knowledge" as any}>לכל המאמרים</Link>
+        </Button>
       </div>
     );
   }
@@ -133,7 +156,12 @@ async function ArticleGrid({ searchParams }: { searchParams: Promise<{ cat?: str
           key={a.id}
           slug={a.slug}
           cat={CATEGORY_LABELS[a.category] ?? a.category}
-          date={a.published_at ? new Date(a.published_at).toLocaleDateString("he-IL") : ""}
+          category={a.category}
+          date={
+            a.published_at
+              ? new Date(a.published_at).toLocaleDateString("he-IL")
+              : ""
+          }
           read={`${a.read_time_minutes} דק׳ קריאה`}
           title={a.title}
           excerpt={a.excerpt}
@@ -150,37 +178,71 @@ export default function KnowledgePage({
 }) {
   return (
     <>
-      {/* Hero + filters */}
-      <section className="bg-background">
-        <div className="mx-auto px-6 py-[72px] text-center" style={{ maxWidth: 1120 }}>
-          <h1
-            className="font-bold text-primary text-display" style={{marginBottom: 12, lineHeight: 1.1}}
-          >
-            מרכז הידע של קול מצהלות
+      {/* ── 1. HERO ── */}
+      <section className="relative overflow-hidden bg-primary text-primary-foreground">
+        <div className="bg-brand-gold-wash pointer-events-none absolute inset-0" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo_negative.svg"
+          alt=""
+          aria-hidden="true"
+          width={720}
+          height={720}
+          className="pointer-events-none absolute -top-28 -left-24 opacity-[0.07] select-none"
+        />
+
+        <div className="relative shell-site flex flex-col items-center justify-center py-24 text-center md:py-28">
+          <h1 className="max-w-5xl text-hero text-balance text-primary-foreground">
+            מרכז הידע של
+            <br />
+            <span
+              className="mt-3 inline-block rounded-xl"
+              style={{
+                background: "var(--brand-gold)",
+                color: "var(--brand-gold-foreground)",
+                padding: "1px 20px 6px",
+                transform: "rotate(-1.5deg)",
+              }}
+            >
+              קול מצהלות
+            </span>
           </h1>
-          <p className="mb-8 text-subtitle text-muted-foreground">
+          <p className="mt-8 max-w-2xl text-subtitle text-primary-foreground/85">
             כל מה שחשוב לדעת על שידוכים, בירורים, פגישות, אירוסין ומה שביניהם.
           </p>
-          <Suspense fallback={<div className="flex flex-wrap justify-center gap-2 opacity-50">
-            {CATEGORIES.map((cat) => (
-              <span key={cat.value} className="rounded-full border border-border bg-card px-4 py-1.5 text-body-sm font-semibold text-muted-foreground">{cat.label}</span>
-            ))}
-          </div>}>
-            <CategoryFilters searchParams={searchParams} />
-          </Suspense>
         </div>
       </section>
 
       {/* Article grid */}
-      <section className="bg-muted">
-        <div className="mx-auto px-6 py-16" style={{ maxWidth: 1120 }}>
-          <Suspense fallback={
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-[340px] animate-pulse rounded-2xl bg-border" />
-              ))}
-            </div>
-          }>
+      <section className="bg-secondary">
+        <div className="shell-site py-16 md:py-20">
+          <div className="mb-10">
+            <Suspense
+              fallback={
+                <div className="flex flex-wrap justify-center gap-2 opacity-50">
+                  {CATEGORIES.map((cat) => (
+                    <span
+                      key={cat.value}
+                      className="rounded-md border border-border px-4 py-1.5 text-body-sm font-semibold text-muted-foreground"
+                    >
+                      {cat.label}
+                    </span>
+                  ))}
+                </div>
+              }
+            >
+              <CategoryFilters searchParams={searchParams} />
+            </Suspense>
+          </div>
+          <Suspense
+            fallback={
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="h-[340px] animate-pulse rounded-2xl bg-border" />
+                ))}
+              </div>
+            }
+          >
             <ArticleGrid searchParams={searchParams} />
           </Suspense>
         </div>
