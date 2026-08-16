@@ -133,7 +133,7 @@ export function SignUpForm({
                 <Input
                   id="phone"
                   type="tel"
-                  placeholder="+44 7XXX XXXXXX"
+                  placeholder="05X-XXX-XXXX"
                   required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
@@ -142,7 +142,7 @@ export function SignUpForm({
                   className="text-left"
                 />
                 <p className="text-muted-foreground text-caption">
-                  מספר ישראלי (05…) או בינלאומי עם קידומת (+…)
+                  מספר בינלאומי? הזינו עם קידומת מדינה (+…)
                 </p>
               </div>
               {/* <div className="grid gap-2">
