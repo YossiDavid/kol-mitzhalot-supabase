@@ -50,10 +50,10 @@ import {
 } from "@/features/students/lib/profile-labels";
 import { unstable_noStore as noStore } from "next/cache";
 
-// הדף מרנדר תוכן שונה למשתמש מחובר ולגולש אנונימי, ולכן אסור שייכנס
-// לקאש של ה-CDN — אחרת גרסה מלאה שנוצרה עבור מנהל עלולה להיות מוגשת
-// לגולש אנונימי. noStore() לבדו לא מנע HIT בפועל.
-export const dynamic = "force-dynamic";
+// הערה: אין כאן export const dynamic — הוא אסור תחת Cache Components
+// (next.config: cacheComponents) והבנייה נכשלת עליו. גם אין בו צורך:
+// ללא "use cache" שום דבר אינו נשמר בקאש המשותף, ותוכן שתלוי ב-cookies
+// או headers הוא session-specific ממילא.
 import { cn } from "@/lib/utils";
 
 type IconComponent = React.ComponentType<{
