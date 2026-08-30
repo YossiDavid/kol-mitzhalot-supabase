@@ -106,7 +106,6 @@ function InfoTag({
 // מכשיר/רחוב/בית/קו"ח/user_id/institution_id) לא מופיע כאן.
 type AnonymousStudentRow = {
   id: string;
-  permalink: string | null;
   first_name: string;
   last_name: string;
   gender: string | null;
@@ -254,7 +253,7 @@ export default async function StudentPage({
     ? await createAdminClient()
         .from("students")
         .select(
-          `id, permalink, first_name, last_name, gender, personal_status, city, height, community, shtible, plan_for_life, head_cover_type, about, parents_info, family_info, author_info, image_url, birth_date, deleted_at,
+          `id, first_name, last_name, gender, personal_status, city, height, community, shtible, plan_for_life, head_cover_type, about, parents_info, family_info, author_info, image_url, birth_date, deleted_at,
 			education_history(*),
 			employment_history(*)
 		`,
