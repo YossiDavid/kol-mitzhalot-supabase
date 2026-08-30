@@ -54,10 +54,12 @@ async function SidebarLayout({ children }: { children: React.ReactNode }) {
 
   // גולש לא מחובר בכרטיס ציבורי מקבל מעטפת מינימלית: אין sidebar, אין
   // ניווט תחתון ואין באנר התחזות — כולם כלי ניהול של משתמש מחובר.
+  // חובה variant="website": וריאנט "app" מרנדר SidebarTrigger שקורא
+  // ל-useSidebar, ומחוץ ל-SidebarProvider הוא זורק שגיאה בצד הלקוח.
   if (!user && isPublicStudentCard) {
     return (
       <div className="flex min-h-svh flex-col">
-        <Header variant="app" />
+        <Header variant="website" />
         <main className="container flex-1 px-3 py-4 md:px-4 md:py-5">
           {children}
         </main>
