@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { getAppOrigin } from "@/lib/app-url";
+import { getRequestOrigin } from "@/lib/app-url";
 import { unstable_noStore as noStore } from "next/cache";
 
 /**
@@ -70,7 +70,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const origin = getAppOrigin();
+    // הדומיין שממנו המנהל פועל בפועל (beta.kolmitzhalot.org.il / preview /
+    // localhost) — אחרת ההתחזות זורקת אותו לדומיין ה-deployment של Vercel
+    const origin = getRequestOrigin(req.headers);
     const redirectUrl = `${origin}/auth/confirm?token_hash=${encodeURIComponent(linkData.properties.hashed_token)}&type=magiclink&next=/app`;
 
     return NextResponse.json({ redirectUrl });
