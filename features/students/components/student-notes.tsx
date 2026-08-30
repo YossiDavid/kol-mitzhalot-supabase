@@ -110,6 +110,11 @@ export default function StudentNotes({
     }
   }
 
+  // הפיצול לפי author_role — הכשירות שנשמרה בזמן הכתיבה. מנהל שכותב מופיע
+  // יחד עם השדכנים, כי מבחינת הכרטיס זו הערת עבודה ולא מחמאה חינוכית.
+  const staffNotes = notes.filter((note) => note.author_role === "staff");
+  const shadchanNotes = notes.filter((note) => note.author_role !== "staff");
+
   return (
     <div className="space-y-4">
       {canWrite && (
@@ -143,32 +148,52 @@ export default function StudentNotes({
           </p>
         </div>
       ) : (
-        <ul className="space-y-3">
-          {notes.map((note) => (
-            <li
-              key={note.id}
-              className="rounded-lg border border-border bg-muted/30 p-3"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="flex flex-wrap items-baseline gap-x-1.5">
-                  <span className="text-caption font-bold text-foreground">
-                    {note.author_name}
-                  </span>
-                  <span className="text-caption text-muted-foreground">
-                    {formatAuthorAttribution(note)}
-                  </span>
-                </span>
-                <span className="shrink-0 text-caption text-muted-foreground">
-                  {formatNoteDate(note.created_at)}
-                </span>
-              </div>
-              <p className="mt-1.5 text-body-sm leading-relaxed whitespace-pre-wrap text-foreground">
-                {note.body}
-              </p>
-            </li>
-          ))}
-        </ul>
+        <div className="space-y-5">
+          <NoteGroup title="מחמאות אנשי צוות" notes={staffNotes} />
+          <NoteGroup title="הערות שדכנים" notes={shadchanNotes} />
+        </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * קבוצת הערות אחת. מחמאות של אנשי חינוך והערות עבודה של שדכנים משרתות
+ * מטרות שונות וקהלים שונים, ולכן מוצגות בנפרד. קבוצה ריקה אינה מוצגת כלל —
+ * הודעת "אין הערות" מופיעה פעם אחת בלבד, כשאין אף הערה.
+ */
+function NoteGroup({ title, notes }: { title: string; notes: Note[] }) {
+  if (notes.length === 0) return null;
+  return (
+    <div className="space-y-2">
+      <h3 className="text-caption font-bold text-muted-foreground">
+        {title} ({notes.length})
+      </h3>
+      <ul className="space-y-3">
+        {notes.map((note) => (
+          <li
+            key={note.id}
+            className="rounded-lg border border-border bg-muted/30 p-3"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex flex-wrap items-baseline gap-x-1.5">
+                <span className="text-caption font-bold text-foreground">
+                  {note.author_name}
+                </span>
+                <span className="text-caption text-muted-foreground">
+                  {formatAuthorAttribution(note)}
+                </span>
+              </span>
+              <span className="shrink-0 text-caption text-muted-foreground">
+                {formatNoteDate(note.created_at)}
+              </span>
+            </div>
+            <p className="mt-1.5 text-body-sm leading-relaxed whitespace-pre-wrap text-foreground">
+              {note.body}
+            </p>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
