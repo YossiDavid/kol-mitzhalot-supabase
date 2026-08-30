@@ -3,7 +3,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import calculateAge from "@/lib/calculateAge";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { hasRole } from "@/lib/user";
+import { formatFullName, resolveDisplayName } from "@/lib/user-display-name";
 import {
   User,
   Phone,
@@ -20,12 +22,16 @@ import {
   ChevronRight,
   Lock,
   ImageIcon,
+  MessageSquareText,
 } from "lucide-react";
 import Link from "next/link";
 import ShareButton from "@/features/students/components/share-button";
 import MessageButton from "@/features/students/components/message-button";
 import DeleteStudentButton from "@/features/students/components/delete-student-button";
 import StudentPhoto from "@/features/students/components/student-photo";
+import StudentNotes, {
+  type Note,
+} from "@/features/students/components/student-notes";
 import StatusUpdateButton from "./status-update-button";
 import { jewishDateHebrew } from "@/lib/jewishDatte";
 import {
@@ -44,6 +50,74 @@ import {
 } from "@/features/students/lib/profile-labels";
 import { unstable_noStore as noStore } from "next/cache";
 import { cn } from "@/lib/utils";
+
+// שליפת מחמאות/הערות למיועד + שם תצוגה לכל מחבר. הקריאה עצמה עוברת דרך
+// הלקוח המשויך למשתמש (RLS מסנן מי רואה מה - ראה
+// supabase/migrations/20260830170000_student_notes.sql), ורק פענוח השם של
+// כל מחבר (auth.users + user_profiles) דורש את לקוח ה-admin, כמו ב-
+// features/admin/lib/users.ts.
+async function loadStudentNotes(studentId: string): Promise<Note[]> {
+  const supabase = await createClient();
+  const { data: rows, error: notesError } = await supabase
+    .from("student_notes")
+    .select("id, body, created_at, author_id")
+    .eq("student_id", studentId)
+    .order("created_at", { ascending: false });
+
+  if (notesError) {
+    console.error("[students/notes]", notesError);
+    return [];
+  }
+  if (!rows || rows.length === 0) return [];
+
+  const admin = createAdminClient();
+  const authorIds = Array.from(new Set(rows.map((row) => row.author_id)));
+
+  const { data: profiles, error: profilesError } = await admin
+    .from("user_profiles")
+    .select("id, first_name, last_name")
+    .in("id", authorIds);
+
+  if (profilesError) {
+    console.error("[students/notes] user_profiles", profilesError);
+  }
+
+  const profileMap = new Map(
+    (profiles ?? []).map((profile) => [
+      profile.id,
+      { first_name: profile.first_name, last_name: profile.last_name },
+    ]),
+  );
+
+  const nameMap = new Map<string, string>();
+  await Promise.all(
+    authorIds.map(async (authorId) => {
+      try {
+        const { data: authorData, error: authorError } =
+          await admin.auth.admin.getUserById(authorId);
+        if (authorError || !authorData.user) {
+          nameMap.set(authorId, "משתמש");
+          return;
+        }
+        const { firstName, lastName } = resolveDisplayName(
+          authorData.user,
+          profileMap.get(authorId) ?? null,
+        );
+        nameMap.set(authorId, formatFullName(firstName, lastName) || "משתמש");
+      } catch (err) {
+        console.error("[students/notes] author lookup", err);
+        nameMap.set(authorId, "משתמש");
+      }
+    }),
+  );
+
+  return rows.map((row) => ({
+    id: row.id,
+    body: row.body,
+    created_at: row.created_at,
+    author_name: nameMap.get(row.author_id) ?? "משתמש",
+  }));
+}
 
 export default async function StudentPage({
   params,
@@ -101,11 +175,17 @@ export default async function StudentPage({
     );
   }
 
-  // החלטת מוצר: תמונת בנות חסויה תמיד — ללא יוצא מן הכלל (גם לשדכן/מנהל/הבעלים).
-  // תמונה של בת נחשפת רק למנהל מערכת. בהמשך יתווסף כאן גם "משתמש מורשה"
+  // תמונה של בת נחשפת רק למנהל מערכת — לא לשדכן ולא לבעלת הכרטיס.
+  // בהמשך יתווסף כאן גם "משתמש מורשה"
   // כפיצ'ר נפרד — נקודת ההרחבה היחידה היא הביטוי הזה.
   const canViewFemalePhoto = isAdmin;
   const photoPrivate = student.gender === "female" && !canViewFemalePhoto;
+
+  // מי רואה את סעיף המחמאות וההערות בכלל: שדכן/מנהל/איש צוות. RLS הוא
+  // האכיפה האמיתית (מי רואה אילו הערות ספציפיות) - זה רק שער תצוגה.
+  const canAccessNotes =
+    isShadchan || hasRole(user, "staff");
+  const notes = canAccessNotes ? await loadStudentNotes(student.id) : [];
 
   type IconComponent = React.ComponentType<{
     size?: number;
@@ -354,6 +434,17 @@ export default async function StudentPage({
           )}
         </div>
       </Section>
+
+      {/* Notes/endorsements — full width, visible only to shadchan/admin/staff */}
+      {canAccessNotes && (
+        <Section title="מחמאות והערות" icon={MessageSquareText}>
+          <StudentNotes
+            studentId={student.id}
+            canWrite={canAccessNotes}
+            initialNotes={notes}
+          />
+        </Section>
+      )}
 
       {/* Main Content */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">

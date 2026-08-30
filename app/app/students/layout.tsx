@@ -16,7 +16,14 @@ export default async function StudentsLayout({
     redirect("/auth/login");
   }
 
-  if (!hasRole(user, "admin") && !hasRole(user, "shadchan")) {
+  // איש צוות מאושר גם רשאי להיכנס - RLS (staff_can_access_student, ראה
+  // supabase/migrations/20260830170000_student_notes.sql) כבר מגביל את
+  // הרשימה שהוא יראה למיועדים של המוסד שלו בלבד.
+  if (
+    !hasRole(user, "admin") &&
+    !hasRole(user, "shadchan") &&
+    !hasRole(user, "staff")
+  ) {
     redirect("/app");
   }
 

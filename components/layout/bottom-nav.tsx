@@ -23,11 +23,11 @@ const allItems = [
   { title: "הוספה", url: "/app/students/create", icon: Plus },
 ] as const;
 
-const shadchanOnlyUrls = [
-  "/app/students",
-  "/app/students/create",
-  "/app/canvas",
-];
+// זמינים רק לשדכן/מנהל - איש צוות לא יוצר כרטיסים ולא משתמש בלוח ההתאמות.
+const shadchanOnlyUrls = ["/app/students/create", "/app/canvas"];
+// זמין גם לאיש צוות מאושר (בנוסף לשדכן/מנהל) - RLS מגביל את הרשימה
+// שהוא יראה למיועדים של המוסד שלו בלבד.
+const staffVisibleUrls = ["/app/students"];
 
 export function BottomNav({ roles }: { roles: Role[] }) {
   const pathname = usePathname();
@@ -40,9 +40,12 @@ export function BottomNav({ roles }: { roles: Role[] }) {
   // איש צוות עדיין רואה את פריטי השדכן, ולא רק לפי תפקיד "ראשי" יחיד.
   const isShadchanOrAdmin =
     effectiveRoles.includes("shadchan") || effectiveRoles.includes("admin");
-  const items = isShadchanOrAdmin
-    ? allItems
-    : allItems.filter((item) => !shadchanOnlyUrls.includes(item.url));
+  const isStaff = effectiveRoles.includes("staff");
+  const items = allItems.filter((item) => {
+    if (shadchanOnlyUrls.includes(item.url)) return isShadchanOrAdmin;
+    if (staffVisibleUrls.includes(item.url)) return isShadchanOrAdmin || isStaff;
+    return true;
+  });
 
   return (
     <nav
