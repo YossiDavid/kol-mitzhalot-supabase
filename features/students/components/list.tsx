@@ -73,6 +73,9 @@ export default function StudentsList() {
   const { query } = useStudentQuery();
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
+  // שגיאת טעינה אמיתית — נבדלת מ"אין תוצאות", כדי שכשל שאילתה לא ייראה כמו חיפוש ריק
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const supabaseRef = useRef(createClient());
   const supabase = supabaseRef.current;
@@ -82,7 +85,9 @@ export default function StudentsList() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (isMounted) setUser(user || undefined);
     });
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [supabase]);
 
   useEffect(() => {
@@ -90,6 +95,7 @@ export default function StudentsList() {
 
     async function fetchStudents() {
       setLoading(true);
+      setLoadError(null);
       try {
         const oneMonthAgo = new Date();
         oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
@@ -140,22 +146,30 @@ export default function StudentsList() {
         const { data, error } = await q;
         if (!isMounted) return;
         if (error) {
-          console.error("[students/list] query failed:", error.message);
+          console.error("[students/list] query failed:", error);
           toast.error("לא הצלחנו לטעון את רשימת הכרטיסים");
           setStudents([]);
+          setLoadError(error.message);
           return;
         }
         setStudents(data || []);
-      } catch {
-        if (isMounted) setStudents([]);
+      } catch (err: unknown) {
+        if (!isMounted) return;
+        const message = err instanceof Error ? err.message : "שגיאה לא צפויה";
+        console.error("[students/list] unexpected failure:", err);
+        toast.error("לא הצלחנו לטעון את רשימת הכרטיסים");
+        setStudents([]);
+        setLoadError(message);
       } finally {
         if (isMounted) setLoading(false);
       }
     }
 
     fetchStudents();
-    return () => { isMounted = false; };
-  }, [query, supabase]);
+    return () => {
+      isMounted = false;
+    };
+  }, [query, supabase, reloadKey]);
 
   const favSet = useMemo(
     () => new Set<string>(user?.user_metadata?.favorites || []),
@@ -172,7 +186,10 @@ export default function StudentsList() {
       data: { favorites: nextFavs },
     });
 
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     if (data) setUser(data.user || undefined);
   };
 
@@ -180,6 +197,36 @@ export default function StudentsList() {
     return (
       <div className="flex items-center justify-center gap-2 p-8 text-center">
         <Spinner /> טוען נתונים...
+      </div>
+    );
+
+  // כשל בטעינה אינו "אין תוצאות" — מציגים אותו במפורש עם אפשרות לנסות שוב
+  if (loadError)
+    return (
+      <div className="mt-8">
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle>לא הצלחנו לטעון את רשימת הכרטיסים</EmptyTitle>
+            <EmptyDescription>
+              אירעה תקלה בשליפת הנתונים. נסו שוב, ואם התקלה חוזרת פנו למנהל
+              המערכת.
+            </EmptyDescription>
+          </EmptyHeader>
+          <p
+            className="mt-2 text-center text-body-sm text-muted-foreground"
+            dir="ltr"
+            role="alert"
+          >
+            {loadError}
+          </p>
+          <Button
+            variant="outline"
+            className="mt-4"
+            onClick={() => setReloadKey((k) => k + 1)}
+          >
+            נסו שוב
+          </Button>
+        </Empty>
       </div>
     );
 
@@ -215,37 +262,74 @@ export default function StudentsList() {
                         </span>
                       )}
                       {student.image_url && (
-                        <Camera className="text-muted-foreground h-3.5 w-3.5 shrink-0" aria-label="יש תמונה" />
+                        <Camera
+                          className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                          aria-label="יש תמונה"
+                        />
                       )}
                     </p>
-                    <p className="text-muted-foreground mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-body-sm">
-                      <span>{parseStatus(student.personal_status, student.gender)}</span>
+                    <p className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-body-sm text-muted-foreground">
+                      <span>
+                        {parseStatus(student.personal_status, student.gender)}
+                      </span>
                       <span>·</span>
                       <span>גיל {calculateAge(student.birth_date || "")}</span>
-                      {student.city && <><span>·</span><span>{student.city}</span></>}
-                      {student.height && <><span>·</span><span>{student.height} ס״מ</span></>}
+                      {student.city && (
+                        <>
+                          <span>·</span>
+                          <span>{student.city}</span>
+                        </>
+                      )}
+                      {student.height && (
+                        <>
+                          <span>·</span>
+                          <span>{student.height} ס״מ</span>
+                        </>
+                      )}
                     </p>
                   </div>
                   <button
-                    onClick={() => handleFavoriteChange(!favSet.has(student.id), student.id)}
+                    onClick={() =>
+                      handleFavoriteChange(!favSet.has(student.id), student.id)
+                    }
                     className="mt-0.5 shrink-0 p-1"
-                    aria-label={favSet.has(student.id) ? "הסר ממועדפים" : "הוסף למועדפים"}
+                    aria-label={
+                      favSet.has(student.id) ? "הסר ממועדפים" : "הוסף למועדפים"
+                    }
                   >
                     <Star
                       className={cn(
                         "h-5 w-5 transition-colors",
-                        favSet.has(student.id) ? "fill-favorite text-favorite" : "text-muted-foreground",
+                        favSet.has(student.id)
+                          ? "fill-favorite text-favorite"
+                          : "text-muted-foreground",
                       )}
                     />
                   </button>
                 </div>
                 <div className="mt-3 flex gap-2">
                   {student.cv_url ? (
-                    <Button asChild variant="outline" size="sm" className="flex-1">
-                      <a href={student.cv_url} target="_blank" rel="noopener noreferrer">קו״ח</a>
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      <a
+                        href={student.cv_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        קו״ח
+                      </a>
                     </Button>
                   ) : (
-                    <Button asChild variant="outline" size="sm" className="flex-1">
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                    >
                       <Link href={"/" as any}>הוספת קו״ח</Link>
                     </Button>
                   )}
@@ -284,14 +368,20 @@ export default function StudentsList() {
               >
                 <div>
                   <button
-                    onClick={() => handleFavoriteChange(!favSet.has(student.id), student.id)}
+                    onClick={() =>
+                      handleFavoriteChange(!favSet.has(student.id), student.id)
+                    }
                     className="p-1"
-                    aria-label={favSet.has(student.id) ? "הסר ממועדפים" : "הוסף למועדפים"}
+                    aria-label={
+                      favSet.has(student.id) ? "הסר ממועדפים" : "הוסף למועדפים"
+                    }
                   >
                     <Star
                       className={cn(
                         "h-5 w-5 transition-colors",
-                        favSet.has(student.id) ? "fill-favorite text-favorite" : "text-muted-foreground",
+                        favSet.has(student.id)
+                          ? "fill-favorite text-favorite"
+                          : "text-muted-foreground",
                       )}
                     />
                   </button>
@@ -299,7 +389,10 @@ export default function StudentsList() {
                 <div className="flex items-center gap-1">
                   {parseStatus(student.personal_status, student.gender)}
                   {student.image_url && (
-                    <Camera className="text-muted-foreground h-3.5 w-3.5 shrink-0" aria-label="יש תמונה" />
+                    <Camera
+                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                      aria-label="יש תמונה"
+                    />
                   )}
                 </div>
                 <div>{student.last_name}</div>
@@ -318,7 +411,11 @@ export default function StudentsList() {
                 <div className="flex gap-1">
                   {student.cv_url ? (
                     <Button asChild className="flex-1" variant="outline">
-                      <a href={student.cv_url} target="_blank" rel="noopener noreferrer">
+                      <a
+                        href={student.cv_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         כרטיס קו״ח
                       </a>
                     </Button>

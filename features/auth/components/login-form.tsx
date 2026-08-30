@@ -2,6 +2,10 @@
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import {
+  AUTH_CONFIRM_PATH,
+  getAuthRedirectUrl,
+} from "@/features/auth/lib/redirect-url";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,9 +29,6 @@ export function LoginForm({
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const getRedirectUrl = () =>
-    `${typeof window !== "undefined" ? window.location.origin : ""}/auth/confirm`;
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const supabase = createClient();
@@ -37,7 +38,7 @@ export function LoginForm({
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: getRedirectUrl() },
+        options: { emailRedirectTo: getAuthRedirectUrl(AUTH_CONFIRM_PATH) },
       });
       if (error) throw error;
       router.push("/auth/check-email");
@@ -75,7 +76,7 @@ export function LoginForm({
                 />
               </div>
               {error && (
-                <p className="text-destructive text-body-sm" role="alert">
+                <p className="text-body-sm text-destructive" role="alert">
                   {error}
                 </p>
               )}
@@ -83,7 +84,7 @@ export function LoginForm({
                 {isLoading ? "שולח קישור..." : "שלח קישור התחברות"}
               </Button>
             </div>
-            <div className="text-muted-foreground mt-4 text-center text-body-sm">
+            <div className="mt-4 text-center text-body-sm text-muted-foreground">
               אין לך חשבון?{" "}
               <Link
                 href="/auth/sign-up"

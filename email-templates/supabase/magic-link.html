@@ -2,7 +2,13 @@
   ספק: Supabase Auth (לא SendGrid)
   מיקום ב-Dashboard: Authentication → Email Templates → Magic Link
   נושא מוצע: לינק התחברות זמנית למערכת קול מצהלות
-  משתנים: {{ .SiteURL }}, {{ .TokenHash }} — הקישור הבנוי למטה מפנה ל-/auth/confirm (ראו MAGIC_LINK_SETUP.md בפרויקט)
+  משתנים: {{ .RedirectTo }}, {{ .TokenHash }}
+  חשוב: משתמשים ב-{{ .RedirectTo }} ולא ב-{{ .SiteURL }} — כך הקישור חוזר לדומיין שממנו
+  הגולש נכנס בפועל (פרודקשן / preview ב-Vercel / localhost) ולא לדומיין קבוע אחד.
+  {{ .RedirectTo }} מכיל את הערך המלא שנשלח כ-emailRedirectTo, כלומר כבר כולל את /auth/confirm
+  וללא query string — ולכן התבנית מוסיפה כאן ?token_hash=...&type=magiclink בלבד.
+  ראו: https://supabase.com/docs/guides/auth/redirect-urls
+  כל כתובת חייבת להופיע ב-Dashboard → Authentication → URL Configuration → Redirect URLs.
 -->
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #ecf0f2;">
     <tr>
@@ -25,7 +31,7 @@
             <td style="padding: 8px 32px 32px; text-align: center;">
               <p style="margin: 0 0 24px; color: #4b5563;">לחץ על הכפתור כדי להתחבר לחשבון שלך:</p>
               <p style="margin: 0 0 24px;">
-                <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&next=/app" style="display: inline-block; padding: 14px 32px; background: #3899a3; color: #ffffff; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 16px;">התחברות</a>
+                <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=magiclink" style="display: inline-block; padding: 14px 32px; background: #3899a3; color: #ffffff; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 16px;">התחברות</a>
               </p>
               <p style="margin: 0; font-size: 14px; color: #6b7280;">אם לא ביקשת קישור זה, אפשר להתעלם מהמייל. הקישור בתוקף לשעה.</p>
             </td>

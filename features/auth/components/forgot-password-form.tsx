@@ -14,6 +14,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useState } from "react";
+import {
+  AUTH_UPDATE_PASSWORD_PATH,
+  getAuthRedirectUrl,
+} from "@/features/auth/lib/redirect-url";
 
 export function ForgotPasswordForm({
   className,
@@ -33,7 +37,7 @@ export function ForgotPasswordForm({
     try {
       // The url which will be included in the email. This URL needs to be configured in your redirect URLs in the Supabase dashboard at https://supabase.com/dashboard/project/_/auth/url-configuration
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/update-password`,
+        redirectTo: getAuthRedirectUrl(AUTH_UPDATE_PASSWORD_PATH),
       });
       if (error) throw error;
       setSuccess(true);
@@ -50,11 +54,14 @@ export function ForgotPasswordForm({
         <Card>
           <CardHeader>
             <CardTitle className="text-heading">בדוק את האימייל שלך</CardTitle>
-            <CardDescription>נשלחה לך מייל עם פקודות שחזור סיסמה</CardDescription>
+            <CardDescription>
+              נשלחה לך מייל עם פקודות שחזור סיסמה
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-body-sm text-muted-foreground">
-              אם הירשמת באמצעות האימייל והסיסמה, תקבל מייל עם פקודות שחזור סיסמה.
+              אם הירשמת באמצעות האימייל והסיסמה, תקבל מייל עם פקודות שחזור
+              סיסמה.
             </p>
           </CardContent>
         </Card>

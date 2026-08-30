@@ -16,6 +16,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { isValidPhone, PHONE_INVALID_MESSAGE } from "@/lib/phone";
+import {
+  AUTH_CONFIRM_PATH,
+  getAuthRedirectUrl,
+} from "@/features/auth/lib/redirect-url";
 
 export function SignUpForm({
   className,
@@ -28,9 +32,6 @@ export function SignUpForm({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-
-  const getRedirectUrl = () =>
-    `${typeof window !== "undefined" ? window.location.origin : ""}/auth/confirm?next=/app`;
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +63,7 @@ export function SignUpForm({
             firstName: fn,
             lastName: ln,
           },
-          emailRedirectTo: getRedirectUrl(),
+          emailRedirectTo: getAuthRedirectUrl(AUTH_CONFIRM_PATH),
         },
       });
       if (error) throw error;
@@ -141,7 +142,7 @@ export function SignUpForm({
                   dir="ltr"
                   className="text-left"
                 />
-                <p className="text-muted-foreground text-caption">
+                <p className="text-caption text-muted-foreground">
                   מספר בינלאומי? הזינו עם קידומת מדינה (+…)
                 </p>
               </div>
@@ -168,7 +169,7 @@ export function SignUpForm({
                 />
               </div> */}
               {error && (
-                <p className="text-destructive text-body-sm" role="alert">
+                <p className="text-body-sm text-destructive" role="alert">
                   {error}
                 </p>
               )}
@@ -176,7 +177,7 @@ export function SignUpForm({
                 {isLoading ? "יצירת חשבון..." : "הירשם"}
               </Button>
             </div>
-            <div className="text-muted-foreground mt-4 text-center text-body-sm">
+            <div className="mt-4 text-center text-body-sm text-muted-foreground">
               יש לך חשבון?{" "}
               <Link href="/auth/login" className="underline underline-offset-4">
                 התחבר
