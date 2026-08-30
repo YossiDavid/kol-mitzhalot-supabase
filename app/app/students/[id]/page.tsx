@@ -51,6 +51,118 @@ import {
 import { unstable_noStore as noStore } from "next/cache";
 import { cn } from "@/lib/utils";
 
+type IconComponent = React.ComponentType<{
+  size?: number;
+  className?: string;
+}>;
+
+// Section/InfoTag הוצאו החוצה מהקומפוננטה (לא תלויים ב-state/props של הדף)
+// כדי שגם התצוגה הציבורית (משתמש לא מחובר) תוכל להשתמש בהם ולהיראות כמו
+// אותו כרטיס. שום שינוי בהתנהגות - זו רק העברת scope.
+function Section({
+  title,
+  icon: Icon,
+  children,
+}: {
+  title: string;
+  icon: IconComponent;
+  children: React.ReactNode;
+}) {
+  return (
+    <Box className="space-y-4">
+      <div className="flex items-center gap-3 border-b border-border pb-3">
+        <div className="rounded-lg bg-muted p-2">
+          <Icon size={20} className="text-primary" />
+        </div>
+        <h2 className="text-title! font-bold!">{title}</h2>
+      </div>
+      {children}
+    </Box>
+  );
+}
+
+function InfoTag({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number | null | undefined;
+}) {
+  if (!value && value !== 0) return null;
+  return (
+    <div className="flex flex-col">
+      <span className="text-caption font-medium text-muted-foreground">
+        {label}
+      </span>
+      <span className="text-body-sm font-semibold text-foreground">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+// שורת ה-DB הגולמית שנשלפת ב-select המצומצם למשתמש לא מחובר. חייבת להישאר
+// תואמת בדיוק לרשימת השדות שנבחרים ב-query - שום שדה רגיש (ת.ז./טלפון/סוג
+// מכשיר/רחוב/בית/קו"ח/user_id/institution_id) לא מופיע כאן.
+type AnonymousStudentRow = {
+  id: string;
+  permalink: string | null;
+  first_name: string;
+  last_name: string;
+  gender: string | null;
+  personal_status: string | null;
+  city: string | null;
+  height: number | null;
+  community: string | null;
+  shtible: string | null;
+  plan_for_life: string | null;
+  head_cover_type: string | null;
+  about: string | null;
+  parents_info: Record<string, any> | null;
+  family_info: Record<string, any> | null;
+  author_info: Record<string, any> | null;
+  image_url: string | null;
+  birth_date: string | null;
+  deleted_at: string | null;
+  education_history: Array<Record<string, any>> | null;
+  employment_history: Array<Record<string, any>> | null;
+};
+
+// אובייקט התצוגה הציבורי בפועל - בלי birth_date (הוחלף בגיל מספרי) ובלי
+// deleted_at. image_url הוא המפתח היחיד שמתווסף בתנאי.
+type PublicStudent = Omit<
+  AnonymousStudentRow,
+  "birth_date" | "deleted_at" | "image_url"
+> & {
+  age: number | null;
+  image_url?: string;
+};
+
+/**
+ * בונה את אובייקט התצוגה הציבורי מתוך שורת ה-DB הגולמית שנשלפה עבור משתמש
+ * לא מחובר. זהו המקום היחיד שבו birth_date נהפך לגיל (מספר, דרך
+ * lib/calculateAge.ts) ולאחר מכן נשמט - הגיל המדויק/תאריך הלידה לעולם לא
+ * מגיע ל-JSX ולכן לא יכול לדלוף דרך ה-payload המסודר (serialized) של ה-HTML.
+ * deleted_at נשמט גם הוא (שימש רק לסינון ב-query).
+ *
+ * כלל מוחלט: image_url נכנס לאובייקט המוחזר רק כאשר gender === "male".
+ * עבור כרטיס של בת המפתח image_url לא קיים בכלל באובייקט - לא רק "ריק" או
+ * "לא מוצג ב-JSX" - כדי שלא תהיה שום דרך שבה הוא יזלוג ל-HTML הנשלח ללקוח.
+ */
+function buildPublicStudent(row: AnonymousStudentRow): PublicStudent {
+  const { birth_date, deleted_at, image_url, ...rest } = row;
+  // deleted_at שימש רק לסינון ב-query (is deleted_at null) - כאן הוא נשמט
+  // באופן מכוון ולא אמור להגיע לעולם ל-JSX; שורת ה-void רק "מסמנת" אותו
+  // כבשימוש עבור ה-linter.
+  void deleted_at;
+  const age = birth_date ? Number(calculateAge(birth_date)) : null;
+  return {
+    ...rest,
+    age,
+    ...(row.gender === "male" && image_url ? { image_url } : {}),
+  };
+}
+
 // שליפת מחמאות/הערות למיועד + שם תצוגה לכל מחבר. הקריאה עצמה עוברת דרך
 // הלקוח המשויך למשתמש (RLS מסנן מי רואה מה - ראה
 // supabase/migrations/20260830170000_student_notes.sql), ורק פענוח השם של
@@ -128,10 +240,34 @@ export default async function StudentPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("students")
-    .select(
-      `*,
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // חייב להיקבע לפני שליפת המידע - קובע אילו עמודות/embeds מותר בכלל
+  // לשלוף (ראה ההערה על AnonymousStudentRow למעלה). זה לא רק "מה מוצג
+  // ב-JSX" - Server Component מסדרר (serialize) כל מה שנשלף להטבעה ב-HTML,
+  // ולכן הגבלת מידע חייבת לקרות כבר ברמת ה-query, לא רק בתצוגה.
+  const isAnonymous = !user;
+
+  const { data, error } = isAnonymous
+    ? await createAdminClient()
+        .from("students")
+        .select(
+          `id, permalink, first_name, last_name, gender, personal_status, city, height, community, shtible, plan_for_life, head_cover_type, about, parents_info, family_info, author_info, image_url, birth_date, deleted_at,
+			education_history(*),
+			employment_history(*)
+		`,
+        )
+        .eq("id", id)
+        // אין RLS למשתמש anon (זה client עם service role) - הסינון על
+        // deleted_at חייב לקרות כאן במפורש, אחרת כרטיס שנמחק "רך" יחשף.
+        .is("deleted_at", null)
+        .single()
+    : await supabase
+        .from("students")
+        .select(
+          `*,
 		education_history(*),
 		employment_history(*),
 		medical_records(*),
@@ -139,13 +275,9 @@ export default async function StudentPage({
 		references(*),
 		previous_partners(*)
 	`,
-    )
-    .eq("id", id)
-    .single();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+        )
+        .eq("id", id)
+        .single();
 
   const isShadchan = hasRole(user, "shadchan") || hasRole(user, "admin");
   const isAdmin = hasRole(user, "admin");
@@ -175,6 +307,560 @@ export default async function StudentPage({
     );
   }
 
+  // --- ענף ציבורי (משתמש לא מחובר) --------------------------------------
+  // התצוגה מוגבלת: אין שורת פעולות, אין הערות, ואין מקטעי "מה אני מחפש"/
+  // "הצהרה רפואית"/"ממליצים"/"נישואין קודמים" - כי הטבלאות שמזינות אותם לא
+  // נשלפו כלל (ראה ה-select הציבורי למעלה). מוחזר כאן ולא ממשיך לקוד של
+  // המשתמש המחובר למטה, כדי שהקוד של המשתמש המחובר יישאר ללא שינוי.
+  if (isAnonymous) {
+    const publicStudent = buildPublicStudent(student as AnonymousStudentRow);
+
+    const genderLabel =
+      publicStudent.gender === "male"
+        ? "זכר"
+        : publicStudent.gender === "female"
+          ? "נקבה"
+          : null;
+
+    // כלל מוחלט: אצל בת לעולם לא מוצגת תמונה בדף הציבורי (גם אם איכשהו
+    // תגיע לכאן) - publicStudent.image_url ממילא לא קיים במקרה הזה
+    // (ראה buildPublicStudent), זו רק הגנה כפולה בשכבת התצוגה.
+    const showMalePhoto =
+      publicStudent.gender === "male" && !!publicStudent.image_url;
+    const showFemaleLockPlaceholder = publicStudent.gender === "female";
+
+    return (
+      <div className="min-h-screen space-y-6 text-right">
+        {/* Back */}
+        <Link
+          href="/app/students"
+          className="inline-flex items-center gap-1 text-body-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ChevronRight className="h-4 w-4" />
+          חזרה לרשימה
+        </Link>
+
+        {/* CTA להתחברות - כרטיס ציבורי מוגבל, יש עוד מידע אחרי התחברות */}
+        <div className="flex flex-col items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-body-sm font-medium text-foreground">
+            זוהי גרסה מוגבלת של הכרטיס. התחברו כדי לצפות בכרטיס המלא.
+          </p>
+          <Button asChild size="sm">
+            <Link href="/auth/login">התחברות לצפייה בכרטיס המלא</Link>
+          </Button>
+        </div>
+
+        {/* Hero */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="shrink-0">
+            {showFemaleLockPlaceholder ? (
+              <div className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-full border bg-muted sm:h-24 sm:w-24">
+                <Lock className="h-6 w-6 text-muted-foreground" />
+                <span className="text-caption text-muted-foreground">חסוי</span>
+              </div>
+            ) : showMalePhoto ? (
+              <StudentPhoto
+                src={publicStudent.image_url!}
+                alt={`${publicStudent.first_name} ${publicStudent.last_name}`}
+              />
+            ) : (
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border bg-muted sm:h-24 sm:w-24">
+                <ImageIcon className="h-8 w-8 text-muted-foreground" />
+              </div>
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <h1 className="text-heading! leading-tight! font-bold!">
+              {publicStudent.first_name} {publicStudent.last_name}
+            </h1>
+            <p className="mt-1.5 flex flex-wrap gap-x-2 gap-y-1 text-body-sm text-muted-foreground">
+              {genderLabel && <span>{genderLabel}</span>}
+              {publicStudent.age !== null && (
+                <>
+                  <span className="text-muted-foreground/40">·</span>
+                  <span>גיל {publicStudent.age}</span>
+                </>
+              )}
+              {publicStudent.personal_status && (
+                <>
+                  <span className="text-muted-foreground/40">·</span>
+                  <span>
+                    {personalStatusToHebrew(
+                      publicStudent.personal_status,
+                      publicStudent.gender ?? undefined,
+                    )}
+                  </span>
+                </>
+              )}
+              {publicStudent.city && (
+                <>
+                  <span className="text-muted-foreground/40">·</span>
+                  <span>{publicStudent.city}</span>
+                </>
+              )}
+              {publicStudent.height && (
+                <>
+                  <span className="text-muted-foreground/40">·</span>
+                  <span>{publicStudent.height} ס"מ</span>
+                </>
+              )}
+            </p>
+          </div>
+        </div>
+
+        {/* פרטים אישיים - ללא ת.ז./טלפון/סוג מכשיר/רחוב/בית (לא נשלפו בכלל) */}
+        <Section title="פרטים אישיים" icon={User}>
+          {publicStudent.about && (
+            <p className="leading-relaxed text-muted-foreground">
+              {publicStudent.about}
+            </p>
+          )}
+          <div className="grid grid-cols-2 gap-4 rounded-lg bg-muted/50 p-4 sm:grid-cols-3 lg:grid-cols-4">
+            {genderLabel && <InfoTag label="מגדר" value={genderLabel} />}
+            <InfoTag label="עיר" value={publicStudent.city} />
+            <InfoTag
+              label="גיל"
+              value={
+                publicStudent.age !== null ? `${publicStudent.age} שנים` : null
+              }
+            />
+            <InfoTag
+              label="סטטוס אישי"
+              value={
+                publicStudent.personal_status
+                  ? personalStatusToHebrew(
+                      publicStudent.personal_status,
+                      publicStudent.gender ?? undefined,
+                    )
+                  : null
+              }
+            />
+            {publicStudent.height && (
+              <InfoTag label="גובה" value={`${publicStudent.height} ס"מ`} />
+            )}
+            {publicStudent.community && (
+              <InfoTag label="קהילה" value={publicStudent.community} />
+            )}
+            {publicStudent.shtible && (
+              <InfoTag label="שטיבל" value={publicStudent.shtible} />
+            )}
+            {publicStudent.plan_for_life && (
+              <InfoTag
+                label="תכנון לחיים"
+                value={planForLifeToHebrew(publicStudent.plan_for_life)}
+              />
+            )}
+            {publicStudent.head_cover_type && (
+              <InfoTag
+                label="סוג כיסוי ראש"
+                value={headCoverTypeToHebrew(publicStudent.head_cover_type)}
+              />
+            )}
+          </div>
+        </Section>
+
+        {/* Main Content */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
+          {/* Main Column */}
+          <div className="space-y-6 lg:col-span-3">
+            {/* Family Background */}
+            <Section title="רקע משפחתי" icon={Users}>
+              <div className="space-y-6">
+                {/* Parents */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {/* Father */}
+                  <div className="rounded-lg border border-border bg-muted/30 p-4">
+                    <p className="mb-2 text-caption font-bold text-muted-foreground uppercase">
+                      אבא
+                    </p>
+                    <p className="font-bold">
+                      {publicStudent.parents_info?.father?.self?.prefix || ""}{" "}
+                      {publicStudent.parents_info?.father?.self?.name || ""}{" "}
+                      {publicStudent.parents_info?.father?.self?.suffix || ""}
+                    </p>
+                    {publicStudent.parents_info?.father?.job && (
+                      <p className="mt-1 text-body-sm text-muted-foreground italic">
+                        {publicStudent.parents_info.father.job}
+                      </p>
+                    )}
+                    {publicStudent.parents_info?.father?.phone && (
+                      <a
+                        href={`tel:${publicStudent.parents_info.father.phone}`}
+                        className="mt-2 flex items-center gap-1 text-caption text-muted-foreground hover:text-primary"
+                      >
+                        <Phone size={12} />{" "}
+                        {publicStudent.parents_info.father.phone}
+                      </a>
+                    )}
+                    {publicStudent.parents_info?.father?.email && (
+                      <a
+                        href={`mailto:${publicStudent.parents_info.father.email}`}
+                        className="mt-1 flex items-center gap-1 text-caption text-muted-foreground hover:text-primary"
+                      >
+                        <Mail size={12} />{" "}
+                        {publicStudent.parents_info.father.email}
+                      </a>
+                    )}
+                    {/* Grandfather */}
+                    {publicStudent.parents_info?.father?.grandFather && (
+                      <div className="mt-3 border-t border-border pt-3">
+                        <p className="text-caption text-muted-foreground">
+                          אביו:
+                        </p>
+                        <p className="text-body-sm">
+                          {publicStudent.parents_info.father.grandFather
+                            .prefix || ""}{" "}
+                          {publicStudent.parents_info.father.grandFather.name ||
+                            ""}{" "}
+                          {publicStudent.parents_info.father.grandFather
+                            .suffix || ""}
+                        </p>
+                      </div>
+                    )}
+                    {/* Grandmother */}
+                    {publicStudent.parents_info?.father?.grandMother && (
+                      <div className="mt-2">
+                        <p className="text-caption text-muted-foreground">
+                          אמו:
+                        </p>
+                        <p className="text-body-sm">
+                          {publicStudent.parents_info.father.grandMother
+                            .prefix || ""}{" "}
+                          {publicStudent.parents_info.father.grandMother.name ||
+                            ""}{" "}
+                          {publicStudent.parents_info.father.grandMother
+                            .suffix || ""}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Mother */}
+                  <div className="rounded-lg border border-border bg-muted/30 p-4">
+                    <p className="mb-2 text-caption font-bold text-muted-foreground uppercase">
+                      אמא
+                    </p>
+                    <p className="font-bold">
+                      {publicStudent.parents_info?.mother?.self?.prefix || ""}{" "}
+                      {publicStudent.parents_info?.mother?.self?.name || ""}{" "}
+                      {publicStudent.parents_info?.mother?.self?.suffix || ""}
+                      {publicStudent.parents_info?.mother?.maidenName && (
+                        <span className="text-body-sm font-normal text-muted-foreground">
+                          {" "}
+                          | לבית {publicStudent.parents_info.mother.maidenName}
+                        </span>
+                      )}
+                    </p>
+                    {publicStudent.parents_info?.mother?.job && (
+                      <p className="mt-1 text-body-sm text-muted-foreground">
+                        {publicStudent.parents_info.mother.job}
+                      </p>
+                    )}
+                    {publicStudent.parents_info?.mother?.phone && (
+                      <a
+                        href={`tel:${publicStudent.parents_info.mother.phone}`}
+                        className="mt-2 flex items-center gap-1 text-caption text-muted-foreground hover:text-primary"
+                      >
+                        <Phone size={12} />{" "}
+                        {publicStudent.parents_info.mother.phone}
+                      </a>
+                    )}
+                    {publicStudent.parents_info?.mother?.email && (
+                      <a
+                        href={`mailto:${publicStudent.parents_info.mother.email}`}
+                        className="mt-1 flex items-center gap-1 text-caption text-muted-foreground hover:text-primary"
+                      >
+                        <Mail size={12} />{" "}
+                        {publicStudent.parents_info.mother.email}
+                      </a>
+                    )}
+                    {publicStudent.parents_info?.deadParent === "mother" &&
+                      publicStudent.parents_info?.motherDeathDate && (
+                        <p className="mt-2 text-caption text-destructive">
+                          נפטרה ב-
+                          {jewishDateHebrew(
+                            publicStudent.parents_info.motherDeathDate,
+                          )}
+                        </p>
+                      )}
+                    {/* Grandfather */}
+                    {publicStudent.parents_info?.mother?.grandFather && (
+                      <div className="mt-3 border-t border-border pt-3">
+                        <p className="text-caption text-muted-foreground">
+                          אביה:
+                        </p>
+                        <p className="text-body-sm">
+                          {publicStudent.parents_info.mother.grandFather
+                            .prefix || ""}{" "}
+                          {publicStudent.parents_info.mother.grandFather.name ||
+                            ""}{" "}
+                          {publicStudent.parents_info.mother.grandFather
+                            .suffix || ""}
+                        </p>
+                      </div>
+                    )}
+                    {/* Grandmother */}
+                    {publicStudent.parents_info?.mother?.grandMother && (
+                      <div className="mt-2">
+                        <p className="text-caption text-muted-foreground">
+                          אימה:
+                        </p>
+                        <p className="text-body-sm">
+                          {publicStudent.parents_info.mother.grandMother
+                            .prefix || ""}{" "}
+                          {publicStudent.parents_info.mother.grandMother.name ||
+                            ""}{" "}
+                          {publicStudent.parents_info.mother.grandMother
+                            .suffix || ""}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Parents Status */}
+                {publicStudent.parents_info?.status && (
+                  <div className="rounded-lg border border-border bg-muted/50 p-4">
+                    <h4 className="mb-3 text-body-sm font-bold">מצב ההורים</h4>
+                    <div className="grid grid-cols-3 gap-4">
+                      <InfoTag
+                        label="סטטוס"
+                        value={parentsStatusToHebrew(
+                          publicStudent.parents_info.status,
+                        )}
+                      />
+                      {publicStudent.parents_info.holding && (
+                        <InfoTag
+                          label="מי מגדל"
+                          value={
+                            publicStudent.parents_info.holding === "mother"
+                              ? "האם"
+                              : publicStudent.parents_info.holding === "father"
+                                ? "האב"
+                                : "שניהם"
+                          }
+                        />
+                      )}
+                      {publicStudent.parents_info.deadParent === "father" &&
+                        publicStudent.parents_info.fatherDeathDate && (
+                          <InfoTag
+                            label="תאריך פטירת האב"
+                            value={publicStudent.parents_info.fatherDeathDate}
+                          />
+                        )}
+                      {publicStudent.parents_info.isMotherRemarried && (
+                        <InfoTag
+                          label="האם נישאה מחדש"
+                          value={
+                            publicStudent.parents_info.isMotherRemarried ===
+                            "true"
+                              ? "כן"
+                              : "לא"
+                          }
+                        />
+                      )}
+                      {publicStudent.parents_info.isMotherRemarried ===
+                        "true" &&
+                        publicStudent.parents_info.newHusbandName && (
+                          <InfoTag
+                            label="שם הבעל החדש"
+                            value={publicStudent.parents_info.newHusbandName}
+                          />
+                        )}
+                      {publicStudent.parents_info.isFatherRemarried && (
+                        <InfoTag
+                          label="האם נישא מחדש"
+                          value={
+                            publicStudent.parents_info.isFatherRemarried ===
+                            "true"
+                              ? "כן"
+                              : "לא"
+                          }
+                        />
+                      )}
+                      {publicStudent.parents_info.isFatherRemarried ===
+                        "true" &&
+                        publicStudent.parents_info.newWifeName && (
+                          <InfoTag
+                            label="שם האשה החדשה"
+                            value={publicStudent.parents_info.newWifeName}
+                          />
+                        )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Family Info */}
+                {publicStudent.family_info && (
+                  <div className="rounded-lg border border-border bg-muted/50 p-4">
+                    <h4 className="mb-3 text-body-sm font-bold">
+                      פרטים נוספים
+                    </h4>
+                    <div className="grid grid-cols-3 gap-4">
+                      {publicStudent.family_info.numberOfChildren && (
+                        <InfoTag
+                          label="מספר ילדים במשפחה"
+                          value={publicStudent.family_info.numberOfChildren}
+                        />
+                      )}
+                      {publicStudent.family_info.currentChildPlace && (
+                        <InfoTag
+                          label="מיקום במשפחה"
+                          value={publicStudent.family_info.currentChildPlace}
+                        />
+                      )}
+                      {publicStudent.family_info.about && (
+                        <InfoTag
+                          label="על המשפחה"
+                          value={publicStudent.family_info.about}
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Mechutanim */}
+                {publicStudent.family_info?.mechutanim &&
+                  publicStudent.family_info.mechutanim.length > 0 && (
+                    <div>
+                      <h4 className="mb-3 flex items-center gap-2 text-body-sm font-bold">
+                        <Heart size={16} /> מחותנים
+                      </h4>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {publicStudent.family_info.mechutanim.map(
+                          (
+                            m: {
+                              firstName?: string;
+                              lastName?: string;
+                              city?: string;
+                            },
+                            idx: number,
+                          ) => (
+                            <div
+                              key={idx}
+                              className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
+                            >
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-caption font-bold">
+                                {idx + 1}
+                              </div>
+                              <div>
+                                <p className="text-body-sm font-bold">
+                                  {m.firstName} {m.lastName}
+                                </p>
+                                {m.city && (
+                                  <p className="text-caption text-muted-foreground">
+                                    {m.city}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  )}
+              </div>
+            </Section>
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-6">
+            {/* Education */}
+            {publicStudent.education_history &&
+              publicStudent.education_history.length > 0 && (
+                <Section title="לימודים" icon={GraduationCap}>
+                  <div>
+                    {publicStudent.education_history.map(
+                      (
+                        edu: {
+                          name?: string;
+                          institution_type?: string;
+                          community?: string;
+                          city?: string;
+                        },
+                        idx: number,
+                      ) => (
+                        <div
+                          key={idx}
+                          className="relative border-r-2 border-border py-2 pr-4"
+                        >
+                          <div className="absolute top-2 -right-[5px] h-2 w-2 rounded-full bg-primary"></div>
+                          <p className="text-body-sm font-bold">{edu.name}</p>
+                          <div className="flex flex-wrap gap-1 text-caption text-muted-foreground">
+                            {edu.institution_type && (
+                              <span>{eduToHebrew(edu.institution_type)}</span>
+                            )}
+                            {edu.community && (
+                              <>
+                                {edu.institution_type && <span>|</span>}
+                                <span>{edu.community}</span>
+                              </>
+                            )}
+                            {edu.city && (
+                              <>
+                                {(edu.institution_type || edu.community) && (
+                                  <span>|</span>
+                                )}
+                                <span>{edu.city}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </Section>
+              )}
+
+            {publicStudent.employment_history &&
+              publicStudent.employment_history.length > 0 && (
+                <Section title="תעסוקה" icon={Briefcase}>
+                  <div className="space-y-3">
+                    {publicStudent.employment_history.map(
+                      (
+                        job: {
+                          category?: string;
+                          role?: string;
+                          location?: string;
+                          description?: string;
+                        },
+                        idx: number,
+                      ) => (
+                        <div
+                          key={idx}
+                          className="rounded-lg border border-border bg-muted/50 p-3"
+                        >
+                          {job.category && (
+                            <p className="mb-1 text-caption font-bold text-muted-foreground uppercase">
+                              {employmentCategoryToHebrew(job.category)}
+                            </p>
+                          )}
+                          {job.role && (
+                            <p className="text-body-sm font-bold">{job.role}</p>
+                          )}
+                          {job.location && (
+                            <p className="text-caption text-muted-foreground">
+                              {job.location}
+                            </p>
+                          )}
+                          {job.description && (
+                            <p className="mt-1 text-caption text-muted-foreground">
+                              {job.description}
+                            </p>
+                          )}
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </Section>
+              )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // תמונה של בת נחשפת רק למנהל מערכת — לא לשדכן ולא לבעלת הכרטיס.
   // בהמשך יתווסף כאן גם "משתמש מורשה"
   // כפיצ'ר נפרד — נקודת ההרחבה היחידה היא הביטוי הזה.
@@ -183,54 +869,10 @@ export default async function StudentPage({
 
   // מי רואה את סעיף המחמאות וההערות בכלל: שדכן/מנהל/איש צוות. RLS הוא
   // האכיפה האמיתית (מי רואה אילו הערות ספציפיות) - זה רק שער תצוגה.
-  const canAccessNotes =
-    isShadchan || hasRole(user, "staff");
+  const canAccessNotes = isShadchan || hasRole(user, "staff");
   const notes = canAccessNotes ? await loadStudentNotes(student.id) : [];
-
-  type IconComponent = React.ComponentType<{
-    size?: number;
-    className?: string;
-  }>;
-
-  const Section = ({
-    title,
-    icon: Icon,
-    children,
-  }: {
-    title: string;
-    icon: IconComponent;
-    children: React.ReactNode;
-  }) => (
-    <Box className="space-y-4">
-      <div className="flex items-center gap-3 border-b border-border pb-3">
-        <div className="rounded-lg bg-muted p-2">
-          <Icon size={20} className="text-primary" />
-        </div>
-        <h2 className="text-title! font-bold!">{title}</h2>
-      </div>
-      {children}
-    </Box>
-  );
-
-  const InfoTag = ({
-    label,
-    value,
-  }: {
-    label: string;
-    value: string | number | null | undefined;
-  }) => {
-    if (!value && value !== 0) return null;
-    return (
-      <div className="flex flex-col">
-        <span className="text-caption font-medium text-muted-foreground">
-          {label}
-        </span>
-        <span className="text-body-sm font-semibold text-foreground">
-          {value}
-        </span>
-      </div>
-    );
-  };
+  // Section/InfoTag/IconComponent הוגדרו ב-module scope למעלה (משותפים עם
+  // הענף הציבורי) - ראה ההערה שם.
 
   const genderLabel =
     student.gender === "male"

@@ -25,8 +25,15 @@ export async function runMiddlewareSession(
 ): Promise<NextResponse> {
   const { checkName = false } = options;
 
+  // מעבירים את הנתיב הנוכחי הלאה כ-header (x-pathname) כדי ש-Server
+  // Components (כמו app/app/layout.tsx) יוכלו לדעת על איזה נתיב מדובר -
+  // ל-layout אין גישה ישירה ל-pathname, ואנחנו זקוקים לזה כדי לאפשר גישה
+  // לכרטיס מיועד גם למשתמש לא מחובר.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", request.nextUrl.pathname);
+
   let supabaseResponse = NextResponse.next({
-    request,
+    request: { headers: requestHeaders },
   });
 
   const supabase = createServerClient(
@@ -41,8 +48,11 @@ export async function runMiddlewareSession(
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );
+          // חייבים לבנות מחדש את ה-header גם כאן - NextResponse.next החדש
+          // מאפס את הבקשה המועברת הלאה, כך שבלי זה x-pathname היה אובד בכל
+          // פעם שהעוגיות מתרעננות (setAll נקרא).
           supabaseResponse = NextResponse.next({
-            request,
+            request: { headers: requestHeaders },
           });
           cookiesToSet.forEach(({ name, value, options: opts }) =>
             supabaseResponse.cookies.set(name, value, opts),
@@ -66,6 +76,8 @@ export async function runMiddlewareSession(
 }
 
 /** תאימות לאחור — רק רענון סשן */
-export async function updateSession(request: NextRequest): Promise<NextResponse> {
+export async function updateSession(
+  request: NextRequest,
+): Promise<NextResponse> {
   return runMiddlewareSession(request, { checkName: false });
 }

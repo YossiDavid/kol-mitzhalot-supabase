@@ -4,7 +4,7 @@ import { ImpersonationBanner } from "@/features/admin/components/impersonation-b
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { Suspense } from "react";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
@@ -13,6 +13,12 @@ import { Toaster } from "@/components/ui/sonner";
 import { redirect } from "next/navigation";
 import { getRoles } from "@/lib/user";
 import { getPhoneVerificationEnabled } from "@/lib/system-settings";
+
+// כרטיס מיועד ציבורי: נתיב של בדיוק /app/students/<מזהה> ללא סגמנטים נוספים.
+// ה-lookahead השלילי מוציא במפורש את /app/students/create, כדי שדף יצירת
+// מיועד ימשיך לדרוש התחברות למרות שגם לו יש סגמנט יחיד אחרי /app/students.
+// /app/students (בלי סגמנט) לא תואם בכלל, ולכן גם הוא ממשיך לדרוש התחברות.
+const PUBLIC_STUDENT_CARD_PATH_REGEX = /^\/app\/students\/(?!create$)[^/]+$/;
 
 async function SidebarLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
@@ -23,21 +29,28 @@ async function SidebarLayout({ children }: { children: React.ReactNode }) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // בדיקת אימות - אם המשתמש לא מחובר, הפנה להתחברות
-  if (!user) {
+  const pathname = (await headers()).get("x-pathname") ?? "";
+  const isPublicStudentCard = PUBLIC_STUDENT_CARD_PATH_REGEX.test(pathname);
+
+  // בדיקת אימות - אם המשתמש לא מחובר, הפנה להתחברות, חוץ מכרטיס מיועד
+  // ציבורי (הגבלת המידע הנחשף למשתמש לא מחובר נעשית בתוך הדף עצמו).
+  if (!user && !isPublicStudentCard) {
     redirect("/auth/login");
   }
 
-  const phoneVerificationEnabled = await getPhoneVerificationEnabled();
-
-  if (phoneVerificationEnabled) {
-    const isPhoneVerified = user?.user_metadata?.phone_verified === true;
-    if (!isPhoneVerified) {
-      redirect("/auth/verify-phone");
+  // בדיקת אימות טלפון רלוונטית רק למשתמש מחובר - משתמש לא מחובר שצופה
+  // בכרטיס מיועד ציבורי מדלג עליה לגמרי.
+  if (user) {
+    const phoneVerificationEnabled = await getPhoneVerificationEnabled();
+    if (phoneVerificationEnabled) {
+      const isPhoneVerified = user.user_metadata?.phone_verified === true;
+      if (!isPhoneVerified) {
+        redirect("/auth/verify-phone");
+      }
     }
   }
 
-  const roles = getRoles(user);
+  const roles = user ? getRoles(user) : [];
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
