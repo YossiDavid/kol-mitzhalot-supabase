@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { getEffectiveRole } from "@/lib/user";
+import { hasRole } from "@/lib/user";
 
 const PERSONAL_STATUS_VALUES = [
   "single",
@@ -30,8 +30,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const role = getEffectiveRole(user);
-  if (role !== "admin" && role !== "shadchan") {
+  if (!hasRole(user, "admin") && !hasRole(user, "shadchan")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

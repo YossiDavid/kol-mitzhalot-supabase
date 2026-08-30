@@ -31,6 +31,7 @@ import {
   INSTITUTION_TYPE_LABELS,
   type InstitutionType,
 } from "@/features/institutions/lib/institution-labels";
+import { hasRole } from "@/lib/user-role";
 
 interface StaffFormData {
   institutionId: string;
@@ -107,8 +108,7 @@ export default function StaffApplicationPage() {
       }
 
       // בדיקה שהמשתמש לא איש צוות או אדמין
-      const role = user.user_metadata?.role;
-      if (role === "staff" || role === "admin") {
+      if (hasRole(user, "staff") || hasRole(user, "admin")) {
         router.push("/app/settings");
         return;
       }

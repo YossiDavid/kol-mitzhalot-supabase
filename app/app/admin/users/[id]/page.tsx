@@ -7,7 +7,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import calculateAge from "@/lib/calculateAge";
 import { unstable_noStore as noStore } from "next/cache";
-import { getEffectiveRole, getRoleLabel } from "@/lib/user";
+import { getEffectiveRole, getRoleLabel, getRoles } from "@/lib/user";
+import type { Role } from "@/lib/user";
+import { UserRolesEditor } from "@/features/admin/components/user-roles-editor";
 
 type UserDetails = {
   id: string;
@@ -16,6 +18,7 @@ type UserDetails = {
   email: string | null;
   phone: string | null;
   role: string | null;
+  roles: Role[];
   createdAt: string;
   lastSignInAt: string | null;
   children: Array<{
@@ -141,6 +144,7 @@ async function getUserDetails(userId: string): Promise<UserDetails | null> {
     email: user.email || null,
     phone: user.phone || null,
     role: getEffectiveRole(user),
+    roles: getRoles(user),
     createdAt: user.created_at,
     lastSignInAt: user.last_sign_in_at || null,
     children: childrenData.map((c) => ({
@@ -313,6 +317,15 @@ export default async function UserDetailsPage({
                 {formatDate(userDetails.lastSignInAt)}
               </div>
             </div>
+          </Box>
+
+          {/* עריכת תפקידים - משתמש יכול להיות גם וגם (למשל שדכן וגם איש צוות) */}
+          <Box>
+            <h3 className="mb-4 text-subtitle font-semibold">תפקידים</h3>
+            <UserRolesEditor
+              userId={userDetails.id}
+              initialRoles={userDetails.roles}
+            />
           </Box>
 
           {/* סטטיסטיקות שידוכים */}

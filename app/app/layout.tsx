@@ -11,7 +11,7 @@ import Footer from "@/components/layout/footer";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { Toaster } from "@/components/ui/sonner";
 import { redirect } from "next/navigation";
-import { getEffectiveRole } from "@/lib/user";
+import { getRoles } from "@/lib/user";
 import { getPhoneVerificationEnabled } from "@/lib/system-settings";
 
 async function SidebarLayout({ children }: { children: React.ReactNode }) {
@@ -37,11 +37,11 @@ async function SidebarLayout({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const role = getEffectiveRole(user);
+  const roles = getRoles(user);
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebar role={role} />
+      <AppSidebar roles={roles} />
       <SidebarInset>
         <ImpersonationBanner />
         <div className="flex flex-1 flex-col">
@@ -51,7 +51,7 @@ async function SidebarLayout({ children }: { children: React.ReactNode }) {
           </main>
           <Footer className="hidden md:flex" />
         </div>
-        <BottomNav role={role} />
+        <BottomNav roles={roles} />
         <Toaster
           richColors
           dir="rtl"

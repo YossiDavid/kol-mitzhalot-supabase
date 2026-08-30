@@ -13,6 +13,7 @@ import {
   Chat as UserChat,
 } from "@/features/dashboard/components/user";
 import { createClient } from "@/lib/supabase/server";
+import { hasRole } from "@/lib/user";
 import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 
@@ -24,9 +25,9 @@ export default async function Home() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAdmin = user?.user_metadata?.role === "admin";
-  const isShadchan = user?.user_metadata?.role === "shadchan";
-  const isUser = user?.user_metadata?.role === "user";
+  const isAdmin = hasRole(user, "admin");
+  const isShadchan = hasRole(user, "shadchan");
+  const isUser = hasRole(user, "user");
 
   // מיועדים שעניינו אותך והוספת ללוח העבודה
   const favorites = user?.user_metadata?.favorites || [];

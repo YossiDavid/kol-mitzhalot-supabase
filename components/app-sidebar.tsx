@@ -40,7 +40,7 @@ const allItems = [
 
 const shadchanOnlyUrls = ["/app/students", "/app/students/create", "/app/canvas"];
 
-export function AppSidebar({ role }: { role: Role }) {
+export function AppSidebar({ roles }: { roles: Role[] }) {
   const [mounted, setMounted] = useState(false);
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
@@ -48,9 +48,12 @@ export function AppSidebar({ role }: { role: Role }) {
 
   useEffect(() => setMounted(true), []);
 
-  // Use role only after mount so server and client initial render match (avoid hydration mismatch)
-  const effectiveRole: Role = mounted ? role : "user";
-  const isShadchanOrAdmin = effectiveRole === "shadchan" || effectiveRole === "admin";
+  // Use roles only after mount so server and client initial render match (avoid hydration mismatch)
+  const effectiveRoles: Role[] = mounted ? roles : ["user"];
+  // ניווט חייב להציג את איחוד כל ההרשאות של המשתמש - מי שהוא גם שדכן וגם
+  // איש צוות עדיין רואה את פריטי השדכן, ולא רק לפי תפקיד "ראשי" יחיד.
+  const isShadchanOrAdmin =
+    effectiveRoles.includes("shadchan") || effectiveRoles.includes("admin");
   const items = isShadchanOrAdmin
     ? allItems
     : allItems.filter((item) => !shadchanOnlyUrls.includes(item.url));

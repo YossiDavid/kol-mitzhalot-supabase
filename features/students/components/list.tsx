@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStudentQuery } from "@/features/students/lib/student-query-context";
 import { createClient } from "@/lib/supabase/client";
-import { getEffectiveRole } from "@/lib/user-role";
+import { hasRole } from "@/lib/user-role";
 import DeleteStudentButton from "@/features/students/components/delete-student-button";
 import {
   Empty,
@@ -179,7 +179,7 @@ export default function StudentsList() {
     [user?.user_metadata?.favorites],
   );
 
-  const isAdmin = getEffectiveRole(user) === "admin";
+  const isAdmin = hasRole(user, "admin");
 
   const handleStudentDeleted = (studentId: string) => {
     setStudents((prev) => prev.filter((s) => s.id !== studentId));

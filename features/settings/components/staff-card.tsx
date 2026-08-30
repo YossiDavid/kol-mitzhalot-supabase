@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { hasRole } from "@/lib/user-role";
 import {
   INSTITUTION_TYPE_LABELS,
   type InstitutionType,
@@ -37,7 +38,7 @@ interface StaffApplication {
 export function StaffCard() {
   const [application, setApplication] = useState<StaffApplication | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<boolean>(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -48,11 +49,11 @@ export function StaffCard() {
 
       if (!user) return;
 
-      const role = user.user_metadata?.role;
-      setUserRole(role);
+      const isStaffOrAdmin = hasRole(user, "staff") || hasRole(user, "admin");
+      setUserRole(isStaffOrAdmin);
 
       // אם המשתמש כבר איש צוות או אדמין, לא צריך להציג את הכרטיס
-      if (role === "staff" || role === "admin") {
+      if (isStaffOrAdmin) {
         setIsLoading(false);
         return;
       }
@@ -101,7 +102,7 @@ export function StaffCard() {
   }
 
   // אם המשתמש כבר איש צוות או אדמין, לא להציג את הכרטיס
-  if (userRole === "staff" || userRole === "admin") {
+  if (userRole) {
     return null;
   }
 

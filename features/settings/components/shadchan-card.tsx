@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { hasRole } from "@/lib/user-role";
 
 type ApplicationStatus = "pending" | "approved" | "rejected" | null;
 
@@ -28,7 +29,7 @@ export function ShadchanCard() {
     null,
   );
   const [isLoading, setIsLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<boolean>(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -39,11 +40,11 @@ export function ShadchanCard() {
 
       if (!user) return;
 
-      const role = user.user_metadata?.role;
-      setUserRole(role);
+      const isShadchanOrAdmin = hasRole(user, "shadchan") || hasRole(user, "admin");
+      setUserRole(isShadchanOrAdmin);
 
       // אם המשתמש כבר שדכן או אדמין, לא צריך להציג את הכרטיס
-      if (role === "shadchan" || role === "admin") {
+      if (isShadchanOrAdmin) {
         setIsLoading(false);
         return;
       }
@@ -79,7 +80,7 @@ export function ShadchanCard() {
   }
 
   // אם המשתמש כבר שדכן או אדמין, לא להציג את הכרטיס
-  if (userRole === "shadchan" || userRole === "admin") {
+  if (userRole) {
     return null;
   }
 

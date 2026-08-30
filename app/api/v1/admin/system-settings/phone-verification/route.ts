@@ -3,6 +3,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PHONE_VERIFICATION_SETTING_KEY } from "@/lib/system-settings";
+import { hasRole } from "@/lib/user";
 
 /**
  * GET/PATCH phone verification module toggle. Admin only.
@@ -14,7 +15,7 @@ export async function GET() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user || user.user_metadata?.role !== "admin") {
+  if (!hasRole(user, "admin")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -43,7 +44,7 @@ export async function PATCH(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user || user.user_metadata?.role !== "admin") {
+  if (!hasRole(user, "admin")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

@@ -8,7 +8,7 @@ import {
   SHIDDUCH_STATUS_LABELS,
   SHIDDUCH_STATUS_VALUES,
 } from "@/features/shidduchim/lib/status";
-import { getEffectiveRole } from "@/lib/user";
+import { hasRole } from "@/lib/user";
 
 const bodySchema = z.object({
   shidduchId: z.string().uuid(),
@@ -25,8 +25,8 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const role = getEffectiveRole(user);
-  if (role !== "admin" && role !== "shadchan") {
+  const isAdmin = hasRole(user, "admin");
+  if (!isAdmin && !hasRole(user, "shadchan")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -68,7 +68,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Shidduch not found" }, { status: 404 });
   }
 
-  if (role !== "admin" && existing.shadchan_id !== user.id) {
+  if (!isAdmin && existing.shadchan_id !== user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

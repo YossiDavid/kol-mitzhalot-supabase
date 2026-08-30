@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import calculateAge from "@/lib/calculateAge";
 import { createClient } from "@/lib/supabase/server";
+import { hasRole } from "@/lib/user";
 import {
   User,
   Phone,
@@ -72,10 +73,8 @@ export default async function StudentPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isShadchan =
-    user?.user_metadata?.role === "shadchan" ||
-    user?.user_metadata?.role === "admin";
-  const isAdmin = user?.user_metadata?.role === "admin";
+  const isShadchan = hasRole(user, "shadchan") || hasRole(user, "admin");
+  const isAdmin = hasRole(user, "admin");
 
   if (error) {
     return (

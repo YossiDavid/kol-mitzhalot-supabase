@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { User } from "@supabase/supabase-js";
 import { fetchAllAuthUsers } from "@/features/admin/lib/users";
 import { resolveDisplayName } from "@/lib/user-display-name";
+import { hasRole } from "@/lib/user-role";
 import type { AdminShadchanimQuery } from "@/features/admin/lib/shadchanim-query";
 
 export type { AdminShadchanimQuery };
@@ -143,7 +144,7 @@ async function listShadchanEntries(
   }
 
   for (const user of allUsers) {
-    if (user.user_metadata?.role !== "shadchan" || seen.has(user.id)) continue;
+    if (!hasRole(user, "shadchan") || seen.has(user.id)) continue;
     entries.push({
       userId: user.id,
       applicationStatus: null,
@@ -194,7 +195,7 @@ export async function getShadchanimSummary(): Promise<{
   const infoUserIds = new Set(rows.map((r) => r.user_id));
   const allUsers = await fetchAllAuthUsers(adminClient);
   const orphanCount = allUsers.filter(
-    (u) => u.user_metadata?.role === "shadchan" && !infoUserIds.has(u.id),
+    (u) => hasRole(u, "shadchan") && !infoUserIds.has(u.id),
   ).length;
 
   return { total: rows.length + orphanCount, pendingCount };

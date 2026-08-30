@@ -6,7 +6,7 @@ import {
   type ShidduchStatus,
 } from "@/features/shidduchim/lib/status";
 import { createClient } from "@/lib/supabase/server";
-import { getEffectiveRole } from "@/lib/user";
+import { hasRole } from "@/lib/user";
 import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -62,9 +62,9 @@ export default async function ShidduchCardPage({
     notFound();
   }
 
-  const role = getEffectiveRole(user);
-  const canEditStatus = role === "admin" || shidduch.shadchan_id === user.id;
-  const canLoadBothNames = role === "admin" || shidduch.shadchan_id === user.id;
+  const isAdmin = hasRole(user, "admin");
+  const canEditStatus = isAdmin || shidduch.shadchan_id === user.id;
+  const canLoadBothNames = isAdmin || shidduch.shadchan_id === user.id;
 
   type NameRow = { first_name: string | null; last_name: string | null };
 

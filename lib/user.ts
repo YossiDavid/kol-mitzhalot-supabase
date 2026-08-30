@@ -1,7 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 
 export type { Role, UserWithRole } from "./user-role";
-export { getEffectiveRole, getRoleLabel } from "./user-role";
+export {
+  getEffectiveRole,
+  getRoleLabel,
+  getRoles,
+  hasRole,
+  primaryRole,
+  pickHighestPrecedenceRole,
+} from "./user-role";
 
 export async function getUser() {
   const supabase = await createClient();

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { hasRole, pickHighestPrecedenceRole } from "@/lib/user";
+import type { Role } from "@/lib/user";
 import { unstable_noStore as noStore } from "next/cache";
 
 export async function POST(req: NextRequest) {
@@ -27,7 +29,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const isAdmin = currentUser.user_metadata?.role === "admin";
+    const isAdmin = hasRole(currentUser, "admin");
     if (!isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -36,7 +38,10 @@ export async function POST(req: NextRequest) {
 
     // שליפת המשתמש הקיים לפני העדכון: updateUserById מחליף את כל ה-user_metadata
     // באובייקט שמועבר, ולכן חובה למזג לתוכו את המטא-דאטה הקיימת (firstName,
-    // lastName, phone, phone_verified וכו') ולא רק להעביר role - אחרת הנתונים האלה נמחקים.
+    // lastName, phone, phone_verified וכו') ולהוסיף staff לרשימת ה-roles הקיימת
+    // בלי לדרוס אותה. דריסת role (השדה הבודד הישן) היא בדיוק הבאג שקרה בפרודקשן:
+    // משתמש אמיתי (hello@shos.digital) היה shadchan, אושר גם כאיש צוות, ואיבד
+    // את כל הרשאות וניווט השדכן שלו כי role הוחלף ל-"staff" בלבד.
     const { data: existingUserData, error: fetchError } =
       await adminClient.auth.admin.getUserById(userId);
 
@@ -48,12 +53,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // עדכון התפקיד של המשתמש ל-staff, תוך שימור המטא-דאטה הקיימת
+    const existingRoles: Role[] = Array.isArray(
+      existingUserData.user.user_metadata?.roles,
+    )
+      ? (existingUserData.user.user_metadata?.roles as Role[])
+      : [];
+    const nextRoles = Array.from(new Set([...existingRoles, "staff" as Role]));
+
+    // עדכון התפקיד של המשתמש: מוסיפים staff ל-roles ושומרים גם role (הסקלר
+    // הישן) לפי סדר העדיפות, כדי שקוד שעדיין לא הומר ל-hasRole ימשיך לעבוד
     const { data: updateData, error: updateError } =
       await adminClient.auth.admin.updateUserById(userId, {
         user_metadata: {
           ...existingUserData.user.user_metadata,
-          role: "staff",
+          roles: nextRoles,
+          role: pickHighestPrecedenceRole(nextRoles),
         },
       });
 

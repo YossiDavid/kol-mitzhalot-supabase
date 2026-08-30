@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { getEffectiveRole } from "@/lib/user";
+import { hasRole } from "@/lib/user";
 
 // שיוך המוני של מוסד לימודים לכרטיסי מיועדים קיימים (מסך
 // app/app/admin/students/institutions). institutionId=null מנקה שיוך קיים.
@@ -25,8 +25,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const role = getEffectiveRole(user);
-  if (role !== "admin") {
+  if (!hasRole(user, "admin")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

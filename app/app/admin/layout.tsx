@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { hasRole } from "@/lib/user";
 import { redirect } from "next/navigation";
 
 export default async function AdminLayout({
@@ -12,7 +13,7 @@ export default async function AdminLayout({
   } = await supabase.auth.getUser();
 
   // בדיקה שהמשתמש הוא אדמין
-  const isAdmin = user?.user_metadata?.role === "admin";
+  const isAdmin = hasRole(user, "admin");
 
   if (!isAdmin) {
     redirect("/app");

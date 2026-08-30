@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
 import { isValidPhone, PHONE_INVALID_MESSAGE } from "@/lib/phone";
+import { hasRole } from "@/lib/user-role";
 
 interface ShadchanFormData {
   bio: string;
@@ -71,8 +72,7 @@ export default function ShadchanApplicationPage() {
       }
 
       // בדיקה שהמשתמש לא שדכן או אדמין
-      const role = user.user_metadata?.role;
-      if (role === "shadchan" || role === "admin") {
+      if (hasRole(user, "shadchan") || hasRole(user, "admin")) {
         router.push("/app/settings");
         return;
       }

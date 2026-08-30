@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { User } from "@supabase/supabase-js";
-import { getEffectiveRole, getRoleLabel } from "@/lib/user";
+import { getEffectiveRole, getRoleLabel, hasRole } from "@/lib/user";
 import {
   formatFullName,
   resolveDisplayName,
@@ -144,7 +144,9 @@ function userMatchesSearch(
 
 function userMatchesRole(user: User, role: AdminUsersQuery["role"]): boolean {
   if (!role) return true;
-  return getEffectiveRole(user) === role;
+  // hasRole (לא getEffectiveRole) כדי שמשתמש עם כמה תפקידים (למשל שדכן וגם
+  // איש צוות) יופיע תחת כל אחד מהם בסינון, ולא רק תחת התפקיד הראשי
+  return hasRole(user, role);
 }
 
 function sortUsers(

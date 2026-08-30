@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { AuthButton } from "@/components/auth-button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/server";
-import { getEffectiveRole } from "@/lib/user";
+import { hasRole } from "@/lib/user";
 import HeaderIcons from "./icons";
 import { UserMenu } from "./user-menu";
 import { Button } from "../../ui/button";
@@ -25,11 +25,10 @@ export default async function Header({
 
   const firstName = user?.user_metadata?.firstName as string;
   const lastName = user?.user_metadata?.lastName as string;
-  const role = user ? getEffectiveRole(user) : null;
-  const showShadchanJoin =
-    role === "user" || (role !== "admin" && role !== "shadchan");
-  const showStaffJoin =
-    role === "user" || (role !== "admin" && role !== "staff");
+  // הצטרפות כשדכן/איש צוות מוצגת רק אם למשתמש עדיין אין את התפקיד הזה בפועל
+  // (ולא רק אם יש לו תפקיד "אחר" - משתמש יכול להיות גם וגם)
+  const showShadchanJoin = !hasRole(user, "shadchan") && !hasRole(user, "admin");
+  const showStaffJoin = !hasRole(user, "staff") && !hasRole(user, "admin");
 
   if (variant === "website") {
     return (
@@ -103,7 +102,7 @@ export default async function Header({
           <div className="hidden items-center gap-5 font-semibold md:flex">
             שלום וברכה, {firstName} {lastName}!
           </div>
-          {user?.user_metadata?.role === "admin" && (
+          {hasRole(user, "admin") && (
             <Button variant={"link"} asChild className="hidden md:inline-flex">
               <Link href="/app/admin">למערכת ניהול</Link>
             </Button>
@@ -125,7 +124,7 @@ export default async function Header({
           </Suspense>
         )}
         <Button asChild className="hidden md:flex">
-          {user?.user_metadata?.role !== "shadchan" ? (
+          {!hasRole(user, "shadchan") ? (
             <Link href={"/app/students/create"}>הוספת מיועדים למערכת</Link>
           ) : (
             <Link href={"/"}>לרשימת המיועדים</Link>

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { sendShidduchOfferEmails } from "@/features/shidduchim/lib/send-offer-email";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { getEffectiveRole } from "@/lib/user";
+import { hasRole } from "@/lib/user";
 
 const bodySchema = z.object({
   shidduchId: z.string().uuid(),
@@ -21,8 +21,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const role = getEffectiveRole(user);
-  if (role !== "admin" && role !== "shadchan") {
+  const isAdmin = hasRole(user, "admin");
+  if (!isAdmin && !hasRole(user, "shadchan")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Shidduch not found" }, { status: 404 });
   }
 
-  if (role !== "admin" && shidduch.shadchan_id !== user.id) {
+  if (!isAdmin && shidduch.shadchan_id !== user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

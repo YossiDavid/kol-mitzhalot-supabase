@@ -1,6 +1,6 @@
 import { Section } from "@/components/layout";
 import { createClient } from "@/lib/supabase/server";
-import { getEffectiveRole } from "@/lib/user";
+import { hasRole } from "@/lib/user";
 import { unstable_noStore as noStore } from "next/cache";
 import CreatePostDialog from "./create-post-dialog";
 
@@ -30,8 +30,7 @@ export default async function ForumsPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const role = user ? getEffectiveRole(user) : null;
-  const canPost = role === "shadchan" || role === "admin";
+  const canPost = hasRole(user, "shadchan") || hasRole(user, "admin");
 
   const { data: posts } = await supabase
     .from("forum_posts")

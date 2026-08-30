@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Save, Send, User as UserIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { getCompatibilityNotes } from "@/features/shidduchim/lib/compatibility";
-import { getEffectiveRole } from "@/lib/user-role";
+import { hasRole } from "@/lib/user-role";
 
 type Gender = "male" | "female";
 
@@ -84,8 +84,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
 
   useEffect(() => {
     void supabase.auth.getUser().then(({ data }) => {
-      const r = getEffectiveRole(data.user);
-      setCanOffer(r === "shadchan" || r === "admin");
+      setCanOffer(hasRole(data.user, "shadchan") || hasRole(data.user, "admin"));
     });
   }, [supabase]);
 

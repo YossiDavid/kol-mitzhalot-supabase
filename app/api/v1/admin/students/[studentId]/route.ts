@@ -3,7 +3,7 @@ import { unstable_noStore as noStore } from "next/cache";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { getEffectiveRole } from "@/lib/user";
+import { hasRole } from "@/lib/user";
 
 export async function DELETE(
   req: NextRequest,
@@ -21,8 +21,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const role = getEffectiveRole(user);
-  if (role !== "admin") {
+  if (!hasRole(user, "admin")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

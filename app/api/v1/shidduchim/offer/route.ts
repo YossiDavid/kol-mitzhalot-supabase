@@ -5,7 +5,7 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { sendShidduchOfferEmails } from "@/features/shidduchim/lib/send-offer-email";
-import { getEffectiveRole } from "@/lib/user";
+import { hasRole } from "@/lib/user";
 
 const recipientScopeSchema = z.enum(["both", "groom_only", "bride_only"]);
 
@@ -34,8 +34,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const role = getEffectiveRole(user);
-  if (role !== "shadchan" && role !== "admin") {
+  if (!hasRole(user, "shadchan") && !hasRole(user, "admin")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

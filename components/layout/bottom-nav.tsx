@@ -18,14 +18,17 @@ const allItems = [
 
 const shadchanOnlyUrls = ["/app/students", "/app/students/create", "/app/canvas"];
 
-export function BottomNav({ role }: { role: Role }) {
+export function BottomNav({ roles }: { roles: Role[] }) {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
 
-  const effectiveRole: Role = mounted ? role : "user";
-  const isShadchanOrAdmin = effectiveRole === "shadchan" || effectiveRole === "admin";
+  const effectiveRoles: Role[] = mounted ? roles : ["user"];
+  // ניווט חייב להציג את איחוד כל ההרשאות של המשתמש - מי שהוא גם שדכן וגם
+  // איש צוות עדיין רואה את פריטי השדכן, ולא רק לפי תפקיד "ראשי" יחיד.
+  const isShadchanOrAdmin =
+    effectiveRoles.includes("shadchan") || effectiveRoles.includes("admin");
   const items = isShadchanOrAdmin
     ? allItems
     : allItems.filter((item) => !shadchanOnlyUrls.includes(item.url));

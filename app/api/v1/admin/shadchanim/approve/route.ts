@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { hasRole, pickHighestPrecedenceRole } from "@/lib/user";
+import type { Role } from "@/lib/user";
 import { unstable_noStore as noStore } from "next/cache";
 
 export async function POST(req: NextRequest) {
@@ -27,18 +29,44 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const isAdmin = currentUser.user_metadata?.role === "admin";
+    const isAdmin = hasRole(currentUser, "admin");
     if (!isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const adminClient = createAdminClient();
 
-    // עדכון התפקיד של המשתמש ל-shadchan
+    // שליפת המשתמש הקיים לפני העדכון: updateUserById מחליף את כל ה-user_metadata
+    // באובייקט שמועבר, ולכן חובה למזג לתוכו את המטא-דאטה הקיימת (firstName,
+    // lastName, phone וכו') ולהוסיף shadchan לרשימת ה-roles הקיימת בלי לדרוס
+    // אותה - דריסת role היא בדיוק הבאג שהוריד למשתמש אמיתי (hello@shos.digital)
+    // את הרשאות השדכן שלו כשהוא אושר בנפרד כאיש צוות.
+    const { data: existingUserData, error: fetchError } =
+      await adminClient.auth.admin.getUserById(userId);
+
+    if (fetchError || !existingUserData.user) {
+      console.error("Error fetching user before approval:", fetchError);
+      return NextResponse.json(
+        { error: fetchError?.message || "User not found" },
+        { status: 404 },
+      );
+    }
+
+    const existingRoles: Role[] = Array.isArray(
+      existingUserData.user.user_metadata?.roles,
+    )
+      ? (existingUserData.user.user_metadata?.roles as Role[])
+      : [];
+    const nextRoles = Array.from(new Set([...existingRoles, "shadchan" as Role]));
+
+    // עדכון התפקיד של המשתמש: מוסיפים shadchan ל-roles ושומרים גם role (הסקלר
+    // הישן) לפי סדר העדיפות, כדי שקוד שעדיין לא הומר ל-hasRole ימשיך לעבוד
     const { data: updateData, error: updateError } =
       await adminClient.auth.admin.updateUserById(userId, {
         user_metadata: {
-          role: "shadchan",
+          ...existingUserData.user.user_metadata,
+          roles: nextRoles,
+          role: pickHighestPrecedenceRole(nextRoles),
         },
       });
 

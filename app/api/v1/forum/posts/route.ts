@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getEffectiveRole } from "@/lib/user";
+import { hasRole } from "@/lib/user";
 
 export async function GET() {
   const supabase = await createClient();
@@ -55,8 +55,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const role = getEffectiveRole(user);
-  if (role !== "admin" && role !== "shadchan") {
+  if (!hasRole(user, "admin") && !hasRole(user, "shadchan")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

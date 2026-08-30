@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getEffectiveRole } from "@/lib/user";
+import { hasRole } from "@/lib/user";
 import { redirect } from "next/navigation";
 
 export default async function CanvasLayout({
@@ -16,8 +16,7 @@ export default async function CanvasLayout({
     redirect("/auth/login");
   }
 
-  const role = getEffectiveRole(user);
-  if (role !== "admin" && role !== "shadchan") {
+  if (!hasRole(user, "admin") && !hasRole(user, "shadchan")) {
     redirect("/app");
   }
 
