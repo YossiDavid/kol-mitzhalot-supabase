@@ -1,21 +1,21 @@
-"use client"
+"use client";
 
-import { z } from "zod"
+import { z } from "zod";
 
-const req = (msg = "שדה חובה") => z.string().min(1, msg)
-const opt = z.string().default("")
+const req = (msg = "שדה חובה") => z.string().min(1, msg);
+const opt = z.string().default("");
 
 const namePartsRequired = z.object({
   prefix: opt,
   name: req(),
   suffix: opt,
-})
+});
 
 const namePartsOptional = z.object({
   prefix: opt,
   name: opt,
   suffix: opt,
-})
+});
 
 export const studentFormSchema = z.object({
   isOnShiduchim: z.boolean().default(true),
@@ -33,6 +33,7 @@ export const studentFormSchema = z.object({
   house: req("נא למלא מספר בית"),
   community: opt,
   shtible: opt,
+  institutionId: opt,
   personalStatus: req("נא לבחור סטטוס אישי"),
   height: opt,
   cellphoneType: req("נא לבחור סוג טלפון"),
@@ -131,6 +132,6 @@ export const studentFormSchema = z.object({
     name: req("נא למלא שם ממלא הטופס"),
     phone: req("נא למלא טלפון ממלא הטופס"),
   }),
-})
+});
 
-export type StudentFormValues = z.infer<typeof studentFormSchema>
+export type StudentFormValues = z.infer<typeof studentFormSchema>;

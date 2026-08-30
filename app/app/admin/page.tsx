@@ -1,7 +1,14 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { DashboardSection } from "@/components/layout";
-import { Users, FileText, UserCheck, BookOpen, UserPlus } from "lucide-react";
+import {
+  Users,
+  FileText,
+  UserCheck,
+  BookOpen,
+  UserPlus,
+  GraduationCap,
+} from "lucide-react";
 
 export default function AdminPage() {
   return (
@@ -60,6 +67,16 @@ export default function AdminPage() {
               <h3 className="mb-2 text-subtitle font-semibold">ניהול תוכן</h3>
               <p className="text-body-sm text-muted-foreground">
                 מאמרים, מאורסים, והמלצות רבנים
+              </p>
+            </div>
+          </Link>
+
+          <Link href={"/app/admin/institutions" as any}>
+            <div className="cursor-pointer rounded-lg border p-6 transition-colors hover:bg-accent">
+              <GraduationCap className="mb-4 h-8 w-8" />
+              <h3 className="mb-2 text-subtitle font-semibold">מוסדות לימוד</h3>
+              <p className="text-body-sm text-muted-foreground">
+                ניהול מאגר מוסדות הלימוד לבחירה באשף יצירת כרטיס מיועד
               </p>
             </div>
           </Link>

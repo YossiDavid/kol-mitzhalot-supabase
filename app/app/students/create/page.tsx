@@ -13,7 +13,10 @@ import { cn } from "@/lib/utils";
 import { studentFields } from "@/features/students/components/create-form/fileds-data";
 import { DynamicField } from "@/features/students/components/create-form/fields/dynamic-field";
 import { createClient } from "@/lib/supabase/client";
-import { studentFormSchema, type StudentFormValues } from "@/features/students/components/create-form/schema";
+import {
+  studentFormSchema,
+  type StudentFormValues,
+} from "@/features/students/components/create-form/schema";
 import { toast } from "sonner";
 
 type Step = (typeof studentFields)[number];
@@ -34,6 +37,7 @@ const defaultValues = {
   house: "",
   community: "",
   shtible: "",
+  institutionId: "",
   personalStatus: "",
   height: "",
   cellphoneType: "",
@@ -399,9 +403,11 @@ export default function CreateStudentPage() {
       if (!values.personalStatus) missingFields.push("סטטוס אישי");
       if (!values.country) missingFields.push("ארץ");
       if (!values.city) missingFields.push("עיר");
-      
+
       if (missingFields.length > 0) {
-        toast.error(`שגיאה: יש למלא את השדות החובה הבאים:\n${missingFields.join(", ")}`);
+        toast.error(
+          `שגיאה: יש למלא את השדות החובה הבאים:\n${missingFields.join(", ")}`,
+        );
         setIsSubmitting(false);
         return;
       }
@@ -468,6 +474,7 @@ export default function CreateStudentPage() {
         house: values.house,
         community: values.community || null,
         shtible: values.shtible || null,
+        institution_id: values.institutionId || null,
         cellphone_type: mappedCellphoneType,
         plan_for_life: values.planForLife || null,
         head_cover_type: values.headCoverType || null,
@@ -724,8 +731,11 @@ export default function CreateStudentPage() {
 
       // 2. יצירת הסטודנט (ללא URLs)
       // הערה: ודא/י שהשם של הפונקציה ב-Supabase תואם (ייתכן שצריך לשנות ל-"create_full_student_profile" או שם אחר)
-      console.log("Calling RPC with payload:", JSON.stringify(payload, null, 2));
-      
+      console.log(
+        "Calling RPC with payload:",
+        JSON.stringify(payload, null, 2),
+      );
+
       const { data: studentData, error: createError } = await supabase.rpc(
         "create_full_student_profile",
         {
@@ -743,7 +753,9 @@ export default function CreateStudentPage() {
           hint: createError.hint,
           code: createError.code,
         });
-        toast.error(`שגיאה בשמירת הקו״ח: ${createError.message}\n\nפרטים: ${JSON.stringify(createError)}`);
+        toast.error(
+          `שגיאה בשמירת הקו״ח: ${createError.message}\n\nפרטים: ${JSON.stringify(createError)}`,
+        );
         setIsSubmitting(false);
         return;
       }
@@ -889,7 +901,9 @@ export default function CreateStudentPage() {
 
         if (updateError) {
           console.error("Error updating student with file URLs:", updateError);
-          toast.error("הקו״ח נוצר בהצלחה, אבל הייתה בעיה בעדכון כתובות הקבצים. אנא עדכן ידנית.");
+          toast.error(
+            "הקו״ח נוצר בהצלחה, אבל הייתה בעיה בעדכון כתובות הקבצים. אנא עדכן ידנית.",
+          );
         }
       }
 
@@ -929,7 +943,9 @@ export default function CreateStudentPage() {
             );
             console.error("Update data:", updateData);
             console.error("Student ID:", studentId);
-            toast.error(`הקו״ח נשמר, אבל הייתה בעיה בעדכון מסמכים רפואיים: ${medicalUpdateError.message}`);
+            toast.error(
+              `הקו״ח נשמר, אבל הייתה בעיה בעדכון מסמכים רפואיים: ${medicalUpdateError.message}`,
+            );
           } else {
             console.log(
               "Medical records updated successfully:",
@@ -947,7 +963,9 @@ export default function CreateStudentPage() {
       console.log("Student created and files uploaded successfully");
 
       if (hasUploadErrors) {
-        toast.warning("הקו״ח נשמר בהצלחה, אבל היו בעיות בהעלאת חלק מהקבצים. ניתן לעדכן את הקבצים מאוחר יותר.");
+        toast.warning(
+          "הקו״ח נשמר בהצלחה, אבל היו בעיות בהעלאת חלק מהקבצים. ניתן לעדכן את הקבצים מאוחר יותר.",
+        );
       } else {
         toast.success("הקו״ח נשמר בהצלחה!");
       }
@@ -968,9 +986,11 @@ export default function CreateStudentPage() {
   return (
     <Section asChild className="my-4 space-y-4 md:my-10">
       <div>
-        <h1 className="mb-4 text-heading font-bold md:text-heading">הוספת קו״ח למערכת</h1>
+        <h1 className="mb-4 text-heading font-bold md:text-heading">
+          הוספת קו״ח למערכת
+        </h1>
         <Box className="p-4 md:p-8">
-          <div className="grid gap-4 md:gap-8 md:grid-cols-[220px_minmax(0,1fr)]">
+          <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)] md:gap-8">
             <StepSidebar
               steps={steps}
               currentStepIndex={currentStepIndex}
@@ -1151,8 +1171,8 @@ function StepSidebar({
             className={cn(
               "relative shrink-0 rounded-lg px-3 py-2 text-right transition md:w-full",
               isActive
-                ? "bg-primary/10 text-primary md:before:bg-primary md:before:absolute md:before:top-1/2 md:before:right-0 md:before:h-1/2 md:before:w-1 md:before:-translate-y-1/2 md:before:rounded-l-2xl"
-                : "hover:bg-muted/70 bg-transparent",
+                ? "bg-primary/10 text-primary md:before:absolute md:before:top-1/2 md:before:right-0 md:before:h-1/2 md:before:w-1 md:before:-translate-y-1/2 md:before:rounded-l-2xl md:before:bg-primary"
+                : "bg-transparent hover:bg-muted/70",
               isDisabled && "cursor-not-allowed opacity-60",
             )}
             disabled={isDisabled}
