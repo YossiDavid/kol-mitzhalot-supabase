@@ -2,6 +2,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStudentQuery } from "@/features/students/lib/student-query-context";
 import { createClient } from "@/lib/supabase/client";
+import { getEffectiveRole } from "@/lib/user-role";
+import DeleteStudentButton from "@/features/students/components/delete-student-button";
 import {
   Empty,
   EmptyDescription,
@@ -104,6 +106,7 @@ export default function StudentsList() {
         let q = supabase
           .from("students")
           .select("*")
+          .is("deleted_at", null)
           // Active cards, or recently engaged (status_changed_at may be null on older rows)
           .or(
             [
@@ -175,6 +178,12 @@ export default function StudentsList() {
     () => new Set<string>(user?.user_metadata?.favorites || []),
     [user?.user_metadata?.favorites],
   );
+
+  const isAdmin = getEffectiveRole(user) === "admin";
+
+  const handleStudentDeleted = (studentId: string) => {
+    setStudents((prev) => prev.filter((s) => s.id !== studentId));
+  };
 
   const handleFavoriteChange = async (checked: boolean, id: string) => {
     const currentFavs: string[] = user?.user_metadata?.favorites || [];
@@ -288,24 +297,39 @@ export default function StudentsList() {
                       )}
                     </p>
                   </div>
-                  <button
-                    onClick={() =>
-                      handleFavoriteChange(!favSet.has(student.id), student.id)
-                    }
-                    className="mt-0.5 shrink-0 p-1"
-                    aria-label={
-                      favSet.has(student.id) ? "הסר ממועדפים" : "הוסף למועדפים"
-                    }
-                  >
-                    <Star
-                      className={cn(
-                        "h-5 w-5 transition-colors",
+                  <div className="mt-0.5 flex shrink-0 items-center gap-1">
+                    <button
+                      onClick={() =>
+                        handleFavoriteChange(
+                          !favSet.has(student.id),
+                          student.id,
+                        )
+                      }
+                      className="p-1"
+                      aria-label={
                         favSet.has(student.id)
-                          ? "fill-favorite text-favorite"
-                          : "text-muted-foreground",
-                      )}
-                    />
-                  </button>
+                          ? "הסר ממועדפים"
+                          : "הוסף למועדפים"
+                      }
+                    >
+                      <Star
+                        className={cn(
+                          "h-5 w-5 transition-colors",
+                          favSet.has(student.id)
+                            ? "fill-favorite text-favorite"
+                            : "text-muted-foreground",
+                        )}
+                      />
+                    </button>
+                    {isAdmin && (
+                      <DeleteStudentButton
+                        variant="icon"
+                        studentId={student.id}
+                        studentName={`${student.first_name} ${student.last_name}`}
+                        onDeleted={() => handleStudentDeleted(student.id)}
+                      />
+                    )}
+                  </div>
                 </div>
                 <div className="mt-3 flex gap-2">
                   {student.cv_url ? (
@@ -366,7 +390,7 @@ export default function StudentsList() {
                     "border-yellow-400 bg-yellow-50 dark:bg-yellow-950/30",
                 )}
               >
-                <div>
+                <div className="flex items-center gap-1">
                   <button
                     onClick={() =>
                       handleFavoriteChange(!favSet.has(student.id), student.id)
@@ -385,6 +409,14 @@ export default function StudentsList() {
                       )}
                     />
                   </button>
+                  {isAdmin && (
+                    <DeleteStudentButton
+                      variant="icon"
+                      studentId={student.id}
+                      studentName={`${student.first_name} ${student.last_name}`}
+                      onDeleted={() => handleStudentDeleted(student.id)}
+                    />
+                  )}
                 </div>
                 <div className="flex items-center gap-1">
                   {parseStatus(student.personal_status, student.gender)}

@@ -15,9 +15,13 @@ import Link from "next/link";
 
 interface UserMenuProps {
   showShadchanJoin?: boolean;
+  showStaffJoin?: boolean;
 }
 
-export function UserMenu({ showShadchanJoin = false }: UserMenuProps) {
+export function UserMenu({
+  showShadchanJoin = false,
+  showStaffJoin = false,
+}: UserMenuProps) {
   const router = useRouter();
 
   const logout = async () => {
@@ -48,6 +52,17 @@ export function UserMenu({ showShadchanJoin = false }: UserMenuProps) {
             >
               <UserPlus className="h-4 w-4" />
               הצטרפות כשדכן
+            </Link>
+          </DropdownMenuItem>
+        )}
+        {showStaffJoin && (
+          <DropdownMenuItem asChild>
+            <Link
+              href="/app/settings/staff"
+              className="flex items-center gap-2"
+            >
+              <UserPlus className="h-4 w-4" />
+              הצטרפות כאיש צוות
             </Link>
           </DropdownMenuItem>
         )}

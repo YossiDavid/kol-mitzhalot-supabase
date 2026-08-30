@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { DashboardSection } from "@/components/layout";
-import { Users, FileText, UserCheck, BookOpen } from "lucide-react";
+import { Users, FileText, UserCheck, BookOpen, UserPlus } from "lucide-react";
 
 export default function AdminPage() {
   return (
@@ -18,6 +18,16 @@ export default function AdminPage() {
               <h3 className="text-subtitle font-semibold mb-2">כל השדכנים</h3>
               <p className="text-body-sm text-muted-foreground">
                 ניהול וצפייה בכל השדכנים במערכת
+              </p>
+            </div>
+          </Link>
+
+          <Link href="/app/admin/staff/requests">
+            <div className="p-6 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
+              <UserPlus className="h-8 w-8 mb-4" />
+              <h3 className="text-subtitle font-semibold mb-2">בקשות הצטרפות כאיש צוות</h3>
+              <p className="text-body-sm text-muted-foreground">
+                אישור ודחייה של בקשות הצטרפות כאיש צוות
               </p>
             </div>
           </Link>

@@ -23,6 +23,7 @@ import {
 import Link from "next/link";
 import ShareButton from "@/features/students/components/share-button";
 import MessageButton from "@/features/students/components/message-button";
+import DeleteStudentButton from "@/features/students/components/delete-student-button";
 import StatusUpdateButton from "./status-update-button";
 import { jewishDateHebrew } from "@/lib/jewishDatte";
 import {
@@ -73,6 +74,7 @@ export default async function StudentPage({
   const isShadchan =
     user?.user_metadata?.role === "shadchan" ||
     user?.user_metadata?.role === "admin";
+  const isAdmin = user?.user_metadata?.role === "admin";
 
   if (error) {
     return (
@@ -249,6 +251,14 @@ export default async function StudentPage({
               studentId={student.id}
               currentStatus={student.personal_status as any}
               gender={student.gender as any}
+            />
+          )}
+          {isAdmin && (
+            <DeleteStudentButton
+              variant="button"
+              studentId={student.id}
+              studentName={`${student.first_name} ${student.last_name}`}
+              redirectTo="/app/students"
             />
           )}
         </div>

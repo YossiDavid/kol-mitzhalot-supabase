@@ -1,4 +1,4 @@
-export type Role = "admin" | "shadchan" | "user";
+export type Role = "admin" | "shadchan" | "staff" | "user";
 
 /** User-like object with optional user_metadata.role (Auth User or similar). */
 export type UserWithRole =
@@ -13,13 +13,15 @@ export type UserWithRole =
  */
 export function getEffectiveRole(user: UserWithRole): Role {
   const role = user?.user_metadata?.role;
-  if (role === "admin" || role === "shadchan" || role === "user") return role;
+  if (role === "admin" || role === "shadchan" || role === "staff" || role === "user")
+    return role;
   return "user";
 }
 
 const ROLE_LABELS: Record<Role, string> = {
   admin: "מנהל",
   shadchan: "שדכן",
+  staff: "איש צוות",
   user: "משתמש",
 };
 

@@ -63,14 +63,22 @@ export async function PATCH(
       ...(isEngagedOrMarried ? { in_shidduchim: false } : {}),
     })
     .eq("id", studentId)
+    .is("deleted_at", null)
     .select("id, personal_status, in_shidduchim, status_changed_at")
-    .single();
+    .maybeSingle();
 
-  if (updateError || !updated) {
+  if (updateError) {
     console.error(updateError);
     return NextResponse.json(
       { error: "Failed to update status" },
       { status: 500 },
+    );
+  }
+
+  if (!updated) {
+    return NextResponse.json(
+      { error: "Student not found" },
+      { status: 404 },
     );
   }
 

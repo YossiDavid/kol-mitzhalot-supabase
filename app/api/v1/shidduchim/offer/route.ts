@@ -78,11 +78,13 @@ export async function POST(req: NextRequest) {
         .from("students")
         .select("id, gender, user_id, first_name, last_name")
         .eq("id", groomId)
+        .is("deleted_at", null)
         .single(),
       admin
         .from("students")
         .select("id, gender, user_id, first_name, last_name")
         .eq("id", brideId)
+        .is("deleted_at", null)
         .single(),
     ]);
 

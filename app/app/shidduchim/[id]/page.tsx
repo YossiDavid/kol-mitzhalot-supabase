@@ -79,11 +79,13 @@ export default async function ShidduchCardPage({
         .from("students")
         .select("first_name, last_name")
         .eq("id", shidduch.groom_id)
+        .is("deleted_at", null)
         .maybeSingle(),
       admin
         .from("students")
         .select("first_name, last_name")
         .eq("id", shidduch.bride_id)
+        .is("deleted_at", null)
         .maybeSingle(),
     ]);
     groomRow = g;

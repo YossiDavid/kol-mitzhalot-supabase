@@ -28,6 +28,8 @@ export default async function Header({
   const role = user ? getEffectiveRole(user) : null;
   const showShadchanJoin =
     role === "user" || (role !== "admin" && role !== "shadchan");
+  const showStaffJoin =
+    role === "user" || (role !== "admin" && role !== "staff");
 
   if (variant === "website") {
     return (
@@ -113,7 +115,10 @@ export default async function Header({
         <HeaderIcons hasUserMenu={!!user} />
 
         {user ? (
-          <UserMenu showShadchanJoin={showShadchanJoin} />
+          <UserMenu
+            showShadchanJoin={showShadchanJoin}
+            showStaffJoin={showStaffJoin}
+          />
         ) : (
           <Suspense>
             <AuthButton />
