@@ -221,7 +221,7 @@ export default function StaffApplicationPage() {
                       <FormControl>
                         <Input
                           {...field}
-                          placeholder="לדוגמה: מחנך, רכז שכבה"
+                          placeholder="לדוגמה: משגיח, מחנכת"
                           disabled={isLoading}
                         />
                       </FormControl>

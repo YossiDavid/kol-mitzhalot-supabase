@@ -108,7 +108,7 @@ function ShidduchIdeaDetails({
       {showReason && (
         <div className="rounded-md border p-3">
           <p className="mb-1 text-body-sm font-bold">סיבת ההצעה</p>
-          <p className="whitespace-pre-wrap text-body-sm leading-relaxed">
+          <p className="text-body-sm leading-relaxed whitespace-pre-wrap">
             {reason}
           </p>
         </div>
@@ -130,7 +130,9 @@ function ShidduchIdeaDetails({
 export default function SubmissionsAdminPage() {
   const [items, setItems] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "new" | "read" | "archived">("all");
+  const [filter, setFilter] = useState<"all" | "new" | "read" | "archived">(
+    "all",
+  );
   const [selected, setSelected] = useState<Submission | null>(null);
   const supabase = createClient();
 
@@ -197,7 +199,9 @@ export default function SubmissionsAdminPage() {
         <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
           <Box>
             {loading ? (
-              <div className="py-10 text-center text-muted-foreground">טוען...</div>
+              <div className="py-10 text-center text-muted-foreground">
+                טוען...
+              </div>
             ) : items.length === 0 ? (
               <div className="py-16 text-center text-muted-foreground">
                 אין פניות להצגה
@@ -286,7 +290,7 @@ export default function SubmissionsAdminPage() {
                   {selected.subject ? ` — ${selected.subject}` : ""}
                 </p>
                 {selected.message ? (
-                  <p className="whitespace-pre-wrap text-body leading-relaxed">
+                  <p className="text-body leading-relaxed whitespace-pre-wrap">
                     {selected.message}
                   </p>
                 ) : null}
