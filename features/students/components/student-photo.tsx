@@ -18,7 +18,7 @@ export default function StudentPhoto({ src, alt }: StudentPhotoProps) {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="הגדלת התמונה"
-        className="cursor-zoom-in rounded-full transition hover:brightness-95 hover:ring-2 hover:ring-primary/40"
+        className="cursor-zoom-in rounded-full transition hover:ring-2 hover:ring-primary/40 hover:brightness-95"
       >
         <img
           src={src}

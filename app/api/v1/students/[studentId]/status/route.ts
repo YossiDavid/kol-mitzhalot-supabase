@@ -53,6 +53,9 @@ export async function PATCH(
   const { status } = parsed.data;
   const admin = createAdminClient();
 
+  // אירוסין/נישואין מוציאים את הכרטיס משידוכים, וחזרה לרווק/גרוש/אלמן
+  // מחזירה אותו. בלי הצד השני של התנאי, תיקון סטטוס שגוי היה משאיר את
+  // הכרטיס עם in_shidduchim=false והוא היה נעלם מהרשימה בלי שאיש ישים לב.
   const isEngagedOrMarried = status === "engaged" || status === "married";
 
   const { data: updated, error: updateError } = await admin
@@ -60,7 +63,7 @@ export async function PATCH(
     .update({
       personal_status: status,
       status_changed_at: new Date().toISOString(),
-      ...(isEngagedOrMarried ? { in_shidduchim: false } : {}),
+      in_shidduchim: !isEngagedOrMarried,
     })
     .eq("id", studentId)
     .is("deleted_at", null)
