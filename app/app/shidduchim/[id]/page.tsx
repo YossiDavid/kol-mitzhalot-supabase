@@ -64,8 +64,7 @@ export default async function ShidduchCardPage({
 
   const role = getEffectiveRole(user);
   const canEditStatus = role === "admin" || shidduch.shadchan_id === user.id;
-  const canLoadBothNames =
-    role === "admin" || shidduch.shadchan_id === user.id;
+  const canLoadBothNames = role === "admin" || shidduch.shadchan_id === user.id;
 
   type NameRow = { first_name: string | null; last_name: string | null };
 
@@ -134,11 +133,15 @@ export default async function ShidduchCardPage({
       <Box className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <p className="text-muted-foreground text-body-sm font-medium">מיועד</p>
+            <p className="text-body-sm font-medium text-muted-foreground">
+              מיועד
+            </p>
             <p className="text-subtitle font-semibold">{groomName}</p>
           </div>
           <div>
-            <p className="text-muted-foreground text-body-sm font-medium">מיועדת</p>
+            <p className="text-body-sm font-medium text-muted-foreground">
+              מיועדת
+            </p>
             <p className="text-subtitle font-semibold">{brideName}</p>
           </div>
         </div>
@@ -151,7 +154,9 @@ export default async function ShidduchCardPage({
 
         {scopeLabel && (
           <div>
-            <p className="text-muted-foreground text-body-sm font-medium">היקף שליחה</p>
+            <p className="text-body-sm font-medium text-muted-foreground">
+              היקף שליחה
+            </p>
             <p className="text-body-sm">{scopeLabel}</p>
           </div>
         )}
@@ -163,7 +168,9 @@ export default async function ShidduchCardPage({
 
         {shidduch.sent_at && (
           <div>
-            <p className="text-muted-foreground text-body-sm font-medium">נשלח למייל</p>
+            <p className="text-body-sm font-medium text-muted-foreground">
+              נשלח למייל
+            </p>
             <p className="text-body-sm">
               {new Date(shidduch.sent_at).toLocaleString("he-IL", {
                 dateStyle: "short",
@@ -175,10 +182,10 @@ export default async function ShidduchCardPage({
 
         {shidduch.note_for_groom?.trim() && (
           <div>
-            <p className="text-muted-foreground mb-1 text-body-sm font-medium">
+            <p className="mb-1 text-body-sm font-medium text-muted-foreground">
               הערות לצד המיועד
             </p>
-            <div className="bg-muted/50 rounded-lg border p-3 text-body-sm whitespace-pre-wrap">
+            <div className="rounded-lg border bg-muted/50 p-3 text-body-sm whitespace-pre-wrap">
               {shidduch.note_for_groom}
             </div>
           </div>
@@ -186,16 +193,16 @@ export default async function ShidduchCardPage({
 
         {shidduch.note_for_bride?.trim() && (
           <div>
-            <p className="text-muted-foreground mb-1 text-body-sm font-medium">
+            <p className="mb-1 text-body-sm font-medium text-muted-foreground">
               הערות לצד המיועדת
             </p>
-            <div className="bg-muted/50 rounded-lg border p-3 text-body-sm whitespace-pre-wrap">
+            <div className="rounded-lg border bg-muted/50 p-3 text-body-sm whitespace-pre-wrap">
               {shidduch.note_for_bride}
             </div>
           </div>
         )}
 
-        <p className="text-muted-foreground text-caption">
+        <p className="text-caption text-muted-foreground">
           נוצר:{" "}
           {new Date(shidduch.created_at).toLocaleString("he-IL", {
             dateStyle: "short",

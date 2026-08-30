@@ -76,10 +76,7 @@ export async function PATCH(
   }
 
   if (!updated) {
-    return NextResponse.json(
-      { error: "Student not found" },
-      { status: 404 },
-    );
+    return NextResponse.json({ error: "Student not found" }, { status: 404 });
   }
 
   return NextResponse.json({ ok: true, row: updated });

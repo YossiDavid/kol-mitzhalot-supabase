@@ -81,9 +81,9 @@ export default function DeleteStudentButton({
         <DialogHeader>
           <DialogTitle>מחיקת כרטיס</DialogTitle>
           <DialogDescription>
-            הכרטיס של <strong>{studentName}</strong> יוסר מהמערכת ולא יופיע
-            עוד ברשימות ובחיפושים. הנתונים והיסטוריית ההצעות שלו נשמרים
-            במערכת ולא נמחקים לצמיתות.
+            הכרטיס של <strong>{studentName}</strong> יוסר מהמערכת ולא יופיע עוד
+            ברשימות ובחיפושים. הנתונים והיסטוריית ההצעות שלו נשמרים במערכת ולא
+            נמחקים לצמיתות.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

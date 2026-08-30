@@ -81,7 +81,7 @@ export default async function Header({
   }
 
   return (
-    <header className="border-b-foreground/10 bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-30 container flex h-16 items-center justify-between gap-5 border-b font-semibold backdrop-blur-sm">
+    <header className="sticky top-0 z-30 container flex h-16 items-center justify-between gap-5 border-b border-b-foreground/10 bg-background/95 font-semibold backdrop-blur-sm supports-[backdrop-filter]:bg-background/80">
       <div className="flex items-center gap-2">
         <>
           {/* מובייל: לוגו */}
@@ -98,7 +98,7 @@ export default async function Header({
           <SidebarTrigger className="z-20 -ms-1 hidden md:inline-flex" />
           <Separator
             orientation="vertical"
-            className="bg-primary mx-2 hidden data-[orientation=vertical]:h-4 md:block"
+            className="mx-2 hidden bg-primary data-[orientation=vertical]:h-4 md:block"
           />
           <div className="hidden items-center gap-5 font-semibold md:flex">
             שלום וברכה, {firstName} {lastName}!

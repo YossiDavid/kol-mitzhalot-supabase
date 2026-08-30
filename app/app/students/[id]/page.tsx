@@ -24,6 +24,7 @@ import Link from "next/link";
 import ShareButton from "@/features/students/components/share-button";
 import MessageButton from "@/features/students/components/message-button";
 import DeleteStudentButton from "@/features/students/components/delete-student-button";
+import StudentPhoto from "@/features/students/components/student-photo";
 import StatusUpdateButton from "./status-update-button";
 import { jewishDateHebrew } from "@/lib/jewishDatte";
 import {
@@ -80,8 +81,8 @@ export default async function StudentPage({
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <div className="space-y-2 text-center">
-          <p className="text-destructive font-semibold">שגיאה בטעינת הפרופיל</p>
-          <p className="text-muted-foreground text-body-sm">{error.message}</p>
+          <p className="font-semibold text-destructive">שגיאה בטעינת הפרופיל</p>
+          <p className="text-body-sm text-muted-foreground">{error.message}</p>
         </div>
       </div>
     );
@@ -92,8 +93,8 @@ export default async function StudentPage({
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <div className="space-y-2 text-center">
-          <p className="text-foreground font-semibold">מיועד לא נמצא</p>
-          <p className="text-muted-foreground text-body-sm">
+          <p className="font-semibold text-foreground">מיועד לא נמצא</p>
+          <p className="text-body-sm text-muted-foreground">
             הרשומה שחיפשת אינה קיימת במערכת
           </p>
         </div>
@@ -101,8 +102,8 @@ export default async function StudentPage({
     );
   }
 
-  const isOwnProfile = user?.id === student.user_id;
-  const photoPrivate = student.gender === "female" && !isOwnProfile && !isShadchan;
+  // החלטת מוצר: תמונת בנות חסויה תמיד — ללא יוצא מן הכלל (גם לשדכן/מנהל/הבעלים).
+  const photoPrivate = student.gender === "female";
 
   type IconComponent = React.ComponentType<{
     size?: number;
@@ -119,8 +120,8 @@ export default async function StudentPage({
     children: React.ReactNode;
   }) => (
     <Box className="space-y-4">
-      <div className="border-border flex items-center gap-3 border-b pb-3">
-        <div className="bg-muted rounded-lg p-2">
+      <div className="flex items-center gap-3 border-b border-border pb-3">
+        <div className="rounded-lg bg-muted p-2">
           <Icon size={20} className="text-primary" />
         </div>
         <h2 className="text-title! font-bold!">{title}</h2>
@@ -139,8 +140,12 @@ export default async function StudentPage({
     if (!value && value !== 0) return null;
     return (
       <div className="flex flex-col">
-        <span className="text-muted-foreground text-caption font-medium">{label}</span>
-        <span className="text-foreground text-body-sm font-semibold">{value}</span>
+        <span className="text-caption font-medium text-muted-foreground">
+          {label}
+        </span>
+        <span className="text-body-sm font-semibold text-foreground">
+          {value}
+        </span>
       </div>
     );
   };
@@ -168,7 +173,7 @@ export default async function StudentPage({
       {/* Back */}
       <Link
         href="/app/students"
-        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-body-sm transition-colors"
+        className="inline-flex items-center gap-1 text-body-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ChevronRight className="h-4 w-4" />
         חזרה לרשימה
@@ -180,30 +185,29 @@ export default async function StudentPage({
         {student.image_url && (
           <div className="shrink-0">
             {photoPrivate ? (
-              <div className="bg-muted flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-full border sm:h-24 sm:w-24">
-                <Lock className="text-muted-foreground h-6 w-6" />
-                <span className="text-muted-foreground text-caption">חסוי</span>
+              <div className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-full border bg-muted sm:h-24 sm:w-24">
+                <Lock className="h-6 w-6 text-muted-foreground" />
+                <span className="text-caption text-muted-foreground">חסוי</span>
               </div>
             ) : (
-              <img
+              <StudentPhoto
                 src={student.image_url}
                 alt={`${student.first_name} ${student.last_name}`}
-                className="h-20 w-20 rounded-full object-cover sm:h-24 sm:w-24"
               />
             )}
           </div>
         )}
         {!student.image_url && (
-          <div className="bg-muted flex h-20 w-20 shrink-0 items-center justify-center rounded-full border sm:h-24 sm:w-24">
-            <ImageIcon className="text-muted-foreground h-8 w-8" />
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border bg-muted sm:h-24 sm:w-24">
+            <ImageIcon className="h-8 w-8 text-muted-foreground" />
           </div>
         )}
 
         <div className="min-w-0 flex-1">
-          <h1 className="text-heading! font-bold! leading-tight!">
+          <h1 className="text-heading! leading-tight! font-bold!">
             {student.first_name} {student.last_name}
           </h1>
-          <p className="text-muted-foreground mt-1.5 flex flex-wrap gap-x-2 gap-y-1 text-body-sm">
+          <p className="mt-1.5 flex flex-wrap gap-x-2 gap-y-1 text-body-sm text-muted-foreground">
             {genderLabel && <span>{genderLabel}</span>}
             {student.birth_date && (
               <>
@@ -214,7 +218,12 @@ export default async function StudentPage({
             {student.personal_status && (
               <>
                 <span className="text-muted-foreground/40">·</span>
-                <span>{personalStatusToHebrew(student.personal_status, student.gender)}</span>
+                <span>
+                  {personalStatusToHebrew(
+                    student.personal_status,
+                    student.gender,
+                  )}
+                </span>
               </>
             )}
             {student.city && (
@@ -244,7 +253,10 @@ export default async function StudentPage({
               </Link>
             </Button>
           )}
-          <ShareButton studentId={student.id} studentName={`${student.first_name} ${student.last_name}`} />
+          <ShareButton
+            studentId={student.id}
+            studentName={`${student.first_name} ${student.last_name}`}
+          />
           {isShadchan && <MessageButton authorId={student.user_id} />}
           {isShadchan && (
             <StatusUpdateButton
@@ -266,80 +278,79 @@ export default async function StudentPage({
 
       {/* Personal details — full width */}
       <Section title="פרטים אישיים" icon={User}>
-            {student.about && (
-              <p className="text-muted-foreground leading-relaxed">
-                {student.about}
-              </p>
-            )}
-            <div className="bg-muted/50 grid grid-cols-2 gap-4 rounded-lg p-4 sm:grid-cols-3 lg:grid-cols-4">
-              {genderLabel && (
-                <InfoTag label="מגדר" value={genderLabel} />
-              )}
-              {shidduchimLabel && (
-                <InfoTag label="מיועד לשידוכים" value={shidduchimLabel} />
-              )}
-              <InfoTag label="עיר" value={student.city} />
-              <InfoTag label="רחוב" value={student.street} />
-              <InfoTag label="מספר בית" value={student.house} />
-              <InfoTag label="ארץ" value={student.country} />
-              <InfoTag
-                label="גיל"
-                value={
-                  student.birth_date
-                    ? `${calculateAge(student.birth_date)} שנים`
-                    : null
-                }
-              />
-              <InfoTag label="תעודת זהות" value={student.identity_number} />
-              <InfoTag
-                label="סטטוס אישי"
-                value={
-                  student.personal_status
-                    ? personalStatusToHebrew(student.personal_status, student.gender)
-                    : null
-                }
-              />
-              {student.height && (
-                <InfoTag label="גובה" value={`${student.height} ס"מ`} />
-              )}
-              {student.community && (
-                <InfoTag label="קהילה" value={student.community} />
-              )}
-              {student.shtible && (
-                <InfoTag label="שטיבל" value={student.shtible} />
-              )}
-              {student.cellphone_type && (
-                <InfoTag
-                  label="סוג מכשיר"
-                  value={cellphoneTypeToHebrew(student.cellphone_type)}
-                />
-              )}
-              {student.phone && (
-                <div className="flex flex-col">
-                  <span className="text-muted-foreground text-caption font-medium">
-                    טלפון
-                  </span>
-                  <a
-                    href={`tel:${student.phone}`}
-                    className="text-primary flex items-center gap-1 text-body-sm font-semibold hover:underline"
-                  >
-                    <Phone size={12} /> {student.phone}
-                  </a>
-                </div>
-              )}
-              {student.plan_for_life && (
-                <InfoTag
-                  label="תכנון לחיים"
-                  value={planForLifeToHebrew(student.plan_for_life)}
-                />
-              )}
-              {student.head_cover_type && (
-                <InfoTag
-                  label="סוג כיסוי ראש"
-                  value={headCoverTypeToHebrew(student.head_cover_type)}
-                />
-              )}
+        {student.about && (
+          <p className="leading-relaxed text-muted-foreground">
+            {student.about}
+          </p>
+        )}
+        <div className="grid grid-cols-2 gap-4 rounded-lg bg-muted/50 p-4 sm:grid-cols-3 lg:grid-cols-4">
+          {genderLabel && <InfoTag label="מגדר" value={genderLabel} />}
+          {shidduchimLabel && (
+            <InfoTag label="מיועד לשידוכים" value={shidduchimLabel} />
+          )}
+          <InfoTag label="עיר" value={student.city} />
+          <InfoTag label="רחוב" value={student.street} />
+          <InfoTag label="מספר בית" value={student.house} />
+          <InfoTag label="ארץ" value={student.country} />
+          <InfoTag
+            label="גיל"
+            value={
+              student.birth_date
+                ? `${calculateAge(student.birth_date)} שנים`
+                : null
+            }
+          />
+          <InfoTag label="תעודת זהות" value={student.identity_number} />
+          <InfoTag
+            label="סטטוס אישי"
+            value={
+              student.personal_status
+                ? personalStatusToHebrew(
+                    student.personal_status,
+                    student.gender,
+                  )
+                : null
+            }
+          />
+          {student.height && (
+            <InfoTag label="גובה" value={`${student.height} ס"מ`} />
+          )}
+          {student.community && (
+            <InfoTag label="קהילה" value={student.community} />
+          )}
+          {student.shtible && <InfoTag label="שטיבל" value={student.shtible} />}
+          {student.cellphone_type && (
+            <InfoTag
+              label="סוג מכשיר"
+              value={cellphoneTypeToHebrew(student.cellphone_type)}
+            />
+          )}
+          {student.phone && (
+            <div className="flex flex-col">
+              <span className="text-caption font-medium text-muted-foreground">
+                טלפון
+              </span>
+              <a
+                href={`tel:${student.phone}`}
+                className="flex items-center gap-1 text-body-sm font-semibold text-primary hover:underline"
+              >
+                <Phone size={12} /> {student.phone}
+              </a>
             </div>
+          )}
+          {student.plan_for_life && (
+            <InfoTag
+              label="תכנון לחיים"
+              value={planForLifeToHebrew(student.plan_for_life)}
+            />
+          )}
+          {student.head_cover_type && (
+            <InfoTag
+              label="סוג כיסוי ראש"
+              value={headCoverTypeToHebrew(student.head_cover_type)}
+            />
+          )}
+        </div>
       </Section>
 
       {/* Main Content */}
@@ -352,8 +363,8 @@ export default async function StudentPage({
               {/* Parents */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {/* Father */}
-                <div className="border-border bg-muted/30 rounded-lg border p-4">
-                  <p className="text-muted-foreground mb-2 text-caption font-bold uppercase">
+                <div className="rounded-lg border border-border bg-muted/30 p-4">
+                  <p className="mb-2 text-caption font-bold text-muted-foreground uppercase">
                     אבא
                   </p>
                   <p className="font-bold">
@@ -362,14 +373,14 @@ export default async function StudentPage({
                     {student.parents_info?.father?.self?.suffix || ""}
                   </p>
                   {student.parents_info?.father?.job && (
-                    <p className="text-muted-foreground mt-1 text-body-sm italic">
+                    <p className="mt-1 text-body-sm text-muted-foreground italic">
                       {student.parents_info.father.job}
                     </p>
                   )}
                   {student.parents_info?.father?.phone && (
                     <a
                       href={`tel:${student.parents_info.father.phone}`}
-                      className="text-muted-foreground hover:text-primary mt-2 flex items-center gap-1 text-caption"
+                      className="mt-2 flex items-center gap-1 text-caption text-muted-foreground hover:text-primary"
                     >
                       <Phone size={12} /> {student.parents_info.father.phone}
                     </a>
@@ -377,15 +388,17 @@ export default async function StudentPage({
                   {student.parents_info?.father?.email && (
                     <a
                       href={`mailto:${student.parents_info.father.email}`}
-                      className="text-muted-foreground hover:text-primary mt-1 flex items-center gap-1 text-caption"
+                      className="mt-1 flex items-center gap-1 text-caption text-muted-foreground hover:text-primary"
                     >
                       <Mail size={12} /> {student.parents_info.father.email}
                     </a>
                   )}
                   {/* Grandfather */}
                   {student.parents_info?.father?.grandFather && (
-                    <div className="border-border mt-3 border-t pt-3">
-                      <p className="text-muted-foreground text-caption">אביו:</p>
+                    <div className="mt-3 border-t border-border pt-3">
+                      <p className="text-caption text-muted-foreground">
+                        אביו:
+                      </p>
                       <p className="text-body-sm">
                         {student.parents_info.father.grandFather.prefix || ""}{" "}
                         {student.parents_info.father.grandFather.name || ""}{" "}
@@ -396,7 +409,7 @@ export default async function StudentPage({
                   {/* Grandmother */}
                   {student.parents_info?.father?.grandMother && (
                     <div className="mt-2">
-                      <p className="text-muted-foreground text-caption">אמו:</p>
+                      <p className="text-caption text-muted-foreground">אמו:</p>
                       <p className="text-body-sm">
                         {student.parents_info.father.grandMother.prefix || ""}{" "}
                         {student.parents_info.father.grandMother.name || ""}{" "}
@@ -407,8 +420,8 @@ export default async function StudentPage({
                 </div>
 
                 {/* Mother */}
-                <div className="border-border bg-muted/30 rounded-lg border p-4">
-                  <p className="text-muted-foreground mb-2 text-caption font-bold uppercase">
+                <div className="rounded-lg border border-border bg-muted/30 p-4">
+                  <p className="mb-2 text-caption font-bold text-muted-foreground uppercase">
                     אמא
                   </p>
                   <p className="font-bold">
@@ -416,21 +429,21 @@ export default async function StudentPage({
                     {student.parents_info?.mother?.self?.name || ""}{" "}
                     {student.parents_info?.mother?.self?.suffix || ""}
                     {student.parents_info?.mother?.maidenName && (
-                      <span className="text-muted-foreground text-body-sm font-normal">
+                      <span className="text-body-sm font-normal text-muted-foreground">
                         {" "}
                         | לבית {student.parents_info.mother.maidenName}
                       </span>
                     )}
                   </p>
                   {student.parents_info?.mother?.job && (
-                    <p className="text-muted-foreground mt-1 text-body-sm">
+                    <p className="mt-1 text-body-sm text-muted-foreground">
                       {student.parents_info.mother.job}
                     </p>
                   )}
                   {student.parents_info?.mother?.phone && (
                     <a
                       href={`tel:${student.parents_info.mother.phone}`}
-                      className="text-muted-foreground hover:text-primary mt-2 flex items-center gap-1 text-caption"
+                      className="mt-2 flex items-center gap-1 text-caption text-muted-foreground hover:text-primary"
                     >
                       <Phone size={12} /> {student.parents_info.mother.phone}
                     </a>
@@ -438,22 +451,24 @@ export default async function StudentPage({
                   {student.parents_info?.mother?.email && (
                     <a
                       href={`mailto:${student.parents_info.mother.email}`}
-                      className="text-muted-foreground hover:text-primary mt-1 flex items-center gap-1 text-caption"
+                      className="mt-1 flex items-center gap-1 text-caption text-muted-foreground hover:text-primary"
                     >
                       <Mail size={12} /> {student.parents_info.mother.email}
                     </a>
                   )}
                   {student.parents_info?.deadParent === "mother" &&
                     student.parents_info?.motherDeathDate && (
-                      <p className="text-destructive mt-2 text-caption">
+                      <p className="mt-2 text-caption text-destructive">
                         נפטרה ב-
                         {jewishDateHebrew(student.parents_info.motherDeathDate)}
                       </p>
                     )}
                   {/* Grandfather */}
                   {student.parents_info?.mother?.grandFather && (
-                    <div className="border-border mt-3 border-t pt-3">
-                      <p className="text-muted-foreground text-caption">אביה:</p>
+                    <div className="mt-3 border-t border-border pt-3">
+                      <p className="text-caption text-muted-foreground">
+                        אביה:
+                      </p>
                       <p className="text-body-sm">
                         {student.parents_info.mother.grandFather.prefix || ""}{" "}
                         {student.parents_info.mother.grandFather.name || ""}{" "}
@@ -464,7 +479,9 @@ export default async function StudentPage({
                   {/* Grandmother */}
                   {student.parents_info?.mother?.grandMother && (
                     <div className="mt-2">
-                      <p className="text-muted-foreground text-caption">אימה:</p>
+                      <p className="text-caption text-muted-foreground">
+                        אימה:
+                      </p>
                       <p className="text-body-sm">
                         {student.parents_info.mother.grandMother.prefix || ""}{" "}
                         {student.parents_info.mother.grandMother.name || ""}{" "}
@@ -477,7 +494,7 @@ export default async function StudentPage({
 
               {/* Parents Status */}
               {student.parents_info?.status && (
-                <div className="border-border bg-muted/50 rounded-lg border p-4">
+                <div className="rounded-lg border border-border bg-muted/50 p-4">
                   <h4 className="mb-3 text-body-sm font-bold">מצב ההורים</h4>
                   <div className="grid grid-cols-3 gap-4">
                     <InfoTag
@@ -543,7 +560,7 @@ export default async function StudentPage({
 
               {/* Family Info */}
               {student.family_info && (
-                <div className="border-border bg-muted/50 rounded-lg border p-4">
+                <div className="rounded-lg border border-border bg-muted/50 p-4">
                   <h4 className="mb-3 text-body-sm font-bold">פרטים נוספים</h4>
                   <div className="grid grid-cols-3 gap-4">
                     {student.family_info.numberOfChildren && (
@@ -587,9 +604,9 @@ export default async function StudentPage({
                         ) => (
                           <div
                             key={idx}
-                            className="border-border bg-card flex items-center gap-3 rounded-lg border p-3"
+                            className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
                           >
-                            <div className="bg-muted flex h-8 w-8 items-center justify-center rounded-full text-caption font-bold">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-caption font-bold">
                               {idx + 1}
                             </div>
                             <div>
@@ -597,7 +614,7 @@ export default async function StudentPage({
                                 {m.firstName} {m.lastName}
                               </p>
                               {m.city && (
-                                <p className="text-muted-foreground text-caption">
+                                <p className="text-caption text-muted-foreground">
                                   {m.city}
                                 </p>
                               )}
@@ -635,24 +652,24 @@ export default async function StudentPage({
                     ) => (
                       <div
                         key={idx}
-                        className="border-border bg-muted/30 rounded-lg border p-4"
+                        className="rounded-lg border border-border bg-muted/30 p-4"
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
                             <p className="font-bold">{p.full_name}</p>
                             {p.marriage_date && (
-                              <p className="text-muted-foreground text-caption">
+                              <p className="text-caption text-muted-foreground">
                                 נישאו: {p.marriage_date}
                               </p>
                             )}
                             {p.separation_type === "divorce" &&
                               p.divorce_date && (
-                                <p className="text-muted-foreground text-caption">
+                                <p className="text-caption text-muted-foreground">
                                   גירושין: {p.divorce_date}
                                 </p>
                               )}
                             {p.separation_type === "death" && p.death_date && (
-                              <p className="text-muted-foreground text-caption">
+                              <p className="text-caption text-muted-foreground">
                                 נפטר/ה ב: {jewishDateHebrew(p.death_date)}
                               </p>
                             )}
@@ -662,7 +679,7 @@ export default async function StudentPage({
                               </p>
                             )}
                             {p.divorce_details?.rabbiName && (
-                              <p className="text-muted-foreground text-caption">
+                              <p className="text-caption text-muted-foreground">
                                 רב מלווה: {p.divorce_details.rabbiName}
                                 {p.divorce_details.rabbiPhone && (
                                   <span>
@@ -681,13 +698,13 @@ export default async function StudentPage({
                           </div>
                           {p.children_number ? (
                             <div className="text-left">
-                              <span className="border-border bg-card rounded-lg border px-2 py-1 text-caption font-bold">
+                              <span className="rounded-lg border border-border bg-card px-2 py-1 text-caption font-bold">
                                 {p.children_number} ילדים
                               </span>
                             </div>
                           ) : (
                             <div className="text-left">
-                              <span className="border-border bg-card rounded-lg border px-2 py-1 text-caption font-bold">
+                              <span className="rounded-lg border border-border bg-card px-2 py-1 text-caption font-bold">
                                 אין ילדים
                               </span>
                             </div>
@@ -710,8 +727,8 @@ export default async function StudentPage({
             >
               <div className="space-y-4">
                 {student.partner_preferences.additional_information && (
-                  <div className="border-primary bg-muted/50 rounded-lg border-r-4 p-4">
-                    <p className="text-foreground font-medium italic">
+                  <div className="rounded-lg border-r-4 border-primary bg-muted/50 p-4">
+                    <p className="font-medium text-foreground italic">
                       "{student.partner_preferences.additional_information}"
                     </p>
                   </div>
@@ -719,8 +736,8 @@ export default async function StudentPage({
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
                   {student.partner_preferences.age_min &&
                     student.partner_preferences.age_max && (
-                      <div className="bg-muted/50 rounded-lg p-3">
-                        <p className="text-muted-foreground text-caption">
+                      <div className="rounded-lg bg-muted/50 p-3">
+                        <p className="text-caption text-muted-foreground">
                           טווח גילאים
                         </p>
                         <p className="text-body-sm font-bold">
@@ -730,8 +747,8 @@ export default async function StudentPage({
                       </div>
                     )}
                   {student.partner_preferences.work_status && (
-                    <div className="bg-muted/50 rounded-lg p-3">
-                      <p className="text-muted-foreground text-caption">
+                    <div className="rounded-lg bg-muted/50 p-3">
+                      <p className="text-caption text-muted-foreground">
                         סטטוס תעסוקתי מבוקש
                       </p>
                       <p className="text-body-sm font-bold">
@@ -742,8 +759,8 @@ export default async function StudentPage({
                     </div>
                   )}
                   {student.partner_preferences.head_cover_type && (
-                    <div className="bg-muted/50 rounded-lg p-3">
-                      <p className="text-muted-foreground text-caption">
+                    <div className="rounded-lg bg-muted/50 p-3">
+                      <p className="text-caption text-muted-foreground">
                         סוג כיסוי ראש רצוי
                       </p>
                       <p className="text-body-sm font-bold">
@@ -754,8 +771,8 @@ export default async function StudentPage({
                     </div>
                   )}
                   {student.partner_preferences.plan_for_life && (
-                    <div className="bg-muted/50 rounded-lg p-3">
-                      <p className="text-muted-foreground text-caption">
+                    <div className="rounded-lg bg-muted/50 p-3">
+                      <p className="text-caption text-muted-foreground">
                         תכנון לחיים
                       </p>
                       <p className="text-body-sm font-bold">
@@ -766,8 +783,8 @@ export default async function StudentPage({
                     </div>
                   )}
                   {student.partner_preferences.cellphone_type && (
-                    <div className="bg-muted/50 rounded-lg p-3">
-                      <p className="text-muted-foreground text-caption">
+                    <div className="rounded-lg bg-muted/50 p-3">
+                      <p className="text-caption text-muted-foreground">
                         סוג טלפון מקובל
                       </p>
                       <p className="text-body-sm font-bold">
@@ -778,14 +795,16 @@ export default async function StudentPage({
                     </div>
                   )}
                 </div>
-                <div className="bg-muted/50 rounded-lg p-3">
-                  <p className="text-muted-foreground mb-2 text-caption">
+                <div className="rounded-lg bg-muted/50 p-3">
+                  <p className="mb-2 text-caption text-muted-foreground">
                     ארץ / מדינות מועדפות
                   </p>
                   {!student.partner_preferences.preferred_countries ||
                   student.partner_preferences.preferred_countries.length ===
                     0 ? (
-                    <p className="text-body-sm font-bold">ללא העדפה — כל הארצות</p>
+                    <p className="text-body-sm font-bold">
+                      ללא העדפה — כל הארצות
+                    </p>
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {student.partner_preferences.preferred_countries.map(
@@ -799,8 +818,8 @@ export default async function StudentPage({
                   )}
                 </div>
                 {student.partner_preferences.about_partner && (
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <p className="text-muted-foreground mb-1 text-caption">
+                  <div className="rounded-lg bg-muted/50 p-3">
+                    <p className="mb-1 text-caption text-muted-foreground">
                       אופי המבוקש
                     </p>
                     <p className="text-body-sm">
@@ -832,11 +851,11 @@ export default async function StudentPage({
                     ) => (
                       <div
                         key={idx}
-                        className="border-border relative border-r-2 py-2 pr-4"
+                        className="relative border-r-2 border-border py-2 pr-4"
                       >
-                        <div className="bg-primary absolute top-2 -right-[5px] h-2 w-2 rounded-full"></div>
+                        <div className="absolute top-2 -right-[5px] h-2 w-2 rounded-full bg-primary"></div>
                         <p className="text-body-sm font-bold">{edu.name}</p>
-                        <div className="text-muted-foreground flex flex-wrap gap-1 text-caption">
+                        <div className="flex flex-wrap gap-1 text-caption text-muted-foreground">
                           {edu.institution_type && (
                             <span>{eduToHebrew(edu.institution_type)}</span>
                           )}
@@ -879,10 +898,10 @@ export default async function StudentPage({
                     ) => (
                       <div
                         key={idx}
-                        className="border-border bg-muted/50 rounded-lg border p-3"
+                        className="rounded-lg border border-border bg-muted/50 p-3"
                       >
                         {job.category && (
-                          <p className="text-muted-foreground mb-1 text-caption font-bold uppercase">
+                          <p className="mb-1 text-caption font-bold text-muted-foreground uppercase">
                             {employmentCategoryToHebrew(job.category)}
                           </p>
                         )}
@@ -890,12 +909,12 @@ export default async function StudentPage({
                           <p className="text-body-sm font-bold">{job.role}</p>
                         )}
                         {job.location && (
-                          <p className="text-muted-foreground text-caption">
+                          <p className="text-caption text-muted-foreground">
                             {job.location}
                           </p>
                         )}
                         {job.description && (
-                          <p className="text-muted-foreground mt-1 text-caption">
+                          <p className="mt-1 text-caption text-muted-foreground">
                             {job.description}
                           </p>
                         )}
@@ -922,9 +941,9 @@ export default async function StudentPage({
                   ) => (
                     <div
                       key={idx}
-                      className="border-border bg-card hover:bg-muted/50 rounded-lg border p-3 transition-colors"
+                      className="rounded-lg border border-border bg-card p-3 transition-colors hover:bg-muted/50"
                     >
-                      <p className="text-primary mb-1 text-caption font-bold">
+                      <p className="mb-1 text-caption font-bold text-primary">
                         {ref.reference_type &&
                           referenceTypeToHebrew(ref.reference_type)}
                       </p>
@@ -932,7 +951,7 @@ export default async function StudentPage({
                       {ref.phone && (
                         <a
                           href={`tel:${ref.phone}`}
-                          className="text-muted-foreground hover:text-primary mt-1 flex items-center gap-1 text-caption"
+                          className="mt-1 flex items-center gap-1 text-caption text-muted-foreground hover:text-primary"
                         >
                           <Phone size={12} /> {ref.phone}
                         </a>
@@ -940,7 +959,7 @@ export default async function StudentPage({
                       {ref.email && (
                         <a
                           href={`mailto:${ref.email}`}
-                          className="text-muted-foreground hover:text-primary mt-1 flex items-center gap-1 text-caption"
+                          className="mt-1 flex items-center gap-1 text-caption text-muted-foreground hover:text-primary"
                         >
                           <Mail size={12} /> {ref.email}
                         </a>
@@ -962,133 +981,134 @@ export default async function StudentPage({
                   : "bg-muted/40",
               )}
             >
-            {!hasMedicalIssue ? (
-              <p className="text-foreground text-caption leading-relaxed">
-                <strong>מצב בריאותי כללי:</strong>{" "}
-                {student.medical_records?.status === "good"
-                  ? medicalStatusToHebrew("good")
-                  : "תקין — ללא פירוט על בעיה רפואית (כפי שנמסר במילוי)"}
-              </p>
-            ) : (
-              <>
-                <p className="text-foreground text-caption leading-relaxed">
-                  צוין שיש נושא רפואי (
-                  {medicalStatusToHebrew(student.medical_records.status)}):
+              {!hasMedicalIssue ? (
+                <p className="text-caption leading-relaxed text-foreground">
+                  <strong>מצב בריאותי כללי:</strong>{" "}
+                  {student.medical_records?.status === "good"
+                    ? medicalStatusToHebrew("good")
+                    : "תקין — ללא פירוט על בעיה רפואית (כפי שנמסר במילוי)"}
                 </p>
-                {student.medical_records.details && (
-                  <blockquote className="border-destructive/30 mt-1 mb-2 block rounded-sm border-s-2 bg-white/25 ps-2 text-caption leading-relaxed">
-                    {student.medical_records.details}
-                  </blockquote>
-                )}
-                {student.medical_records.exposure_level && (
-                  <p className="text-muted-foreground mb-2 text-caption">
-                    רמת חשיפה:{" "}
-                    {exposureLevelToHebrew(
-                      student.medical_records.exposure_level,
-                    )}
+              ) : (
+                <>
+                  <p className="text-caption leading-relaxed text-foreground">
+                    צוין שיש נושא רפואי (
+                    {medicalStatusToHebrew(student.medical_records.status)}):
                   </p>
-                )}
-                {student.medical_records.related_issue_preference && (
-                  <p className="text-muted-foreground text-caption">
-                    העדפה לשידוך:{" "}
-                    {relatedIssuePreferenceToHebrew(
-                      student.medical_records.related_issue_preference,
-                    )}
-                  </p>
-                )}
-                {student.medical_records.contact_info && (
-                  <div className="border-border mt-3 border-t pt-3">
-                    <p className="text-muted-foreground mb-1 text-caption font-bold">
-                      יצירת קשר למידע נוסף:
+                  {student.medical_records.details && (
+                    <blockquote className="mt-1 mb-2 block rounded-sm border-s-2 border-destructive/30 bg-white/25 ps-2 text-caption leading-relaxed">
+                      {student.medical_records.details}
+                    </blockquote>
+                  )}
+                  {student.medical_records.exposure_level && (
+                    <p className="mb-2 text-caption text-muted-foreground">
+                      רמת חשיפה:{" "}
+                      {exposureLevelToHebrew(
+                        student.medical_records.exposure_level,
+                      )}
                     </p>
-                    {student.medical_records.contact_info.type ===
-                      "parents" && <p className="text-caption">ההורים</p>}
-                    {student.medical_records.contact_info.type === "other" &&
-                      student.medical_records.contact_info.contacts &&
-                      student.medical_records.contact_info.contacts.length >
-                        0 && (
+                  )}
+                  {student.medical_records.related_issue_preference && (
+                    <p className="text-caption text-muted-foreground">
+                      העדפה לשידוך:{" "}
+                      {relatedIssuePreferenceToHebrew(
+                        student.medical_records.related_issue_preference,
+                      )}
+                    </p>
+                  )}
+                  {student.medical_records.contact_info && (
+                    <div className="mt-3 border-t border-border pt-3">
+                      <p className="mb-1 text-caption font-bold text-muted-foreground">
+                        יצירת קשר למידע נוסף:
+                      </p>
+                      {student.medical_records.contact_info.type ===
+                        "parents" && <p className="text-caption">ההורים</p>}
+                      {student.medical_records.contact_info.type === "other" &&
+                        student.medical_records.contact_info.contacts &&
+                        student.medical_records.contact_info.contacts.length >
+                          0 && (
+                          <div className="space-y-1">
+                            {student.medical_records.contact_info.contacts.map(
+                              (
+                                contact: {
+                                  name?: string;
+                                  phone?: string;
+                                  email?: string;
+                                },
+                                idx: number,
+                              ) => (
+                                <div key={idx} className="text-caption">
+                                  <p className="font-bold">{contact.name}</p>
+                                  {contact.phone && (
+                                    <a
+                                      href={`tel:${contact.phone}`}
+                                      className="hover:text-primary"
+                                    >
+                                      {contact.phone}
+                                    </a>
+                                  )}
+                                  {contact.email && (
+                                    <a
+                                      href={`mailto:${contact.email}`}
+                                      className="block hover:text-primary"
+                                    >
+                                      {contact.email}
+                                    </a>
+                                  )}
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        )}
+                    </div>
+                  )}
+                  {student.medical_records.documents &&
+                    student.medical_records.documents.length > 0 && (
+                      <div className="mt-3 border-t border-border pt-3">
+                        <p className="mb-2 text-caption font-bold text-muted-foreground">
+                          מסמכים רפואיים:
+                        </p>
                         <div className="space-y-1">
-                          {student.medical_records.contact_info.contacts.map(
-                            (
-                              contact: {
-                                name?: string;
-                                phone?: string;
-                                email?: string;
-                              },
-                              idx: number,
-                            ) => (
-                              <div key={idx} className="text-caption">
-                                <p className="font-bold">{contact.name}</p>
-                                {contact.phone && (
-                                  <a
-                                    href={`tel:${contact.phone}`}
-                                    className="hover:text-primary"
-                                  >
-                                    {contact.phone}
-                                  </a>
-                                )}
-                                {contact.email && (
-                                  <a
-                                    href={`mailto:${contact.email}`}
-                                    className="hover:text-primary block"
-                                  >
-                                    {contact.email}
-                                  </a>
-                                )}
-                              </div>
+                          {student.medical_records.documents.map(
+                            (doc: string, idx: number) => (
+                              <a
+                                key={idx}
+                                href={doc}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block text-caption text-primary hover:underline"
+                              >
+                                <FileText size={12} className="inline" /> מסמך{" "}
+                                {idx + 1}
+                              </a>
                             ),
                           )}
                         </div>
-                      )}
-                  </div>
-                )}
-                {student.medical_records.documents &&
-                  student.medical_records.documents.length > 0 && (
-                    <div className="border-border mt-3 border-t pt-3">
-                      <p className="text-muted-foreground mb-2 text-caption font-bold">
-                        מסמכים רפואיים:
-                      </p>
-                      <div className="space-y-1">
-                        {student.medical_records.documents.map(
-                          (doc: string, idx: number) => (
-                            <a
-                              key={idx}
-                              href={doc}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary block text-caption hover:underline"
-                            >
-                              <FileText size={12} className="inline" /> מסמך{" "}
-                              {idx + 1}
-                            </a>
-                          ),
-                        )}
                       </div>
-                    </div>
-                  )}
-              </>
-            )}
+                    )}
+                </>
+              )}
             </div>
           </Section>
 
           {/* Author Info */}
           {student.author_info && (
-            <div className="border-border bg-card rounded-lg border p-4">
-              <p className="text-muted-foreground mb-1 text-caption font-bold tracking-widest uppercase">
+            <div className="rounded-lg border border-border bg-card p-4">
+              <p className="mb-1 text-caption font-bold tracking-widest text-muted-foreground uppercase">
                 הקו״ח מולאו ע"י
               </p>
-              <p className="text-body-sm font-bold">{student.author_info.name}</p>
+              <p className="text-body-sm font-bold">
+                {student.author_info.name}
+              </p>
               {student.author_info.phone && (
                 <a
                   href={`tel:${student.author_info.phone}`}
-                  className="text-muted-foreground hover:text-primary mt-1 flex items-center gap-1 text-caption"
+                  className="mt-1 flex items-center gap-1 text-caption text-muted-foreground hover:text-primary"
                 >
                   <Phone size={12} /> {student.author_info.phone}
                 </a>
               )}
             </div>
           )}
-
         </div>
       </div>
     </div>

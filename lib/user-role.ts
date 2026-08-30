@@ -13,7 +13,12 @@ export type UserWithRole =
  */
 export function getEffectiveRole(user: UserWithRole): Role {
   const role = user?.user_metadata?.role;
-  if (role === "admin" || role === "shadchan" || role === "staff" || role === "user")
+  if (
+    role === "admin" ||
+    role === "shadchan" ||
+    role === "staff" ||
+    role === "user"
+  )
     return role;
   return "user";
 }

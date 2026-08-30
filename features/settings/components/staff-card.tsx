@@ -24,9 +24,7 @@ interface StaffApplication {
 }
 
 export function StaffCard() {
-  const [application, setApplication] = useState<StaffApplication | null>(
-    null,
-  );
+  const [application, setApplication] = useState<StaffApplication | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
 
@@ -51,7 +49,9 @@ export function StaffCard() {
       // שליפת מידע על הבקשה אם קיימת
       const { data, error } = await supabase
         .from("staff_info")
-        .select("application_status, submitted_at, approved_at, rejected_at, rejected_reason")
+        .select(
+          "application_status, submitted_at, approved_at, rejected_at, rejected_reason",
+        )
         .eq("user_id", user.id)
         .single();
 
@@ -91,19 +91,28 @@ export function StaffCard() {
     switch (application.application_status) {
       case "pending":
         return (
-          <Badge variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-200">
+          <Badge
+            variant="outline"
+            className="border-yellow-200 bg-yellow-50 text-yellow-800"
+          >
             ממתין לאישור
           </Badge>
         );
       case "approved":
         return (
-          <Badge variant="outline" className="bg-green-50 text-green-800 border-green-200">
+          <Badge
+            variant="outline"
+            className="border-green-200 bg-green-50 text-green-800"
+          >
             אושר
           </Badge>
         );
       case "rejected":
         return (
-          <Badge variant="outline" className="bg-red-50 text-red-800 border-red-200">
+          <Badge
+            variant="outline"
+            className="border-red-200 bg-red-50 text-red-800"
+          >
             נדחה
           </Badge>
         );
@@ -128,9 +137,7 @@ export function StaffCard() {
     <Card>
       <CardHeader>
         <CardTitle>הצטרפות כאיש צוות</CardTitle>
-        <CardDescription>
-          הגש בקשה להצטרפות כאיש צוות במערכת
-        </CardDescription>
+        <CardDescription>הגש בקשה להצטרפות כאיש צוות במערכת</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {application?.application_status && (
@@ -165,7 +172,8 @@ export function StaffCard() {
         )}
 
         <div className="flex gap-2">
-          {!application?.application_status || application.application_status === "rejected" ? (
+          {!application?.application_status ||
+          application.application_status === "rejected" ? (
             <Button asChild>
               <Link href="/app/settings/staff">
                 {application?.application_status === "rejected"

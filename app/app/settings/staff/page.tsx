@@ -120,11 +120,9 @@ export default function StaffApplicationPage() {
       }
 
       // upsert לפי user_id
-      const { error } = await supabase
-        .from("staff_info")
-        .upsert(insertData, {
-          onConflict: "user_id",
-        });
+      const { error } = await supabase.from("staff_info").upsert(insertData, {
+        onConflict: "user_id",
+      });
 
       if (error) throw error;
 
@@ -136,9 +134,7 @@ export default function StaffApplicationPage() {
       router.push("/app/settings");
     } catch (error: unknown) {
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "אירעה שגיאה בשליחת הבקשה";
+        error instanceof Error ? error.message : "אירעה שגיאה בשליחת הבקשה";
       toast.error(errorMessage);
       console.error("Error submitting staff application:", error);
     } finally {
@@ -159,7 +155,7 @@ export default function StaffApplicationPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-heading font-bold">הצטרפות כאיש צוות</h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="mt-2 text-muted-foreground">
             מלא את הפרטים הבאים כדי להגיש בקשה להצטרפות כאיש צוות במערכת
           </p>
         </div>
@@ -234,7 +230,7 @@ export default function StaffApplicationPage() {
                   )}
                 />
 
-                <div className="flex gap-2 justify-end">
+                <div className="flex justify-end gap-2">
                   <Button
                     type="button"
                     variant="outline"

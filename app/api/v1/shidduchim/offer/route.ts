@@ -163,7 +163,10 @@ export async function POST(req: NextRequest) {
 
       if (uErr || !updated) {
         console.error(uErr);
-        return NextResponse.json({ error: "שגיאה בעדכון טיוטה" }, { status: 500 });
+        return NextResponse.json(
+          { error: "שגיאה בעדכון טיוטה" },
+          { status: 500 },
+        );
       }
       return NextResponse.json({ ok: true, id: updated.id, status: "draft" });
     }
@@ -176,7 +179,10 @@ export async function POST(req: NextRequest) {
 
     if (iErr || !inserted) {
       console.error(iErr);
-      return NextResponse.json({ error: "שגיאה בשמירת טיוטה" }, { status: 500 });
+      return NextResponse.json(
+        { error: "שגיאה בשמירת טיוטה" },
+        { status: 500 },
+      );
     }
 
     return NextResponse.json({ ok: true, id: inserted.id, status: "draft" });
@@ -259,7 +265,12 @@ export async function POST(req: NextRequest) {
     sentTo = result.sentTo;
     sendGridMessageIds = result.sendGridMessageIds;
     if (process.env.NODE_ENV === "development") {
-      console.info("[shidduchim/offer] SendGrid sentTo:", sentTo, "messageIds:", sendGridMessageIds);
+      console.info(
+        "[shidduchim/offer] SendGrid sentTo:",
+        sentTo,
+        "messageIds:",
+        sendGridMessageIds,
+      );
     }
   } catch (e) {
     console.error(e);

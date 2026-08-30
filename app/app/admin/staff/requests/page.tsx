@@ -118,8 +118,8 @@ export default async function StaffRequestsPage() {
             </Button>
           }
         >
-          <div className="border-destructive bg-destructive/10 mt-6 rounded-lg border p-6">
-            <h3 className="text-destructive mb-2 text-subtitle font-semibold">
+          <div className="mt-6 rounded-lg border border-destructive bg-destructive/10 p-6">
+            <h3 className="mb-2 text-subtitle font-semibold text-destructive">
               שגיאה בטעינת הבקשות
             </h3>
             <p className="text-body-sm">{error.message}</p>
@@ -134,7 +134,7 @@ export default async function StaffRequestsPage() {
       <DashboardSection
         title="בקשות הצטרפות כאיש צוות"
         titleNumber={requests.length}
-        subTitle={`${requests.filter(r => r.application_status === "pending").length} ממתינות · ${requests.filter(r => r.application_status === "approved").length} מאושרות · ${requests.filter(r => r.application_status === "rejected").length} נדחות`}
+        subTitle={`${requests.filter((r) => r.application_status === "pending").length} ממתינות · ${requests.filter((r) => r.application_status === "approved").length} מאושרות · ${requests.filter((r) => r.application_status === "rejected").length} נדחות`}
         button={
           <Button asChild>
             <Link href="/app/admin">חזרה לדף הבית</Link>
@@ -142,11 +142,11 @@ export default async function StaffRequestsPage() {
         }
       >
         {requests.length === 0 ? (
-          <div className="text-muted-foreground py-10 text-center">
+          <div className="py-10 text-center text-muted-foreground">
             אין בקשות ממתינות לאישור
           </div>
         ) : (
-          <div className="space-y-6 mt-6">
+          <div className="mt-6 space-y-6">
             {requests.map((request) => (
               <Box key={request.id} className="p-6">
                 <div className="space-y-4">
@@ -158,18 +158,20 @@ export default async function StaffRequestsPage() {
                             ? `${request.user_first_name || ""} ${request.user_last_name || ""}`.trim()
                             : `בקשה #${request.id.substring(0, 8)}`}
                         </h3>
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-caption font-medium ${
-                          request.application_status === "approved"
-                            ? "bg-green-100 text-green-800"
-                            : request.application_status === "rejected"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-caption font-medium ${
+                            request.application_status === "approved"
+                              ? "bg-green-100 text-green-800"
+                              : request.application_status === "rejected"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
                           {request.application_status === "approved"
                             ? "מאושר"
                             : request.application_status === "rejected"
-                            ? "נדחה"
-                            : "ממתין לאישור"}
+                              ? "נדחה"
+                              : "ממתין לאישור"}
                         </span>
                       </div>
                       {request.user_email && (
@@ -180,11 +182,12 @@ export default async function StaffRequestsPage() {
                       <p className="text-body-sm text-muted-foreground">
                         תאריך הגשה: {formatDate(request.submitted_at)}
                       </p>
-                      {request.application_status === "approved" && request.approved_at && (
-                        <p className="text-body-sm text-green-700">
-                          אושר ב: {formatDate(request.approved_at)}
-                        </p>
-                      )}
+                      {request.application_status === "approved" &&
+                        request.approved_at && (
+                          <p className="text-body-sm text-green-700">
+                            אושר ב: {formatDate(request.approved_at)}
+                          </p>
+                        )}
                       {request.application_status === "rejected" && (
                         <>
                           {request.rejected_at && (
@@ -205,22 +208,22 @@ export default async function StaffRequestsPage() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {request.institution && (
                       <div>
-                        <h4 className="font-semibold mb-1">מוסד לימודים:</h4>
+                        <h4 className="mb-1 font-semibold">מוסד לימודים:</h4>
                         <p className="text-body-sm">{request.institution}</p>
                       </div>
                     )}
                     {request.city && (
                       <div>
-                        <h4 className="font-semibold mb-1">עיר:</h4>
+                        <h4 className="mb-1 font-semibold">עיר:</h4>
                         <p className="text-body-sm">{request.city}</p>
                       </div>
                     )}
                     {request.position && (
                       <div>
-                        <h4 className="font-semibold mb-1">תפקיד:</h4>
+                        <h4 className="mb-1 font-semibold">תפקיד:</h4>
                         <p className="text-body-sm">{request.position}</p>
                       </div>
                     )}
