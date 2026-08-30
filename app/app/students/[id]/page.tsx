@@ -49,6 +49,11 @@ import {
   workStatusToHebrew,
 } from "@/features/students/lib/profile-labels";
 import { unstable_noStore as noStore } from "next/cache";
+
+// הדף מרנדר תוכן שונה למשתמש מחובר ולגולש אנונימי, ולכן אסור שייכנס
+// לקאש של ה-CDN — אחרת גרסה מלאה שנוצרה עבור מנהל עלולה להיות מוגשת
+// לגולש אנונימי. noStore() לבדו לא מנע HIT בפועל.
+export const dynamic = "force-dynamic";
 import { cn } from "@/lib/utils";
 
 type IconComponent = React.ComponentType<{
