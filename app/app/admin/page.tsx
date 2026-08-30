@@ -8,6 +8,7 @@ import {
   BookOpen,
   UserPlus,
   GraduationCap,
+  Link2,
 } from "lucide-react";
 
 export default function AdminPage() {
@@ -77,6 +78,18 @@ export default function AdminPage() {
               <h3 className="mb-2 text-subtitle font-semibold">מוסדות לימוד</h3>
               <p className="text-body-sm text-muted-foreground">
                 ניהול מאגר מוסדות הלימוד לבחירה באשף יצירת כרטיס מיועד
+              </p>
+            </div>
+          </Link>
+
+          <Link href={"/app/admin/students/institutions" as any}>
+            <div className="cursor-pointer rounded-lg border p-6 transition-colors hover:bg-accent">
+              <Link2 className="mb-4 h-8 w-8" />
+              <h3 className="mb-2 text-subtitle font-semibold">
+                שיוך מוסד המוני
+              </h3>
+              <p className="text-body-sm text-muted-foreground">
+                שיוך מוסד לימודים למספר כרטיסי מיועדים בבת אחת
               </p>
             </div>
           </Link>

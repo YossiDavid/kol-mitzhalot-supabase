@@ -6,11 +6,21 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { StaffRequestActions } from "@/features/admin/components/staff-request-actions";
+import {
+  INSTITUTION_TYPE_LABELS,
+  type InstitutionType,
+} from "@/features/institutions/lib/institution-labels";
+
+type StaffRequestInstitution = {
+  name: string;
+  city: string | null;
+  type: InstitutionType;
+};
 
 type StaffRequest = {
   id: string;
   user_id: string;
-  institution: string | null;
+  institutions: StaffRequestInstitution | null;
   city: string | null;
   position: string | null;
   application_status: "pending" | "approved" | "rejected" | null;
@@ -34,10 +44,10 @@ async function getPendingRequests(): Promise<StaffRequest[]> {
     throw error;
   }
 
-  // שליפת כל הבקשות (ממתינות + מאושרות + נדחות)
+  // שליפת כל הבקשות (ממתינות + מאושרות + נדחות), כולל שם/עיר/סוג המוסד המקושר
   const { data, error } = await supabase
     .from("staff_info")
-    .select("*")
+    .select("*, institutions(name, city, type)")
     .order("submitted_at", { ascending: false });
 
   if (error) {
@@ -71,8 +81,13 @@ async function getPendingRequests(): Promise<StaffRequest[]> {
       console.error(`Error fetching user ${request.user_id}:`, err);
     }
 
+    // PostgREST מחזיר את ה-embed כאובייקט יחיד (יחס many-to-one), אך ה-SDK
+    // מקליד אותו כמערך כשאין Database type - מנרמלים לאיבר הראשון בלבד.
     requests.push({
       ...request,
+      institutions: Array.isArray(request.institutions)
+        ? (request.institutions[0] ?? null)
+        : request.institutions,
       user_first_name: userFirstName,
       user_last_name: userLastName,
       user_email: userEmail,
@@ -209,12 +224,14 @@ export default async function StaffRequestsPage() {
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    {request.institution && (
-                      <div>
-                        <h4 className="mb-1 font-semibold">מוסד לימודים:</h4>
-                        <p className="text-body-sm">{request.institution}</p>
-                      </div>
-                    )}
+                    <div>
+                      <h4 className="mb-1 font-semibold">מוסד לימודים:</h4>
+                      <p className="text-body-sm">
+                        {request.institutions
+                          ? `${request.institutions.name}${request.institutions.city ? ` · ${request.institutions.city}` : ""} · ${INSTITUTION_TYPE_LABELS[request.institutions.type]}`
+                          : "לא נבחר"}
+                      </p>
+                    </div>
                     {request.city && (
                       <div>
                         <h4 className="mb-1 font-semibold">עיר:</h4>

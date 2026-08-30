@@ -20,29 +20,79 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
+import {
+  INSTITUTION_TYPE_LABELS,
+  type InstitutionType,
+} from "@/features/institutions/lib/institution-labels";
 
 interface StaffFormData {
-  institution: string;
+  institutionId: string;
   city: string;
   position: string;
+}
+
+interface ExistingStaffApplication {
+  institution_id: string | null;
+  city: string | null;
+  position: string | null;
+  application_status: "pending" | "approved" | "rejected" | null;
+}
+
+interface InstitutionOption {
+  id: string;
+  name: string;
+  city: string | null;
+  type: InstitutionType;
 }
 
 export default function StaffApplicationPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
-  const [existingApplication, setExistingApplication] = useState<any>(null);
+  const [existingApplication, setExistingApplication] =
+    useState<ExistingStaffApplication | null>(null);
+  const [institutions, setInstitutions] = useState<InstitutionOption[]>([]);
+  const [isInstitutionsLoading, setIsInstitutionsLoading] = useState(true);
+  const [institutionsError, setInstitutionsError] = useState<string | null>(
+    null,
+  );
 
   const form = useForm<StaffFormData>({
     defaultValues: {
-      institution: "",
+      institutionId: "",
       city: "",
       position: "",
     },
   });
+
+  useEffect(() => {
+    async function fetchInstitutions() {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("institutions")
+        .select("id, name, city, type")
+        .eq("is_active", true)
+        .order("name", { ascending: true });
+
+      if (error) {
+        setInstitutionsError(`שגיאה בטעינת רשימת המוסדות: ${error.message}`);
+        setIsInstitutionsLoading(false);
+        return;
+      }
+
+      setInstitutions(data ?? []);
+      setIsInstitutionsLoading(false);
+    }
+
+    fetchInstitutions();
+  }, []);
 
   useEffect(() => {
     async function fetchExistingData() {
@@ -66,7 +116,7 @@ export default function StaffApplicationPage() {
       // שליפת מידע קיים אם יש
       const { data, error } = await supabase
         .from("staff_info")
-        .select("*")
+        .select("institution_id, city, position, application_status")
         .eq("user_id", user.id)
         .single();
 
@@ -78,7 +128,7 @@ export default function StaffApplicationPage() {
         setExistingApplication(data);
         // מילוי הטופס עם הנתונים הקיימים
         form.reset({
-          institution: data.institution || "",
+          institutionId: data.institution_id || "",
           city: data.city || "",
           position: data.position || "",
         });
@@ -106,18 +156,18 @@ export default function StaffApplicationPage() {
       }
 
       // הכנת הנתונים להכנסה
-      const insertData: any = {
+      const insertData = {
         user_id: user.id,
-        institution: data.institution || null,
+        institution_id: data.institutionId || null,
         city: data.city || null,
         position: data.position || null,
+        ...(existingApplication
+          ? {}
+          : {
+              application_status: "pending" as const,
+              submitted_at: new Date().toISOString(),
+            }),
       };
-
-      // אם זו בקשה חדשה, הוסף application_status = 'pending'
-      if (!existingApplication) {
-        insertData.application_status = "pending";
-        insertData.submitted_at = new Date().toISOString();
-      }
 
       // upsert לפי user_id
       const { error } = await supabase.from("staff_info").upsert(insertData, {
@@ -175,19 +225,46 @@ export default function StaffApplicationPage() {
               >
                 <FormField
                   control={form.control as any}
-                  name="institution"
+                  name="institutionId"
                   rules={{ required: "מוסד לימודים הוא שדה חובה" }}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>מוסד לימודים</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="לדוגמה: ישיבת..."
-                          disabled={isLoading}
-                        />
-                      </FormControl>
-                      <FormMessage />
+                      {institutionsError ? (
+                        <p className="text-body-sm text-destructive">
+                          {institutionsError}
+                        </p>
+                      ) : !isInstitutionsLoading &&
+                        institutions.length === 0 ? (
+                        <p className="text-body-sm text-muted-foreground">
+                          לא הוגדרו עדיין מוסדות לימוד במערכת. נא לפנות למנהל
+                          המערכת כדי להוסיף את המוסד שלכם לרשימה.
+                        </p>
+                      ) : (
+                        <>
+                          <FormControl>
+                            <NativeSelect
+                              {...field}
+                              disabled={isLoading || isInstitutionsLoading}
+                            >
+                              <NativeSelectOption value="" disabled>
+                                {isInstitutionsLoading
+                                  ? "טוען מוסדות..."
+                                  : "בחר/י מוסד לימודים"}
+                              </NativeSelectOption>
+                              {institutions.map((institution) => (
+                                <NativeSelectOption
+                                  key={institution.id}
+                                  value={institution.id}
+                                >
+                                  {`${institution.name}${institution.city ? ` · ${institution.city}` : ""} · ${INSTITUTION_TYPE_LABELS[institution.type]}`}
+                                </NativeSelectOption>
+                              ))}
+                            </NativeSelect>
+                          </FormControl>
+                          <FormMessage />
+                        </>
+                      )}
                     </FormItem>
                   )}
                 />

@@ -12,8 +12,18 @@ import {
 } from "@/components/ui/card";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import {
+  INSTITUTION_TYPE_LABELS,
+  type InstitutionType,
+} from "@/features/institutions/lib/institution-labels";
 
 type ApplicationStatus = "pending" | "approved" | "rejected" | null;
+
+interface StaffApplicationInstitution {
+  name: string;
+  city: string | null;
+  type: InstitutionType;
+}
 
 interface StaffApplication {
   application_status: ApplicationStatus;
@@ -21,6 +31,7 @@ interface StaffApplication {
   approved_at: string | null;
   rejected_at: string | null;
   rejected_reason: string | null;
+  institutions: StaffApplicationInstitution | null;
 }
 
 export function StaffCard() {
@@ -46,11 +57,11 @@ export function StaffCard() {
         return;
       }
 
-      // שליפת מידע על הבקשה אם קיימת
+      // שליפת מידע על הבקשה אם קיימת, כולל שם/עיר/סוג המוסד המקושר
       const { data, error } = await supabase
         .from("staff_info")
         .select(
-          "application_status, submitted_at, approved_at, rejected_at, rejected_reason",
+          "application_status, submitted_at, approved_at, rejected_at, rejected_reason, institutions(name, city, type)",
         )
         .eq("user_id", user.id)
         .single();
@@ -60,7 +71,18 @@ export function StaffCard() {
         console.error("Error fetching staff application:", error);
       }
 
-      setApplication(data || null);
+      // PostgREST מחזיר את ה-embed כאובייקט יחיד (יחס many-to-one), אך ה-SDK
+      // מקליד אותו כמערך כשאין Database type - מנרמלים לאיבר הראשון בלבד.
+      setApplication(
+        data
+          ? {
+              ...data,
+              institutions: Array.isArray(data.institutions)
+                ? (data.institutions[0] ?? null)
+                : data.institutions,
+            }
+          : null,
+      );
       setIsLoading(false);
     }
 
@@ -146,6 +168,12 @@ export function StaffCard() {
               <span className="text-body-sm font-medium">סטטוס הבקשה:</span>
               {getStatusBadge()}
             </div>
+            <p className="text-body-sm text-muted-foreground">
+              מוסד לימודים:{" "}
+              {application.institutions
+                ? `${application.institutions.name}${application.institutions.city ? ` · ${application.institutions.city}` : ""} · ${INSTITUTION_TYPE_LABELS[application.institutions.type]}`
+                : "לא נבחר"}
+            </p>
             {application.submitted_at && (
               <p className="text-body-sm text-muted-foreground">
                 תאריך הגשה: {formatDate(application.submitted_at)}
