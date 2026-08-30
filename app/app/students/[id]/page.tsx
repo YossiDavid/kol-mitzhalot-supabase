@@ -102,7 +102,10 @@ export default async function StudentPage({
   }
 
   // החלטת מוצר: תמונת בנות חסויה תמיד — ללא יוצא מן הכלל (גם לשדכן/מנהל/הבעלים).
-  const photoPrivate = student.gender === "female";
+  // תמונה של בת נחשפת רק למנהל מערכת. בהמשך יתווסף כאן גם "משתמש מורשה"
+  // כפיצ'ר נפרד — נקודת ההרחבה היחידה היא הביטוי הזה.
+  const canViewFemalePhoto = isAdmin;
+  const photoPrivate = student.gender === "female" && !canViewFemalePhoto;
 
   type IconComponent = React.ComponentType<{
     size?: number;

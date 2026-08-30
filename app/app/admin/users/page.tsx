@@ -115,32 +115,32 @@ export default async function UsersPage({
             </Button>
           }
         >
-          <div className="border-destructive bg-destructive/10 mt-6 rounded-lg border p-6">
-            <h3 className="text-destructive mb-2 text-subtitle font-semibold">
+          <div className="mt-6 rounded-lg border border-destructive bg-destructive/10 p-6">
+            <h3 className="mb-2 text-subtitle font-semibold text-destructive">
               שגיאה בהגדרת האדמין
             </h3>
             {isServiceRoleKeyError ? (
               <div className="space-y-4">
                 <p className="text-body-sm">
                   המשתנה{" "}
-                  <code className="bg-muted rounded px-2 py-1">
+                  <code className="rounded bg-muted px-2 py-1">
                     SUPABASE_SERVICE_ROLE_KEY
                   </code>{" "}
                   לא מוגדר.
                 </p>
-                <div className="bg-muted space-y-2 rounded-lg p-4">
+                <div className="space-y-2 rounded-lg bg-muted p-4">
                   <p className="font-semibold">הוראות התקנה:</p>
                   <ol className="list-inside list-decimal space-y-1 text-body-sm">
                     <li>
                       פתח את קובץ{" "}
-                      <code className="bg-background rounded px-1">
+                      <code className="rounded bg-background px-1">
                         .env.local
                       </code>{" "}
                       בתיקיית הפרויקט
                     </li>
                     <li>
                       הוסף את השורה:{" "}
-                      <code className="bg-background rounded px-1">
+                      <code className="rounded bg-background px-1">
                         SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
                       </code>
                     </li>
@@ -157,14 +157,14 @@ export default async function UsersPage({
                     </li>
                     <li>
                       הפעל מחדש את שרת הפיתוח (
-                      <code className="bg-background rounded px-1">
+                      <code className="rounded bg-background px-1">
                         npm run dev
                       </code>
                       )
                     </li>
                   </ol>
                 </div>
-                <p className="text-muted-foreground text-caption">
+                <p className="text-caption text-muted-foreground">
                   ⚠️ ה-Service Role Key רגיש מאוד - אל תחלוק אותו או תעלה אותו
                   ל-Git
                 </p>
@@ -197,17 +197,21 @@ export default async function UsersPage({
           </div>
         }
       >
-        <Suspense fallback={<div className="bg-muted/30 mt-6 h-24 animate-pulse rounded-lg border" />}>
+        <Suspense
+          fallback={
+            <div className="mt-6 h-24 animate-pulse rounded-lg border bg-muted/30" />
+          }
+        >
           <AdminUsersFilters />
         </Suspense>
 
         {total === 0 ? (
-          <div className="text-muted-foreground py-10 text-center">
+          <div className="py-10 text-center text-muted-foreground">
             לא נמצאו משתמשים לפי הסינון
           </div>
         ) : (
           <>
-            <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-2 pt-6 text-body-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-6 text-body-sm text-muted-foreground">
               <span>
                 מציג {(page - 1) * perPage + 1}–
                 {Math.min(page * perPage, total)} מתוך {total}
@@ -247,7 +251,9 @@ export default async function UsersPage({
                   <div className="text-center">
                     {user.shidduchimCompletedCount}
                   </div>
-                  <div className="text-body-sm">{formatDate(user.createdAt)}</div>
+                  <div className="text-body-sm">
+                    {formatDate(user.createdAt)}
+                  </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <Button asChild variant="outline" size="sm">
                       <Link href={`/app/admin/users/${user.id}`}>צפייה</Link>

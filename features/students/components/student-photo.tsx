@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { X } from "lucide-react";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface StudentPhotoProps {
   src: string;
@@ -28,13 +34,27 @@ export default function StudentPhoto({ src, alt }: StudentPhotoProps) {
       </button>
       <DialogContent
         dir="rtl"
-        className="max-w-[90vw] gap-0 border-none bg-transparent p-0 shadow-none sm:max-w-[90vw]"
+        showCloseButton={false}
+        // התיבה נצמדת לרוחב התמונה (w-auto) ולא נפרשת על 90vw. אחרת השטח
+        // הריק שסביב התמונה עדיין נחשב "בתוך" הדיאלוג, ולחיצה בו לא סוגרת.
+        className="w-auto max-w-[95vw] gap-0 border-none bg-transparent p-0 shadow-none sm:max-w-[95vw]"
+        // גיבוי: לחיצה על שולי התיבה עצמה (ולא על התמונה) סוגרת גם היא
+        onClick={(event) => {
+          if (event.target === event.currentTarget) setOpen(false);
+        }}
       >
         <DialogTitle className="sr-only">{alt}</DialogTitle>
+        {/* כפתור הסגירה המובנה כהה ונבלע ברקע השחור — כאן לבן על רקע מוכהה */}
+        <DialogClose
+          aria-label="סגירה"
+          className="absolute end-2 top-2 rounded-full bg-black/40 p-2 text-white transition hover:bg-black/70 focus:ring-2 focus:ring-white focus:outline-hidden"
+        >
+          <X className="h-5 w-5" />
+        </DialogClose>
         <img
           src={src}
           alt={alt}
-          className="mx-auto max-h-[85vh] max-w-[90vw] rounded-lg object-contain"
+          className="max-h-[85vh] max-w-[95vw] rounded-lg object-contain"
         />
       </DialogContent>
     </Dialog>
