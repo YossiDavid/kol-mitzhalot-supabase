@@ -52,6 +52,20 @@ async function SidebarLayout({ children }: { children: React.ReactNode }) {
 
   const roles = user ? getRoles(user) : [];
 
+  // גולש לא מחובר בכרטיס ציבורי מקבל מעטפת מינימלית: אין sidebar, אין
+  // ניווט תחתון ואין באנר התחזות — כולם כלי ניהול של משתמש מחובר.
+  if (!user && isPublicStudentCard) {
+    return (
+      <div className="flex min-h-svh flex-col">
+        <Header variant="app" />
+        <main className="container flex-1 px-3 py-4 md:px-4 md:py-5">
+          {children}
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar roles={roles} />

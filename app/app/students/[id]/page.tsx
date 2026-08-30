@@ -344,16 +344,6 @@ export default async function StudentPage({
           חזרה לרשימה
         </Link>
 
-        {/* CTA להתחברות - כרטיס ציבורי מוגבל, יש עוד מידע אחרי התחברות */}
-        <div className="flex flex-col items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-body-sm font-medium text-foreground">
-            זוהי גרסה מוגבלת של הכרטיס. התחברו כדי לצפות בכרטיס המלא.
-          </p>
-          <Button asChild size="sm">
-            <Link href="/auth/login">התחברות לצפייה בכרטיס המלא</Link>
-          </Button>
-        </div>
-
         {/* Hero */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="shrink-0">
