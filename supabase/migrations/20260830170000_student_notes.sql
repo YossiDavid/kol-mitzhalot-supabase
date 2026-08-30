@@ -22,6 +22,25 @@ COMMENT ON COLUMN public.student_notes.student_id IS 'הכרטיס שעליו נ
 COMMENT ON COLUMN public.student_notes.author_id IS 'מי כתב את ההערה';
 COMMENT ON COLUMN public.student_notes.body IS 'תוכן ההערה';
 
+-- שני העמודות הבאות הן תמונת מצב (snapshot) של הכשירות (capacity) שבה המחבר
+-- כתב את ההערה, בזמן הכתיבה - לא נגזרות מחדש בזמן קריאה. הסיבה: תפקידים
+-- ומוסדות משתנים - איש צוות עשוי לעזוב את המוסד או להפוך לשדכן בהמשך, וההערה
+-- שכתב לפני שנה חייבת להמשיך להציג "איש צוות, ישיבת אגריפס" גם אז. לכן
+-- הערכים נכתבים פעם אחת ב-INSERT (ראה app/api/v1/students/[studentId]/notes/route.ts)
+-- ולעולם לא מתעדכנים בדיעבד לפי מצב המשתמש הנוכחי.
+--
+-- ADD COLUMN IF NOT EXISTS + NOT NULL בלי ברירת מחדל: תקין כאן כי הטבלה
+-- מעולם לא נפרסה בענן ולכן לעולם אין בה שורות קיימות שהוספת עמודת חובה
+-- הייתה נכשלת עליהן.
+ALTER TABLE public.student_notes
+  ADD COLUMN IF NOT EXISTS author_role text NOT NULL CHECK (author_role IN ('staff', 'shadchan', 'admin'));
+
+ALTER TABLE public.student_notes
+  ADD COLUMN IF NOT EXISTS author_institution_id uuid REFERENCES public.institutions(id) ON DELETE SET NULL;
+
+COMMENT ON COLUMN public.student_notes.author_role IS 'תמונת מצב: הכשירות שבה נכתבה ההערה (staff/shadchan/admin) בזמן הכתיבה - לא נגזרת מחדש בזמן קריאה, כדי שהערה ישנה תמשיך להציג את התפקיד שהיה בזמן הכתיבה גם אם תפקידי המשתמש השתנו מאז';
+COMMENT ON COLUMN public.student_notes.author_institution_id IS 'תמונת מצב: מוסד הלימודים של המחבר בזמן הכתיבה (רלוונטי רק כאשר author_role = ''staff''; NULL עבור שדכן/מנהל) - לא מתעדכן כאשר שיוך המוסד של המשתמש משתנה בהמשך';
+
 CREATE INDEX IF NOT EXISTS idx_student_notes_student_id_created_at
   ON public.student_notes (student_id, created_at DESC);
 
@@ -77,11 +96,22 @@ DROP POLICY IF EXISTS "Student_notes select own or shadchan_admin" ON public.stu
 CREATE POLICY "Student_notes select own or shadchan_admin" ON public.student_notes
   FOR SELECT USING (public.is_shadchan_or_admin() OR author_id = auth.uid());
 
+-- הרחבה (2026-08-30, הוספת author_role/author_institution_id): מעבר על
+-- הבדיקה המקורית (author_id = auth.uid() AND (שדכן/מנהל OR איש צוות שייך
+-- למוסד)), מתווספת דרישה שהכשירות המוצהרת (author_role) תואמת בפועל את
+-- הכשירות האמיתית של המשתמש - כדי שאיש צוות לא יוכל לכתוב הערה המתויגת
+-- "שדכן". שתי הדרישות מתקיימות יחד (AND) - זו לא החלפה, זו תוספת שאינה
+-- מחלישה את הבדיקה המקורית.
 DROP POLICY IF EXISTS "Student_notes insert scoped" ON public.student_notes;
 CREATE POLICY "Student_notes insert scoped" ON public.student_notes
   FOR INSERT WITH CHECK (
     author_id = auth.uid()
     AND (public.is_shadchan_or_admin() OR public.staff_can_access_student(auth.uid(), student_id))
+    AND (
+      (author_role = 'staff' AND public.staff_can_access_student(auth.uid(), student_id))
+      OR (author_role = 'shadchan' AND public.has_role(auth.uid(), 'shadchan'))
+      OR (author_role = 'admin' AND public.has_role(auth.uid(), 'admin'))
+    )
   );
 
 DROP POLICY IF EXISTS "Student_notes update own or admin" ON public.student_notes;

@@ -7,11 +7,32 @@ import { MessageSquareText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
+export type NoteAuthorRole = "staff" | "shadchan" | "admin";
+
+export type NoteAuthorInstitution = {
+  name: string;
+  city: string | null;
+  type: string | null;
+};
+
 export type Note = {
   id: string;
   body: string;
   created_at: string;
   author_name: string;
+  author_role: NoteAuthorRole;
+  author_institution?: NoteAuthorInstitution | null;
+};
+
+// שורת ה-JSON שמוחזרת ע"י app/api/v1/students/[studentId]/notes/route.ts
+// לאחר יצירת הערה - כולל את כל השדות הדרושים לתצוגה האופטימית המיידית,
+// בלי צורך ברענון הדף.
+type CreatedNoteResponse = {
+  id: string;
+  body: string;
+  created_at: string;
+  author_role: NoteAuthorRole;
+  institutions: NoteAuthorInstitution | null;
 };
 
 function formatNoteDate(dateString: string): string {
@@ -22,6 +43,19 @@ function formatNoteDate(dateString: string): string {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(dateString));
+}
+
+// שורת השיוך הקצרה שמוצגת ליד שם המחבר - תמיד נגזרת מתמונת המצב שנשמרה
+// על ההערה עצמה (author_role/author_institution), לא ממצב המשתמש הנוכחי.
+function formatAuthorAttribution(note: Note): string {
+  if (note.author_role === "shadchan") return "שדכן";
+  if (note.author_role === "admin") return "מנהל מערכת";
+
+  // author_role === "staff"
+  if (!note.author_institution) return "איש צוות";
+
+  const { name, city } = note.author_institution;
+  return city ? `איש צוות · ${name}, ${city}` : `איש צוות · ${name}`;
 }
 
 export default function StudentNotes({
@@ -55,13 +89,15 @@ export default function StudentNotes({
         return;
       }
 
-      const { note } = await res.json();
+      const { note }: { note: CreatedNoteResponse } = await res.json();
       setNotes((prev) => [
         {
           id: note.id,
           body: note.body,
           created_at: note.created_at,
           author_name: "את/ה",
+          author_role: note.author_role,
+          author_institution: note.institutions,
         },
         ...prev,
       ]);
@@ -114,10 +150,15 @@ export default function StudentNotes({
               className="rounded-lg border border-border bg-muted/30 p-3"
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-caption font-bold text-foreground">
-                  {note.author_name}
+                <span className="flex flex-wrap items-baseline gap-x-1.5">
+                  <span className="text-caption font-bold text-foreground">
+                    {note.author_name}
+                  </span>
+                  <span className="text-caption text-muted-foreground">
+                    {formatAuthorAttribution(note)}
+                  </span>
                 </span>
-                <span className="text-caption text-muted-foreground">
+                <span className="shrink-0 text-caption text-muted-foreground">
                   {formatNoteDate(note.created_at)}
                 </span>
               </div>

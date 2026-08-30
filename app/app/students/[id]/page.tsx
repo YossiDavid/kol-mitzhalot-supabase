@@ -176,7 +176,9 @@ async function loadStudentNotes(studentId: string): Promise<Note[]> {
   const supabase = await createClient();
   const { data: rows, error: notesError } = await supabase
     .from("student_notes")
-    .select("id, body, created_at, author_id")
+    .select(
+      "id, body, created_at, author_id, author_role, author_institution_id, institutions(name, city, type)",
+    )
     .eq("student_id", studentId)
     .order("created_at", { ascending: false });
 
@@ -227,12 +229,23 @@ async function loadStudentNotes(studentId: string): Promise<Note[]> {
     }),
   );
 
-  return rows.map((row) => ({
-    id: row.id,
-    body: row.body,
-    created_at: row.created_at,
-    author_name: nameMap.get(row.author_id) ?? "משתמש",
-  }));
+  return rows.map((row) => {
+    // PostgREST מחזיר את ה-embed כאובייקט יחיד (יחס many-to-one), אך ה-SDK
+    // מקליד אותו כמערך כשאין Database type - מנרמלים לאיבר הראשון בלבד
+    // (זהה לדפוס ב-features/settings/components/staff-card.tsx).
+    const institution = Array.isArray(row.institutions)
+      ? (row.institutions[0] ?? null)
+      : row.institutions;
+
+    return {
+      id: row.id,
+      body: row.body,
+      created_at: row.created_at,
+      author_name: nameMap.get(row.author_id) ?? "משתמש",
+      author_role: row.author_role,
+      author_institution: institution,
+    };
+  });
 }
 
 export default async function StudentPage({
