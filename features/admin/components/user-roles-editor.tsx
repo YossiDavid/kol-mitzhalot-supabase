@@ -7,7 +7,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import type { Role } from "@/lib/user-role";
 
-const EDITABLE_ROLES: { role: Extract<Role, "admin" | "shadchan" | "staff">; label: string }[] = [
+const EDITABLE_ROLES: {
+  role: Extract<Role, "admin" | "shadchan" | "staff">;
+  label: string;
+}[] = [
   { role: "admin", label: "מנהל" },
   { role: "shadchan", label: "שדכן" },
   { role: "staff", label: "איש צוות" },
@@ -18,7 +21,10 @@ interface UserRolesEditorProps {
   initialRoles: Role[];
 }
 
-export function UserRolesEditor({ userId, initialRoles }: UserRolesEditorProps) {
+export function UserRolesEditor({
+  userId,
+  initialRoles,
+}: UserRolesEditorProps) {
   const router = useRouter();
   const [roles, setRoles] = useState<Set<string>>(
     () => new Set(initialRoles.filter((r) => r !== "user")),
@@ -53,7 +59,9 @@ export function UserRolesEditor({ userId, initialRoles }: UserRolesEditorProps) 
       router.refresh();
     } catch (error: unknown) {
       const message =
-        error instanceof Error ? error.message : "שגיאה לא צפויה בעדכון התפקידים";
+        error instanceof Error
+          ? error.message
+          : "שגיאה לא צפויה בעדכון התפקידים";
       toast.error(message);
     } finally {
       setIsSaving(false);

@@ -131,8 +131,7 @@ async function getUserDetails(userId: string): Promise<UserDetails | null> {
         childId: child.id,
         childName: `${child.first_name} ${child.last_name}`,
         offered: childNonDraft.length,
-        completed: childNonDraft.filter((s) => s.status === "completed")
-          .length,
+        completed: childNonDraft.filter((s) => s.status === "completed").length,
       });
     }
   }
@@ -205,32 +204,32 @@ export default async function UserDetailsPage({
             </Button>
           }
         >
-          <div className="border-destructive bg-destructive/10 mt-6 rounded-lg border p-6">
-            <h3 className="text-destructive mb-2 text-subtitle font-semibold">
+          <div className="mt-6 rounded-lg border border-destructive bg-destructive/10 p-6">
+            <h3 className="mb-2 text-subtitle font-semibold text-destructive">
               שגיאה בהגדרת האדמין
             </h3>
             {isServiceRoleKeyError ? (
               <div className="space-y-4">
                 <p className="text-body-sm">
                   המשתנה{" "}
-                  <code className="bg-muted rounded px-2 py-1">
+                  <code className="rounded bg-muted px-2 py-1">
                     SUPABASE_SERVICE_ROLE_KEY
                   </code>{" "}
                   לא מוגדר.
                 </p>
-                <div className="bg-muted space-y-2 rounded-lg p-4">
+                <div className="space-y-2 rounded-lg bg-muted p-4">
                   <p className="font-semibold">הוראות התקנה:</p>
                   <ol className="list-inside list-decimal space-y-1 text-body-sm">
                     <li>
                       פתח את קובץ{" "}
-                      <code className="bg-background rounded px-1">
+                      <code className="rounded bg-background px-1">
                         .env.local
                       </code>{" "}
                       בתיקיית הפרויקט
                     </li>
                     <li>
                       הוסף את השורה:{" "}
-                      <code className="bg-background rounded px-1">
+                      <code className="rounded bg-background px-1">
                         SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
                       </code>
                     </li>
@@ -247,14 +246,14 @@ export default async function UserDetailsPage({
                     </li>
                     <li>
                       הפעל מחדש את שרת הפיתוח (
-                      <code className="bg-background rounded px-1">
+                      <code className="rounded bg-background px-1">
                         npm run dev
                       </code>
                       )
                     </li>
                   </ol>
                 </div>
-                <p className="text-muted-foreground text-caption">
+                <p className="text-caption text-muted-foreground">
                   ⚠️ ה-Service Role Key רגיש מאוד - אל תחלוק אותו או תעלה אותו
                   ל-Git
                 </p>
@@ -305,8 +304,10 @@ export default async function UserDetailsPage({
                 {userDetails.phone || "לא זמין"}
               </div>
               <div>
-                <span className="text-muted-foreground">תפקיד:</span>{" "}
-                {getRoleLabel(userDetails.role)}
+                <span className="text-muted-foreground">
+                  {userDetails.roles.length > 1 ? "תפקידים:" : "תפקיד:"}
+                </span>{" "}
+                {userDetails.roles.map(getRoleLabel).join(" · ")}
               </div>
               <div>
                 <span className="text-muted-foreground">תאריך הצטרפות:</span>{" "}
@@ -330,7 +331,9 @@ export default async function UserDetailsPage({
 
           {/* סטטיסטיקות שידוכים */}
           <Box>
-            <h3 className="mb-4 text-subtitle font-semibold">סטטיסטיקות שידוכים</h3>
+            <h3 className="mb-4 text-subtitle font-semibold">
+              סטטיסטיקות שידוכים
+            </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <span className="text-muted-foreground">

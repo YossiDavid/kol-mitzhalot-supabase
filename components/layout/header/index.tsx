@@ -27,7 +27,8 @@ export default async function Header({
   const lastName = user?.user_metadata?.lastName as string;
   // הצטרפות כשדכן/איש צוות מוצגת רק אם למשתמש עדיין אין את התפקיד הזה בפועל
   // (ולא רק אם יש לו תפקיד "אחר" - משתמש יכול להיות גם וגם)
-  const showShadchanJoin = !hasRole(user, "shadchan") && !hasRole(user, "admin");
+  const showShadchanJoin =
+    !hasRole(user, "shadchan") && !hasRole(user, "admin");
   const showStaffJoin = !hasRole(user, "staff") && !hasRole(user, "admin");
 
   if (variant === "website") {

@@ -239,7 +239,7 @@ export default async function UsersPage({
                     {formatFullName(user.firstName, user.lastName) || "לא זמין"}
                   </div>
                   <div className="text-body-sm">{user.email || "לא זמין"}</div>
-                  <div>{getRoleLabel(user.role)}</div>
+                  <div>{user.roles.map(getRoleLabel).join(" · ")}</div>
                   <div className="text-center">{user.childrenCount}</div>
                   <div className="text-center">
                     {user.shidduchimOfferedCount}

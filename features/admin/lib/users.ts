@@ -1,11 +1,14 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { User } from "@supabase/supabase-js";
-import { getEffectiveRole, getRoleLabel, hasRole } from "@/lib/user";
 import {
-  formatFullName,
-  resolveDisplayName,
-} from "@/lib/user-display-name";
+  getEffectiveRole,
+  getRoleLabel,
+  getRoles,
+  hasRole,
+  type Role,
+} from "@/lib/user";
+import { formatFullName, resolveDisplayName } from "@/lib/user-display-name";
 
 export { formatFullName, resolveDisplayName };
 
@@ -14,7 +17,10 @@ export type UserStatsRow = {
   firstName: string | null;
   lastName: string | null;
   email: string | null;
+  /** התפקיד הראשי — לתצוגה מקוצרת ולמיון בלבד */
   role: string;
+  /** כל תפקידי המשתמש. משתמש יכול להיות שדכן וגם איש צוות */
+  roles: Role[];
   createdAt: string;
   lastSignInAt: string | null;
   childrenCount: number;
@@ -38,7 +44,9 @@ function clamp(n: number, min: number, max: number) {
 async function loadProfilesMap(
   admin: ReturnType<typeof createAdminClient>,
   ids: string[],
-): Promise<Map<string, { first_name: string | null; last_name: string | null }>> {
+): Promise<
+  Map<string, { first_name: string | null; last_name: string | null }>
+> {
   const map = new Map<
     string,
     { first_name: string | null; last_name: string | null }
@@ -67,6 +75,7 @@ async function buildStatsForUser(
   profile: { first_name: string | null; last_name: string | null } | null,
 ): Promise<UserStatsRow> {
   const role = getEffectiveRole(user);
+  const roles = getRoles(user);
   const { firstName, lastName } = resolveDisplayName(user, profile);
 
   const { count: childrenCount } = await supabase
@@ -118,6 +127,7 @@ async function buildStatsForUser(
     lastName,
     email: user.email || null,
     role,
+    roles,
     createdAt: user.created_at,
     lastSignInAt: user.last_sign_in_at || null,
     childrenCount: childrenCount || 0,
@@ -219,9 +229,7 @@ function isFastPaginationPath(query: AdminUsersQuery): boolean {
   );
 }
 
-export async function getAdminUsersList(
-  query: AdminUsersQuery,
-): Promise<{
+export async function getAdminUsersList(query: AdminUsersQuery): Promise<{
   rows: UserStatsRow[];
   total: number;
   page: number;
@@ -243,8 +251,7 @@ export async function getAdminUsersList(
       return { rows: [], total: 0, page, perPage, lastPage: 1 };
     }
     const users = data.users ?? [];
-    const total =
-      typeof data.total === "number" ? data.total : users.length;
+    const total = typeof data.total === "number" ? data.total : users.length;
     const lastPage = Math.max(
       1,
       typeof data.lastPage === "number" && data.lastPage > 0

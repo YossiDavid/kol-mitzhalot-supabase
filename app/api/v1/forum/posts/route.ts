@@ -77,7 +77,11 @@ export async function POST(req: NextRequest) {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("forum_posts")
-    .insert({ title: parsed.data.title, body: parsed.data.body, author_id: user.id })
+    .insert({
+      title: parsed.data.title,
+      body: parsed.data.body,
+      author_id: user.id,
+    })
     .select("id, title, body, created_at, author_id")
     .single();
 

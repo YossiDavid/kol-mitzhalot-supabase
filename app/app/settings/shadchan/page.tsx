@@ -146,17 +146,26 @@ export default function ShadchanApplicationPage() {
           ? parseInt(data.experience_years)
           : null,
         specializations: data.specializations
-          ? data.specializations.split(",").map((s) => s.trim()).filter(Boolean)
+          ? data.specializations
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
           : null,
         contact_phone: data.contact_phone || null,
         contact_email: data.contact_email || null,
         website_url: data.website_url || null,
         location: data.location || null,
         languages: data.languages
-          ? data.languages.split(",").map((l) => l.trim()).filter(Boolean)
+          ? data.languages
+              .split(",")
+              .map((l) => l.trim())
+              .filter(Boolean)
           : null,
         certifications: data.certifications
-          ? data.certifications.split(",").map((c) => c.trim()).filter(Boolean)
+          ? data.certifications
+              .split(",")
+              .map((c) => c.trim())
+              .filter(Boolean)
           : null,
       };
 
@@ -183,9 +192,7 @@ export default function ShadchanApplicationPage() {
       router.push("/app/settings");
     } catch (error: unknown) {
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "אירעה שגיאה בשליחת הבקשה";
+        error instanceof Error ? error.message : "אירעה שגיאה בשליחת הבקשה";
       toast.error(errorMessage);
       console.error("Error submitting shadchan application:", error);
     } finally {
@@ -206,7 +213,7 @@ export default function ShadchanApplicationPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-heading font-bold">הצטרפות כשדכן</h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="mt-2 text-muted-foreground">
             מלא את הפרטים הבאים כדי להגיש בקשה להצטרפות כשדכן במערכת
           </p>
         </div>
@@ -395,7 +402,9 @@ export default function ShadchanApplicationPage() {
                   name="certifications"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>תעודות והסמכות (מופרדות בפסיקים, אופציונלי)</FormLabel>
+                      <FormLabel>
+                        תעודות והסמכות (מופרדות בפסיקים, אופציונלי)
+                      </FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -408,7 +417,7 @@ export default function ShadchanApplicationPage() {
                   )}
                 />
 
-                <div className="flex gap-2 justify-end">
+                <div className="flex justify-end gap-2">
                   <Button
                     type="button"
                     variant="outline"

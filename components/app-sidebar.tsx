@@ -38,7 +38,11 @@ const allItems = [
   { title: "הגדרות", url: "/app/settings", icon: Settings },
 ] as const;
 
-const shadchanOnlyUrls = ["/app/students", "/app/students/create", "/app/canvas"];
+const shadchanOnlyUrls = [
+  "/app/students",
+  "/app/students/create",
+  "/app/canvas",
+];
 
 export function AppSidebar({ roles }: { roles: Role[] }) {
   const [mounted, setMounted] = useState(false);
@@ -58,7 +62,12 @@ export function AppSidebar({ roles }: { roles: Role[] }) {
     ? allItems
     : allItems.filter((item) => !shadchanOnlyUrls.includes(item.url));
   return (
-    <Sidebar variant="floating" side="right" collapsible="icon" className="hidden md:flex">
+    <Sidebar
+      variant="floating"
+      side="right"
+      collapsible="icon"
+      className="hidden md:flex"
+    >
       <SidebarLogo />
 
       <SidebarContent>
@@ -86,7 +95,9 @@ export function AppSidebar({ roles }: { roles: Role[] }) {
                     {isCollapsed ? (
                       <Tooltip>
                         <TooltipTrigger asChild>{button}</TooltipTrigger>
-                        <TooltipContent side="right">{item.title}</TooltipContent>
+                        <TooltipContent side="right">
+                          {item.title}
+                        </TooltipContent>
                       </Tooltip>
                     ) : (
                       button
@@ -94,7 +105,6 @@ export function AppSidebar({ roles }: { roles: Role[] }) {
                   </SidebarMenuItem>
                 );
               })}
-
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

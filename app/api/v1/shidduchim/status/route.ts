@@ -84,7 +84,10 @@ export async function PATCH(req: NextRequest) {
 
   if (updateError || !updated) {
     console.error(updateError);
-    return NextResponse.json({ error: "Failed to update status" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update status" },
+      { status: 500 },
+    );
   }
 
   return NextResponse.json({

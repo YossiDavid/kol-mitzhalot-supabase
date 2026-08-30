@@ -45,7 +45,7 @@ export default async function ForumsPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-heading font-bold">פורום שדכנים</h1>
-          <p className="text-muted-foreground mt-1 text-body-sm">
+          <p className="mt-1 text-body-sm text-muted-foreground">
             מקום לשאלות, עצות, ושיתוף ידע בין שדכנים
           </p>
         </div>
@@ -54,7 +54,7 @@ export default async function ForumsPage() {
 
       <div className="mt-8 space-y-4">
         {postList.length === 0 ? (
-          <div className="text-muted-foreground rounded-xl border border-dashed p-12 text-center">
+          <div className="rounded-xl border border-dashed p-12 text-center text-muted-foreground">
             <p className="text-subtitle font-medium">אין פוסטים עדיין</p>
             <p className="mt-1 text-body-sm">
               {canPost
@@ -69,11 +69,13 @@ export default async function ForumsPage() {
               className="rounded-xl border bg-card p-5 text-right shadow-sm transition-shadow hover:shadow-md"
               dir="rtl"
             >
-              <h2 className="text-subtitle font-semibold leading-snug">{post.title}</h2>
-              <p className="text-muted-foreground mt-0.5 text-caption">
+              <h2 className="text-subtitle leading-snug font-semibold">
+                {post.title}
+              </h2>
+              <p className="mt-0.5 text-caption text-muted-foreground">
                 {formatDate(post.created_at)}
               </p>
-              <p className="mt-3 whitespace-pre-wrap text-body-sm leading-relaxed">
+              <p className="mt-3 text-body-sm leading-relaxed whitespace-pre-wrap">
                 {post.body}
               </p>
             </article>

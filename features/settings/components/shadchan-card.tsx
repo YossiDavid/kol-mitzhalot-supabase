@@ -40,7 +40,8 @@ export function ShadchanCard() {
 
       if (!user) return;
 
-      const isShadchanOrAdmin = hasRole(user, "shadchan") || hasRole(user, "admin");
+      const isShadchanOrAdmin =
+        hasRole(user, "shadchan") || hasRole(user, "admin");
       setUserRole(isShadchanOrAdmin);
 
       // אם המשתמש כבר שדכן או אדמין, לא צריך להציג את הכרטיס
@@ -52,7 +53,9 @@ export function ShadchanCard() {
       // שליפת מידע על הבקשה אם קיימת
       const { data, error } = await supabase
         .from("shadchanim_info")
-        .select("application_status, submitted_at, approved_at, rejected_at, rejected_reason")
+        .select(
+          "application_status, submitted_at, approved_at, rejected_at, rejected_reason",
+        )
         .eq("user_id", user.id)
         .single();
 
@@ -92,19 +95,28 @@ export function ShadchanCard() {
     switch (application.application_status) {
       case "pending":
         return (
-          <Badge variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-200">
+          <Badge
+            variant="outline"
+            className="border-yellow-200 bg-yellow-50 text-yellow-800"
+          >
             ממתין לאישור
           </Badge>
         );
       case "approved":
         return (
-          <Badge variant="outline" className="bg-green-50 text-green-800 border-green-200">
+          <Badge
+            variant="outline"
+            className="border-green-200 bg-green-50 text-green-800"
+          >
             אושר
           </Badge>
         );
       case "rejected":
         return (
-          <Badge variant="outline" className="bg-red-50 text-red-800 border-red-200">
+          <Badge
+            variant="outline"
+            className="border-red-200 bg-red-50 text-red-800"
+          >
             נדחה
           </Badge>
         );
@@ -129,9 +141,7 @@ export function ShadchanCard() {
     <Card>
       <CardHeader>
         <CardTitle>הצטרפות כשדכן</CardTitle>
-        <CardDescription>
-          הגש בקשה להצטרפות כשדכן במערכת
-        </CardDescription>
+        <CardDescription>הגש בקשה להצטרפות כשדכן במערכת</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {application?.application_status && (
@@ -166,7 +176,8 @@ export function ShadchanCard() {
         )}
 
         <div className="flex gap-2">
-          {!application?.application_status || application.application_status === "rejected" ? (
+          {!application?.application_status ||
+          application.application_status === "rejected" ? (
             <Button asChild>
               <Link href="/app/settings/shadchan">
                 {application?.application_status === "rejected"

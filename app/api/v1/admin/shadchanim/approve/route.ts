@@ -57,7 +57,9 @@ export async function POST(req: NextRequest) {
     )
       ? (existingUserData.user.user_metadata?.roles as Role[])
       : [];
-    const nextRoles = Array.from(new Set([...existingRoles, "shadchan" as Role]));
+    const nextRoles = Array.from(
+      new Set([...existingRoles, "shadchan" as Role]),
+    );
 
     // עדכון התפקיד של המשתמש: מוסיפים shadchan ל-roles ושומרים גם role (הסקלר
     // הישן) לפי סדר העדיפות, כדי שקוד שעדיין לא הומר ל-hasRole ימשיך לעבוד

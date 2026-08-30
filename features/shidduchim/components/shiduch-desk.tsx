@@ -84,7 +84,9 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
 
   useEffect(() => {
     void supabase.auth.getUser().then(({ data }) => {
-      setCanOffer(hasRole(data.user, "shadchan") || hasRole(data.user, "admin"));
+      setCanOffer(
+        hasRole(data.user, "shadchan") || hasRole(data.user, "admin"),
+      );
     });
   }, [supabase]);
 
@@ -200,7 +202,6 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
     }
   };
 
-
   const handleSaveDraft = async () => {
     if (!newShiduch || !canOffer) return;
     setDraftLoading(true);
@@ -262,11 +263,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
         Array.isArray(data.sentTo) && data.sentTo.length > 0
           ? data.sentTo.join(", ")
           : null;
-      toast.success(
-        list
-          ? `נשלח במייל ל: ${list}`
-          : "ההצעה נשלחה במייל",
-      );
+      toast.success(list ? `נשלח במייל ל: ${list}` : "ההצעה נשלחה במייל");
       setSendModalOpen(false);
       router.refresh();
       await fetchPairStatus();
@@ -284,7 +281,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
       <div className="mx-auto mt-4 grid max-w-full grid-cols-1 gap-4 md:mt-10 md:max-w-[800px] md:grid-cols-2">
         {/* Male drop zone */}
         <div
-          className="border-primary relative min-h-50 rounded-xl border border-dashed bg-sky-50 p-2"
+          className="relative min-h-50 rounded-xl border border-dashed border-primary bg-sky-50 p-2"
           onDragEnter={handleDragEnterTicket}
           onDragLeave={handleDragLeaveTicket}
           onDragOver={handleDragOverTicket}
@@ -292,7 +289,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
           data-male
         >
           {draggingGender === "female" && (
-            <div className="text-destructive absolute top-2 left-1/2 -translate-x-1/2 text-body-sm">
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 text-body-sm text-destructive">
               לא ניתן להכניס מיועדת כאן
             </div>
           )}
@@ -319,11 +316,16 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
               >
                 <div className="grid grid-cols-2 gap-2">
                   <StudentBox.ViewProfile />
-                  <StudentBox.RemoveFromDesk onClick={() => { setMale(null); setMaleNote(""); }} />
+                  <StudentBox.RemoveFromDesk
+                    onClick={() => {
+                      setMale(null);
+                      setMaleNote("");
+                    }}
+                  />
                 </div>
               </StudentBox>
               <textarea
-                className="mt-2 w-full resize-none rounded-md border border-sky-200 bg-white/70 p-2 text-body-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-sky-400"
+                className="mt-2 w-full resize-none rounded-md border border-sky-200 bg-white/70 p-2 text-body-sm placeholder:text-muted-foreground focus:ring-1 focus:ring-sky-400 focus:outline-none"
                 rows={2}
                 placeholder="הערות על המיועד..."
                 value={maleNote}
@@ -332,7 +334,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
               />
             </>
           ) : (
-            <div className="text-muted-foreground absolute inset-0 flex flex-col items-center justify-center gap-2 text-body-sm">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-body-sm text-muted-foreground">
               <UserIcon className="size-8 opacity-30" />
               <span>גרור מיועד לכאן</span>
             </div>
@@ -341,7 +343,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
 
         {/* Female drop zone */}
         <div
-          className="border-primary relative min-h-50 rounded-xl border border-dashed bg-rose-50 p-2"
+          className="relative min-h-50 rounded-xl border border-dashed border-primary bg-rose-50 p-2"
           onDragEnter={handleDragEnterTicket}
           onDragLeave={handleDragLeaveTicket}
           onDragOver={handleDragOverTicket}
@@ -349,7 +351,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
           data-female
         >
           {draggingGender === "male" && (
-            <div className="text-destructive absolute top-2 left-1/2 -translate-x-1/2 text-body-sm">
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 text-body-sm text-destructive">
               לא ניתן להכניס מיועד כאן
             </div>
           )}
@@ -376,11 +378,16 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
               >
                 <div className="grid grid-cols-2 gap-2">
                   <StudentBox.ViewProfile />
-                  <StudentBox.RemoveFromDesk onClick={() => { setFemale(null); setFemaleNote(""); }} />
+                  <StudentBox.RemoveFromDesk
+                    onClick={() => {
+                      setFemale(null);
+                      setFemaleNote("");
+                    }}
+                  />
                 </div>
               </StudentBox>
               <textarea
-                className="mt-2 w-full resize-none rounded-md border border-rose-200 bg-white/70 p-2 text-body-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-rose-400"
+                className="mt-2 w-full resize-none rounded-md border border-rose-200 bg-white/70 p-2 text-body-sm placeholder:text-muted-foreground focus:ring-1 focus:ring-rose-400 focus:outline-none"
                 rows={2}
                 placeholder="הערות על המיועדת..."
                 value={femaleNote}
@@ -389,7 +396,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
               />
             </>
           ) : (
-            <div className="text-muted-foreground absolute inset-0 flex flex-col items-center justify-center gap-2 text-body-sm">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-body-sm text-muted-foreground">
               <UserIcon className="size-8 opacity-30" />
               <span>גרור מיועדת לכאן</span>
             </div>
@@ -435,7 +442,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
               </div>
 
               {hasBlockingPair && (
-                <p className="text-muted-foreground mt-3 text-center text-body-sm">
+                <p className="mt-3 text-center text-body-sm text-muted-foreground">
                   לצמד זה כבר קיימת הצעה במערכת — לא ניתן לשמור או לשלוח שוב.
                 </p>
               )}
@@ -443,7 +450,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
           )}
 
           {!canOffer && (
-            <p className="text-muted-foreground mt-4 text-center text-body-sm">
+            <p className="mt-4 text-center text-body-sm text-muted-foreground">
               שליחת הצעות ושמירת טיוטות זמינות לשדכנים ולמנהלים בלבד.
             </p>
           )}

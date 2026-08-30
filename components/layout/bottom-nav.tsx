@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Home, MessageCircle, Network, Plus, Settings, Users } from "lucide-react";
+import {
+  Home,
+  MessageCircle,
+  Network,
+  Plus,
+  Settings,
+  Users,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/lib/user-role";
 
@@ -16,7 +23,11 @@ const allItems = [
   { title: "הוספה", url: "/app/students/create", icon: Plus },
 ] as const;
 
-const shadchanOnlyUrls = ["/app/students", "/app/students/create", "/app/canvas"];
+const shadchanOnlyUrls = [
+  "/app/students",
+  "/app/students/create",
+  "/app/canvas",
+];
 
 export function BottomNav({ roles }: { roles: Role[] }) {
   const pathname = usePathname();
@@ -35,7 +46,7 @@ export function BottomNav({ roles }: { roles: Role[] }) {
 
   return (
     <nav
-      className="fixed bottom-0 right-0 left-0 z-50 md:hidden"
+      className="fixed right-0 bottom-0 left-0 z-50 md:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className="flex h-16 items-center justify-around rounded-t-2xl border-t border-border/60 bg-background px-1 shadow-[0_-4px_24px_rgba(0,0,0,0.07)]">
@@ -50,7 +61,7 @@ export function BottomNav({ roles }: { roles: Role[] }) {
                 key={item.url}
                 href={item.url}
                 prefetch={false}
-                className="flex flex-1 flex-col items-center justify-center -translate-y-3"
+                className="flex flex-1 -translate-y-3 flex-col items-center justify-center"
                 aria-label="הוספת מיועד"
               >
                 <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 transition-transform active:scale-95">
@@ -70,7 +81,12 @@ export function BottomNav({ roles }: { roles: Role[] }) {
                 isActive ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <Icon className={cn("h-5 w-5", isActive ? "stroke-[2.5]" : "stroke-[1.5]")} />
+              <Icon
+                className={cn(
+                  "h-5 w-5",
+                  isActive ? "stroke-[2.5]" : "stroke-[1.5]",
+                )}
+              />
               <span className="leading-none">{item.title}</span>
             </Link>
           );

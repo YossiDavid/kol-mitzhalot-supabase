@@ -9,7 +9,13 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { email, phone, firstName, lastName, role }: {
+    const {
+      email,
+      phone,
+      firstName,
+      lastName,
+      role,
+    }: {
       email?: string;
       phone?: string;
       firstName?: string;
@@ -18,17 +24,11 @@ export async function POST(req: NextRequest) {
     } = body;
 
     if (!email) {
-      return NextResponse.json(
-        { error: "Email is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
     if (!phone) {
-      return NextResponse.json(
-        { error: "Phone is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Phone is required" }, { status: 400 });
     }
 
     const allowedRoles = ["admin", "shadchan", "user"];
@@ -91,4 +91,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
