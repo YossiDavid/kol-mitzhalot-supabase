@@ -147,9 +147,7 @@ export function UserRolesEditor({
             מוסד לימודים <span className="text-destructive">*</span>
           </label>
           {institutionsError ? (
-            <p className="text-body-sm text-destructive">
-              {institutionsError}
-            </p>
+            <p className="text-body-sm text-destructive">{institutionsError}</p>
           ) : !isInstitutionsLoading && institutions.length === 0 ? (
             <p className="text-body-sm text-muted-foreground">
               לא הוגדרו עדיין מוסדות לימוד במערכת.{" "}
@@ -173,7 +171,10 @@ export function UserRolesEditor({
                     : "בחר/י מוסד לימודים"}
                 </NativeSelectOption>
                 {institutions.map((institution) => (
-                  <NativeSelectOption key={institution.id} value={institution.id}>
+                  <NativeSelectOption
+                    key={institution.id}
+                    value={institution.id}
+                  >
                     {`${institution.name}${institution.city ? ` · ${institution.city}` : ""} · ${INSTITUTION_TYPE_LABELS[institution.type]}`}
                   </NativeSelectOption>
                 ))}
