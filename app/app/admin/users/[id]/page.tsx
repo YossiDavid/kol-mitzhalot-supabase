@@ -19,6 +19,7 @@ type UserDetails = {
   phone: string | null;
   role: string | null;
   roles: Role[];
+  staffInstitutionId: string | null;
   createdAt: string;
   lastSignInAt: string | null;
   children: Array<{
@@ -62,6 +63,19 @@ async function getUserDetails(userId: string): Promise<UserDetails | null> {
   }
 
   const supabase = await createClient();
+
+  // שליפת מוסד הלימודים הקיים של המשתמש (אם הוא איש צוות) כדי למלא מראש את
+  // בורר המוסד ב-UserRolesEditor. משתמשים ב-admin client כי מדובר ברשומת
+  // staff_info של משתמש אחר, ו-RLS מתירה קריאה כזו רק למנהל (או לבעל הרשומה).
+  const { data: staffInfo, error: staffInfoError } = await adminClient
+    .from("staff_info")
+    .select("institution_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (staffInfoError) {
+    console.error("Error fetching staff_info:", staffInfoError);
+  }
 
   // שליפת ילדים
   const { data: children, error: childrenError } = await supabase
@@ -144,6 +158,7 @@ async function getUserDetails(userId: string): Promise<UserDetails | null> {
     phone: user.phone || null,
     role: getEffectiveRole(user),
     roles: getRoles(user),
+    staffInstitutionId: staffInfo?.institution_id ?? null,
     createdAt: user.created_at,
     lastSignInAt: user.last_sign_in_at || null,
     children: childrenData.map((c) => ({
@@ -326,6 +341,7 @@ export default async function UserDetailsPage({
             <UserRolesEditor
               userId={userDetails.id}
               initialRoles={userDetails.roles}
+              initialInstitutionId={userDetails.staffInstitutionId}
             />
           </Box>
 
