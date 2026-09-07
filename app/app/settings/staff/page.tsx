@@ -16,10 +16,10 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -248,8 +248,8 @@ export default function StaffApplicationPage() {
           <h1 className="text-heading font-bold">הצטרפות כאיש צוות</h1>
           <p className="mt-2 text-muted-foreground">
             ההצטרפות כאיש צוות נועדה לכתיבת משוב חיובי על כרטיסי המיועדים
-            שמתחנכים אצלכם — מחמאות ותשבחות שיעזרו לשדכנים להכיר אותם טוב
-            יותר. מלאו את המוסדות שבהם אתם מלמדים ואת התפקיד בכל אחד מהם.
+            שמתחנכים אצלכם — מחמאות ותשבחות שיעזרו לשדכנים להכיר אותם טוב יותר.
+            מלאו את המוסדות שבהם אתם מלמדים ואת התפקיד בכל אחד מהם.
           </p>
         </div>
 
@@ -268,7 +268,7 @@ export default function StaffApplicationPage() {
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-2">
-                    <FormLabel>מוסדות לימוד ותפקיד</FormLabel>
+                    <Label>מוסדות לימוד ותפקיד</Label>
                     <Button
                       type="button"
                       variant="outline"
