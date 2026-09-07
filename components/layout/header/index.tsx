@@ -4,6 +4,7 @@ import { AuthButton } from "@/components/auth-button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/server";
 import { hasRole } from "@/lib/user";
+import { getRoleLabel, getRoles } from "@/lib/user-role";
 import { formatFullName, resolveDisplayName } from "@/lib/user-display-name";
 import HeaderIcons from "./icons";
 import { UserMenu } from "./user-menu";
@@ -39,6 +40,9 @@ export default async function Header({
     ? resolveDisplayName(user, profile)
     : { firstName: null, lastName: null };
   const greetingName = formatFullName(firstName, lastName);
+  // סוגי המשתמש בסוגריים אחרי השם. getRoles מחזיר ["user"] כברירת
+  // מחדל, ולכן לכל משתמש מחובר תמיד יש לפחות תווית אחת.
+  const roleLabels = user ? getRoles(user).map(getRoleLabel).join(", ") : "";
   // הצטרפות כשדכן/איש צוות מוצגת רק אם למשתמש עדיין אין את התפקיד הזה בפועל
   // (ולא רק אם יש לו תפקיד "אחר" - משתמש יכול להיות גם וגם)
   const showShadchanJoin =
@@ -116,6 +120,11 @@ export default async function Header({
           />
           <div className="hidden items-center gap-5 font-semibold md:flex">
             {greetingName ? `שלום וברכה, ${greetingName}!` : "שלום וברכה!"}
+            {roleLabels && (
+              <span className="font-normal text-muted-foreground">
+                ({roleLabels})
+              </span>
+            )}
           </div>
           {hasRole(user, "admin") && (
             <Button variant={"link"} asChild className="hidden md:inline-flex">

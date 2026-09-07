@@ -35,7 +35,11 @@ export const studentFormSchema = z.object({
   shtible: opt,
   institutionId: opt,
   personalStatus: req("נא לבחור סטטוס אישי"),
-  height: opt,
+  // גובה בס״מ. ריק מותר, אבל ערך שהוזן חייב להיות סביר —
+  // מתחת ל-50 זה כמעט תמיד טעות הקלדה.
+  height: opt.refine((v) => v === "" || Number(v) >= 50, {
+    message: "גובה מינימלי הוא 50 ס״מ",
+  }),
   cellphoneType: req("נא לבחור סוג טלפון"),
   phone: opt,
   planForLife: opt,

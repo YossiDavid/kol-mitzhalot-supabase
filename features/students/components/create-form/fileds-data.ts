@@ -39,6 +39,10 @@ interface BaseField {
   name: string;
   id?: string;
   label: string;
+  /** מינימום לשדות מספריים */
+  min?: number;
+  /** מקסימום לשדות מספריים */
+  max?: number;
   placeholder?: string;
   description?: string;
   beforeField?: string;
@@ -337,8 +341,10 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "height",
-            label: "גובה",
-            type: "text",
+            label: "גובה (בס״מ)",
+            type: "number",
+            min: 50,
+            placeholder: "לדוגמה: 175",
             columns: 3,
           },
           {
