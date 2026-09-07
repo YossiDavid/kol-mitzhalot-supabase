@@ -126,7 +126,7 @@ export default async function Header({
       </div>
 
       <div className="flex gap-2">
-        <HeaderIcons hasUserMenu={!!user} />
+        <HeaderIcons hasUserMenu={!!user} userId={user?.id ?? null} />
 
         {user ? (
           <UserMenu
