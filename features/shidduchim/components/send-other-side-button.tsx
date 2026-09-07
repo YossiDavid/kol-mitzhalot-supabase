@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogFooter,
   DialogHeader,
+  DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -81,6 +82,9 @@ export default function SendOtherSideButton({
         <DialogContent dir="rtl">
           <DialogHeader>
             <DialogTitle>{`שליחה גם ${targetLabel}`}</DialogTitle>
+            <DialogDescription>
+              ההצעה תישלח גם לצד השני, עם ההערה שתכתבו כאן.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
             <Label htmlFor="send-other-side-note">{noteLabel}</Label>

@@ -16,6 +16,7 @@ import {
   DialogContent,
   DialogFooter,
   DialogHeader,
+  DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/client";
@@ -312,6 +313,9 @@ export default function InstitutionsAdminPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editingId ? "עריכת מוסד" : "מוסד חדש"}</DialogTitle>
+            <DialogDescription>
+              מוסדות אלה מוצעים לבחירה באשף יצירת כרטיס מיועד.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">

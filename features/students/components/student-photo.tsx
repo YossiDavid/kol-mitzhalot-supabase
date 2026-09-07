@@ -6,6 +6,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
 
@@ -44,6 +45,9 @@ export default function StudentPhoto({ src, alt }: StudentPhotoProps) {
         }}
       >
         <DialogTitle className="sr-only">{alt}</DialogTitle>
+        <DialogDescription className="sr-only">
+          תצוגה מוגדלת של התמונה
+        </DialogDescription>
         {/* כפתור הסגירה המובנה כהה ונבלע ברקע השחור — כאן לבן על רקע מוכהה */}
         <DialogClose
           aria-label="סגירה"

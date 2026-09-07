@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogFooter,
   DialogHeader,
+  DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -78,6 +79,9 @@ export default function SendProposalModal({
       >
         <DialogHeader>
           <DialogTitle>שליחת הצעת שידוך</DialogTitle>
+          <DialogDescription>
+            בחרו למי לשלוח והוסיפו הערה לכל צד לפני השליחה.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-2">

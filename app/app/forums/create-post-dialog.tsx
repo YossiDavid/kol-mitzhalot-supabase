@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogDescription,
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
@@ -59,6 +60,9 @@ export default function CreatePostDialog() {
         <DialogContent dir="rtl" className="max-w-lg">
           <DialogHeader>
             <DialogTitle>פוסט חדש בפורום</DialogTitle>
+            <DialogDescription>
+              הפוסט יפורסם בפורום ויהיה גלוי לשאר השדכנים.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
