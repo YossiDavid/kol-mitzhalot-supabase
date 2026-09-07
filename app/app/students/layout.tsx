@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { hasRole } from "@/lib/user";
+import { StudentsNoAccess } from "@/features/students/components/no-access";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -42,7 +43,8 @@ export default async function StudentsLayout({
     !hasRole(user, "shadchan") &&
     !hasRole(user, "staff")
   ) {
-    redirect("/app");
+    // הודעה ולא redirect: הפניה שקטה נראית כמו תקלה.
+    return <StudentsNoAccess />;
   }
 
   return <>{children}</>;
