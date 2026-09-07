@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
+  GraduationCap,
+  HeartHandshake,
   Home,
   LogOut,
   MessageCircle,
   Network,
   Plus,
   Settings,
-  UserPlus,
   Users,
 } from "lucide-react";
 
@@ -149,11 +150,11 @@ export function AppSidebar({ roles }: { roles: Role[] }) {
               {withTooltip(
                 <SidebarMenuButton asChild>
                   <Link href="/app/settings/shadchan" prefetch={false}>
-                    <UserPlus />
-                    <span>בקשת הצטרפות כשדכן</span>
+                    <HeartHandshake />
+                    <span>הצטרפות כשדכן</span>
                   </Link>
                 </SidebarMenuButton>,
-                "בקשת הצטרפות כשדכן",
+                "הצטרפות כשדכן",
               )}
             </SidebarMenuItem>
           )}
@@ -163,11 +164,11 @@ export function AppSidebar({ roles }: { roles: Role[] }) {
               {withTooltip(
                 <SidebarMenuButton asChild>
                   <Link href="/app/settings/staff" prefetch={false}>
-                    <UserPlus />
-                    <span>בקשת הצטרפות כאיש צוות</span>
+                    <GraduationCap />
+                    <span>הצטרפות כאיש צוות</span>
                   </Link>
                 </SidebarMenuButton>,
-                "בקשת הצטרפות כאיש צוות",
+                "הצטרפות כאיש צוות",
               )}
             </SidebarMenuItem>
           )}

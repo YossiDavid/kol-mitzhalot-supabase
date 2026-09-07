@@ -10,7 +10,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CircleUser, LogOut, Settings, UserPlus } from "lucide-react";
+import {
+  CircleUser,
+  GraduationCap,
+  HeartHandshake,
+  LogOut,
+  Settings,
+} from "lucide-react";
 import Link from "next/link";
 
 interface UserMenuProps {
@@ -50,7 +56,7 @@ export function UserMenu({
               href="/app/settings/shadchan"
               className="flex items-center gap-2"
             >
-              <UserPlus className="h-4 w-4" />
+              <HeartHandshake className="h-4 w-4" />
               הצטרפות כשדכן
             </Link>
           </DropdownMenuItem>
@@ -61,7 +67,7 @@ export function UserMenu({
               href="/app/settings/staff"
               className="flex items-center gap-2"
             >
-              <UserPlus className="h-4 w-4" />
+              <GraduationCap className="h-4 w-4" />
               הצטרפות כאיש צוות
             </Link>
           </DropdownMenuItem>
