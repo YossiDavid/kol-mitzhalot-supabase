@@ -58,6 +58,15 @@ interface InstitutionOption {
   type: InstitutionType;
 }
 
+/**
+ * סוגי מוסד שאיש צוות יכול ליצור. "תלמוד תורה" הוסר לבקשת המוצר.
+ * הסינון מקומי בכוונה: INSTITUTION_TYPE_OPTIONS הוא מקור אמת משותף
+ * שמסך ניהול המוסדות עדיין צריך במלואו, ויש מוסדות קיימים מהסוג הזה.
+ */
+const STAFF_INSTITUTION_TYPE_OPTIONS = INSTITUTION_TYPE_OPTIONS.filter(
+  (option) => option.value !== "talmud_torah",
+);
+
 export default function StaffApplicationPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -530,7 +539,7 @@ export default function StaffApplicationPage() {
                           }
                           disabled={isSavingInstitution}
                         >
-                          {INSTITUTION_TYPE_OPTIONS.map((o) => (
+                          {STAFF_INSTITUTION_TYPE_OPTIONS.map((o) => (
                             <NativeSelectOption key={o.value} value={o.value}>
                               {o.label}
                             </NativeSelectOption>
