@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { toast } from "sonner";
 import { Heart } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import StudentBox from "./student-box";
 import type { Student } from "./student-box";
 import calculateAge from "@/lib/calculateAge";
@@ -124,11 +126,18 @@ export default function FavoritesGrid({
       {/* Grid */}
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {filtered.length === 0 ? (
-          <div className="col-span-full flex flex-col items-center gap-2 py-10 text-center">
+          <div className="col-span-full flex flex-col items-center gap-3 py-10 text-center">
             <Heart className="text-muted-foreground/30 size-10" />
             <p className="text-muted-foreground text-body-sm">
               אין {activeTab === "male" ? "מיועדים" : "מיועדות"} במועדפים
             </p>
+            {/* בלי מוצא מהמסך הריק אין דרך להתחיל לעבוד על הלוח */}
+            <Button asChild variant="outline" size="sm">
+              <Link href="/app/students">
+                <Heart className="size-4" />
+                להוספת מיועדים למועדפים
+              </Link>
+            </Button>
           </div>
         ) : (
           filtered.map((item) => (
