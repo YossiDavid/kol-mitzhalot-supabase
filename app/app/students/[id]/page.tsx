@@ -1496,6 +1496,7 @@ export default async function StudentPage({
                       <p className="text-body-sm font-bold">
                         {workStatusToHebrew(
                           student.partner_preferences.work_status,
+                          student.gender,
                         )}
                       </p>
                     </div>
@@ -1841,6 +1842,11 @@ export default async function StudentPage({
               <p className="text-body-sm font-bold">
                 {student.author_info.name}
               </p>
+              {student.author_info.relation && (
+                <p className="text-caption text-muted-foreground">
+                  {student.author_info.relation}
+                </p>
+              )}
               {student.author_info.phone && (
                 <a
                   href={`tel:${student.author_info.phone}`}

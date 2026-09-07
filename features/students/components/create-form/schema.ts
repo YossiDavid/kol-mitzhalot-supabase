@@ -120,7 +120,7 @@ export const studentFormSchema = z.object({
     }),
     preferredCountry: opt,
     specificCountries: z.array(z.record(z.string(), z.unknown())).default([]),
-    workStatus: opt,
+    workStatus: z.array(z.string()).default([]),
     headCoverType: opt,
     planForLife: opt,
     cellphoneType: opt,
@@ -131,6 +131,7 @@ export const studentFormSchema = z.object({
   author: z.object({
     name: req("נא למלא שם ממלא הטופס"),
     phone: req("נא למלא טלפון ממלא הטופס"),
+    relation: req("נא למלא את הקשר למועמד/ת"),
   }),
 });
 

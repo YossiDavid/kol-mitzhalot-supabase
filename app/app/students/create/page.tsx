@@ -148,7 +148,7 @@ const defaultValues = {
     ageRange: { min: 18, max: 40 },
     preferredCountry: "",
     specificCountries: [] as Array<Record<string, unknown>>,
-    workStatus: "",
+    workStatus: [] as string[],
     headCoverType: "",
     planForLife: "",
     cellphoneType: "",
@@ -158,6 +158,7 @@ const defaultValues = {
   author: {
     name: "",
     phone: "",
+    relation: "",
   },
 };
 
@@ -228,6 +229,10 @@ const genderLabelOverrides: Record<string, { male: string; female: string }> = {
   "partner.aboutThePartner": {
     male: "כמה מילים על אופי וסגנון המיועדת",
     female: "כמה מילים על אופי וסגנון המיועד",
+  },
+  "author.relation": {
+    male: "קשר למועמד",
+    female: "קשר למועמדת",
   },
   // Family
   "family.currentChildPlace": {
@@ -567,6 +572,7 @@ export default function CreateStudentPage() {
         author_info: {
           name: values.author?.name || "",
           phone: values.author?.phone || "",
+          relation: values.author?.relation || "",
         },
         education_history: [
           ...(values.education?.yeshivaKtana || []).map((e) => ({
@@ -698,7 +704,9 @@ export default function CreateStudentPage() {
               : values.partner?.specificCountries
                   ?.map((c: any) => c.name || c.locale || "")
                   .filter(Boolean) || [],
-          work_status: values.partner?.workStatus || null,
+          work_status: values.partner?.workStatus?.length
+            ? values.partner.workStatus
+            : [],
           head_cover_type: values.partner?.headCoverType || null,
           plan_for_life: values.partner?.planForLife || null,
           cellphone_type: mapCellphoneType(values.partner?.cellphoneType),

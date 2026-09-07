@@ -137,23 +137,58 @@ export function parentsStatusToHebrew(status: string) {
   }
 }
 
-export function workStatusToHebrew(status: string) {
-  switch (status) {
-    case "student":
-      return "תלמידה";
-    case "working":
-      return "עובד/ת";
-    case "yeshiva":
-      return "תלמיד ישיבה";
-    case "chavruta":
-      return "לומד עם חברותא";
-    case "profession_student":
-      return "לומד/ת מקצוע";
-    case "other":
-      return "לא משנה";
-    default:
-      return status;
-  }
+/** ניסוח לפי מגדר המיועד/ת שמחפשים (הפוך למגדר בעל הכרטיס) */
+const WORK_STATUS_LABELS: Record<string, { male: string; female: string }> = {
+  student: { male: "תלמיד", female: "תלמידת סמינר" },
+  seminar: { male: "תלמיד", female: "תלמידת סמינר" },
+  yeshiva: { male: "לומד בישיבה", female: "לומדת" },
+  kolel: { male: "אברך כולל", female: "אברך כולל" },
+  chavruta: { male: "לומד עם חברותא", female: "לומדת עם חברותא" },
+  working: { male: "עובד", female: "עובדת" },
+  profession_student: { male: "לומד מקצוע", female: "לומדת מקצוע" },
+  at_home: { male: "בבית", female: "בבית" },
+  other: { male: "לא משנה", female: "לא משנה" },
+};
+
+/** ניסוח דו-מגדרי, כשמגדר בעל הכרטיס לא ידוע */
+const WORK_STATUS_NEUTRAL: Record<string, string> = {
+  student: "תלמידה",
+  seminar: "תלמידת סמינר",
+  working: "עובד/ת",
+  yeshiva: "תלמיד ישיבה",
+  kolel: "אברך כולל",
+  chavruta: "לומד עם חברותא",
+  profession_student: "לומד/ת מקצוע",
+  at_home: "בבית",
+  other: "לא משנה",
+};
+
+/**
+ * הסטטוס מתאר את מי שמחפשים, ולכן הניסוח הוא במגדר ההפוך לזה של
+ * בעל הכרטיס. השדה נשמר כמערך (בחירה מרובה); מחרוזת בודדת נתמכת
+ * לצורך תאימות לרשומות שנוצרו לפני המעבר.
+ */
+export function workStatusToHebrew(
+  status: string | string[] | null | undefined,
+  studentGender?: string | null,
+) {
+  const values = Array.isArray(status) ? status : status ? [status] : [];
+  if (values.length === 0) return "";
+
+  const targetGender =
+    studentGender === "male"
+      ? "female"
+      : studentGender === "female"
+        ? "male"
+        : null;
+
+  return values
+    .map((value) =>
+      targetGender
+        ? (WORK_STATUS_LABELS[value]?.[targetGender] ?? value)
+        : (WORK_STATUS_NEUTRAL[value] ?? value),
+    )
+    .join(", ");
 }
 
 export function exposureLevelToHebrew(level: string) {

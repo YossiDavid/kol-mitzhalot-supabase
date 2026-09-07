@@ -485,9 +485,11 @@ function AtomicFieldRenderer({
 									<FormControl>
 										<div
 											className={cn(
-												"flex flex-wrap gap-3",
+												// זהה למרווח של הרדיו, כדי ששתי
+												// קבוצות הבחירה ייראו אותו דבר.
+												"flex flex-wrap gap-x-7 gap-y-3",
 												isVertical &&
-												"flex-col flex-nowrap"
+												"flex-col flex-nowrap gap-y-3"
 											)}
 										>
 											{options.map((option) => (
@@ -547,8 +549,11 @@ function AtomicFieldRenderer({
 								<FormControl>
 									<div
 										className={cn(
-											"flex flex-wrap gap-3",
-											isVertical && "flex-col flex-nowrap"
+											// מרווח אופקי גדול מהמרווח שבין הכפתור לטקסט,
+											// כדי שגבול הפריט יהיה ברור כשהשורה נשברת.
+											"flex flex-wrap gap-x-7 gap-y-3",
+											isVertical &&
+												"flex-col flex-nowrap gap-y-3"
 										)}
 									>
 										{options.map((option) => (

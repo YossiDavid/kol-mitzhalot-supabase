@@ -1789,20 +1789,45 @@ export const studentFields: FormSteps[] = [
               },
             ],
           },
+          // הסעיף מתאר את מי שמחפשים, ולכן המגדר הפוך לזה של הממלא/ת.
+          // אוצר המילים זהה ל-employment.tags כדי לשמור על ניסוח אחיד.
           {
             name: "partner.workStatus",
             label: "סטטוס תעסוקתי מבוקש",
-            type: "radio",
+            type: "chips",
             options: [
-              { value: "student", label: "תלמידה" },
-              { value: "working", label: "עובד/ת" },
-              { value: "yeshiva", label: "תלמיד ישיבה" },
-              { value: "chavruta", label: "לומד עם חברותא" },
-              {
-                value: "profession_student",
-                label: "לומד/ת מקצוע",
-              },
+              { value: "student", label: "תלמידת סמינר" },
+              { value: "working", label: "עובדת" },
+              { value: "profession_student", label: "לומדת מקצוע" },
+              { value: "at_home", label: "בבית" },
               { value: "other", label: "לא משנה" },
+            ],
+            condition: [
+              {
+                parameter: "gender",
+                operator: "===",
+                value: "male",
+              },
+            ],
+          },
+          {
+            name: "partner.workStatus",
+            label: "סטטוס תעסוקתי מבוקש",
+            type: "chips",
+            options: [
+              { value: "yeshiva", label: "לומד בישיבה" },
+              { value: "kolel", label: "אברך כולל" },
+              { value: "chavruta", label: "לומד עם חברותא" },
+              { value: "working", label: "עובד" },
+              { value: "profession_student", label: "לומד מקצוע" },
+              { value: "other", label: "לא משנה" },
+            ],
+            condition: [
+              {
+                parameter: "gender",
+                operator: "===",
+                value: "female",
+              },
             ],
           },
           {
@@ -1896,6 +1921,15 @@ export const studentFields: FormSteps[] = [
             label: 'טלפון ממלא/ת הקו"ח',
             type: "text",
             columns: 3,
+            required: true,
+          },
+          {
+            // הניסוח המגדרי נקבע ב-genderLabelOverrides (author.relation)
+            name: "author.relation",
+            label: "קשר למועמד/ת",
+            type: "text",
+            columns: 3,
+            description: "לדוגמה: אב, אם, אח, קרוב משפחה, שדכן",
             required: true,
           },
         ],
