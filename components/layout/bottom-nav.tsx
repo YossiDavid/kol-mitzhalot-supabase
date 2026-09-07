@@ -24,9 +24,10 @@ const allItems = [
 ] as const;
 
 // לוח ההתאמות הוא כלי עבודה של שדכן/מנהל בלבד.
-// "מיועדים" ו"הוספת מיועד" פתוחים לכולם, כולל הורים: RLS מצמצם כל אחד
-// למה שמותר לו (הורה רואה רק את ילדיו), ולכן אין צורך בסינון לפי תפקיד.
 const shadchanOnlyUrls = ["/app/canvas"];
+// רשימת המיועדים חושפת מיועדים של אחרים, ולכן סגורה להורה. "הוספת
+// מיועד" נשארת פתוחה לכולם — הורה מוסיף את ילדיו.
+const staffVisibleUrls = ["/app/students"];
 
 export function BottomNav({ roles }: { roles: Role[] }) {
   const pathname = usePathname();
@@ -40,7 +41,9 @@ export function BottomNav({ roles }: { roles: Role[] }) {
   const isShadchanOrAdmin =
     effectiveRoles.includes("shadchan") || effectiveRoles.includes("admin");
   const items = allItems.filter((item) => {
-    if (shadchanOnlyUrls.includes(item.url)) return isShadchanOrAdmin;
+    if (shadchanOnlyUrls.includes(item.url)) return isShadchanOrAdmin
+    if (staffVisibleUrls.includes(item.url))
+      return isShadchanOrAdmin || effectiveRoles.includes("staff");
     return true;
   });
 
