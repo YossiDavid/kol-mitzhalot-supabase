@@ -327,7 +327,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
               <textarea
                 className="mt-2 w-full resize-none rounded-md border border-sky-200 bg-white/70 p-2 text-body-sm placeholder:text-muted-foreground focus:ring-1 focus:ring-sky-400 focus:outline-none"
                 rows={2}
-                placeholder="הערות על המיועד..."
+                placeholder="הערה לצד המיועד — תישלח להורים"
                 value={maleNote}
                 onChange={(e) => setMaleNote(e.target.value)}
                 dir="rtl"
@@ -389,7 +389,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
               <textarea
                 className="mt-2 w-full resize-none rounded-md border border-rose-200 bg-white/70 p-2 text-body-sm placeholder:text-muted-foreground focus:ring-1 focus:ring-rose-400 focus:outline-none"
                 rows={2}
-                placeholder="הערות על המיועדת..."
+                placeholder="הערה לצד המיועדת — תישלח להורים"
                 value={femaleNote}
                 onChange={(e) => setFemaleNote(e.target.value)}
                 dir="rtl"
