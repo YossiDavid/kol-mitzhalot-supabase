@@ -179,7 +179,7 @@ export function AppSidebar({ roles }: { roles: Role[] }) {
             {withTooltip(
               <SidebarMenuButton
                 onClick={() => void logout()}
-                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                className="text-sidebar-destructive hover:bg-sidebar-destructive/15 hover:text-sidebar-destructive"
               >
                 <LogOut />
                 <span>התנתקות</span>
