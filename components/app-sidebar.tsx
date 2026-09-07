@@ -4,16 +4,19 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Home,
+  LogOut,
   MessageCircle,
   Network,
   Plus,
   Settings,
+  UserPlus,
   Users,
 } from "lucide-react";
 
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -21,12 +24,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar";
 
 import { SidebarLogo } from "./sidebar/logo";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import type { Role } from "@/lib/user-role";
 
 const allItems = [
@@ -49,6 +54,7 @@ export function AppSidebar({ roles }: { roles: Role[] }) {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
   const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => setMounted(true), []);
 
@@ -58,6 +64,29 @@ export function AppSidebar({ roles }: { roles: Role[] }) {
   // איש צוות עדיין רואה את פריטי השדכן, ולא רק לפי תפקיד "ראשי" יחיד.
   const isShadchanOrAdmin =
     effectiveRoles.includes("shadchan") || effectiveRoles.includes("admin");
+  // אותם תנאים כמו בתפריט המשתמש שבהדר: מציעים הצטרפות רק למי שעדיין
+  // אין לו את התפקיד בפועל.
+  const showShadchanJoin = !isShadchanOrAdmin;
+  const showStaffJoin =
+    !effectiveRoles.includes("staff") && !effectiveRoles.includes("admin");
+
+  const logout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/auth/login");
+  };
+
+  /** במצב מכווץ מוצג רק אייקון, ולכן הטקסט עובר ל-tooltip. */
+  const withTooltip = (node: React.ReactNode, label: string) =>
+    isCollapsed ? (
+      <Tooltip>
+        <TooltipTrigger asChild>{node}</TooltipTrigger>
+        <TooltipContent side="right">{label}</TooltipContent>
+      </Tooltip>
+    ) : (
+      node
+    );
+
   const items = allItems.filter((item) => {
     if (shadchanOnlyUrls.includes(item.url)) return isShadchanOrAdmin
     if (staffVisibleUrls.includes(item.url))
@@ -112,6 +141,54 @@ export function AppSidebar({ roles }: { roles: Role[] }) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarMenu>
+          {showShadchanJoin && (
+            <SidebarMenuItem>
+              {withTooltip(
+                <SidebarMenuButton asChild>
+                  <Link href="/app/settings/shadchan" prefetch={false}>
+                    <UserPlus />
+                    <span>בקשת הצטרפות כשדכן</span>
+                  </Link>
+                </SidebarMenuButton>,
+                "בקשת הצטרפות כשדכן",
+              )}
+            </SidebarMenuItem>
+          )}
+
+          {showStaffJoin && (
+            <SidebarMenuItem>
+              {withTooltip(
+                <SidebarMenuButton asChild>
+                  <Link href="/app/settings/staff" prefetch={false}>
+                    <UserPlus />
+                    <span>בקשת הצטרפות כאיש צוות</span>
+                  </Link>
+                </SidebarMenuButton>,
+                "בקשת הצטרפות כאיש צוות",
+              )}
+            </SidebarMenuItem>
+          )}
+
+          {(showShadchanJoin || showStaffJoin) && <SidebarSeparator />}
+
+          <SidebarMenuItem>
+            {withTooltip(
+              <SidebarMenuButton
+                onClick={() => void logout()}
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              >
+                <LogOut />
+                <span>התנתקות</span>
+              </SidebarMenuButton>,
+              "התנתקות",
+            )}
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+
       <SidebarRail />
     </Sidebar>
   );
