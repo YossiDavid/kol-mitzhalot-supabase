@@ -31,6 +31,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Phone is required" }, { status: 400 });
     }
 
+    // שדות זיהוי חובה. הטריגר enforce_signup_identity דוחה יצירה בלעדיהם ממילא,
+    // אבל בלי הבדיקה כאן הלקוח היה מקבל 500 אטום במקום 400 מוסבר.
+    const trimmedFirstName = firstName?.trim();
+    const trimmedLastName = lastName?.trim();
+
+    if (!trimmedFirstName || !trimmedLastName) {
+      return NextResponse.json(
+        { error: "First name and last name are required" },
+        { status: 400 },
+      );
+    }
+
     const allowedRoles = ["admin", "shadchan", "user"];
     const safeRole = allowedRoles.includes(role ?? "") ? role : "user";
 
@@ -57,8 +69,9 @@ export async function POST(req: NextRequest) {
       email_confirm: true,
       phone_confirm: true,
       user_metadata: {
-        firstName: firstName ?? null,
-        lastName: lastName ?? null,
+        firstName: trimmedFirstName,
+        lastName: trimmedLastName,
+        phone,
         role: safeRole,
       },
     });

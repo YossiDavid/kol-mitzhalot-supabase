@@ -78,8 +78,8 @@ export function ProfileForm({
 
     try {
       const updateData: Record<string, unknown> = {
-        firstName: data.firstName,
-        lastName: data.lastName,
+        firstName: data.firstName.trim(),
+        lastName: data.lastName.trim(),
       };
 
       if (phoneChanged) {
@@ -130,7 +130,10 @@ export function ProfileForm({
             <FormField
               control={form.control as any}
               name="firstName"
-              rules={{ required: "שם פרטי הוא שדה חובה" }}
+              rules={{
+                // trim: רווחים בלבד עוברים את required אבל נכשלים בשער הזיהוי
+                validate: (v) => Boolean(v?.trim()) || "שם פרטי הוא שדה חובה",
+              }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>שם פרטי</FormLabel>
@@ -149,7 +152,9 @@ export function ProfileForm({
             <FormField
               control={form.control as any}
               name="lastName"
-              rules={{ required: "שם משפחה הוא שדה חובה" }}
+              rules={{
+                validate: (v) => Boolean(v?.trim()) || "שם משפחה הוא שדה חובה",
+              }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>שם משפחה</FormLabel>
@@ -195,8 +200,9 @@ export function ProfileForm({
               control={form.control as any}
               name="phone"
               rules={{
+                required: "מספר טלפון הוא שדה חובה",
                 validate: (v) =>
-                  !v?.trim() || isValidPhone(v.trim()) || PHONE_INVALID_MESSAGE,
+                  isValidPhone(v?.trim() ?? "") || PHONE_INVALID_MESSAGE,
               }}
               render={({ field }) => (
                 <FormItem>

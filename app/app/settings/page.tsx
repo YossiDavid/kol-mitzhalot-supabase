@@ -14,7 +14,8 @@ export default async function SettingsPage({
 }) {
   noStore();
   const sp = await searchParams;
-  const nameRequired = sp.required === "name";
+  const missingIdentityField =
+    sp.required === "name" || sp.required === "phone" ? sp.required : null;
   const supabase = await createClient();
 
   const {
@@ -49,12 +50,14 @@ export default async function SettingsPage({
             נהל את הגדרות החשבון והפרופיל שלך
           </p>
         </div>
-        {nameRequired && (
+        {missingIdentityField && (
           <div
             className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-body-sm text-foreground"
             role="status"
           >
-            נא להשלים שם פרטי ושם משפחה כדי להמשיך לשימוש באפליקציה.
+            {missingIdentityField === "name"
+              ? "נא להשלים שם פרטי ושם משפחה כדי להמשיך לשימוש באפליקציה."
+              : "נא להשלים מספר טלפון כדי להמשיך לשימוש באפליקציה."}
           </div>
         )}
         <ProfileForm

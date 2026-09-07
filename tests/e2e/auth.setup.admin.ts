@@ -7,6 +7,8 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const adminEmail =
   process.env.TEST_ADMIN_EMAIL ?? "playwright-admin@kol-mitzhalot.test";
+/** נדרש על ידי הטריגר enforce_signup_identity — אין יצירת משתמש בלי טלפון */
+const ADMIN_PHONE = process.env.TEST_ADMIN_PHONE ?? "+972500000002";
 
 setup("authenticate admin test user", async ({ page }) => {
   const admin = createClient(supabaseUrl, serviceRoleKey, {
@@ -20,16 +22,19 @@ setup("authenticate admin test user", async ({ page }) => {
   if (existing) {
     userId = existing.id;
     await admin.auth.admin.updateUserById(userId, {
-      user_metadata: { role: "admin", phone_verified: true, firstName: "Admin", lastName: "Test" },
+      user_metadata: { role: "admin", phone_verified: true, phone: ADMIN_PHONE, firstName: "Admin", lastName: "Test" },
     });
   } else {
     const { data, error } = await admin.auth.admin.createUser({
       email: adminEmail,
+      phone: ADMIN_PHONE,
       email_confirm: true,
+      phone_confirm: true,
       user_metadata: {
         role: "admin",
         firstName: "Admin",
         lastName: "Test",
+        phone: ADMIN_PHONE,
         phone_verified: true,
       },
     });

@@ -20,6 +20,19 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+/**
+ * כשהאימייל לא קיים, Supabase מחזיר "Signups not allowed for otp" —
+ * הודעה מבלבלת בדף התחברות. מתרגמים אותה להנחיה להירשם.
+ */
+function resolveLoginError(err: unknown): string {
+  if (!(err instanceof Error)) return "אירעה שגיאה";
+  const code = (err as { code?: string }).code;
+  if (code === "otp_disabled" || /signups not allowed/i.test(err.message)) {
+    return "לא נמצא חשבון עם האימייל הזה. יש להירשם תחילה.";
+  }
+  return err.message;
+}
+
 export function LoginForm({
   className,
   ...props
@@ -38,12 +51,17 @@ export function LoginForm({
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: getAuthRedirectUrl(AUTH_CONFIRM_PATH) },
+        options: {
+          // התחברות בלבד. בלי זה Supabase יוצר חשבון חדש לכל אימייל שמוקלד
+          // כאן ומדלג על טופס ההרשמה — כלומר משתמש בלי שם ובלי טלפון.
+          shouldCreateUser: false,
+          emailRedirectTo: getAuthRedirectUrl(AUTH_CONFIRM_PATH),
+        },
       });
       if (error) throw error;
       router.push("/auth/check-email");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "אירעה שגיאה");
+      setError(resolveLoginError(err));
     } finally {
       setIsLoading(false);
     }

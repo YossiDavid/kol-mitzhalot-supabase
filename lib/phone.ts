@@ -35,3 +35,19 @@ export function isValidPhone(phone: string) {
   const digits = value.replace(/\D/g, "");
   return digits.length >= PHONE_DIGITS_MIN && digits.length <= PHONE_DIGITS_MAX;
 }
+
+/**
+ * הטלפון של המשתמש נשמר בשני מקומות: העמודה הנייטיב auth.users.phone
+ * (נכתבת ב-admin.createUser) ו-user_metadata.phone (נכתב בהרשמה ובהגדרות).
+ * מעדיפים את המטא־דאטה, שהוא המקור המעודכן אחרי שינוי בהגדרות.
+ */
+export function resolveUserPhone(user: {
+  phone?: string | null;
+  user_metadata?: Record<string, unknown> | null;
+}): string | null {
+  const meta = user.user_metadata ?? {};
+  const fromMeta = typeof meta.phone === "string" ? meta.phone.trim() : "";
+  if (fromMeta) return fromMeta;
+  const fromColumn = user.phone?.trim() ?? "";
+  return fromColumn || null;
+}
