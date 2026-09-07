@@ -24,6 +24,13 @@ const svgrLoader = {
 const nextConfig: NextConfig = {
   cacheComponents: true,
   typedRoutes: true,
+  experimental: {
+    // Turbopack bundles its own root certificates, so it can't complete the TLS
+    // handshake with fonts.gstatic.com behind a proxy or custom CA. `next/font/google`
+    // then fails with "Can't resolve '@vercel/turbopack-next/internal/font/google/font'".
+    // Fall back to the system trust store.
+    turbopackUseSystemTlsCerts: true,
+  },
   turbopack: {
     rules: {
       // Match by filename first; Next 16.0 globs with `/` are unreliable here.
