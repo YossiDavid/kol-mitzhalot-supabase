@@ -29,7 +29,10 @@ import { useFieldArray, useForm } from "react-hook-form";
 import Link from "next/link";
 import { Plus, Trash2 } from "lucide-react";
 import {
+  INSTITUTION_GENDER_OPTIONS,
   INSTITUTION_TYPE_LABELS,
+  INSTITUTION_TYPE_OPTIONS,
+  type InstitutionGender,
   type InstitutionType,
 } from "@/features/institutions/lib/institution-labels";
 import { hasRole } from "@/lib/user-role";
@@ -77,6 +80,104 @@ export default function StaffApplicationPage() {
     control: form.control,
     name: "institutions",
   });
+
+  // הוספת מוסד שלא קיים ברשימה. נשמר בנפרד מטופס הבקשה כדי ששגיאות
+  // ולידציה של המוסד החדש לא ייחשבו כשגיאות של הבקשה עצמה.
+  const [isAddingInstitution, setIsAddingInstitution] = useState(false);
+  const [isSavingInstitution, setIsSavingInstitution] = useState(false);
+  const [newInstitution, setNewInstitution] = useState({
+    name: "",
+    city: "",
+    gender: "male" as InstitutionGender,
+    type: "yeshiva_gedola" as InstitutionType,
+  });
+
+  const selectedInstitutionIds = form
+    .watch("institutions")
+    .map((e) => e?.institutionId)
+    .filter(Boolean);
+
+  /** מוסד שכבר נבחר בשורה אחרת לא יוצע שוב, כדי למנוע כפילות. */
+  const availableInstitutions = (index: number) => {
+    const currentValue = form.watch(`institutions.${index}.institutionId`);
+    const takenElsewhere = new Set(
+      selectedInstitutionIds.filter((id) => id !== currentValue),
+    );
+    return institutions.filter((i) => !takenElsewhere.has(i.id));
+  };
+
+  const handleCreateInstitution = async () => {
+    const name = newInstitution.name.trim();
+    if (!name) {
+      toast.error("נא למלא שם מוסד");
+      return;
+    }
+
+    setIsSavingInstitution(true);
+    try {
+      const supabase = createClient();
+      const { data: newId, error } = await supabase.rpc("request_institution", {
+        p_name: name,
+        p_gender: newInstitution.gender,
+        p_type: newInstitution.type,
+        p_city: newInstitution.city.trim() || null,
+      });
+      if (error) throw error;
+
+      // ה-RPC מחזיר מוסד קיים אם השם והעיר זהים, ולכן ייתכן שהמזהה
+      // כבר ברשימה המקומית.
+      const alreadyListed = institutions.some((i) => i.id === newId);
+      if (!alreadyListed) {
+        setInstitutions((prev) =>
+          [
+            ...prev,
+            {
+              id: newId as string,
+              name,
+              city: newInstitution.city.trim() || null,
+              type: newInstitution.type,
+            },
+          ].sort((a, b) => a.name.localeCompare(b.name, "he")),
+        );
+      }
+
+      if (selectedInstitutionIds.includes(newId as string)) {
+        toast.info("המוסד כבר נבחר באחת השורות");
+      } else {
+        // משבצים בשורה הריקה הראשונה, ואם אין — מוסיפים שורה
+        const rows = form.getValues("institutions");
+        const emptyIndex = rows.findIndex((r) => !r.institutionId);
+        if (emptyIndex >= 0) {
+          form.setValue(
+            `institutions.${emptyIndex}.institutionId`,
+            newId as string,
+            { shouldValidate: true },
+          );
+        } else {
+          institutionFields.append({
+            institutionId: newId as string,
+            position: "",
+          });
+        }
+        toast.success(
+          alreadyListed ? "המוסד כבר קיים במערכת ונבחר" : "המוסד נוסף ונבחר",
+        );
+      }
+
+      setNewInstitution({
+        name: "",
+        city: "",
+        gender: "male",
+        type: "yeshiva_gedola",
+      });
+      setIsAddingInstitution(false);
+    } catch (err) {
+      console.error("Error creating institution:", err);
+      toast.error("שגיאה בהוספת המוסד");
+    } finally {
+      setIsSavingInstitution(false);
+    }
+  };
 
   useEffect(() => {
     async function fetchInstitutions() {
@@ -169,7 +270,14 @@ export default function StaffApplicationPage() {
         return;
       }
 
-      const entries = data.institutions.filter((e) => e.institutionId);
+      // כפילות: הבורר כבר מסנן מוסד שנבחר בשורה אחרת, אבל upsert עם
+      // אותו מוסד פעמיים נכשל ב-"cannot affect row a second time".
+      const seen = new Set<string>();
+      const entries = data.institutions.filter((e) => {
+        if (!e.institutionId || seen.has(e.institutionId)) return false;
+        seen.add(e.institutionId);
+        return true;
+      });
       if (entries.length === 0) {
         toast.error("יש לבחור לפחות מוסד לימודים אחד");
         setIsLoading(false);
@@ -317,14 +425,16 @@ export default function StaffApplicationPage() {
                                       ? "טוען מוסדות..."
                                       : "בחר/י מוסד לימודים"}
                                   </NativeSelectOption>
-                                  {institutions.map((institution) => (
-                                    <NativeSelectOption
-                                      key={institution.id}
-                                      value={institution.id}
-                                    >
-                                      {`${institution.name}${institution.city ? ` · ${institution.city}` : ""} · ${INSTITUTION_TYPE_LABELS[institution.type]}`}
-                                    </NativeSelectOption>
-                                  ))}
+                                  {availableInstitutions(index).map(
+                                    (institution) => (
+                                      <NativeSelectOption
+                                        key={institution.id}
+                                        value={institution.id}
+                                      >
+                                        {`${institution.name}${institution.city ? ` · ${institution.city}` : ""} · ${INSTITUTION_TYPE_LABELS[institution.type]}`}
+                                      </NativeSelectOption>
+                                    ),
+                                  )}
                                 </NativeSelect>
                               </FormControl>
                               <FormMessage />
@@ -366,6 +476,95 @@ export default function StaffApplicationPage() {
                         </Button>
                       </div>
                     ))
+                  )}
+
+                  {isAddingInstitution ? (
+                    <div className="space-y-3 rounded-lg border border-dashed border-border p-3">
+                      <p className="text-body-sm font-medium">הוספת מוסד חדש</p>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <Input
+                          value={newInstitution.name}
+                          onChange={(e) =>
+                            setNewInstitution((p) => ({
+                              ...p,
+                              name: e.target.value,
+                            }))
+                          }
+                          placeholder="שם המוסד"
+                          disabled={isSavingInstitution}
+                        />
+                        <Input
+                          value={newInstitution.city}
+                          onChange={(e) =>
+                            setNewInstitution((p) => ({
+                              ...p,
+                              city: e.target.value,
+                            }))
+                          }
+                          placeholder="עיר (לא חובה)"
+                          disabled={isSavingInstitution}
+                        />
+                        <NativeSelect
+                          value={newInstitution.gender}
+                          onChange={(e) =>
+                            setNewInstitution((p) => ({
+                              ...p,
+                              gender: e.target.value as InstitutionGender,
+                            }))
+                          }
+                          disabled={isSavingInstitution}
+                        >
+                          {INSTITUTION_GENDER_OPTIONS.map((o) => (
+                            <NativeSelectOption key={o.value} value={o.value}>
+                              {o.label}
+                            </NativeSelectOption>
+                          ))}
+                        </NativeSelect>
+                        <NativeSelect
+                          value={newInstitution.type}
+                          onChange={(e) =>
+                            setNewInstitution((p) => ({
+                              ...p,
+                              type: e.target.value as InstitutionType,
+                            }))
+                          }
+                          disabled={isSavingInstitution}
+                        >
+                          {INSTITUTION_TYPE_OPTIONS.map((o) => (
+                            <NativeSelectOption key={o.value} value={o.value}>
+                              {o.label}
+                            </NativeSelectOption>
+                          ))}
+                        </NativeSelect>
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={isSavingInstitution}
+                          onClick={() => setIsAddingInstitution(false)}
+                        >
+                          ביטול
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={isSavingInstitution}
+                          onClick={() => void handleCreateInstitution()}
+                        >
+                          {isSavingInstitution ? "שומר..." : "הוספה ובחירה"}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingInstitution(true)}
+                      className="text-body-sm text-primary underline underline-offset-4"
+                    >
+                      המוסד לא ברשימה? הוספת מוסד חדש
+                    </button>
                   )}
                 </div>
 
