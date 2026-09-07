@@ -25,24 +25,26 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select";
 import { toast } from "sonner";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import Link from "next/link";
+import { Plus, Trash2 } from "lucide-react";
 import {
   INSTITUTION_TYPE_LABELS,
   type InstitutionType,
 } from "@/features/institutions/lib/institution-labels";
 import { hasRole } from "@/lib/user-role";
 
-interface StaffFormData {
+/** שיוך יחיד: מוסד ותפקיד באותו מוסד */
+interface StaffInstitutionEntry {
   institutionId: string;
-  city: string;
   position: string;
 }
 
+interface StaffFormData {
+  institutions: StaffInstitutionEntry[];
+}
+
 interface ExistingStaffApplication {
-  institution_id: string | null;
-  city: string | null;
-  position: string | null;
   application_status: "pending" | "approved" | "rejected" | null;
 }
 
@@ -67,10 +69,13 @@ export default function StaffApplicationPage() {
 
   const form = useForm<StaffFormData>({
     defaultValues: {
-      institutionId: "",
-      city: "",
-      position: "",
+      institutions: [{ institutionId: "", position: "" }],
     },
+  });
+
+  const institutionFields = useFieldArray({
+    control: form.control,
+    name: "institutions",
   });
 
   useEffect(() => {
@@ -116,7 +121,7 @@ export default function StaffApplicationPage() {
       // שליפת מידע קיים אם יש
       const { data, error } = await supabase
         .from("staff_info")
-        .select("institution_id, city, position, application_status")
+        .select("application_status")
         .eq("user_id", user.id)
         .single();
 
@@ -126,11 +131,20 @@ export default function StaffApplicationPage() {
 
       if (data) {
         setExistingApplication(data);
-        // מילוי הטופס עם הנתונים הקיימים
+
+        const { data: affiliations } = await supabase
+          .from("staff_institutions")
+          .select("institution_id, position")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: true });
+
         form.reset({
-          institutionId: data.institution_id || "",
-          city: data.city || "",
-          position: data.position || "",
+          institutions: affiliations?.length
+            ? affiliations.map((a) => ({
+                institutionId: a.institution_id ?? "",
+                position: a.position ?? "",
+              }))
+            : [{ institutionId: "", position: "" }],
         });
       }
 
@@ -155,12 +169,19 @@ export default function StaffApplicationPage() {
         return;
       }
 
-      // הכנת הנתונים להכנסה
+      const entries = data.institutions.filter((e) => e.institutionId);
+      if (entries.length === 0) {
+        toast.error("יש לבחור לפחות מוסד לימודים אחד");
+        setIsLoading(false);
+        return;
+      }
+
+      // staff_info עדיין מחזיק את השיוך הראשון בעמודות הישנות, כדי
+      // שממשקים שטרם הומרו ימשיכו להציג משהו.
       const insertData = {
         user_id: user.id,
-        institution_id: data.institutionId || null,
-        city: data.city || null,
-        position: data.position || null,
+        institution_id: entries[0].institutionId,
+        position: entries[0].position || null,
         ...(existingApplication
           ? {}
           : {
@@ -169,12 +190,32 @@ export default function StaffApplicationPage() {
             }),
       };
 
-      // upsert לפי user_id
       const { error } = await supabase.from("staff_info").upsert(insertData, {
         onConflict: "user_id",
       });
 
       if (error) throw error;
+
+      // סנכרון רשימת המוסדות: מוחקים מה שהוסר, ואז upsert לשאר.
+      const keptIds = entries.map((e) => e.institutionId);
+      const { error: deleteError } = await supabase
+        .from("staff_institutions")
+        .delete()
+        .eq("user_id", user.id)
+        .not("institution_id", "in", `(${keptIds.join(",")})`);
+      if (deleteError) throw deleteError;
+
+      const { error: affiliationError } = await supabase
+        .from("staff_institutions")
+        .upsert(
+          entries.map((e) => ({
+            user_id: user.id,
+            institution_id: e.institutionId,
+            position: e.position || null,
+          })),
+          { onConflict: "user_id,institution_id" },
+        );
+      if (affiliationError) throw affiliationError;
 
       toast.success(
         existingApplication
@@ -206,7 +247,9 @@ export default function StaffApplicationPage() {
         <div>
           <h1 className="text-heading font-bold">הצטרפות כאיש צוות</h1>
           <p className="mt-2 text-muted-foreground">
-            מלא את הפרטים הבאים כדי להגיש בקשה להצטרפות כאיש צוות במערכת
+            ההצטרפות כאיש צוות נועדה לכתיבת משוב חיובי על כרטיסי המיועדים
+            שמתחנכים אצלכם — מחמאות ותשבחות שיעזרו לשדכנים להכיר אותם טוב
+            יותר. מלאו את המוסדות שבהם אתם מלמדים ואת התפקיד בכל אחד מהם.
           </p>
         </div>
 
@@ -223,89 +266,108 @@ export default function StaffApplicationPage() {
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-6"
               >
-                <FormField
-                  control={form.control as any}
-                  name="institutionId"
-                  rules={{ required: "מוסד לימודים הוא שדה חובה" }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>מוסד לימודים</FormLabel>
-                      {institutionsError ? (
-                        <p className="text-body-sm text-destructive">
-                          {institutionsError}
-                        </p>
-                      ) : !isInstitutionsLoading &&
-                        institutions.length === 0 ? (
-                        <p className="text-body-sm text-muted-foreground">
-                          לא הוגדרו עדיין מוסדות לימוד במערכת. נא לפנות למנהל
-                          המערכת כדי להוסיף את המוסד שלכם לרשימה.
-                        </p>
-                      ) : (
-                        <>
-                          <FormControl>
-                            <NativeSelect
-                              {...field}
-                              disabled={isLoading || isInstitutionsLoading}
-                            >
-                              <NativeSelectOption value="" disabled>
-                                {isInstitutionsLoading
-                                  ? "טוען מוסדות..."
-                                  : "בחר/י מוסד לימודים"}
-                              </NativeSelectOption>
-                              {institutions.map((institution) => (
-                                <NativeSelectOption
-                                  key={institution.id}
-                                  value={institution.id}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <FormLabel>מוסדות לימוד ותפקיד</FormLabel>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={isLoading || isInstitutionsLoading}
+                      onClick={() =>
+                        institutionFields.append({
+                          institutionId: "",
+                          position: "",
+                        })
+                      }
+                    >
+                      <Plus className="size-4" />
+                      הוספת מוסד
+                    </Button>
+                  </div>
+
+                  {institutionsError ? (
+                    <p className="text-body-sm text-destructive">
+                      {institutionsError}
+                    </p>
+                  ) : !isInstitutionsLoading && institutions.length === 0 ? (
+                    <p className="text-body-sm text-muted-foreground">
+                      לא הוגדרו עדיין מוסדות לימוד במערכת. נא לפנות למנהל המערכת
+                      כדי להוסיף את המוסד שלכם לרשימה.
+                    </p>
+                  ) : (
+                    institutionFields.fields.map((entry, index) => (
+                      <div
+                        key={entry.id}
+                        className="flex flex-col gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-start"
+                      >
+                        <FormField
+                          control={form.control as any}
+                          name={`institutions.${index}.institutionId`}
+                          rules={{ required: "יש לבחור מוסד לימודים" }}
+                          render={({ field }) => (
+                            <FormItem className="flex-1">
+                              <FormControl>
+                                <NativeSelect
+                                  {...field}
+                                  disabled={isLoading || isInstitutionsLoading}
                                 >
-                                  {`${institution.name}${institution.city ? ` · ${institution.city}` : ""} · ${INSTITUTION_TYPE_LABELS[institution.type]}`}
-                                </NativeSelectOption>
-                              ))}
-                            </NativeSelect>
-                          </FormControl>
-                          <FormMessage />
-                        </>
-                      )}
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control as any}
-                  name="city"
-                  rules={{ required: "עיר היא שדה חובה" }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>עיר</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="לדוגמה: ירושלים"
-                          disabled={isLoading}
+                                  <NativeSelectOption value="" disabled>
+                                    {isInstitutionsLoading
+                                      ? "טוען מוסדות..."
+                                      : "בחר/י מוסד לימודים"}
+                                  </NativeSelectOption>
+                                  {institutions.map((institution) => (
+                                    <NativeSelectOption
+                                      key={institution.id}
+                                      value={institution.id}
+                                    >
+                                      {`${institution.name}${institution.city ? ` · ${institution.city}` : ""} · ${INSTITUTION_TYPE_LABELS[institution.type]}`}
+                                    </NativeSelectOption>
+                                  ))}
+                                </NativeSelect>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
 
-                <FormField
-                  control={form.control as any}
-                  name="position"
-                  rules={{ required: "תפקיד הוא שדה חובה" }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>תפקיד</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="לדוגמה: משגיח, מחנכת"
-                          disabled={isLoading}
+                        <FormField
+                          control={form.control as any}
+                          name={`institutions.${index}.position`}
+                          rules={{ required: "תפקיד הוא שדה חובה" }}
+                          render={({ field }) => (
+                            <FormItem className="flex-1">
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder="תפקיד — לדוגמה: משגיח, מחנכת"
+                                  disabled={isLoading}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0 text-muted-foreground"
+                          aria-label="הסרת המוסד"
+                          // המוסד האחרון לא נמחק: בלעדיו אין בקשה
+                          disabled={
+                            isLoading || institutionFields.fields.length === 1
+                          }
+                          onClick={() => institutionFields.remove(index)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    ))
                   )}
-                />
+                </div>
 
                 <div className="flex justify-end gap-2">
                   <Button

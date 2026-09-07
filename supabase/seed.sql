@@ -370,3 +370,27 @@ VALUES
 INSERT INTO public.system_settings (key, value)
 VALUES ('phone_verification_enabled', false)
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now();
+
+-- ── מוסדות לימוד (סביבת פיתוח) ────────────────────────────────────
+-- אין אילוץ ייחודיות על name, ולכן אידמפוטנטיות מושגת ב-WHERE NOT
+-- EXISTS ולא ב-ON CONFLICT. נדרש כדי שטופס "הצטרפות כאיש צוות"
+-- יציג רשימה לבחירה.
+INSERT INTO public.institutions (name, city, gender, type)
+SELECT v.name, v.city, v.gender, v.type
+FROM (VALUES
+  ('ישיבת תפארת הבחורים',   'ירושלים',   'male',   'yeshiva_gedola'),
+  ('ישיבת אור החיים',       'בני ברק',   'male',   'yeshiva_gedola'),
+  ('ישיבת נחלת משה',        'מודיעין עילית', 'male', 'yeshiva_gedola'),
+  ('ישיבה קטנה בית אהרן',   'ירושלים',   'male',   'yeshiva_ketana'),
+  ('ישיבה קטנה זכרון יעקב', 'ביתר עילית', 'male',  'yeshiva_ketana'),
+  ('תלמוד תורה חכמת שלמה',  'בני ברק',   'male',   'talmud_torah'),
+  ('כולל אברכים תורת חסד',  'ירושלים',   'male',   'kollel'),
+  ('סמינר בית יעקב הישן',   'ירושלים',   'female', 'seminary'),
+  ('סמינר נוה הורים',       'בני ברק',   'female', 'seminary'),
+  ('סמינר דרכי רחל',        'אלעד',      'female', 'seminary'),
+  ('בית ספר בנות ירושלים',  'ירושלים',   'female', 'school'),
+  ('בית ספר בית רחל',       'אשדוד',     'female', 'school')
+) AS v(name, city, gender, type)
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.institutions i WHERE i.name = v.name
+);
