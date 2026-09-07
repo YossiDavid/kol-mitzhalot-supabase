@@ -33,10 +33,8 @@ interface ShadchanFormData {
   specializations: string;
   contact_phone: string;
   contact_email: string;
-  website_url: string;
-  location: string;
   languages: string;
-  certifications: string;
+  closed_matches: string;
 }
 
 export default function ShadchanApplicationPage() {
@@ -52,10 +50,8 @@ export default function ShadchanApplicationPage() {
       specializations: "",
       contact_phone: "",
       contact_email: "",
-      website_url: "",
-      location: "",
       languages: "",
-      certifications: "",
+      closed_matches: "",
     },
   });
 
@@ -99,14 +95,10 @@ export default function ShadchanApplicationPage() {
             : data.specializations || "",
           contact_phone: data.contact_phone || "",
           contact_email: data.contact_email || "",
-          website_url: data.website_url || "",
-          location: data.location || "",
           languages: Array.isArray(data.languages)
             ? data.languages.join(", ")
             : data.languages || "",
-          certifications: Array.isArray(data.certifications)
-            ? data.certifications.join(", ")
-            : data.certifications || "",
+          closed_matches: data.closed_matches?.toString() || "",
         });
       }
 
@@ -153,19 +145,14 @@ export default function ShadchanApplicationPage() {
           : null,
         contact_phone: data.contact_phone || null,
         contact_email: data.contact_email || null,
-        website_url: data.website_url || null,
-        location: data.location || null,
         languages: data.languages
           ? data.languages
               .split(",")
               .map((l) => l.trim())
               .filter(Boolean)
           : null,
-        certifications: data.certifications
-          ? data.certifications
-              .split(",")
-              .map((c) => c.trim())
-              .filter(Boolean)
+        closed_matches: data.closed_matches
+          ? parseInt(data.closed_matches)
           : null,
       };
 
@@ -274,6 +261,30 @@ export default function ShadchanApplicationPage() {
 
                 <FormField
                   control={form.control as any}
+                  name="closed_matches"
+                  rules={{
+                    required: "מספר השידוכים שנסגרו הוא שדה חובה",
+                    min: { value: 0, message: "מספר לא יכול להיות שלילי" },
+                  }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>כמה שידוכים סגרתי</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="number"
+                          min="0"
+                          placeholder="לדוגמה: 12"
+                          disabled={isLoading}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control as any}
                   name="specializations"
                   render={({ field }) => (
                     <FormItem>
@@ -344,43 +355,6 @@ export default function ShadchanApplicationPage() {
 
                 <FormField
                   control={form.control as any}
-                  name="website_url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>כתובת אתר (אופציונלי)</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="url"
-                          placeholder="https://example.com"
-                          disabled={isLoading}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control as any}
-                  name="location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>מיקום (אופציונלי)</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="לדוגמה: ירושלים"
-                          disabled={isLoading}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control as any}
                   name="languages"
                   render={({ field }) => (
                     <FormItem>
@@ -389,26 +363,6 @@ export default function ShadchanApplicationPage() {
                         <Input
                           {...field}
                           placeholder="לדוגמה: עברית, אנגלית, יידיש"
-                          disabled={isLoading}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control as any}
-                  name="certifications"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        תעודות והסמכות (מופרדות בפסיקים, אופציונלי)
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="לדוגמה: הסמכה רבנית, תעודת שדכן"
                           disabled={isLoading}
                         />
                       </FormControl>
