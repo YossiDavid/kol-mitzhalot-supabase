@@ -1,7 +1,5 @@
+import { ChatEmptyState } from "@/features/chats/components/chat-empty-state";
+
 export default function ChatSlotPage() {
-  return (
-    <div className="flex h-full items-center justify-center">
-      <p className="text-muted-foreground text-body-sm">בחר שיחה מהרשימה</p>
-    </div>
-  );
+  return <ChatEmptyState variant="no-selection" />;
 }

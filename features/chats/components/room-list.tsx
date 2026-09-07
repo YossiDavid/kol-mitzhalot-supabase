@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Box } from "@/components/layout";
 import { createClient } from "@/lib/supabase/client";
 import type { Room } from "@/app/app/chats/types";
+import { ChatEmptyState } from "./chat-empty-state";
 
 function formatTime(dateString: string | null): string {
   if (!dateString) return "";
@@ -244,9 +245,7 @@ export function RoomList() {
               טוען...
             </div>
           ) : rooms.length === 0 ? (
-            <div className="text-muted-foreground p-4 text-center text-body-sm">
-              אין צ׳אטים
-            </div>
+            <ChatEmptyState variant="no-rooms" className="py-14" />
           ) : (
             rooms.map((r) => (
               <RoomRow
