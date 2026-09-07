@@ -215,6 +215,20 @@ const genderLabelOverrides: Record<string, { male: string; female: string }> = {
     male: "שם אם אמו",
     female: "שם אם אמה",
   },
+  // המיועד/ת עצמו/ה
+  phone: {
+    male: "מספר טלפון של המיועד",
+    female: "מספר טלפון של המיועדת",
+  },
+  about: {
+    male: "כמה מילים על אופי וסגנון המיועד",
+    female: "כמה מילים על אופי וסגנון המיועדת",
+  },
+  // סעיף "מי שמחפשים" — המגדר הפוך: מיועד מחפש מיועדת ולהפך.
+  "partner.aboutThePartner": {
+    male: "כמה מילים על אופי וסגנון המיועדת",
+    female: "כמה מילים על אופי וסגנון המיועד",
+  },
   // Family
   "family.currentChildPlace": {
     male: "מיקום הבן בין האחים",

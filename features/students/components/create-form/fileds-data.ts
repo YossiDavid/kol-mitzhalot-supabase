@@ -58,7 +58,12 @@ export interface SelectField extends BaseField {
   type: (typeof SELECT_FIELD_TYPES)[number];
   options: {
     value: string;
+    /** ניסוח ברירת מחדל, כשעדיין לא נבחר מגדר */
     label: string;
+    /** נוסח זכר — גובר על label כשנבחר "מיועד" */
+    labelMale?: string;
+    /** נוסח נקבה — גובר על label כשנבחר "מיועדת" */
+    labelFemale?: string;
   }[];
   empty?: string;
   vertical?: boolean;
@@ -311,14 +316,20 @@ export const studentFields: FormSteps[] = [
               {
                 value: "single",
                 label: "רווק.ה",
+                labelMale: "רווק",
+                labelFemale: "רווקה",
               },
               {
                 value: "divorced",
                 label: "גרוש.ה",
+                labelMale: "גרוש",
+                labelFemale: "גרושה",
               },
               {
                 value: "widowed",
                 label: "אלמנ.ה",
+                labelMale: "אלמן",
+                labelFemale: "אלמנה",
               },
             ],
             columns: 3,
@@ -875,7 +886,7 @@ export const studentFields: FormSteps[] = [
               },
               {
                 name: "education.seminar.name",
-                label: "שם הישיבה",
+                label: "שם הסמינר",
                 type: "text",
                 required: true,
                 columns: 3,
@@ -1229,18 +1240,6 @@ export const studentFields: FormSteps[] = [
             name: "knownRabbanim",
             fileds: [
               {
-                name: "knownRabbanim.id",
-                type: "select2",
-                label: "לבחירה מתוך המאגר",
-                options: [{ value: "", label: "" }],
-                table: "user_profiles",
-                valueColumn: "id",
-                labelColumn: "first_name,last_name",
-                searchColumn: "first_name,last_name",
-                // filters: { role: "rabbi" },
-                columns: 3,
-              },
-              {
                 name: "knownRabbanim.name",
                 type: "text",
                 label: "שם מלא",
@@ -1481,6 +1480,30 @@ export const studentFields: FormSteps[] = [
                 operator: "===",
                 value: "true",
               },
+              // ההורים נשואים — אין בן/בת זוג חדש, גם אם נבחר קודם סטטוס אחר
+              // והערך של הרדיו נשאר.
+              {
+                parameter: "parents.status",
+                operator: "!==",
+                value: "married",
+              },
+              {
+                parameter: "parents.status",
+                operator: "!==",
+                value: "",
+              },
+              // הרדיו למעלה מוסתר כששני ההורים נפטרו, אך ערכו נשאר. בלי
+              // השערים האלה השדה ממשיך להופיע אחרי שינוי deadParent.
+              {
+                parameter: "parents.deadParent",
+                operator: "!==",
+                value: "both",
+              },
+              {
+                parameter: "parents.deadParent",
+                operator: "!==",
+                value: "mother",
+              },
             ],
             required: true,
           },
@@ -1530,6 +1553,28 @@ export const studentFields: FormSteps[] = [
                 parameter: "parents.isFatherRemarried",
                 operator: "===",
                 value: "true",
+              },
+              // ההורים נשואים — אין בן/בת זוג חדש, גם אם נבחר קודם סטטוס אחר
+              // והערך של הרדיו נשאר.
+              {
+                parameter: "parents.status",
+                operator: "!==",
+                value: "married",
+              },
+              {
+                parameter: "parents.status",
+                operator: "!==",
+                value: "",
+              },
+              {
+                parameter: "parents.deadParent",
+                operator: "!==",
+                value: "both",
+              },
+              {
+                parameter: "parents.deadParent",
+                operator: "!==",
+                value: "father",
               },
             ],
             required: true,

@@ -102,8 +102,20 @@ function AtomicFieldRenderer({
 	const placeholder: string | undefined = rawField.placeholder
 	const description: string | undefined = rawField.description
 	const beforeField: React.ReactNode = rawField.beforeField ?? rawField.before
-	const options: Array<{ value: string; label: string }> =
-		(rawField.options as Array<{ value: string; label: string }>) ?? []
+	// לייבל של אפשרות יכול להיות מגדרי (״רווק.ה״ → ״רווק״ / ״רווקה״).
+	// getLabel מטפל רק בלייבל של השדה, ולכן האפשרויות נפתרות כאן.
+	const options: Array<{ value: string; label: string }> = (
+		(rawField.options as Array<{
+			value: string
+			label: string
+			labelFemale?: string
+			labelMale?: string
+		}>) ?? []
+	).map((option) => {
+		const gendered =
+			gender === "female" ? option.labelFemale : gender === "male" ? option.labelMale : undefined
+		return gendered ? { ...option, label: gendered } : option
+	})
 	const isRequired = Boolean(rawField.required)
 	const isVertical = Boolean(rawField.vertical)
 	const emptyLabel: string | undefined = rawField.empty
