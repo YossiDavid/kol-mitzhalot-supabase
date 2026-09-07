@@ -11,9 +11,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Box } from "@/components/layout";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Check, SendHorizontal } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { MessageBubble } from "./message-bubble";
+import { ChatEmptyState } from "./chat-empty-state";
 import type { Message } from "@/app/app/chats/types";
 
 function canEditMessage(m: Message, uid: string | null): boolean {
@@ -75,7 +76,8 @@ export function ChatView({ roomId }: { roomId: string }) {
 
         let name = otherId.substring(0, 8);
         if (userData?.firstName || userData?.lastName) {
-          name = `${userData.firstName || ""} ${userData.lastName || ""}`.trim();
+          name =
+            `${userData.firstName || ""} ${userData.lastName || ""}`.trim();
         } else if (userData?.email) {
           name = userData.email.split("@")[0];
         }
@@ -128,7 +130,9 @@ export function ChatView({ roomId }: { roomId: string }) {
         arr.forEach((p) => onlineIds.add(p.user_id)),
       );
       setOtherOnline(
-        Boolean(otherUserIdRef.current && onlineIds.has(otherUserIdRef.current)),
+        Boolean(
+          otherUserIdRef.current && onlineIds.has(otherUserIdRef.current),
+        ),
       );
     };
 
@@ -145,7 +149,8 @@ export function ChatView({ roomId }: { roomId: string }) {
           if (payload.eventType === "INSERT") {
             const row = payload.new as Message;
             setMessages((prev) => {
-              if (prev.some((m) => m.message_id === row.message_id)) return prev;
+              if (prev.some((m) => m.message_id === row.message_id))
+                return prev;
               return [...prev, row];
             });
           }
@@ -289,7 +294,7 @@ export function ChatView({ roomId }: { roomId: string }) {
           <Link
             href="/app/chats"
             className={cn(
-              "text-muted-foreground hover:text-foreground flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition md:hidden",
+              "flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:text-foreground md:hidden",
             )}
           >
             <ArrowRight className="h-5 w-5" />
@@ -301,7 +306,14 @@ export function ChatView({ roomId }: { roomId: string }) {
             <div className="truncate text-body-sm font-semibold">
               {roomTitle ?? "..."}
             </div>
-            <div className="text-muted-foreground text-caption">
+            <div className="flex items-center gap-1.5 text-caption text-muted-foreground">
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "size-1.5 rounded-full",
+                  otherOnline ? "bg-emerald-500" : "bg-muted-foreground/40",
+                )}
+              />
               {otherOnline ? "מחובר" : "לא מחובר"}
             </div>
           </div>
@@ -313,9 +325,7 @@ export function ChatView({ roomId }: { roomId: string }) {
           <div ref={listRef}>
             <div className="mx-auto flex w-full flex-col gap-3 p-4">
               {messages.length === 0 ? (
-                <div className="text-muted-foreground flex items-center justify-center py-8">
-                  אין הודעות עדיין
-                </div>
+                <ChatEmptyState variant="no-messages" className="py-12" />
               ) : (
                 messages.map((m) => (
                   <div
@@ -351,10 +361,10 @@ export function ChatView({ roomId }: { roomId: string }) {
 
         {/* Reply / Edit banner */}
         {(replyTo || editTarget) && (
-          <div className="bg-muted/40 mx-3 mt-2 rounded-md border px-3 py-2 text-caption">
+          <div className="mx-3 mt-2 rounded-md border bg-muted/40 px-3 py-2 text-caption">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <div className="text-muted-foreground mb-1">
+                <div className="mb-1 text-muted-foreground">
                   {replyTo ? "תגובה להודעה" : "עריכת הודעה"}
                 </div>
                 <div className="truncate">
@@ -380,12 +390,14 @@ export function ChatView({ roomId }: { roomId: string }) {
 
         {/* Composer */}
         <div className="p-3">
-          <div className="flex w-full items-end gap-2">
+          <div className="flex w-full items-center gap-2 rounded-full border border-border bg-background py-1.5 ps-4 pe-1.5 transition-colors focus-within:border-primary/40">
             <Input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder="כתוב הודעה..."
               disabled={sending}
+              aria-label="הודעה חדשה"
+              className="h-9 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
@@ -393,8 +405,19 @@ export function ChatView({ roomId }: { roomId: string }) {
                 }
               }}
             />
-            <Button onClick={() => void onSend()} disabled={sending}>
-              {sending ? "שולח..." : editTarget ? "שמור" : "שלח"}
+            <Button
+              onClick={() => void onSend()}
+              // ריק או באמצע שליחה — אין מה לשלוח
+              disabled={sending || !draft.trim()}
+              size="icon"
+              className="size-9 shrink-0 rounded-full"
+              aria-label={editTarget ? "שמירת העריכה" : "שליחת הודעה"}
+            >
+              {editTarget ? (
+                <Check className="size-4" />
+              ) : (
+                <SendHorizontal className="size-4" />
+              )}
             </Button>
           </div>
         </div>

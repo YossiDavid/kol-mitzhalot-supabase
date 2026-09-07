@@ -1,9 +1,13 @@
-import { MessagesSquare, MessageSquareDashed } from "lucide-react";
+import {
+  MessagesSquare,
+  MessageSquareDashed,
+  MessageSquarePlus,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 type ChatEmptyStateProps = {
-  variant: "no-rooms" | "no-selection";
+  variant: "no-rooms" | "no-selection" | "no-messages";
   className?: string;
 };
 
@@ -21,6 +25,12 @@ const COPY = {
     Icon: MessagesSquare,
     title: "לא נבחרה שיחה",
     description: "בחרו שיחה מהרשימה כדי לקרוא ולהשיב.",
+  },
+  // השיחה נפתחה אך עדיין לא נשלחה בה הודעה.
+  "no-messages": {
+    Icon: MessageSquarePlus,
+    title: "אין הודעות עדיין",
+    description: "כתבו את ההודעה הראשונה בשיחה.",
   },
 } as const;
 

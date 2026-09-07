@@ -45,28 +45,53 @@ const RoomRow = React.memo(function RoomRow({
   return (
     <Link
       href={`/app/chats/${room.room_id}`}
+      aria-current={active ? "page" : undefined}
       className={cn(
-        "flex w-full items-center gap-3 px-4 py-4 transition",
-        active ? "bg-slate-100" : "hover:bg-muted/60",
+        "group relative mx-2 flex items-center gap-3 rounded-lg px-3 py-3 transition-colors",
+        // bg-slate-100 היה צבע קשיח שהתעלם מהתמה; טוקנים עובדים גם ב-dark.
+        active
+          ? "bg-primary/10 text-foreground"
+          : "hover:bg-muted focus-visible:bg-muted",
       )}
     >
-      <Avatar className="size-9 shrink-0">
-        <AvatarFallback>{initials}</AvatarFallback>
+      {/* פס צד מסמן את השיחה הפתוחה — קריא יותר מרקע בלבד */}
+      <span
+        aria-hidden="true"
+        className={cn(
+          "absolute inset-y-2 end-0 w-0.5 rounded-full transition-colors",
+          active ? "bg-primary" : "bg-transparent",
+        )}
+      />
+      <Avatar className="size-10 shrink-0">
+        <AvatarFallback
+          className={cn(
+            "text-caption font-semibold",
+            active
+              ? "bg-primary/20 text-primary"
+              : "bg-muted text-muted-foreground",
+          )}
+        >
+          {initials}
+        </AvatarFallback>
       </Avatar>
       <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-2">
-          <div className="truncate text-body-sm font-medium">{room.title}</div>
+        <div className="flex items-baseline justify-between gap-2">
+          <div className="truncate text-body-sm font-semibold">
+            {room.title}
+          </div>
           {room.lastAt && (
-            <div className="text-muted-foreground shrink-0 text-caption">
+            <div className="shrink-0 text-caption text-muted-foreground tabular-nums">
               {room.lastAt}
             </div>
           )}
         </div>
-        {room.lastMessage && (
-          <div className="text-muted-foreground truncate text-caption">
-            {room.lastMessage.length > 50
-              ? `${room.lastMessage.substring(0, 50)}...`
-              : room.lastMessage}
+        {room.lastMessage ? (
+          <div className="truncate text-caption text-muted-foreground">
+            {room.lastMessage}
+          </div>
+        ) : (
+          <div className="text-caption text-muted-foreground/70">
+            אין הודעות עדיין
           </div>
         )}
       </div>
@@ -128,7 +153,9 @@ export function RoomList() {
             // Fetch user metadata and last message in parallel
             const [userMetaResult, lastMsgResult] = await Promise.all([
               Promise.resolve(
-                supabase.rpc("get_user_metadata", { target_user_id: otherUserId })
+                supabase.rpc("get_user_metadata", {
+                  target_user_id: otherUserId,
+                }),
               ).catch(() => ({ data: null })),
               room.last_message_id
                 ? supabase
@@ -235,25 +262,32 @@ export function RoomList() {
       className="my-4 h-[calc(100%-2rem)] p-0 md:rounded-l-none md:inset-shadow-[10px_0_10px_-10px_rgba(0,0,0,0.1)]"
     >
       <aside>
-        <div className="flex h-14 items-center px-4">
-          <div className="text-body-sm font-semibold">צ׳אטים</div>
+        <div className="flex h-14 items-center justify-between gap-2 px-4">
+          <div className="text-subtitle font-bold">צ׳אטים</div>
+          {!loading && rooms.length > 0 && (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-caption text-muted-foreground tabular-nums">
+              {rooms.length}
+            </span>
+          )}
         </div>
         <Separator />
         <ScrollArea className="h-[calc(100%-56px)]">
           {loading ? (
-            <div className="text-muted-foreground p-4 text-center text-body-sm">
+            <div className="p-4 text-center text-body-sm text-muted-foreground">
               טוען...
             </div>
           ) : rooms.length === 0 ? (
             <ChatEmptyState variant="no-rooms" className="py-14" />
           ) : (
-            rooms.map((r) => (
-              <RoomRow
-                key={r.room_id}
-                room={r}
-                active={r.room_id === activeRoomId}
-              />
-            ))
+            <div className="flex flex-col gap-0.5 py-2">
+              {rooms.map((r) => (
+                <RoomRow
+                  key={r.room_id}
+                  room={r}
+                  active={r.room_id === activeRoomId}
+                />
+              ))}
+            </div>
           )}
         </ScrollArea>
       </aside>
