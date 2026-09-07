@@ -29,6 +29,7 @@ import {
   type InstitutionGender,
   type InstitutionType,
 } from "@/features/institutions/lib/institution-labels";
+import { InstitutionsImportDialog } from "@/features/institutions/components/import-dialog";
 
 type Institution = {
   id: string;
@@ -173,9 +174,12 @@ export default function InstitutionsAdminPage() {
         title="מוסדות לימוד"
         subTitle="ניהול מאגר מוסדות הלימוד לבחירה באשף יצירת כרטיס מיועד"
         button={
-          <Button onClick={openCreateDialog}>
-            <Plus className="me-1 h-4 w-4" /> מוסד חדש
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <InstitutionsImportDialog onImported={load} />
+            <Button onClick={openCreateDialog}>
+              <Plus className="me-1 h-4 w-4" /> מוסד חדש
+            </Button>
+          </div>
         }
       >
         <Box className="mt-6 space-y-4">
