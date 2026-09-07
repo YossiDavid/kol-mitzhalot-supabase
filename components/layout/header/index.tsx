@@ -4,6 +4,7 @@ import { AuthButton } from "@/components/auth-button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/server";
 import { hasRole } from "@/lib/user";
+import { formatFullName, resolveDisplayName } from "@/lib/user-display-name";
 import HeaderIcons from "./icons";
 import { UserMenu } from "./user-menu";
 import { Button } from "../../ui/button";
@@ -23,8 +24,21 @@ export default async function Header({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const firstName = user?.user_metadata?.firstName as string;
-  const lastName = user?.user_metadata?.lastName as string;
+  // ההדר קרא בעבר רק את user_metadata.firstName/lastName ב-camelCase, ולכן
+  // הציג ברכה ריקה כשהשם שמור ב-snake_case או רק ב-user_profiles.
+  // resolveDisplayName מכסה את כל המקורות, כמו בשאר האפליקציה.
+  const { data: profile } = user
+    ? await supabase
+        .from("user_profiles")
+        .select("first_name, last_name")
+        .eq("id", user.id)
+        .maybeSingle()
+    : { data: null };
+
+  const { firstName, lastName } = user
+    ? resolveDisplayName(user, profile)
+    : { firstName: null, lastName: null };
+  const greetingName = formatFullName(firstName, lastName);
   // הצטרפות כשדכן/איש צוות מוצגת רק אם למשתמש עדיין אין את התפקיד הזה בפועל
   // (ולא רק אם יש לו תפקיד "אחר" - משתמש יכול להיות גם וגם)
   const showShadchanJoin =
@@ -101,7 +115,7 @@ export default async function Header({
             className="mx-2 hidden bg-primary data-[orientation=vertical]:h-4 md:block"
           />
           <div className="hidden items-center gap-5 font-semibold md:flex">
-            שלום וברכה, {firstName} {lastName}!
+            {greetingName ? `שלום וברכה, ${greetingName}!` : "שלום וברכה!"}
           </div>
           {hasRole(user, "admin") && (
             <Button variant={"link"} asChild className="hidden md:inline-flex">
