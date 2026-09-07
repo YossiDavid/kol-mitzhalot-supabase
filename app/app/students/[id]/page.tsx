@@ -23,6 +23,7 @@ import {
   Lock,
   ImageIcon,
   MessageSquareText,
+  Pencil,
 } from "lucide-react";
 import Link from "next/link";
 import ShareButton from "@/features/students/components/share-button";
@@ -868,10 +869,13 @@ export default async function StudentPage({
     );
   }
 
-  // תמונה של בת נחשפת רק למנהל מערכת — לא לשדכן ולא לבעלת הכרטיס.
-  // בהמשך יתווסף כאן גם "משתמש מורשה"
-  // כפיצ'ר נפרד — נקודת ההרחבה היחידה היא הביטוי הזה.
-  const canViewFemalePhoto = isAdmin;
+  // תמונה של בת נחשפת למנהל, לבעל הכרטיס, ולשדכן שקיבל אישור צפייה
+  // מפורש. ההכרעה נעשית ב-can_view_student_photo ולא כאן, כדי שאותו
+  // כלל יחול גם על כל קורא אחר של הטבלה.
+  const { data: canViewFemalePhoto } = await supabase.rpc(
+    "can_view_student_photo",
+    { uid: user?.id ?? null, sid: student.id },
+  );
   const photoPrivate = student.gender === "female" && !canViewFemalePhoto;
 
   // מי רואה את סעיף המחמאות וההערות בכלל: שדכן/מנהל/איש צוות. RLS הוא
@@ -899,6 +903,10 @@ export default async function StudentPage({
     (student.medical_records.status === "littleProblem" ||
       student.medical_records.status === "hugeProblem");
 
+  // חייב לשקף בדיוק את ההרשאה של update_full_student_profile (בעלים / שדכן /
+  // מנהל), אחרת כפתור "עריכה" יוביל למסך שהשמירה בו תיפול על not_allowed.
+  const canEdit = student.user_id === user?.id || isShadchan || isAdmin;
+
   return (
     <div className="min-h-screen space-y-6 text-right">
       {/* Back */}
@@ -916,10 +924,12 @@ export default async function StudentPage({
         {student.image_url && (
           <div className="shrink-0">
             {photoPrivate ? (
-              <div className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-full border bg-muted sm:h-24 sm:w-24">
-                <Lock className="h-6 w-6 text-muted-foreground" />
-                <span className="text-caption text-muted-foreground">חסוי</span>
-              </div>
+              // לחיצה פותחת בקשת צפייה למנהל
+              <StudentPhoto
+                locked
+                studentId={student.id}
+                alt={`${student.first_name} ${student.last_name}`}
+              />
             ) : (
               <StudentPhoto
                 src={student.image_url}
@@ -981,6 +991,14 @@ export default async function StudentPage({
               >
                 <FileText className="h-4 w-4" />
                 קו"ח
+              </Link>
+            </Button>
+          )}
+          {canEdit && (
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/app/students/${student.id}/edit`}>
+                <Pencil className="h-4 w-4" />
+                עריכה
               </Link>
             </Button>
           )}

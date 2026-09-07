@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X } from "lucide-react";
+import { Lock, X } from "lucide-react";
 import {
   Dialog,
   DialogClose,
@@ -9,14 +9,59 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { PhotoRequestDialog } from "@/features/photo-requests/components/photo-request-dialog";
 
-interface StudentPhotoProps {
-  src: string;
-  alt: string;
+/**
+ * שני מצבים בלבד, ולכן טיפוס מאוחד (discriminated union) על locked ולא שדות
+ * אופציונליים: כך אי אפשר להעביר בטעות מצב נעול בלי studentId (ואז הדיאלוג
+ * לא היה יודע איזו בקשה להגיש), ואי אפשר להעביר מצב פתוח בלי src.
+ */
+type StudentPhotoProps =
+  | { locked?: false; src: string; alt: string }
+  | { locked: true; alt: string; studentId: string };
+
+/**
+ * תמונת פרופיל עגולה.
+ *
+ * במצב הרגיל — לחיצה פותחת lightbox עם התמונה בגדול.
+ * במצב הנעול (locked) — אין src כלל, כי השרת לא שולח ללקוח image_url של
+ * מיועדת (ראה buildPublicStudent ו-photoPrivate ב-
+ * app/app/students/[id]/page.tsx); מוצג מנעול, ולחיצה פותחת דיאלוג בקשת
+ * הרשאת צפייה שמנהל מכריע בה.
+ */
+export default function StudentPhoto(props: StudentPhotoProps) {
+  if (props.locked) {
+    return <LockedPhoto alt={props.alt} studentId={props.studentId} />;
+  }
+  return <PhotoLightbox src={props.src} alt={props.alt} />;
 }
 
-/** תמונת פרופיל עגולה — לחיצה פותחת lightbox עם התמונה בגדול. */
-export default function StudentPhoto({ src, alt }: StudentPhotoProps) {
+function LockedPhoto({ alt, studentId }: { alt: string; studentId: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="בקשת הרשאה לצפייה בתמונה"
+        title="בקשת הרשאה לצפייה בתמונה"
+        className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-full border bg-muted transition hover:ring-2 hover:ring-primary/40 hover:brightness-95 sm:h-24 sm:w-24"
+      >
+        <Lock className="h-6 w-6 text-muted-foreground" />
+        <span className="text-caption text-muted-foreground">חסוי</span>
+      </button>
+      <PhotoRequestDialog
+        studentId={studentId}
+        studentName={alt}
+        open={open}
+        onOpenChange={setOpen}
+      />
+    </>
+  );
+}
+
+function PhotoLightbox({ src, alt }: { src: string; alt: string }) {
   const [open, setOpen] = useState(false);
 
   return (

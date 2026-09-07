@@ -2,13 +2,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { DashboardSection } from "@/components/layout";
 import {
-  Users,
-  FileText,
-  UserCheck,
   BookOpen,
-  UserPlus,
+  FileText,
   GraduationCap,
+  Image as ImageIcon,
   Link2,
+  UserCheck,
+  UserPlus,
+  Users,
 } from "lucide-react";
 
 export default function AdminPage() {
@@ -38,6 +39,18 @@ export default function AdminPage() {
               </h3>
               <p className="text-body-sm text-muted-foreground">
                 אישור ודחייה של בקשות הצטרפות כאיש צוות
+              </p>
+            </div>
+          </Link>
+
+          <Link href="/app/admin/photo-requests">
+            <div className="cursor-pointer rounded-lg border p-6 transition-colors hover:bg-accent">
+              <ImageIcon className="mb-4 h-8 w-8" />
+              <h3 className="mb-2 text-subtitle font-semibold">
+                בקשות צפייה בתמונה
+              </h3>
+              <p className="text-body-sm text-muted-foreground">
+                אישור ודחייה של בקשות שדכנים לצפות בתמונת מיועדת
               </p>
             </div>
           </Link>
