@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "@/features/settings/components/profile-form";
-import { PasswordForm } from "@/features/settings/components/password-form";
 import { ShadchanCard } from "@/features/settings/components/shadchan-card";
 import { StaffCard } from "@/features/settings/components/staff-card";
 import { redirect } from "next/navigation";
@@ -64,7 +63,6 @@ export default async function SettingsPage({
           initialData={initialData}
           phoneVerificationEnabled={phoneVerificationEnabled}
         />
-        <PasswordForm />
         <ShadchanCard />
         <StaffCard />
       </div>
