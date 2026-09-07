@@ -22,8 +22,8 @@ export function StudentsNoAccess() {
           אין לך הרשאה לצפות בתוכן זה
         </h1>
         <p className="mx-auto max-w-[38ch] text-body-sm text-muted-foreground">
-          רשימת המיועדים פתוחה לשדכנים, לאנשי צוות ולמנהלים בלבד. את
-          הכרטיסים של ילדיך אפשר לראות בעמוד הראשי.
+          רשימת המיועדים פתוחה לשדכנים, לאנשי צוות ולמנהלים בלבד. את הכרטיסים של
+          ילדיך אפשר לראות בעמוד הראשי.
         </p>
       </div>
       <div className="flex flex-wrap items-center justify-center gap-2">
