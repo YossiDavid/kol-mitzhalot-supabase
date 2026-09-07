@@ -38,11 +38,10 @@ const allItems = [
   { title: "הגדרות", url: "/app/settings", icon: Settings },
 ] as const;
 
-// זמינים רק לשדכן/מנהל - איש צוות לא יוצר כרטיסים ולא משתמש בלוח ההתאמות.
-const shadchanOnlyUrls = ["/app/students/create", "/app/canvas"];
-// זמין גם לאיש צוות מאושר (בנוסף לשדכן/מנהל) - RLS מגביל את הרשימה
-// שהוא יראה למיועדים של המוסד שלו בלבד.
-const staffVisibleUrls = ["/app/students"];
+// לוח ההתאמות הוא כלי עבודה של שדכן/מנהל בלבד.
+// "מיועדים" ו"הוספת מיועד" פתוחים לכולם, כולל הורים: RLS מצמצם כל אחד
+// למה שמותר לו (הורה רואה רק את ילדיו), ולכן אין צורך בסינון לפי תפקיד.
+const shadchanOnlyUrls = ["/app/canvas"];
 
 export function AppSidebar({ roles }: { roles: Role[] }) {
   const [mounted, setMounted] = useState(false);
@@ -58,10 +57,8 @@ export function AppSidebar({ roles }: { roles: Role[] }) {
   // איש צוות עדיין רואה את פריטי השדכן, ולא רק לפי תפקיד "ראשי" יחיד.
   const isShadchanOrAdmin =
     effectiveRoles.includes("shadchan") || effectiveRoles.includes("admin");
-  const isStaff = effectiveRoles.includes("staff");
   const items = allItems.filter((item) => {
     if (shadchanOnlyUrls.includes(item.url)) return isShadchanOrAdmin;
-    if (staffVisibleUrls.includes(item.url)) return isShadchanOrAdmin || isStaff;
     return true;
   });
   return (

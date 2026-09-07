@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { hasRole } from "@/lib/user";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -26,16 +25,12 @@ export default async function StudentsLayout({
     redirect("/auth/login");
   }
 
-  // איש צוות מאושר גם רשאי להיכנס - RLS (staff_can_access_student, ראה
-  // supabase/migrations/20260830170000_student_notes.sql) כבר מגביל את
-  // הרשימה שהוא יראה למיועדים של המוסד שלו בלבד.
-  if (
-    !hasRole(user, "admin") &&
-    !hasRole(user, "shadchan") &&
-    !hasRole(user, "staff")
-  ) {
-    redirect("/app");
-  }
+  // אין סינון תפקידים כאן. הורה חייב להגיע ליצירת כרטיס ולכרטיסים של ילדיו,
+  // ו-RLS כבר מצמצם כל אחד למה שמותר לו:
+  //   - הורה       — auth.uid() = students.user_id (הילדים שלו בלבד)
+  //   - איש צוות   — staff_can_access_student (המיועדים של המוסד שלו)
+  //   - שדכן/אדמין — is_shadchan_or_admin (הכל)
+  // ראה supabase/migrations/20260830170000_student_notes.sql:134-145.
 
   return <>{children}</>;
 }
