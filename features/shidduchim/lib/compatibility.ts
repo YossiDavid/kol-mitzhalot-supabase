@@ -5,7 +5,8 @@ type PartnerPrefsRow = {
   age_min?: number | null;
   age_max?: number | null;
   preferred_countries?: string[] | null;
-  work_status?: string | null;
+  /** מערך מאז 20260907160000. מחרוזת נתמכת לתאימות לרשומות ישנות. */
+  work_status?: string[] | string | null;
   head_cover_type?: string | null;
   plan_for_life?: string | null;
   cellphone_type?: string | null;
@@ -112,6 +113,15 @@ export type CompatibilityOptions = {
 /**
  * הערות אבחון התאמה (בסיס ראשוני — ניתן להרחבה).
  */
+/**
+ * work_status עבר מ-text ל-text[] ב-20260907160000. הקוד כאן השווה
+ * מחרוזות, ומערך שובר את .trim() בזמן ריצה. מנרמלים לשתי הצורות.
+ */
+function normalizeWorkStatus(value: string[] | string | null | undefined) {
+  if (Array.isArray(value)) return value.join(" ").trim();
+  return (value || "").trim();
+}
+
 export function getCompatibilityNotes(
   groom: Record<string, unknown> | null | undefined,
   bride: Record<string, unknown> | null | undefined,
@@ -226,7 +236,7 @@ export function getCompatibilityNotes(
     notes.push("פער גבוה בגובה בין המיועדים");
   }
 
-  const groomReq = (groomP?.work_status || "").trim();
+  const groomReq = normalizeWorkStatus(groomP?.work_status);
   const brideLab = employmentPrimaryLabel(
     bride as { gender?: string; employment_history?: { category?: string }[] },
   );
@@ -241,7 +251,7 @@ export function getCompatibilityNotes(
     }
   }
 
-  const brideReq = (brideP?.work_status || "").trim();
+  const brideReq = normalizeWorkStatus(brideP?.work_status);
   const groomLab = employmentPrimaryLabel(
     groom as { gender?: string; employment_history?: { category?: string }[] },
   );

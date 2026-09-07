@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangleIcon, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 
@@ -35,7 +36,9 @@ export default function CompatibilityDiagnosis({ issues, onDismiss }: Props) {
           </Button>
         )}
 
-        <div className="flex gap-2">
+        {/* כפתור הסגירה ממוקם absolute בקצה ה-start, שהוא בדיוק מאיפה
+            שהכותרת מתחילה ב-RTL. מפנים לו מקום כדי שלא יעלה עליה. */}
+        <div className={cn("flex gap-2", onDismiss && "ps-9")}>
           {hasIssues ? (
             <AlertTriangleIcon className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
           ) : null}

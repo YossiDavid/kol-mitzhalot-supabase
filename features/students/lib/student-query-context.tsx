@@ -3,6 +3,8 @@
 import { createContext, useContext, useState } from "react";
 
 export interface StudentQuery {
+  /** חיפוש חופשי על פני כמה עמודות */
+  search?: string;
   first_name?: string;
   last_name?: string;
   gender?: string;

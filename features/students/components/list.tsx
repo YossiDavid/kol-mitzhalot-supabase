@@ -117,6 +117,23 @@ export default function StudentsList() {
             ].join(","),
           );
 
+        // חיפוש חופשי על פני העמודות שמשתמש היה מצפה להקליד בהן.
+        // ilike ולא textSearch, כי אין אינדקס full-text והשמות קצרים.
+        if (query.search?.trim()) {
+          const term = query.search.trim().replace(/[%,()]/g, "");
+          if (term) {
+            q = q.or(
+              [
+                `first_name.ilike.%${term}%`,
+                `last_name.ilike.%${term}%`,
+                `city.ilike.%${term}%`,
+                `community.ilike.%${term}%`,
+                `shtible.ilike.%${term}%`,
+              ].join(","),
+            );
+          }
+        }
+
         if (query.first_name)
           q = q.ilike("first_name", `%${query.first_name}%`);
         if (query.last_name) q = q.ilike("last_name", `%${query.last_name}%`);
@@ -185,7 +202,18 @@ export default function StudentsList() {
     setStudents((prev) => prev.filter((s) => s.id !== studentId));
   };
 
+  /** מאורס אינו רלוונטי לשידוך, ולכן לא ניתן להוסיפו למועדפים. */
+  const isEngaged = (id: string) =>
+    students.find((s) => s.id === id)?.personal_status === "engaged";
+
   const handleFavoriteChange = async (checked: boolean, id: string) => {
+    // חוסמים הוספה בלבד. הסרה נשארת פתוחה, כדי שמי שכבר במועדפים
+    // והתארס מאז יוכל לצאת משם.
+    if (checked && isEngaged(id)) {
+      toast.info("לא ניתן להוסיף מאורס למועדפים");
+      return;
+    }
+
     const currentFavs: string[] = user?.user_metadata?.favorites || [];
     const nextFavs = checked
       ? [...currentFavs, id]
@@ -305,11 +333,17 @@ export default function StudentsList() {
                           student.id,
                         )
                       }
-                      className="p-1"
+                      className="p-1 disabled:cursor-not-allowed disabled:opacity-40"
+                      disabled={
+                        !favSet.has(student.id) &&
+                        student.personal_status === "engaged"
+                      }
                       aria-label={
                         favSet.has(student.id)
                           ? "הסר ממועדפים"
-                          : "הוסף למועדפים"
+                          : student.personal_status === "engaged"
+                            ? "לא ניתן להוסיף מאורס למועדפים"
+                            : "הוסף למועדפים"
                       }
                     >
                       <Star
@@ -395,9 +429,17 @@ export default function StudentsList() {
                     onClick={() =>
                       handleFavoriteChange(!favSet.has(student.id), student.id)
                     }
-                    className="p-1"
+                    className="p-1 disabled:cursor-not-allowed disabled:opacity-40"
+                    disabled={
+                      !favSet.has(student.id) &&
+                      student.personal_status === "engaged"
+                    }
                     aria-label={
-                      favSet.has(student.id) ? "הסר ממועדפים" : "הוסף למועדפים"
+                      favSet.has(student.id)
+                        ? "הסר ממועדפים"
+                        : student.personal_status === "engaged"
+                          ? "לא ניתן להוסיף מאורס למועדפים"
+                          : "הוסף למועדפים"
                     }
                   >
                     <Star

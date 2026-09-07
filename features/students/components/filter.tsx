@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useStudentQuery, StudentQuery } from "@/features/students/lib/student-query-context";
 import { Box, DashboardSection } from "@/components/layout";
 import { TextField } from "@/features/students/components/create-form/fields/text";
@@ -23,10 +23,12 @@ export default function FilterSection() {
     (v) => v !== undefined && v !== "",
   ).length;
 
-  function handleSearch() {
-    setQuery(filter);
-    setMobileOpen(false);
-  }
+  // הכל מוחל תוך כדי הקלדה. 300ms מספיק כדי לא לירות שאילתה על כל
+  // תו, ועדיין מרגיש מיידי.
+  useEffect(() => {
+    const timer = setTimeout(() => setQuery(filter), 300);
+    return () => clearTimeout(timer);
+  }, [filter, setQuery]);
 
   return (
     <>
@@ -164,10 +166,6 @@ export default function FilterSection() {
                 />
               </div>
             </div>
-            <Button onClick={handleSearch} className="w-full gap-2">
-              <Search className="h-4 w-4" />
-              חיפוש
-            </Button>
           </Box>
         )}
       </div>
@@ -184,6 +182,22 @@ export default function FilterSection() {
           containerClassName="p-0 space-y-4"
         >
           <div className="box grid grid-cols-2 gap-4 p-4 md:grid-cols-12">
+            <div className="col-span-2 md:col-span-3">
+              <Label htmlFor="search">חיפוש חופשי</Label>
+              <div className="relative">
+                <Search className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <TextField
+                  id="search"
+                  type="text"
+                  placeholder="שם, עיר, קהילה…"
+                  className="pe-9"
+                  value={filter.search || ""}
+                  onChange={(e) =>
+                    setFilter({ ...filter, search: e.target.value })
+                  }
+                />
+              </div>
+            </div>
             <div className="col-span-1 md:col-span-2">
               <Label htmlFor="gender">מגדר</Label>
               <NativeSelect
@@ -376,13 +390,6 @@ export default function FilterSection() {
               >
                 <Sliders />
                 <span className="sr-only">הצג עוד מסננים</span>
-              </Button>
-              <Button
-                onClick={() => setQuery(filter)}
-                className="ml-2 flex-1"
-              >
-                חיפוש
-                <Search />
               </Button>
             </div>
           </div>

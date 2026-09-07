@@ -1488,7 +1488,10 @@ export default async function StudentPage({
                         </p>
                       </div>
                     )}
-                  {student.partner_preferences.work_status && (
+                  {workStatusToHebrew(
+                    student.partner_preferences.work_status,
+                    student.gender,
+                  ) && (
                     <div className="rounded-lg bg-muted/50 p-3">
                       <p className="text-caption text-muted-foreground">
                         סטטוס תעסוקתי מבוקש

@@ -9,6 +9,7 @@ import {
   Dialog,
   DialogContent,
   DialogFooter,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -160,6 +161,9 @@ export function InstitutionsImportDialog({
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>ייבוא מוסדות מקובץ אקסל</DialogTitle>
+          <DialogDescription>
+            העלו קובץ, מפו את העמודות לשדות המערכת, ואשרו לפני הייבוא.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5">
