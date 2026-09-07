@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
+  ClipboardList,
   GraduationCap,
   HeartHandshake,
   Home,
@@ -41,11 +42,16 @@ const allItems = [
   { title: "הוספת מיועד", url: "/app/students/create", icon: Plus },
   { title: "צ'אטים", url: "/app/chats", icon: MessageCircle },
   { title: "לוח העבודה", url: "/app/canvas", icon: Network },
+  {
+    title: "כל השידוכים שלי",
+    url: "/app/shadchan/proposals",
+    icon: ClipboardList,
+  },
   { title: "הגדרות", url: "/app/settings", icon: Settings },
 ] as const;
 
 // לוח ההתאמות הוא כלי עבודה של שדכן/מנהל בלבד.
-const shadchanOnlyUrls = ["/app/canvas"];
+const shadchanOnlyUrls = ["/app/canvas", "/app/shadchan/proposals"];
 // רשימת המיועדים חושפת מיועדים של אחרים, ולכן סגורה להורה. "הוספת
 // מיועד" נשארת פתוחה לכולם — הורה מוסיף את ילדיו.
 const staffVisibleUrls = ["/app/students"];

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Box, Section } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import DraftActions from "@/features/shidduchim/components/draft-actions";
 import {
   Empty,
   EmptyContent,
@@ -44,6 +45,8 @@ function fullName(row: {
 type ShidduchRow = {
   id: string;
   status: string;
+  groom_id: string;
+  bride_id: string;
   created_at: string;
   sent_at: string | null;
   note_for_groom: string | null;
@@ -67,6 +70,8 @@ export default async function ShadchanProposalsPage() {
     status,
     created_at,
     sent_at,
+    groom_id,
+    bride_id,
     note_for_groom,
     note_for_bride,
     groom:students!shidduchim_groom_id_fkey(first_name,last_name,city),
@@ -77,13 +82,14 @@ export default async function ShadchanProposalsPage() {
     .from("shidduchim")
     .select(shidduchSelect)
     .eq("shadchan_id", user.id)
-    .neq("status", "draft")
     .order("created_at", { ascending: false });
 
   if (error) console.error(error);
 
   const shidduchim: ShidduchRow[] = (data || []).map((row) => ({
     id: row.id,
+    groom_id: row.groom_id,
+    bride_id: row.bride_id,
     status: row.status,
     created_at: row.created_at,
     sent_at: row.sent_at,
@@ -96,7 +102,7 @@ export default async function ShadchanProposalsPage() {
   return (
     <Section containerClassName="py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-heading font-bold">כל ההצעות שלך</h1>
+        <h1 className="text-heading font-bold">כל השידוכים שלי</h1>
         <Button asChild variant="outline">
           <Link href="/app/canvas">חזרה ללוח העבודה</Link>
         </Button>
@@ -107,7 +113,7 @@ export default async function ShadchanProposalsPage() {
           <EmptyHeader>
             <EmptyTitle>אין הצעות כרגע</EmptyTitle>
             <EmptyDescription>
-              אין שידוכים עם סטטוס שאינו טיוטה עבור השדכן/המנהל/ת המחובר/ת.
+              עדיין לא יצרת שידוכים. אפשר להתחיל מלוח העבודה.
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
@@ -163,10 +169,16 @@ export default async function ShadchanProposalsPage() {
                 </div>
 
                 <div className="flex items-center gap-2 self-end sm:self-start">
+                  {status === "draft" && (
+                    <DraftActions
+                      groomId={row.groom_id}
+                      brideId={row.bride_id}
+                      noteForGroom={row.note_for_groom}
+                      noteForBride={row.note_for_bride}
+                    />
+                  )}
                   <Button asChild variant="outline" size="sm">
-                    <Link href={`/app/shidduchim/${row.id}`}>
-                      פתיחה
-                    </Link>
+                    <Link href={`/app/shidduchim/${row.id}`}>פתיחה</Link>
                   </Button>
                 </div>
               </Box>
