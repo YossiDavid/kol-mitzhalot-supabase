@@ -110,6 +110,9 @@ test.describe("יצירת תלמיד חדש", () => {
     await fill(page, "partner.additionalInformation", "מחפשים בן תורה עם מידות טובות");
     await fill(page, "author.name", "יוסף ישראלי");
     await fill(page, "author.phone", "0521234567");
+    // שדה חובה בסכמה. בלי מילויו zodResolver חוסם את השליחה בלי טוסט ובלי
+    // שגיאת קונסול, והטופס פשוט נשאר במקומו.
+    await fill(page, "author.relation", "אב");
 
     // Submit
     const submitBtn = page.locator("button[type='submit']");
