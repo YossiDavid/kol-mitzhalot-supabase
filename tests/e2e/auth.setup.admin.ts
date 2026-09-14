@@ -22,7 +22,13 @@ setup("authenticate admin test user", async ({ page }) => {
   if (existing) {
     userId = existing.id;
     await admin.auth.admin.updateUserById(userId, {
-      user_metadata: { role: "admin", phone_verified: true, phone: ADMIN_PHONE, firstName: "Admin", lastName: "Test" },
+      user_metadata: {
+        role: "admin",
+        phone_verified: true,
+        phone: ADMIN_PHONE,
+        firstName: "Admin",
+        lastName: "Test",
+      },
     });
   } else {
     const { data, error } = await admin.auth.admin.createUser({
