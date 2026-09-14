@@ -47,11 +47,6 @@ setup("authenticate admin test user", async ({ page }) => {
     .from("user_profiles")
     .upsert({ id: userId, first_name: "Admin", last_name: "Test" });
 
-  // Grant admin role in user_roles table
-  await admin
-    .from("user_roles")
-    .upsert({ user_id: userId, role: "admin" });
-
   // Generate magic link
   const { data: linkData, error: linkError } =
     await admin.auth.admin.generateLink({
