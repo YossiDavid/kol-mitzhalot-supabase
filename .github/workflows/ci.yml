@@ -55,20 +55,51 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
 
+      # הסכמה נבנית מהמיגרציות ומהזרע בכל הרצה, בתוך קונטיינר חד-פעמי.
+      # קודם לכן הבדיקות רצו מול פרויקט מרוחק שסכמתו נסחפה, ונפלו על עמודות,
+      # טבלאות ופונקציות שחסרו שם. מסד שנבנה מאפס אינו יכול להיסחף.
+      #
+      # הגרסה מוצמדת ולא latest, כדי שהבנייה לא תישבר משדרוג צד שלישי.
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.105.0
+
+      - name: Start local Supabase
+        run: supabase start
+
+      # מחיל מיגרציות וזרע באופן ודאי, בלי להסתמך על התנהגות ברירת מחדל של
+      # start. בלי --linked הפקודה נוגעת אך ורק בסטאק המקומי שבקונטיינר,
+      # לעולם לא בפרויקט ענן.
+      - name: Apply migrations and seed
+        run: supabase db reset
+
+      # הכתובת והמפתחות נגזרים מהסטאק שרץ, ולא מסודות. כך אין בהרצה הזו
+      # אישורים לשום סביבה אמיתית.
+      - name: Export local Supabase credentials
+        run: |
+          # מסננים לשורות KEY=VALUE בלבד: ה-CLI מדפיס גם הודעות (שירותים
+          # שנעצרו, גרסה חדשה זמינה), וכיום הן יוצאות ל-stderr — אבל אין
+          # סיבה שהבנייה תישען על כך שזה יישאר כך.
+          eval "$(supabase status -o env 2>/dev/null | grep -E '^[A-Z_0-9]+=')"
+          # נפילה מיידית עם הודעה ברורה עדיפה על ייצוא ערכים ריקים, שהיה
+          # מתגלה רק מאוחר יותר ככישלון בדיקות מבלבל.
+          : "${API_URL:?supabase status did not report API_URL}"
+          : "${PUBLISHABLE_KEY:?supabase status did not report PUBLISHABLE_KEY}"
+          : "${SERVICE_ROLE_KEY:?supabase status did not report SERVICE_ROLE_KEY}"
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+          } >> "$GITHUB_ENV"
+
+      # ALLOW_REMOTE_E2E אינו מוגדר כאן במכוון: היעד באמת מקומי, ולכן
+      # המנגנון שחוסם הרצה מול מסד שאינו מקומי עובר מעצמו במקום להיעקף.
       - name: Run E2E tests
         run: pnpm test:e2e
         env:
           CI: true
-          # הבדיקות חוסמות ריצה מול מסד שאינו מקומי, כי הן כותבות נתונים
-          # אמיתיים. כאן החריגה מפורשת — ועל TEST_SUPABASE_URL להיות פרויקט
-          # בדיקות ייעודי, לעולם לא זה של הפרודקשן.
-          ALLOW_REMOTE_E2E: true
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TEST_SUPABASE_PUBLISHABLE_KEY }}
           NEXT_PUBLIC_APP_URL: http://localhost:3000
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.TEST_SUPABASE_SERVICE_ROLE_KEY }}
-          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
