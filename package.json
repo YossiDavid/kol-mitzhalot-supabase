@@ -1,6 +1,7 @@
 {
   "private": true,
   "scripts": {
+    "preinstall": "node scripts/only-allow-pnpm.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -27,8 +28,8 @@
     "@radix-ui/react-toggle": "^1.1.10",
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@supabase/ssr": "latest",
-    "@supabase/supabase-js": "latest",
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.87.1",
     "@tailwindcss/postcss": "^4.1.17",
     "@tiptap/extension-placeholder": "^3.15.3",
     "@tiptap/pm": "^3.15.3",
@@ -44,7 +45,7 @@
     "jewish-date": "^2.0.22",
     "jewish-dates-core": "^2.0.24",
     "lucide-react": "^0.511.0",
-    "next": "latest",
+    "next": "^16.3.4",
     "next-themes": "^0.4.6",
     "radix-ui": "^1.4.3",
     "react": "^19.0.0",
@@ -58,7 +59,6 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
     "@playwright/test": "^1.61.1",
     "@svgr/webpack": "^8.1.0",
     "@types/node": "^20",
@@ -66,15 +66,18 @@
     "@types/react-dom": "^19",
     "@types/sanitize-html": "^2.16.0",
     "autoprefixer": "^10.4.20",
-    "baseline-browser-mapping": "latest",
+    "baseline-browser-mapping": "^2.11.21",
     "eslint": "^9",
-    "eslint-config-next": "15.3.1",
+    "eslint-config-next": "16.3.4",
     "postcss": "^8",
     "prettier": "^3.7.4",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "tailwindcss": "^4.1.17",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5"
+  },
+  "engines": {
+    "npm": "please-use-pnpm"
   },
   "packageManager": "pnpm@10.33.2+sha512.a90faf6feeab71ad6c6e57f94e0fe1a12f5dcc22cd754db40ae9593eb6a3e0b6b12e3540218bb37ae083404b1f2ce6db2a4121e979829b4aff94b99f49da1cf8"
 }

@@ -1,22 +1,22 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
+import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
+import nextTypescript from "eslint-config-next/typescript";
 
 const TYPO_MSG =
   "Use design-system typography tokens only (text-display|heading|title|subtitle|body|body-sm|label|caption), semantic HTML (h1–h6, p, small), or prose-km. See docs/DESIGN.md §טיפוגרפיה.";
 
 const eslintConfig = [
   {
-    ignores: [".claude/**", ".agents/**"],
+    ignores: [
+      ".next/**",
+      "out/**",
+      "build/**",
+      "next-env.d.ts",
+      ".claude/**",
+      ".agents/**",
+    ],
   },
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...nextCoreWebVitals,
+  ...nextTypescript,
   {
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
@@ -53,6 +53,14 @@ const eslintConfig = [
             "Do not set inline fontSize. Use design-system text-* tokens. See docs/DESIGN.md §טיפוגרפיה.",
         },
       ],
+    },
+  },
+  {
+    rules: {
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/refs": "warn",
+      "react-hooks/purity": "warn",
+      "react-hooks/preserve-manual-memoization": "warn",
     },
   },
 ];

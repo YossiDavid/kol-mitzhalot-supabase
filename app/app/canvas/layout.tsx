@@ -1,16 +1,14 @@
-import { createClient } from "@/lib/supabase/server";
-import { hasRole } from "@/lib/user";
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
-export default async function CanvasLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+import { getUser, hasRole } from "@/lib/user";
+
+/**
+ * לוח ההתאמות פתוח לשדכן ולמנהל בלבד. השער אינו מציג דבר, ולכן הוא זורם
+ * אחרי המסגרת במקום לעכב את הרינדור שלה.
+ */
+async function CanvasGate() {
+  const user = await getUser();
 
   if (!user) {
     redirect("/auth/login");
@@ -20,5 +18,20 @@ export default async function CanvasLayout({
     redirect("/app");
   }
 
-  return <>{children}</>;
+  return null;
+}
+
+export default function CanvasLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <>
+      <Suspense fallback={null}>
+        <CanvasGate />
+      </Suspense>
+      {children}
+    </>
+  );
 }

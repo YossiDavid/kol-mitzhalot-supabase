@@ -18,7 +18,7 @@ import type { Role } from "@/lib/user";
 // למסלול הקיים של הרשמה-ואישור (app/app/settings/staff -> app/app/admin/staff/requests).
 const bodySchema = z.object({
   roles: z.array(z.enum(["admin", "shadchan", "staff"])).max(3),
-  institutionId: z.string().uuid().nullable().optional(),
+  institutionId: z.guid().nullable().optional(),
 });
 
 export async function PATCH(

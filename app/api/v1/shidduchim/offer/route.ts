@@ -10,8 +10,10 @@ import { hasRole } from "@/lib/user";
 const recipientScopeSchema = z.enum(["both", "groom_only", "bride_only"]);
 
 const bodySchema = z.object({
-  groomId: z.string().uuid(),
-  brideId: z.string().uuid(),
+  // z.guid ולא z.uuid: החל מ-zod 4 המאמת של uuid בודק גם את ביטי הגרסה
+  // לפי RFC 4122, ומזהים תקינים לחלוטין במסד (כולל נתוני הזרע) נפסלים.
+  groomId: z.guid(),
+  brideId: z.guid(),
   action: z.enum(["draft", "send"]),
   recipientScope: recipientScopeSchema.optional(),
   noteForGroom: z.string().max(8000).optional().default(""),
@@ -308,7 +310,8 @@ export async function POST(req: NextRequest) {
     ok: true,
     id: shidduchId,
     status: "sent",
-    sentTo,
-    sendGridMessageIds,
+    // לא מחזירים כתובות מייל של ההורים: השדכן אינו אמור לראות אותן,
+    // והן היו נחשפות בדפדפן גם בלי להופיע בהודעה. מספיק כמה נמענים.
+    sentCount: sentTo.length,
   });
 }

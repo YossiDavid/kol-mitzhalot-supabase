@@ -13,11 +13,14 @@ import {
   Chat as UserChat,
 } from "@/features/dashboard/components/user";
 import { createClient } from "@/lib/supabase/server";
+import { getMyProposals } from "@/features/shidduchim/lib/proposals-data";
 import { hasRole } from "@/lib/user";
+import DashboardSkeleton from "@/features/dashboard/components/dashboard-skeleton";
 import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
+import { Suspense } from "react";
 
-export default async function Home() {
+async function DashboardSections() {
   noStore();
   const supabase = await createClient();
 
@@ -117,6 +120,15 @@ export default async function Home() {
     console.error(activeShidduchimRes.error);
   }
   const activeShidduchimData = activeShidduchimRes.data || [];
+
+  // הצעות פתוחות שנשלחו לילדי המשתמש (כמנהל כרטיס) - החדשות קודם
+  const OPEN_PROPOSALS_LIMIT = 5;
+  const openProposals = user?.id
+    ? await getMyProposals(supabase, {
+        openOnly: true,
+        limit: OPEN_PROPOSALS_LIMIT,
+      })
+    : [];
 
   // פוסטים אחרונים בפורום השדכנים
   const forumPostsRes =
@@ -233,7 +245,7 @@ export default async function Home() {
   const roleLabel = isAdmin ? "מנהל" : isShadchan ? "שדכן" : "משתמש";
 
   return (
-    <div className="space-y-10 py-4">
+    <>
       {/* ברכה */}
       {user && (
         <div className="pb-2 md:hidden">
@@ -310,7 +322,7 @@ export default async function Home() {
               </Button>
             }
           >
-            <UserActiveShidduchim shiduchim={[]} />
+            <UserActiveShidduchim shiduchim={openProposals} />
           </DashboardSection>
           <DashboardSection
             title="הודעות אחרונות"
@@ -343,10 +355,20 @@ export default async function Home() {
               </Button>
             }
           >
-            <ShadchanimList shadchanim={[]} />
+            <ShadchanimList />
           </DashboardSection>
         </>
       )}
+    </>
+  );
+}
+
+export default function Home() {
+  return (
+    <div className="space-y-10 py-4">
+      <Suspense fallback={<DashboardSkeleton />}>
+        <DashboardSections />
+      </Suspense>
     </div>
   );
 }

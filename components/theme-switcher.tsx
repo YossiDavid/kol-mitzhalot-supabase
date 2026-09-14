@@ -21,8 +21,11 @@ const ThemeSwitcher = () => {
     setMounted(true);
   }, []);
 
+  // ערכת הנושא בפועל ידועה רק בלקוח, ולכן אי אפשר לרנדר את האייקון בשרת.
+  // מחזירים מציין מקום בגודל הכפתור (size-9) במקום null, אחרת האייקון
+  // "קופץ" אחרי ה-hydration ומזיז את כל ההדר.
   if (!mounted) {
-    return null;
+    return <div className="size-9" aria-hidden />;
   }
 
   const ICON_SIZE = 16;

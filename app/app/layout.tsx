@@ -3,15 +3,13 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ImpersonationBanner } from "@/features/admin/components/impersonation-banner";
 
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/server";
 import { cookies, headers } from "next/headers";
-import { Suspense } from "react";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { Toaster } from "@/components/ui/sonner";
 import { redirect } from "next/navigation";
-import { getRoles } from "@/lib/user";
+import { getRoles, getUser } from "@/lib/user";
 import { getPhoneVerificationEnabled } from "@/lib/system-settings";
 
 // כרטיס מיועד ציבורי: נתיב של בדיוק /app/students/<מזהה> ללא סגמנטים נוספים.
@@ -20,14 +18,20 @@ import { getPhoneVerificationEnabled } from "@/lib/system-settings";
 // /app/students (בלי סגמנט) לא תואם בכלל, ולכן גם הוא ממשיך לדרוש התחברות.
 const PUBLIC_STUDENT_CARD_PATH_REGEX = /^\/app\/students\/(?!create$)[^/]+$/;
 
-async function SidebarLayout({ children }: { children: React.ReactNode }) {
+// המעטפת נטענת לכל בקשה: היא תלויה בסשן, בתפקידים ובעוגיית מצב הסיידבר.
+// היא נשארת חוסמת בכוונה — הדר וסיידבר שמוזרמים מאחורי שלד "קופצים"
+// בטעינה. השלד נשאר ברמת הדף, כך שרק התוכן מתחלף משלד לתוכן.
+export const instant = false;
+
+export default async function AppLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
 
   const pathname = (await headers()).get("x-pathname") ?? "";
   const isPublicStudentCard = PUBLIC_STUDENT_CARD_PATH_REGEX.test(pathname);
@@ -95,17 +99,5 @@ async function SidebarLayout({ children }: { children: React.ReactNode }) {
         />
       </SidebarInset>
     </SidebarProvider>
-  );
-}
-
-export default async function AppLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <Suspense fallback={null}>
-      <SidebarLayout>{children}</SidebarLayout>
-    </Suspense>
   );
 }

@@ -2,13 +2,13 @@
 
 # dependencies
 /node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+
+# הפרויקט עובד רק עם pnpm - lockfile של מנהלי חבילות אחרים לא נכנס ל-git
+package-lock.json
+yarn.lock
+bun.lock
+bun.lockb
+.yarn/
 
 # testing
 /coverage

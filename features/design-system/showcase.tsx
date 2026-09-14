@@ -284,6 +284,7 @@ export function DesignSystemShowcase() {
         <Section
           id="typography"
           title="טיפוגרפיה"
+          // eslint-disable-next-line no-restricted-syntax -- התיאור מצטט את שמות המחלקות האסורות כדי להסביר את הכלל
           description="סולם סמנטי (~1.2). רק text-display|heading|title|subtitle|body|body-sm|label|caption — אסור text-sm / text-[Npx]. תוכן ארוך: prose-km. cn() שומר צבע+גודל יחד."
         >
           <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
@@ -476,9 +477,15 @@ export function DesignSystemShowcase() {
             </div>
 
             <div className="space-y-3">
-              <h3 className="text-subtitle">Toggle Group / Dropdown / Breadcrumb</h3>
+              <h3 className="text-subtitle">
+                Toggle Group / Dropdown / Breadcrumb
+              </h3>
               <div className="flex max-w-xl flex-col gap-5 rounded-xl border border-border bg-card p-5">
-                <ToggleGroup type="multiple" variant="outline" defaultValue={["bold"]}>
+                <ToggleGroup
+                  type="multiple"
+                  variant="outline"
+                  defaultValue={["bold"]}
+                >
                   <ToggleGroupItem value="bold" aria-label="Bold">
                     <Bold />
                   </ToggleGroupItem>

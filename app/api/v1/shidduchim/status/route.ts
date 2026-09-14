@@ -11,7 +11,7 @@ import {
 import { hasRole } from "@/lib/user";
 
 const bodySchema = z.object({
-  shidduchId: z.string().uuid(),
+  shidduchId: z.guid(),
   status: z.string(),
 });
 

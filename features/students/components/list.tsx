@@ -10,7 +10,6 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Box } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import Link from "next/link";
@@ -19,6 +18,7 @@ import { Star, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
 import { cn } from "@/lib/utils";
+import { useRowLink } from "@/features/students/lib/use-row-link";
 
 type Student = {
   id: string;
@@ -50,6 +50,20 @@ type Student = {
   status_changed_at?: string | null;
   permalink: string;
 };
+
+/**
+ * כל השורה/הכרטיס הם קישור לכרטיס המלא. Box מעביר רק className ומשמיט
+ * אירועים ו-props אחרים, ולכן משתמשים ב-div עם המחלקה box עצמה.
+ */
+const CLICKABLE_ROW_CLASS =
+  "box cursor-pointer p-4 outline-none transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50";
+
+const ENGAGED_ROW_CLASS =
+  "border-yellow-400 bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-950/30 dark:hover:bg-yellow-950/50";
+
+function studentCardHref(id: string) {
+  return `/app/students/${id}` as const;
+}
 
 function isRecentlyEngaged(student: Student): boolean {
   if (student.personal_status !== "engaged") return false;
@@ -197,6 +211,12 @@ export default function StudentsList() {
   );
 
   const isAdmin = hasRole(user, "admin");
+  const getRowLinkProps = useRowLink();
+  const rowLinkPropsFor = (student: Student) =>
+    getRowLinkProps(
+      studentCardHref(student.id),
+      `כרטיס מלא: ${student.first_name} ${student.last_name}`,
+    );
 
   const handleStudentDeleted = (studentId: string) => {
     setStudents((prev) => prev.filter((s) => s.id !== studentId));
@@ -281,12 +301,12 @@ export default function StudentsList() {
           {/* כרטיסים — מובייל בלבד */}
           <div className="flex flex-col gap-2 md:hidden">
             {students.map((student) => (
-              <Box
+              <div
                 key={student.id}
+                {...rowLinkPropsFor(student)}
                 className={cn(
-                  "p-4",
-                  isRecentlyEngaged(student) &&
-                    "border-yellow-400 bg-yellow-50 dark:bg-yellow-950/30",
+                  CLICKABLE_ROW_CLASS,
+                  isRecentlyEngaged(student) && ENGAGED_ROW_CLASS,
                 )}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -392,10 +412,10 @@ export default function StudentsList() {
                     </Button>
                   )}
                   <Button asChild size="sm" className="flex-1">
-                    <Link href={`/app/students/${student.id}`}>כרטיס מלא</Link>
+                    <Link href={studentCardHref(student.id)}>כרטיס מלא</Link>
                   </Button>
                 </div>
-              </Box>
+              </div>
             ))}
           </div>
 
@@ -416,12 +436,13 @@ export default function StudentsList() {
               <div>גובה</div>
             </div>
             {students.map((student) => (
-              <Box
+              <div
                 key={student.id}
+                {...rowLinkPropsFor(student)}
                 className={cn(
-                  "col-span-full grid grid-cols-subgrid items-center p-4",
-                  isRecentlyEngaged(student) &&
-                    "border-yellow-400 bg-yellow-50 dark:bg-yellow-950/30",
+                  CLICKABLE_ROW_CLASS,
+                  "col-span-full grid grid-cols-subgrid items-center",
+                  isRecentlyEngaged(student) && ENGAGED_ROW_CLASS,
                 )}
               >
                 <div className="flex items-center gap-1">
@@ -499,12 +520,12 @@ export default function StudentsList() {
                     </Button>
                   )}
                   <Button asChild className="flex-1">
-                    <Link href={`/app/students/${student.id}`}>
+                    <Link href={studentCardHref(student.id)}>
                       לצפיה בכרטיס המלא
                     </Link>
                   </Button>
                 </div>
-              </Box>
+              </div>
             ))}
           </div>
         </>

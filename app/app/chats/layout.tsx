@@ -1,7 +1,9 @@
-"use client";
+import { ChatsPanes } from "./chats-panes";
 
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+// חלון שיחה נטען לכל בקשה מחדש ואין לו shell סטטי בעל ערך: רשימת השיחות
+// וההודעות נקראות בזמן ריצה, ורשימת השיחות אף מסמנת את השיחה הפעילה לפי
+// הנתיב. לכן הסגמנט נשאר חוסם במקום להיכשל ב-prerender.
+export const instant = false;
 
 export default function ChatsLayout({
   children,
@@ -10,30 +12,5 @@ export default function ChatsLayout({
   children: React.ReactNode;
   chat: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const hasRoom = pathname.startsWith("/app/chats/");
-
-  return (
-    <div className="flex h-full overflow-hidden">
-      {/* Room list sidebar */}
-      <div
-        className={cn(
-          "w-full shrink-0 md:w-[340px]",
-          hasRoom ? "hidden md:block" : "block",
-        )}
-      >
-        {children}
-      </div>
-
-      {/* Chat pane */}
-      <div
-        className={cn(
-          "min-w-0 flex-1",
-          hasRoom ? "block" : "hidden md:block",
-        )}
-      >
-        {chat}
-      </div>
-    </div>
-  );
+  return <ChatsPanes chat={chat}>{children}</ChatsPanes>;
 }

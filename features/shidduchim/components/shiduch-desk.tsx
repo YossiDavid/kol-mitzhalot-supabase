@@ -117,9 +117,26 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
     await refetchFavoritesClient();
   };
 
+  /** מבטל תשובת pair-status שעוד בדרך, כדי שלא תאכלס מחדש לוח שכבר השתנה. */
+  const clearPairStatus = () => {
+    pairReq.current += 1;
+    setPairRows(null);
+    setPairLoading(false);
+  };
+
+  /** מחזיר את הלוח למצב ריק, כדי שאפשר יהיה להרכיב מיד את הצמד הבא. */
+  const resetDesk = () => {
+    clearPairStatus();
+    setMale(null);
+    setFemale(null);
+    setMaleNote("");
+    setFemaleNote("");
+    setHideDiagnosis(false);
+  };
+
   const fetchPairStatus = async () => {
     if (!newShiduch) {
-      setPairRows(null);
+      clearPairStatus();
       return;
     }
 
@@ -225,6 +242,9 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
       toast.success("השידוך נשמר כטיוטה");
       router.refresh();
       await fetchPairStatus();
+    } catch (err) {
+      console.error("[shiduch-desk] save draft failed:", err);
+      toast.error("שגיאה בשמירה");
     } finally {
       setDraftLoading(false);
     }
@@ -259,14 +279,21 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
         toast.error(data.error || "שגיאה בשליחה");
         return;
       }
-      const list =
-        Array.isArray(data.sentTo) && data.sentTo.length > 0
-          ? data.sentTo.join(", ")
-          : null;
-      toast.success(list ? `נשלח במייל ל: ${list}` : "ההצעה נשלחה במייל");
+      // בלי כתובות מייל: השדכן אינו אמור לראות את כתובות ההורים
+      toast.success(
+        recipientScope === "both"
+          ? "ההצעה נשלחה במייל לשני הצדדים"
+          : recipientScope === "groom_only"
+            ? "ההצעה נשלחה במייל למנהל כרטיס המיועד"
+            : "ההצעה נשלחה במייל למנהל כרטיס המיועדת",
+      );
       setSendModalOpen(false);
+      // הצמד שנשלח חסום לשליחה חוזרת, והשארתו על הלוח "תוקעת" אותו — מנקים לצמד הבא
+      resetDesk();
       router.refresh();
-      await fetchPairStatus();
+    } catch (err) {
+      console.error("[shiduch-desk] send offer failed:", err);
+      toast.error("שגיאה בשליחה");
     } finally {
       setSendLoading(false);
     }

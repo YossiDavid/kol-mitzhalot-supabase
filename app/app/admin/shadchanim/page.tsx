@@ -23,11 +23,11 @@ function parseShadchanimQuery(
   return { page, perPage };
 }
 
-export default async function ShadchanimPage({
-  searchParams,
-}: {
+type ShadchanimPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
+};
+
+async function ShadchanimContent({ searchParams }: ShadchanimPageProps) {
   noStore();
   const sp = await searchParams;
   const query = parseShadchanimQuery(sp);
@@ -115,5 +115,37 @@ export default async function ShadchanimPage({
         </Suspense>
       </DashboardSection>
     </div>
+  );
+}
+
+function ShadchanimPageFallback() {
+  return (
+    <div className="space-y-10 py-4">
+      <DashboardSection
+        title="כל השדכנים"
+        button={
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline">
+              <Link href="/app/admin/shadchanim/requests">בקשות ממתינות</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/app/admin">חזרה לדף הבית</Link>
+            </Button>
+          </div>
+        }
+      >
+        <div role="status" aria-label="טוען">
+          <ShadchanimListFallback />
+        </div>
+      </DashboardSection>
+    </div>
+  );
+}
+
+export default function ShadchanimPage(props: ShadchanimPageProps) {
+  return (
+    <Suspense fallback={<ShadchanimPageFallback />}>
+      <ShadchanimContent {...props} />
+    </Suspense>
   );
 }
