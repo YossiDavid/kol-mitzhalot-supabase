@@ -105,7 +105,9 @@ export async function POST(req: NextRequest) {
 
   const { data: pairRows, error: pairErr } = await admin
     .from("shidduchim")
-    .select("id, status, shadchan_id, sent_at")
+    .select(
+      "id, status, shadchan_id, sent_at, note_for_groom, note_for_bride, recipient_scope",
+    )
     .eq("groom_id", groomId)
     .eq("bride_id", brideId);
 
@@ -131,6 +133,27 @@ export async function POST(req: NextRequest) {
     (r) => r.shadchan_id === user.id && r.status === "draft",
   );
 
+  // unique_shidduch_pair מתיר שורה אחת לכל צמד. שורה שנדחתה כבר סגורה,
+  // ולכן משתמשים בה מחדש (הבעלות עוברת לשדכן ששולח עכשיו). טיוטה של
+  // שדכן אחר היא עבודה פעילה שלו — אותה לא דורסים בשקט.
+  const reusableRejected = rows.find((r) => r.status === "rejected");
+  const othersDraft = rows.find(
+    (r) => r.shadchan_id !== user.id && r.status === "draft",
+  );
+
+  if (!myDraft && !reusableRejected && othersDraft) {
+    return NextResponse.json(
+      {
+        error:
+          "לצמד הזה כבר קיימת טיוטה של שדכן אחר — לא ניתן ליצור עבורו הצעה נוספת",
+      },
+      { status: 409 },
+    );
+  }
+
+  /** השורה שאפשר לעדכן במקום להכניס חדשה */
+  const rowToReuse = myDraft ?? reusableRejected ?? null;
+
   const groomName = `${groom.first_name || ""} ${groom.last_name || ""}`.trim();
   const brideName = `${bride.first_name || ""} ${bride.last_name || ""}`.trim();
   const shadchanName =
@@ -150,15 +173,14 @@ export async function POST(req: NextRequest) {
       sent_at: null,
     };
 
-    if (myDraft) {
+    if (rowToReuse) {
       const { data: updated, error: uErr } = await admin
         .from("shidduchim")
         .update({
-          note_for_groom: payload.note_for_groom,
-          note_for_bride: payload.note_for_bride,
+          ...payload,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", myDraft.id)
+        .eq("id", rowToReuse.id)
         .select("id")
         .single();
 
@@ -210,14 +232,32 @@ export async function POST(req: NextRequest) {
     updated_at: nowIso,
   };
 
-  let shidduchId: string;
-  let wasDraftUpgrade: boolean;
+  /**
+   * מצב השורה לפני השליחה. שורה שנוצרה עכשיו (null) נמחקת אם המייל נכשל,
+   * ושורה שהייתה קיימת מוחזרת למה שהייתה — כולל סטטוס rejected ובעלות של
+   * שדכן אחר, שאסור שיישארו משונים רק מפני שהמייל לא יצא.
+   */
+  const previousState = rowToReuse
+    ? {
+        status: rowToReuse.status,
+        shadchan_id: rowToReuse.shadchan_id,
+        note_for_groom: rowToReuse.note_for_groom,
+        note_for_bride: rowToReuse.note_for_bride,
+        recipient_scope: rowToReuse.recipient_scope,
+        sent_at: rowToReuse.sent_at,
+      }
+    : null;
 
-  if (myDraft) {
+  /** טיוטה משלי: שומרים את הנוסח שנכתב עכשיו, ורק מחזירים אותה לטיוטה */
+  const reusedMyOwnDraft = !!myDraft && rowToReuse?.id === myDraft.id;
+
+  let shidduchId: string;
+
+  if (rowToReuse) {
     const { data: upgraded, error: uErr } = await admin
       .from("shidduchim")
       .update(sendPayloadBase)
-      .eq("id", myDraft.id)
+      .eq("id", rowToReuse.id)
       .select("id")
       .single();
 
@@ -229,7 +269,6 @@ export async function POST(req: NextRequest) {
       );
     }
     shidduchId = upgraded.id;
-    wasDraftUpgrade = true;
   } else {
     const { data: inserted, error: iErr } = await admin
       .from("shidduchim")
@@ -245,7 +284,6 @@ export async function POST(req: NextRequest) {
       );
     }
     shidduchId = inserted.id;
-    wasDraftUpgrade = false;
   }
 
   let sentTo: string[] = [];
@@ -275,7 +313,9 @@ export async function POST(req: NextRequest) {
     }
   } catch (e) {
     console.error(e);
-    if (wasDraftUpgrade) {
+    if (!previousState) {
+      await admin.from("shidduchim").delete().eq("id", shidduchId);
+    } else if (reusedMyOwnDraft) {
       await admin
         .from("shidduchim")
         .update({
@@ -286,7 +326,10 @@ export async function POST(req: NextRequest) {
         })
         .eq("id", shidduchId);
     } else {
-      await admin.from("shidduchim").delete().eq("id", shidduchId);
+      await admin
+        .from("shidduchim")
+        .update({ ...previousState, updated_at: new Date().toISOString() })
+        .eq("id", shidduchId);
     }
     const msg = e instanceof Error ? e.message : "שגיאת שליחה";
     return NextResponse.json({ error: msg }, { status: 502 });

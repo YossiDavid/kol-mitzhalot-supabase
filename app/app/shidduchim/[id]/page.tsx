@@ -14,6 +14,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 import ParentProposalView from "@/features/shidduchim/components/parent-proposal-view";
+import DeleteShidduchButton from "@/features/shidduchim/components/delete-shidduch-button";
 import SendOtherSideButton from "@/features/shidduchim/components/send-other-side-button";
 import SideResponsesPanel from "@/features/shidduchim/components/side-responses-panel";
 import StatusSelector from "@/features/shidduchim/components/status-selector";
@@ -32,7 +33,9 @@ function fullName(
   return s || fallback;
 }
 
-const idSchema = z.string().uuid();
+// z.guid ולא z.uuid: החל מ-zod 4 המאמת של uuid בודק גם את ביטי הגרסה לפי
+// RFC 4122, ומזהים תקינים לחלוטין במסד היו נופלים כאן ל-404.
+const idSchema = z.guid();
 
 /**
  * כרטיס שידוך. שתי תצוגות:
@@ -194,6 +197,16 @@ async function ShidduchCardContent({
           recipientScope={shidduch.recipient_scope}
           canEdit
         />
+
+        {/* מחיקה מותרת רק לשדכן שיצר את ההצעה — כך גם מדיניות ה-RLS,
+            ולכן אין להציג את הכפתור למנהל שצופה בהצעה של אחר */}
+        {shidduch.shadchan_id === user.id && (
+          <DeleteShidduchButton
+            shidduchId={shidduch.id}
+            pairLabel={`${groomName} - ${brideName}`}
+            wasSent={!!shidduch.sent_at}
+          />
+        )}
 
         {shidduch.sent_at && (
           <div>
