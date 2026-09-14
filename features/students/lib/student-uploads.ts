@@ -1,21 +1,21 @@
 import type { createClient } from "@/lib/supabase/client";
+import {
+  STUDENT_PHOTOS_BUCKET,
+  type StudentPhotoItem,
+} from "@/features/students/lib/student-photo-rules";
 
-// העלאת קבצי כרטיס (תמונה, קו״ח, מסמכים רפואיים) ל-Storage. משותף ליצירה
-// ולעריכה — שני המסלולים שומרים לאותו bucket ובאותה מוסכמת נתיבים.
+// העלאת קבצי כרטיס (גלריית תמונות, קו״ח, מסמכים רפואיים) ל-Storage. משותף
+// ליצירה ולעריכה — שני המסלולים שומרים לאותו bucket ובאותה מוסכמת נתיבים.
 
 type BrowserSupabaseClient = ReturnType<typeof createClient>;
 
-export type StudentFileKind = "image" | "cv" | "medical";
+export type StudentFileKind = "cv" | "medical";
 
-const STUDENTS_BUCKET = "students";
-/** תוקף ה-signed URL: שנה. Public URL אינו אפשרי כי ה-bucket פרטי. */
+/** תוקף ה-signed URL של קו״ח ומסמכים: שנה. Public URL אינו אפשרי כי ה-bucket פרטי. */
 const SIGNED_URL_TTL_SECONDS = 31536000;
 const MAX_FILE_NAME_LENGTH = 100;
-
-const DEFAULT_EXTENSION: Record<Exclude<StudentFileKind, "medical">, string> = {
-  image: "jpg",
-  cv: "pdf",
-};
+const DEFAULT_CV_EXTENSION = "pdf";
+const DEFAULT_PHOTO_EXTENSION = "jpg";
 
 /**
  * Supabase Storage לא מקבל תווים עבריים ותווים מיוחדים ב-URL, ולכן שם הקובץ
@@ -32,7 +32,7 @@ export function sanitizeFileName(fileName: string): string {
 
   const sanitized =
     name
-      .replace(/[\u0590-\u05FF]/g, "")
+      .replace(/[֐-׿]/g, "")
       .replace(/[^a-zA-Z0-9\-_]/g, "-")
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-")
@@ -42,22 +42,46 @@ export function sanitizeFileName(fileName: string): string {
   return sanitized + ext;
 }
 
+function fileExtension(file: File, fallback: string): string {
+  const sanitized = sanitizeFileName(file.name);
+  const lastDot = sanitized.lastIndexOf(".");
+  return lastDot > 0 ? sanitized.substring(lastDot + 1) : fallback;
+}
+
 function buildStoragePath(
   studentId: string,
   file: File,
   kind: StudentFileKind,
 ): string {
-  const sanitized = sanitizeFileName(file.name);
   if (kind === "medical") {
-    return `${studentId}/medical/${Date.now()}-${sanitized}`;
+    return `${studentId}/medical/${Date.now()}-${sanitizeFileName(file.name)}`;
   }
-  const extension = sanitized.split(".").pop() || DEFAULT_EXTENSION[kind];
-  return `${studentId}/${Date.now()}-${kind}.${extension}`;
+  return `${studentId}/${Date.now()}-cv.${fileExtension(file, DEFAULT_CV_EXTENSION)}`;
+}
+
+async function uploadToStudentsBucket(
+  supabase: BrowserSupabaseClient,
+  path: string,
+  file: File,
+): Promise<boolean> {
+  const { error } = await supabase.storage
+    .from(STUDENT_PHOTOS_BUCKET)
+    .upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type,
+    });
+
+  if (error) {
+    console.error("Error uploading student file:", path, error);
+    return false;
+  }
+  return true;
 }
 
 /**
- * מעלה קובץ בודד ומחזיר signed URL, או null אם ההעלאה נכשלה. כישלון אינו
- * זורק: כרטיס עם קובץ חסר עדיף על שמירה שנפלה כולה, והמשתמש יוכל להעלות שוב.
+ * מעלה קו״ח או מסמך רפואי ומחזיר signed URL, או null אם ההעלאה נכשלה.
+ * כישלון אינו זורק: כרטיס עם קובץ חסר עדיף על שמירה שנפלה כולה.
  */
 export async function uploadStudentFile(
   supabase: BrowserSupabaseClient,
@@ -66,22 +90,10 @@ export async function uploadStudentFile(
   kind: StudentFileKind,
 ): Promise<string | null> {
   const path = buildStoragePath(studentId, file, kind);
-
-  const { error: uploadError } = await supabase.storage
-    .from(STUDENTS_BUCKET)
-    .upload(path, file, {
-      cacheControl: "3600",
-      upsert: false,
-      contentType: file.type,
-    });
-
-  if (uploadError) {
-    console.error("Error uploading student file:", kind, uploadError);
-    return null;
-  }
+  if (!(await uploadToStudentsBucket(supabase, path, file))) return null;
 
   const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-    .from(STUDENTS_BUCKET)
+    .from(STUDENT_PHOTOS_BUCKET)
     .createSignedUrl(path, SIGNED_URL_TTL_SECONDS);
 
   if (signedUrlError || !signedUrlData) {
@@ -112,4 +124,86 @@ export async function uploadMedicalDocuments(
   }
 
   return urls;
+}
+
+/**
+ * מעלה תמונת גלריה ומחזיר את הנתיב שלה (לא קישור) - הקישור נחתם בשרת
+ * רק לצופה מורשה. null אם ההעלאה נכשלה.
+ */
+export async function uploadStudentPhoto(
+  supabase: BrowserSupabaseClient,
+  studentId: string,
+  file: File,
+): Promise<string | null> {
+  const extension = fileExtension(file, DEFAULT_PHOTO_EXTENSION);
+  const path = `${studentId}/photos/${Date.now()}-${crypto.randomUUID()}.${extension}`;
+  return (await uploadToStudentsBucket(supabase, path, file)) ? path : null;
+}
+
+export type SaveStudentPhotosResult = {
+  /** כמה תמונות חדשות לא הועלו (ולכן לא נשמרו) */
+  failedUploads: number;
+  /** שגיאת שמירת הגלריה עצמה, או null */
+  error: string | null;
+};
+
+/**
+ * שומר את הגלריה לפי סדר הפריטים: מעלה את החדשות, מחליף את הרשימה ב-
+ * set_student_photos ומוחק מהאחסון את מה שהוסר. תמונה שנכשלה בהעלאה
+ * מדולגת, ושאר הגלריה נשמרת.
+ */
+export async function saveStudentPhotos(
+  supabase: BrowserSupabaseClient,
+  studentId: string,
+  items: readonly StudentPhotoItem[],
+): Promise<SaveStudentPhotosResult> {
+  const paths: string[] = [];
+  const uploadedPaths: string[] = [];
+  let failedUploads = 0;
+
+  for (const item of items) {
+    if (item.kind === "existing") {
+      // תמונה חסויה לעורך מגיעה בלי נתיב - היא אינה בידיו לשמור או להסיר
+      if (item.path) paths.push(item.path);
+      continue;
+    }
+    const path = await uploadStudentPhoto(supabase, studentId, item.file);
+    if (path) {
+      paths.push(path);
+      uploadedPaths.push(path);
+    } else {
+      failedUploads += 1;
+    }
+  }
+
+  const { data: removed, error } = await supabase.rpc("set_student_photos", {
+    p_student_id: studentId,
+    p_paths: paths,
+  });
+
+  if (error) {
+    console.error("[students/photos] set_student_photos failed:", error);
+    // הקבצים שהועלו עכשיו לא נרשמו בגלריה - מנקים אותם כדי שלא יישארו יתומים
+    if (uploadedPaths.length > 0) {
+      await supabase.storage.from(STUDENT_PHOTOS_BUCKET).remove(uploadedPaths);
+    }
+    return { failedUploads, error: error.hint || error.message };
+  }
+
+  const removedPaths = Array.isArray(removed)
+    ? removed.filter((path): path is string => typeof path === "string")
+    : [];
+
+  if (removedPaths.length > 0) {
+    const { error: removeError } = await supabase.storage
+      .from(STUDENT_PHOTOS_BUCKET)
+      .remove(removedPaths);
+    // מדיניות האחסון מתירה מחיקה רק לבעל הכרטיס; אצל שדכן הקובץ נשאר, אבל
+    // כבר אינו חלק מהגלריה ואינו מוצג
+    if (removeError) {
+      console.warn("[students/photos] storage remove failed:", removeError);
+    }
+  }
+
+  return { failedUploads, error: null };
 }

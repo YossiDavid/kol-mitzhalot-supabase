@@ -21,7 +21,10 @@ export default function DeleteShidduchButton({
   pairLabel,
   wasSent,
   redirectTo = "/app/shadchan/proposals",
+  variant = "destructive",
 }: {
+  /** ברשימה ליד פעולה ראשית עדיף מתאר, כדי שהמחיקה לא תבלוט מעליה */
+  variant?: "destructive" | "destructiveOutline";
   shidduchId: string;
   /** "מיועד - מיועדת", לזיהוי ההצעה בדיאלוג */
   pairLabel: string;
@@ -58,7 +61,7 @@ export default function DeleteShidduchButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="destructive" size="sm">
+        <Button variant={variant} size="sm">
           <Trash2 className="h-4 w-4" />
           מחיקת ההצעה
         </Button>

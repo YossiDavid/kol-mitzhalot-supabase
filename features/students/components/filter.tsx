@@ -1,50 +1,288 @@
 "use client";
+
 import { useEffect, useState } from "react";
-import { useStudentQuery, StudentQuery } from "@/features/students/lib/student-query-context";
+import Link from "next/link";
+import { ChevronDown, Search, SlidersHorizontal, X } from "lucide-react";
+
 import { Box, DashboardSection } from "@/components/layout";
-import { TextField } from "@/features/students/components/create-form/fields/text";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Search, Sliders, SlidersHorizontal, ChevronDown } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
+import { TextField } from "@/features/students/components/create-form/fields/text";
+import {
+  useStudentQuery,
+  type StudentQuery,
+} from "@/features/students/lib/student-query-context";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
+
+/** הכל מוחל תוך כדי הקלדה; ההשהיה חוסכת שאילתה על כל תו ועדיין מרגישה מיידית. */
+const FILTER_DEBOUNCE_MS = 300;
+
+type Option = { value: string; label: string };
+
+const GENDER_OPTIONS: Option[] = [
+  { value: "male", label: "זכר" },
+  { value: "female", label: "נקבה" },
+];
+
+const STATUS_OPTIONS: Option[] = [
+  { value: "single", label: "רווק/ה" },
+  { value: "divorced", label: "גרוש/ה" },
+  { value: "widowed", label: "אלמן/ה" },
+  { value: "engaged", label: "מאורס/ה" },
+  { value: "married", label: "נשוי/ה" },
+];
+
+/** הערכים של employment_history.category, כפי שנשמרים בטופס הכרטיס */
+const EMPLOYMENT_OPTIONS: Option[] = [
+  { value: "yeshiva", label: "לומד/ת בישיבה" },
+  { value: "kolel", label: "אברך כולל" },
+  { value: "havruta", label: "לומד עם חברותא" },
+  { value: "seminar", label: "תלמידת סמינר" },
+  { value: "profession", label: "לומד/ת מקצוע" },
+  { value: "working", label: "עובד/ת" },
+  { value: "at_home", label: "בבית" },
+];
+
+const YES_NO_OPTIONS: Option[] = [
+  { value: "true", label: "כן" },
+  { value: "false", label: "לא" },
+];
+
+type UpdateFilter = (key: keyof StudentQuery, value: string) => void;
+
+interface FieldGroupProps {
+  /** מזהים ייחודיים: גרסת המובייל והדסקטופ נמצאות שתיהן ב-DOM */
+  idPrefix: string;
+  filter: StudentQuery;
+  onChange: UpdateFilter;
+}
+
+interface FieldProps extends FieldGroupProps {
+  name: keyof StudentQuery;
+  label: string;
+  className?: string;
+}
+
+function TextFilter({
+  idPrefix,
+  name,
+  label,
+  filter,
+  onChange,
+  className,
+  type = "text",
+}: FieldProps & { type?: "text" | "number" }) {
+  const id = `${idPrefix}${name}`;
+  return (
+    <div className={className}>
+      <Label htmlFor={id}>{label}</Label>
+      <TextField
+        id={id}
+        type={type}
+        inputMode={type === "number" ? "numeric" : undefined}
+        min={type === "number" ? 0 : undefined}
+        value={filter[name] ?? ""}
+        onChange={(e) => onChange(name, e.target.value)}
+      />
+    </div>
+  );
+}
+
+function SelectFilter({
+  idPrefix,
+  name,
+  label,
+  filter,
+  onChange,
+  className,
+  options,
+}: FieldProps & { options: Option[] }) {
+  const id = `${idPrefix}${name}`;
+  return (
+    <div className={className}>
+      <Label htmlFor={id}>{label}</Label>
+      <NativeSelect
+        id={id}
+        value={filter[name] ?? ""}
+        onChange={(e) => onChange(name, e.target.value)}
+      >
+        <NativeSelectOption value="">הכל</NativeSelectOption>
+        {options.map((option) => (
+          <NativeSelectOption key={option.value} value={option.value}>
+            {option.label}
+          </NativeSelectOption>
+        ))}
+      </NativeSelect>
+    </div>
+  );
+}
+
+/** השדות שמוצגים תמיד. מובייל: 2 עמודות; דסקטופ: 12. */
+function BasicFields(props: FieldGroupProps) {
+  const searchId = `${props.idPrefix}search`;
+  return (
+    <>
+      <div className="col-span-2 md:col-span-4">
+        <Label htmlFor={searchId}>חיפוש חופשי</Label>
+        <div className="relative">
+          <Search className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <TextField
+            id={searchId}
+            type="text"
+            placeholder="שם, עיר, קהילה…"
+            className="pe-9"
+            value={props.filter.search ?? ""}
+            onChange={(e) => props.onChange("search", e.target.value)}
+          />
+        </div>
+      </div>
+      <SelectFilter
+        {...props}
+        name="gender"
+        label="מגדר"
+        options={GENDER_OPTIONS}
+        className="md:col-span-2"
+      />
+      <SelectFilter
+        {...props}
+        name="personal_status"
+        label="סטטוס"
+        options={STATUS_OPTIONS}
+        className="md:col-span-2"
+      />
+      <TextFilter
+        {...props}
+        name="ageMin"
+        label="גיל מ־"
+        type="number"
+        className="md:col-span-2"
+      />
+      <TextFilter
+        {...props}
+        name="ageMax"
+        label="גיל עד"
+        type="number"
+        className="md:col-span-2"
+      />
+    </>
+  );
+}
+
+function AdvancedFields(props: FieldGroupProps) {
+  return (
+    <>
+      <TextFilter
+        {...props}
+        name="first_name"
+        label="שם פרטי"
+        className="md:col-span-3"
+      />
+      <TextFilter
+        {...props}
+        name="last_name"
+        label="שם משפחה"
+        className="md:col-span-3"
+      />
+      <TextFilter
+        {...props}
+        name="father_name"
+        label="שם האב"
+        className="md:col-span-3"
+      />
+      <TextFilter
+        {...props}
+        name="city"
+        label="עיר מגורים"
+        className="md:col-span-3"
+      />
+      <TextFilter
+        {...props}
+        name="heightMin"
+        label="גובה מ־ (ס״מ)"
+        type="number"
+        className="md:col-span-2"
+      />
+      <TextFilter
+        {...props}
+        name="heightMax"
+        label="גובה עד (ס״מ)"
+        type="number"
+        className="md:col-span-2"
+      />
+      <SelectFilter
+        {...props}
+        name="employment"
+        label="עיסוק"
+        options={EMPLOYMENT_OPTIONS}
+        className="md:col-span-3"
+      />
+      <SelectFilter
+        {...props}
+        name="is_yeshiva"
+        label="תלמיד / בוגר ישיבה"
+        options={YES_NO_OPTIONS}
+        className="md:col-span-2"
+      />
+      <TextFilter
+        {...props}
+        name="institution"
+        label="מוסד לימודים"
+        className="col-span-2 md:col-span-3"
+      />
+    </>
+  );
+}
+
+function ClearFiltersButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button type="button" variant="ghost" size="sm" onClick={onClick}>
+      <X />
+      ניקוי הסינון
+    </Button>
+  );
+}
 
 export default function FilterSection() {
   const { setQuery } = useStudentQuery();
   const [filter, setFilter] = useState<StudentQuery>({});
-  const [expanded, setExpanded] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const activeFilterCount = Object.values(filter).filter(
-    (v) => v !== undefined && v !== "",
-  ).length;
-
-  // הכל מוחל תוך כדי הקלדה. 300ms מספיק כדי לא לירות שאילתה על כל
-  // תו, ועדיין מרגיש מיידי.
   useEffect(() => {
-    const timer = setTimeout(() => setQuery(filter), 300);
+    const timer = setTimeout(() => setQuery(filter), FILTER_DEBOUNCE_MS);
     return () => clearTimeout(timer);
   }, [filter, setQuery]);
 
+  const updateFilter: UpdateFilter = (key, value) =>
+    setFilter((prev) => ({ ...prev, [key]: value }));
+  const clearFilter = () => setFilter({});
+
+  const activeFilterCount = Object.values(filter).filter(
+    (value) => value !== undefined && value !== "",
+  ).length;
+
   return (
     <>
-      {/* מובייל: toggle */}
+      {/* מובייל: כל השדות בפאנל אחד שנפתח בלחיצה */}
       <div className="space-y-4 md:hidden">
         <div className="text-center">
           <h1>רשימת פרחי אנ״ש</h1>
         </div>
 
         <button
-          onClick={() => setMobileOpen((o) => !o)}
+          type="button"
+          onClick={() => setMobileOpen((open) => !open)}
+          aria-expanded={mobileOpen}
+          aria-controls="mobile-student-filters"
           className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-body-sm font-medium shadow-sm"
         >
           <span className="flex items-center gap-2">
             <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
-            פילטרים
+            חיפוש וסינון
             {activeFilterCount > 0 && (
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-caption font-bold text-primary-foreground">
                 {activeFilterCount}
@@ -60,117 +298,27 @@ export default function FilterSection() {
         </button>
 
         {mobileOpen && (
-          <Box className="space-y-3 p-4">
+          <Box id="mobile-student-filters" className="space-y-3 p-4">
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="m-gender">מגדר</Label>
-                <NativeSelect
-                  id="m-gender"
-                  value={filter.gender || ""}
-                  onChange={(e) =>
-                    setFilter({ ...filter, gender: e.target.value })
-                  }
-                >
-                  <NativeSelectOption value="">הכל</NativeSelectOption>
-                  <NativeSelectOption value="male">זכר</NativeSelectOption>
-                  <NativeSelectOption value="female">נקבה</NativeSelectOption>
-                </NativeSelect>
-              </div>
-              <div>
-                <Label htmlFor="m-status">סטטוס</Label>
-                <NativeSelect
-                  id="m-status"
-                  value={filter.personal_status || ""}
-                  onChange={(e) =>
-                    setFilter({ ...filter, personal_status: e.target.value })
-                  }
-                >
-                  <NativeSelectOption value="">הכל</NativeSelectOption>
-                  <NativeSelectOption value="single">רווק/ה</NativeSelectOption>
-                  <NativeSelectOption value="divorced">
-                    גרוש/ה
-                  </NativeSelectOption>
-                  <NativeSelectOption value="widowed">אלמן/ה</NativeSelectOption>
-                  <NativeSelectOption value="married">נשוי/ה</NativeSelectOption>
-                  <NativeSelectOption value="engaged">
-                    מאורס/ה
-                  </NativeSelectOption>
-                </NativeSelect>
-              </div>
-              <div>
-                <Label htmlFor="m-first">שם פרטי</Label>
-                <TextField
-                  type="text"
-                  id="m-first"
-                  onChange={(e) =>
-                    setFilter({ ...filter, first_name: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="m-last">שם משפחה</Label>
-                <TextField
-                  type="text"
-                  id="m-last"
-                  onChange={(e) =>
-                    setFilter({ ...filter, last_name: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="m-age">גיל מינימלי</Label>
-                <TextField
-                  type="number"
-                  id="m-age"
-                  onChange={(e) =>
-                    setFilter({ ...filter, ageMin: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="m-city">עיר</Label>
-                <TextField
-                  type="text"
-                  id="m-city"
-                  onChange={(e) =>
-                    setFilter({ ...filter, city: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="m-yeshiva">ישיבה</Label>
-                <NativeSelect
-                  id="m-yeshiva"
-                  value={
-                    filter.is_yeshiva === undefined
-                      ? ""
-                      : String(filter.is_yeshiva)
-                  }
-                  onChange={(e: any) =>
-                    setFilter({ ...filter, is_yeshiva: e.target.value })
-                  }
-                >
-                  <NativeSelectOption value="">הכל</NativeSelectOption>
-                  <NativeSelectOption value="true">כן</NativeSelectOption>
-                  <NativeSelectOption value="false">לא</NativeSelectOption>
-                </NativeSelect>
-              </div>
-              <div>
-                <Label htmlFor="m-height">גובה (ס״מ)</Label>
-                <TextField
-                  type="number"
-                  id="m-height"
-                  onChange={(e) =>
-                    setFilter({ ...filter, height: e.target.value })
-                  }
-                />
-              </div>
+              <BasicFields
+                idPrefix="m-"
+                filter={filter}
+                onChange={updateFilter}
+              />
+              <AdvancedFields
+                idPrefix="m-"
+                filter={filter}
+                onChange={updateFilter}
+              />
             </div>
+            {activeFilterCount > 0 && (
+              <ClearFiltersButton onClick={clearFilter} />
+            )}
           </Box>
         )}
       </div>
 
-      {/* דסקטופ: בדיוק כמו המקור */}
+      {/* דסקטופ: שורת סינון בסיסית, והשאר מאחורי "סינון מתקדם" */}
       <div className="hidden md:block">
         <DashboardSection
           title="רשימת פרחי אנ״ש"
@@ -181,216 +329,49 @@ export default function FilterSection() {
           }
           containerClassName="p-0 space-y-4"
         >
-          <div className="box grid grid-cols-2 gap-4 p-4 md:grid-cols-12">
-            <div className="col-span-2 md:col-span-3">
-              <Label htmlFor="search">חיפוש חופשי</Label>
-              <div className="relative">
-                <Search className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <TextField
-                  id="search"
-                  type="text"
-                  placeholder="שם, עיר, קהילה…"
-                  className="pe-9"
-                  value={filter.search || ""}
-                  onChange={(e) =>
-                    setFilter({ ...filter, search: e.target.value })
-                  }
+          <div className="box space-y-4 p-4">
+            <div className="grid grid-cols-12 gap-4">
+              <BasicFields
+                idPrefix=""
+                filter={filter}
+                onChange={updateFilter}
+              />
+            </div>
+
+            {advancedOpen && (
+              <div
+                id="advanced-student-filters"
+                className="grid grid-cols-12 gap-4"
+              >
+                <AdvancedFields
+                  idPrefix=""
+                  filter={filter}
+                  onChange={updateFilter}
                 />
               </div>
-            </div>
-            <div className="col-span-1 md:col-span-2">
-              <Label htmlFor="gender">מגדר</Label>
-              <NativeSelect
-                id="gender"
-                value={filter.gender || ""}
-                onChange={(e) =>
-                  setFilter({ ...filter, gender: e.target.value })
-                }
-              >
-                <NativeSelectOption value="">הכל</NativeSelectOption>
-                <NativeSelectOption value={"male"}>זכר</NativeSelectOption>
-                <NativeSelectOption value={"female"}>נקבה</NativeSelectOption>
-              </NativeSelect>
-            </div>
-            <div className="col-span-1 md:col-span-2">
-              <Label htmlFor="status">סטטוס</Label>
-              <NativeSelect
-                id="status"
-                value={filter.personal_status || ""}
-                onChange={(e) =>
-                  setFilter({ ...filter, personal_status: e.target.value })
-                }
-              >
-                <NativeSelectOption value="">הכל</NativeSelectOption>
-                <NativeSelectOption value="divorced">גרוש/ה</NativeSelectOption>
-                <NativeSelectOption value="widowed">אלמן/ה</NativeSelectOption>
-                <NativeSelectOption value="single">רווק/ה</NativeSelectOption>
-                <NativeSelectOption value="married">נשוי/ה</NativeSelectOption>
-                <NativeSelectOption value="engaged">מאורס/ה</NativeSelectOption>
-              </NativeSelect>
-            </div>
-            <div className="col-span-1 md:col-span-2">
-              <Label htmlFor="firstName">שם פרטי</Label>
-              <TextField
-                type="text"
-                id="firstName"
-                onChange={(e) =>
-                  setFilter({ ...filter, first_name: e.target.value })
-                }
-              />
-            </div>
-            <div className="col-span-1 md:col-span-2">
-              <Label htmlFor="lastName">שם משפחה</Label>
-              <TextField
-                type="text"
-                id="lastName"
-                onChange={(e) =>
-                  setFilter({ ...filter, last_name: e.target.value })
-                }
-              />
-            </div>
-            <div className="col-span-1 md:col-span-2">
-              <Label htmlFor="ageMin">טווח גילאים</Label>
-              <TextField
-                type="number"
-                id="ageMin"
-                onChange={(e) =>
-                  setFilter({ ...filter, ageMin: e.target.value })
-                }
-              />
-            </div>
-            {expanded && (
-              <>
-                <div className="col-span-1 md:col-span-2">
-                  <Label htmlFor="height">גובה (בס״מ)</Label>
-                  <TextField
-                    type="number"
-                    id="height"
-                    onChange={(e) =>
-                      setFilter({ ...filter, height: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="col-span-1 md:col-span-3">
-                  <Label htmlFor="fatherName">שם האב</Label>
-                  <TextField
-                    type="text"
-                    id="fatherName"
-                    onChange={(e) =>
-                      setFilter({ ...filter, father_name: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="col-span-1 md:col-span-2">
-                  <Label htmlFor="city">עיר</Label>
-                  <TextField
-                    type="text"
-                    id="city"
-                    onChange={(e) =>
-                      setFilter({ ...filter, city: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="col-span-1 md:col-span-3">
-                  <Label htmlFor="employment">תעסוקה</Label>
-                  <TextField
-                    type="text"
-                    id="employment"
-                    onChange={(e) =>
-                      setFilter({ ...filter, employment: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="col-span-2 md:col-span-4">
-                  <Label htmlFor="institutions">מקום לימודים</Label>
-                  <TextField
-                    type="text"
-                    id="institutions"
-                    onChange={(e) =>
-                      setFilter({ ...filter, yeshiva_name: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="col-span-1 md:col-span-2">
-                  <Label htmlFor="yeshiva">תלמיד / בוגר ישיבה</Label>
-                  <NativeSelect
-                    id="yeshiva"
-                    value={
-                      filter.is_yeshiva === undefined
-                        ? ""
-                        : String(filter.is_yeshiva)
-                    }
-                    onChange={(e: any) =>
-                      setFilter({ ...filter, is_yeshiva: e.target.value })
-                    }
-                  >
-                    <NativeSelectOption value="">הכל</NativeSelectOption>
-                    <NativeSelectOption value="true">כן</NativeSelectOption>
-                    <NativeSelectOption value="false">לא</NativeSelectOption>
-                  </NativeSelect>
-                </div>
-                <div className="col-span-1 md:col-span-2">
-                  <Label htmlFor="reservoir">לבחירה מתוך המאגר</Label>
-                  <NativeSelect
-                    id="reservoir"
-                    value={
-                      filter.is_reservoir === undefined
-                        ? ""
-                        : String(filter.is_reservoir)
-                    }
-                    onChange={(e: any) =>
-                      setFilter({
-                        ...filter,
-                        is_reservoir: e.target.value === "true",
-                      })
-                    }
-                    className="w-full"
-                  >
-                    <NativeSelectOption value="">הכל</NativeSelectOption>
-                    <NativeSelectOption value="true">כן</NativeSelectOption>
-                    <NativeSelectOption value="false">לא</NativeSelectOption>
-                  </NativeSelect>
-                </div>
-                <div className="col-span-1 md:col-span-2">
-                  <Label htmlFor="yeshivaName">שם הישיבה</Label>
-                  <TextField
-                    type="text"
-                    id="yeshivaName"
-                    onChange={(e) =>
-                      setFilter({ ...filter, yeshiva_name: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="col-span-1 md:col-span-2">
-                  <Label htmlFor="yeshivaCity">עיר</Label>
-                  <TextField
-                    type="text"
-                    id="yeshivaCity"
-                    onChange={(e) =>
-                      setFilter({ ...filter, yeshiva_city: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="col-span-1 md:col-span-2">
-                  <Label htmlFor="class">שיעור / כיתה</Label>
-                  <TextField
-                    type="text"
-                    id="class"
-                    onChange={(e) =>
-                      setFilter({ ...filter, class: e.target.value })
-                    }
-                  />
-                </div>
-              </>
             )}
-            <div className="col-span-2 flex items-center gap-2 md:col-span-2">
+
+            <div className="flex flex-wrap items-center gap-2">
               <Button
+                type="button"
                 variant="ghost"
-                onClick={() => setExpanded((v) => !v)}
+                size="sm"
+                onClick={() => setAdvancedOpen((open) => !open)}
+                aria-expanded={advancedOpen}
+                aria-controls="advanced-student-filters"
               >
-                <Sliders />
-                <span className="sr-only">הצג עוד מסננים</span>
+                <SlidersHorizontal />
+                סינון מתקדם
+                <ChevronDown
+                  className={cn(
+                    "transition-transform duration-200",
+                    advancedOpen && "rotate-180",
+                  )}
+                />
               </Button>
+              {activeFilterCount > 0 && (
+                <ClearFiltersButton onClick={clearFilter} />
+              )}
             </div>
           </div>
         </DashboardSection>

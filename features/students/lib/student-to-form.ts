@@ -228,9 +228,9 @@ export function studentToFormValues(
     lastName: text(student.last_name),
     identityNumber: text(student.identity_number),
     birthDate: toDisplayDate(student.birth_date),
-    // קבצים אינם ניתנים לשחזור כ-File; שדה ריק פירושו "לא הועלה קובץ חדש",
-    // והקובץ הקיים נשמר כפי שהוא.
-    image: { file: null },
+    // הגלריה אינה חלק משורת students (student_photos סגורה ללקוחות); דף
+    // העריכה טוען אותה בשרת אחרי בדיקת ההרשאה ומחליף את הרשימה הריקה.
+    photos: [],
 
     country: text(student.country),
     city: text(student.city),

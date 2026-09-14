@@ -31,9 +31,7 @@ export const emptyStudentFormValues: StudentFormValues = {
   lastName: "",
   identityNumber: "",
   birthDate: "",
-  image: {
-    file: null as File | null,
-  },
+  photos: [],
   country: "",
   city: "",
   street: "",

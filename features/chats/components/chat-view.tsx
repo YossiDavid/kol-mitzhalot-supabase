@@ -1,41 +1,37 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { toast } from "sonner";
 
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Box } from "@/components/layout";
-import { ArrowRight, Check, SendHorizontal } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import type { Message } from "@/app/app/chats/types";
+import { buildMessageStream, canEditMessage } from "../lib/message-stream";
+import {
+  getAvatarUrl,
+  getDisplayName,
+  type UserMetadata,
+} from "../lib/user-display";
 import { MessageBubble } from "./message-bubble";
 import { ChatEmptyState } from "./chat-empty-state";
-import type { Message } from "@/app/app/chats/types";
+import { ChatHeader } from "./chat-header";
+import { ChatComposer, type ComposerBanner } from "./chat-composer";
+import { DateSeparator } from "./date-separator";
+import { MessageListSkeleton } from "./message-list-skeleton";
 
-function canEditMessage(m: Message, uid: string | null): boolean {
-  if (!uid || m.sender_id !== uid) return false;
-  return Date.now() - new Date(m.created_at).getTime() <= 7 * 60 * 1000;
-}
-
-function getInitials(name: string): string {
-  const words = name.split(" ").filter(Boolean);
-  if (words.length === 0) return "?";
-  if (words.length === 1) return words[0][0]?.toUpperCase() ?? "?";
-  return (words[0][0] + words[1][0]).toUpperCase();
-}
+const HIGHLIGHT_MS = 1200;
 
 export function ChatView({ roomId }: { roomId: string }) {
   const supabase = createClient();
 
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [roomTitle, setRoomTitle] = React.useState<string | null>(null);
-  const [otherUserInitials, setOtherUserInitials] = React.useState("?");
+  const [otherAvatarUrl, setOtherAvatarUrl] = React.useState<string | null>(
+    null,
+  );
   const [messages, setMessages] = React.useState<Message[]>([]);
+  // החדר שההודעות שלו נטענו — כל עוד אינו החדר הנוכחי, מוצג שלד
+  const [loadedRoomId, setLoadedRoomId] = React.useState<string | null>(null);
   const [sending, setSending] = React.useState(false);
   const [draft, setDraft] = React.useState("");
   const [otherOnline, setOtherOnline] = React.useState(false);
@@ -73,22 +69,13 @@ export function ChatView({ roomId }: { roomId: string }) {
         const { data: userData } = await supabase.rpc("get_user_metadata", {
           target_user_id: otherId,
         });
-
-        let name = otherId.substring(0, 8);
-        if (userData?.firstName || userData?.lastName) {
-          name =
-            `${userData.firstName || ""} ${userData.lastName || ""}`.trim();
-        } else if (userData?.email) {
-          name = userData.email.split("@")[0];
-        }
-
         if (!isMounted) return;
-        setRoomTitle(name);
-        setOtherUserInitials(getInitials(name));
+        const metadata = userData as UserMetadata;
+        setRoomTitle(getDisplayName(metadata, otherId));
+        setOtherAvatarUrl(getAvatarUrl(metadata));
       } catch {
         if (!isMounted) return;
-        setRoomTitle(otherId.substring(0, 8));
-        setOtherUserInitials(otherId[0]?.toUpperCase() ?? "?");
+        setRoomTitle(getDisplayName(null, otherId));
       }
     }
 
@@ -111,7 +98,13 @@ export function ChatView({ roomId }: { roomId: string }) {
         .select("*")
         .eq("room_id", roomId)
         .order("created_at", { ascending: true });
-      if (!error && isMounted) setMessages(data || []);
+      if (!isMounted) return;
+      if (error) {
+        toast.error("שגיאה בטעינת ההודעות");
+      } else {
+        setMessages(data || []);
+      }
+      setLoadedRoomId(roomId);
     }
 
     fetchMessages();
@@ -179,31 +172,20 @@ export function ChatView({ roomId }: { roomId: string }) {
     };
   }, [roomId, currentUserId, supabase]);
 
-  // Auto scroll to bottom on new messages
+  const isLoadingMessages = loadedRoomId !== roomId;
+
+  // Auto scroll to bottom on new messages (and once the room finished loading)
   React.useEffect(() => {
-    if (!messages.length) return;
+    if (!messages.length || isLoadingMessages) return;
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        const el = listRef.current;
-        if (!el) return;
-        const viewport = el.closest(
+        const viewport = listRef.current?.closest(
           '[data-slot="scroll-area-viewport"]',
-        ) as HTMLElement;
-        if (viewport) {
-          viewport.scrollTop = viewport.scrollHeight;
-        } else {
-          let parent = el.parentElement;
-          while (parent) {
-            if (parent.scrollHeight > parent.clientHeight) {
-              parent.scrollTop = parent.scrollHeight;
-              break;
-            }
-            parent = parent.parentElement;
-          }
-        }
+        ) as HTMLElement | null;
+        if (viewport) viewport.scrollTop = viewport.scrollHeight;
       });
     });
-  }, [messages.length, roomId]);
+  }, [messages.length, roomId, isLoadingMessages]);
 
   // O(1) lookup for replied messages instead of O(N) .find() per message
   const messageById = React.useMemo(
@@ -211,12 +193,14 @@ export function ChatView({ roomId }: { roomId: string }) {
     [messages],
   );
 
+  const stream = React.useMemo(() => buildMessageStream(messages), [messages]);
+
   const scrollToMessage = React.useCallback((targetId: string) => {
     const el = messageRefs.current[targetId];
     if (!el) return;
     el.scrollIntoView({ behavior: "smooth", block: "center" });
     setHighlightId(targetId);
-    setTimeout(() => setHighlightId(null), 1200);
+    setTimeout(() => setHighlightId(null), HIGHLIGHT_MS);
   }, []);
 
   const startEdit = React.useCallback((m: Message) => {
@@ -224,6 +208,24 @@ export function ChatView({ roomId }: { roomId: string }) {
     setReplyTo(null);
     setDraft(m.content);
   }, []);
+
+  const startReply = React.useCallback(
+    (m: Message) => {
+      setReplyTo(m);
+      // תגובה בזמן עריכה מבטלת את העריכה — אחרת השליחה הייתה עורכת במקום להגיב
+      if (editTarget) {
+        setEditTarget(null);
+        setDraft("");
+      }
+    },
+    [editTarget],
+  );
+
+  const cancelBanner = React.useCallback(() => {
+    setReplyTo(null);
+    if (editTarget) setDraft("");
+    setEditTarget(null);
+  }, [editTarget]);
 
   async function onSend() {
     if (editTarget) {
@@ -259,7 +261,7 @@ export function ChatView({ roomId }: { roomId: string }) {
   }
 
   async function submitEdit() {
-    if (!editTarget || !currentUserId) return;
+    if (!editTarget || !currentUserId || sending) return;
     if (!canEditMessage(editTarget, currentUserId)) {
       toast.error("אפשר לערוך רק עד 7 דקות משליחת ההודעה");
       setEditTarget(null);
@@ -286,142 +288,96 @@ export function ChatView({ roomId }: { roomId: string }) {
     }
   }
 
+  const authorLabel = (m: Message) =>
+    m.sender_id === currentUserId ? "את/ה" : (roomTitle ?? "");
+
+  const banner: ComposerBanner | null = editTarget
+    ? {
+        kind: "edit",
+        messageId: editTarget.message_id,
+        title: "עריכת הודעה",
+        content: editTarget.content,
+      }
+    : replyTo
+      ? {
+          kind: "reply",
+          messageId: replyTo.message_id,
+          title:
+            replyTo.sender_id === currentUserId
+              ? "תגובה להודעה שלך"
+              : `תגובה ל${roomTitle ?? "הודעה"}`,
+          content: replyTo.content,
+        }
+      : null;
+
   return (
-    <Box asChild className="my-4">
-      <main className="flex h-[calc(100%-2rem)] flex-col">
-        {/* Header */}
-        <div className="flex h-14 shrink-0 items-center gap-3 px-4">
-          <Link
-            href="/app/chats"
-            className={cn(
-              "flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:text-foreground md:hidden",
-            )}
-          >
-            <ArrowRight className="h-5 w-5" />
-          </Link>
-          <Avatar className="h-9 w-9 shrink-0">
-            <AvatarFallback>{otherUserInitials}</AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 leading-tight">
-            <div className="truncate text-body-sm font-semibold">
-              {roomTitle ?? "..."}
-            </div>
-            <div className="flex items-center gap-1.5 text-caption text-muted-foreground">
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "size-1.5 rounded-full",
-                  otherOnline ? "bg-emerald-500" : "bg-muted-foreground/40",
-                )}
-              />
-              {otherOnline ? "מחובר" : "לא מחובר"}
-            </div>
-          </div>
-        </div>
-        <Separator />
+    <section
+      aria-label={roomTitle ? `שיחה עם ${roomTitle}` : "שיחה"}
+      className="flex h-full min-h-0 flex-col"
+    >
+      <ChatHeader
+        title={roomTitle}
+        avatarUrl={otherAvatarUrl}
+        isOnline={otherOnline}
+      />
 
-        {/* Messages */}
-        <ScrollArea className="max-h-[calc(100vh-20rem)] flex-1">
-          <div ref={listRef}>
-            <div className="mx-auto flex w-full flex-col gap-3 p-4">
-              {messages.length === 0 ? (
-                <ChatEmptyState variant="no-messages" className="py-12" />
-              ) : (
-                messages.map((m) => (
-                  <div
-                    key={m.message_id}
-                    ref={(node) => {
-                      messageRefs.current[m.message_id] = node;
-                    }}
-                  >
-                    <MessageBubble
-                      message={m}
-                      currentUserId={currentUserId}
-                      onReply={() => setReplyTo(m)}
-                      onEdit={startEdit}
-                      canEdit={canEditMessage(m, currentUserId)}
-                      repliedMessage={
-                        m.reply_to_message_id
-                          ? (messageById.get(m.reply_to_message_id) ?? null)
-                          : null
-                      }
-                      onJumpToReplied={scrollToMessage}
-                      highlighted={highlightId === m.message_id}
-                      otherUserName={roomTitle}
-                      otherUserInitials={otherUserInitials}
-                    />
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </ScrollArea>
-
-        <Separator />
-
-        {/* Reply / Edit banner */}
-        {(replyTo || editTarget) && (
-          <div className="mx-3 mt-2 rounded-md border bg-muted/40 px-3 py-2 text-caption">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <div className="mb-1 text-muted-foreground">
-                  {replyTo ? "תגובה להודעה" : "עריכת הודעה"}
+      <ScrollArea className="min-h-0 flex-1 bg-background">
+        <div
+          ref={listRef}
+          role="log"
+          aria-label="הודעות"
+          className="flex flex-col px-3 py-4 md:px-6"
+        >
+          {isLoadingMessages ? (
+            <MessageListSkeleton />
+          ) : messages.length === 0 ? (
+            <ChatEmptyState variant="no-messages" className="py-16" />
+          ) : (
+            stream.map((item) => {
+              if (item.kind === "day") {
+                return <DateSeparator key={item.key} label={item.label} />;
+              }
+              const m = item.message;
+              const replied = m.reply_to_message_id
+                ? (messageById.get(m.reply_to_message_id) ?? null)
+                : null;
+              return (
+                <div
+                  key={item.key}
+                  ref={(node) => {
+                    messageRefs.current[m.message_id] = node;
+                  }}
+                >
+                  <MessageBubble
+                    message={m}
+                    isMe={m.sender_id === currentUserId}
+                    isFirstInGroup={item.isFirstInGroup}
+                    isLastInGroup={item.isLastInGroup}
+                    canEdit={canEditMessage(m, currentUserId)}
+                    repliedMessage={replied}
+                    repliedAuthor={replied ? authorLabel(replied) : null}
+                    highlighted={highlightId === m.message_id}
+                    otherUserName={roomTitle}
+                    otherAvatarUrl={otherAvatarUrl}
+                    onReply={startReply}
+                    onEdit={startEdit}
+                    onJumpToReplied={scrollToMessage}
+                  />
                 </div>
-                <div className="truncate">
-                  {replyTo ? replyTo.content : editTarget?.content}
-                </div>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setReplyTo(null);
-                  if (editTarget) setDraft("");
-                  setEditTarget(null);
-                }}
-                className="h-7 px-2"
-              >
-                ביטול
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Composer */}
-        <div className="p-3">
-          <div className="flex w-full items-center gap-2 rounded-full border border-border bg-background py-1.5 ps-4 pe-1.5 transition-colors focus-within:border-primary/40">
-            <Input
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder="כתוב הודעה..."
-              disabled={sending}
-              aria-label="הודעה חדשה"
-              className="h-9 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  void onSend();
-                }
-              }}
-            />
-            <Button
-              onClick={() => void onSend()}
-              // ריק או באמצע שליחה — אין מה לשלוח
-              disabled={sending || !draft.trim()}
-              size="icon"
-              className="size-9 shrink-0 rounded-full"
-              aria-label={editTarget ? "שמירת העריכה" : "שליחת הודעה"}
-            >
-              {editTarget ? (
-                <Check className="size-4" />
-              ) : (
-                <SendHorizontal className="size-4" />
-              )}
-            </Button>
-          </div>
+              );
+            })
+          )}
         </div>
-      </main>
-    </Box>
+      </ScrollArea>
+
+      <ChatComposer
+        value={draft}
+        onChange={setDraft}
+        onSubmit={() => void onSend()}
+        onCancelBanner={cancelBanner}
+        isSending={sending}
+        banner={banner}
+      />
+    </section>
   );
 }

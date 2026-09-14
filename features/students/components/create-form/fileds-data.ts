@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  MAX_STUDENT_PHOTOS,
+  MAX_STUDENT_PHOTO_MB,
+} from "@/features/students/lib/student-photo-rules";
+
 // Variables
 export const TEXT_FIELD_TYPES = [
   "text",
@@ -24,6 +29,8 @@ const TEXT_SELECT_FIELD_TYPES = ["textAndSelect"] as const;
 const RANGE_FIELD_TYPES = ["range", "rangeDouble"] as const;
 
 const UPLOAD_FIELD_TYPES = ["upload"] as const;
+
+const PHOTO_GALLERY_FIELD_TYPES = ["photos"] as const;
 
 const REPEATER_FIELD_TYPES = ["repeater"] as const;
 
@@ -106,6 +113,11 @@ export interface UploadField extends BaseField {
   maxFiles?: number;
 }
 
+/** גלריית תמונות מסודרת (StudentPhotoItem[]); הראשונה היא הראשית */
+export interface PhotoGalleryField extends BaseField {
+  type: (typeof PHOTO_GALLERY_FIELD_TYPES)[number];
+}
+
 export interface RepeaterField {
   type: (typeof REPEATER_FIELD_TYPES)[number];
   name: string;
@@ -119,6 +131,7 @@ export type Field =
   | TextAndSelectField
   | RangeField
   | UploadField
+  | PhotoGalleryField
   | RepeaterField;
 
 type FormSection = {
@@ -155,6 +168,12 @@ export function isRangeFieldType(type: unknown): type is RangeField["type"] {
 
 export function isUploadFieldType(type: unknown): type is UploadField["type"] {
   return UPLOAD_FIELD_TYPES.includes(type as UploadField["type"]);
+}
+
+export function isPhotoGalleryFieldType(
+  type: unknown,
+): type is PhotoGalleryField["type"] {
+  return PHOTO_GALLERY_FIELD_TYPES.includes(type as PhotoGalleryField["type"]);
 }
 
 // Data
@@ -220,13 +239,11 @@ export const studentFields: FormSteps[] = [
             columns: 3,
           },
           {
-            name: "image",
-            label: "הוספת תמונה",
-            type: "upload",
-            multiple: false,
-            maxFiles: 1,
-            accept: { "image/*": [".png", ".jpg", ".jpeg"] },
-            description: "התמונות תשלח לצד השני רק לאחר הסכמתכם",
+            name: "photos",
+            label: "תמונות",
+            type: "photos",
+            description: `עד ${MAX_STUDENT_PHOTOS} תמונות (JPG, PNG או WebP). תמונות גדולות מוקטנות אוטומטית לעד ${MAX_STUDENT_PHOTO_MB}MB. התמונה הראשונה היא התמונה הראשית. התמונות יישלחו לצד השני רק לאחר הסכמתכם.`,
+            // מסומן כחובה לתצוגה בלבד, כמו שדה התמונה הקודם - הסכמה אינה אוכפת
             required: true,
             columns: -1,
           },
@@ -503,21 +520,22 @@ export const studentFields: FormSteps[] = [
             name: "father.phone",
             label: "טלפון",
             type: "text",
-            columns: 3,
+            columns: 4,
             required: true,
           },
           {
             name: "father.job",
             label: "עיסוק",
             type: "text",
-            columns: 3,
+            columns: 4,
             required: true,
           },
           {
+            // 4 מתוך 12 ולא 2: כתובת מייל לא נכנסה בשדה הצר
             name: "father.email",
             label: "אימייל",
             type: "text",
-            columns: 2,
+            columns: 4,
           },
           {
             name: "father.grandFather",
@@ -588,21 +606,22 @@ export const studentFields: FormSteps[] = [
             name: "mother.phone",
             label: "טלפון",
             type: "text",
-            columns: 3,
+            columns: 4,
             required: true,
           },
           {
             name: "mother.job",
             label: "עיסוק",
             type: "text",
-            columns: 3,
+            columns: 4,
             required: true,
           },
           {
+            // 4 מתוך 12 ולא 2: כתובת מייל לא נכנסה בשדה הצר
             name: "mother.email",
             label: "אימייל",
             type: "text",
-            columns: 2,
+            columns: 4,
           },
           {
             name: "mother.grandFather",

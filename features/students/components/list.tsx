@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import Link from "next/link";
 import calculateAge from "@/lib/calculateAge";
-import { Star, Camera } from "lucide-react";
+import { Star, Camera, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
 import { cn } from "@/lib/utils";
@@ -46,7 +46,8 @@ type Student = {
   birth_date: Date;
   height: number;
   cv_url?: string;
-  image_url?: string | null;
+  /** מספר התמונות בגלריה - התמונות עצמן אינן נשלפות לרשימה */
+  photo_count?: number;
   status_changed_at?: string | null;
   permalink: string;
 };
@@ -60,6 +61,36 @@ const CLICKABLE_ROW_CLASS =
 
 const ENGAGED_ROW_CLASS =
   "border-yellow-400 bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-950/30 dark:hover:bg-yellow-950/50";
+
+/**
+ * סטטוסים שמוציאים את הכרטיס משידוכים (in_shidduchim=false). ברשימה
+ * הרגילה הם מוסתרים, אבל סינון מפורש לפיהם מציג אותם - אחרת כרטיס שסומן
+ * "נשוי" בטעות נעלם ואין דרך להגיע אליו כדי להחזיר את הסטטוס.
+ */
+const OUT_OF_SHIDDUCHIM_STATUSES: readonly string[] = ["engaged", "married"];
+
+function isOutOfShidduchimStatus(status: string | undefined): boolean {
+  return !!status && OUT_OF_SHIDDUCHIM_STATUSES.includes(status);
+}
+
+/** מנקה תווים שיש להם משמעות בתחביר הסינון של PostgREST */
+function sanitizeTerm(value: string | undefined): string {
+  return (value ?? "").trim().replace(/[%,()]/g, "");
+}
+
+/** מספר שלם אי-שלילי מתוך שדה טקסט, או null כשהשדה ריק/לא תקין */
+function parseNonNegativeInt(value: string | undefined): number | null {
+  if (!value?.trim()) return null;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) || parsed < 0 ? null : parsed;
+}
+
+/** התאריך (YYYY-MM-DD) של היום לפני `years` שנים */
+function yearsAgo(years: number): string {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - years);
+  return date.toISOString().split("T")[0];
+}
 
 function studentCardHref(id: string) {
   return `/app/students/${id}` as const;
@@ -117,12 +148,24 @@ export default function StudentsList() {
         oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
         const oneMonthAgoStr = oneMonthAgo.toISOString();
 
+        // סינון לפי טבלה קשורה דורש join פנימי (!inner) - אחרת השורה חוזרת
+        // גם כשאין לה עיסוק/מוסד תואם, רק עם מערך קשור ריק
+        const institution = sanitizeTerm(query.institution);
+        const selectColumns = [
+          "*",
+          ...(query.employment ? ["employment_history!inner(category)"] : []),
+          ...(institution ? ["education_history!inner(name)"] : []),
+        ].join(",");
+
         let q = supabase
           .from("students")
-          .select("*")
-          .is("deleted_at", null)
-          // Active cards, or recently engaged (status_changed_at may be null on older rows)
-          .or(
+          .select(selectColumns)
+          .is("deleted_at", null);
+
+        // Active cards, or recently engaged (status_changed_at may be null on older rows).
+        // An explicit engaged/married filter skips this, so those cards stay reachable.
+        if (!isOutOfShidduchimStatus(query.personal_status)) {
+          q = q.or(
             [
               "in_shidduchim.eq.true",
               "in_shidduchim.is.null",
@@ -130,11 +173,12 @@ export default function StudentsList() {
               "and(personal_status.eq.engaged,status_changed_at.is.null)",
             ].join(","),
           );
+        }
 
         // חיפוש חופשי על פני העמודות שמשתמש היה מצפה להקליד בהן.
         // ilike ולא textSearch, כי אין אינדקס full-text והשמות קצרים.
-        if (query.search?.trim()) {
-          const term = query.search.trim().replace(/[%,()]/g, "");
+        {
+          const term = sanitizeTerm(query.search);
           if (term) {
             q = q.or(
               [
@@ -156,25 +200,31 @@ export default function StudentsList() {
           q = q.eq("personal_status", query.personal_status);
         if (query.city) q = q.ilike("city", `%${query.city}%`);
 
-        if (query.ageMin) {
-          const minAge = parseInt(query.ageMin);
-          if (!isNaN(minAge)) {
-            const maxBirthDate = new Date();
-            maxBirthDate.setFullYear(maxBirthDate.getFullYear() - minAge);
-            q = q.lte("birth_date", maxBirthDate.toISOString().split("T")[0]);
-          }
+        const fatherName = sanitizeTerm(query.father_name);
+        if (fatherName) {
+          q = q.ilike("parents_info->father->self->>name", `%${fatherName}%`);
+        }
+        if (query.employment) {
+          q = q.eq("employment_history.category", query.employment);
+        }
+        if (institution) {
+          q = q.ilike("education_history.name", `%${institution}%`);
         }
 
-        if (query.is_yeshiva !== undefined && query.is_yeshiva !== "") {
-          try {
-            const isYeshivaValue =
-              typeof query.is_yeshiva === "boolean"
-                ? query.is_yeshiva
-                : query.is_yeshiva === "true";
-            q = q.eq("is_yeshiva", isYeshivaValue);
-          } catch {
-            // column may not exist in all schemas
-          }
+        // גיל X ומעלה: נולד עד לפני X שנים. גיל Y לכל היותר: נולד אחרי
+        // לפני Y+1 שנים (מי שבן Y ו-11 חודשים עדיין "בן Y").
+        const ageMin = parseNonNegativeInt(query.ageMin);
+        if (ageMin !== null) q = q.lte("birth_date", yearsAgo(ageMin));
+        const ageMax = parseNonNegativeInt(query.ageMax);
+        if (ageMax !== null) q = q.gt("birth_date", yearsAgo(ageMax + 1));
+
+        const heightMin = parseNonNegativeInt(query.heightMin);
+        if (heightMin !== null) q = q.gte("height", heightMin);
+        const heightMax = parseNonNegativeInt(query.heightMax);
+        if (heightMax !== null) q = q.lte("height", heightMax);
+
+        if (query.is_yeshiva === "true" || query.is_yeshiva === "false") {
+          q = q.eq("is_yeshiva", query.is_yeshiva === "true");
         }
 
         const { data, error } = await q;
@@ -186,7 +236,8 @@ export default function StudentsList() {
           setLoadError(error.message);
           return;
         }
-        setStudents(data || []);
+        // select דינמי (עם join לפי הסינון) מבלבל את הסקת הטיפוסים של supabase-js
+        setStudents((data ?? []) as unknown as Student[]);
       } catch (err: unknown) {
         if (!isMounted) return;
         const message = err instanceof Error ? err.message : "שגיאה לא צפויה";
@@ -222,15 +273,15 @@ export default function StudentsList() {
     setStudents((prev) => prev.filter((s) => s.id !== studentId));
   };
 
-  /** מאורס אינו רלוונטי לשידוך, ולכן לא ניתן להוסיפו למועדפים. */
-  const isEngaged = (id: string) =>
-    students.find((s) => s.id === id)?.personal_status === "engaged";
+  /** מאורס או נשוי אינם רלוונטיים לשידוך, ולכן לא ניתן להוסיפם למועדפים. */
+  const isOutOfShidduchim = (id: string) =>
+    isOutOfShidduchimStatus(students.find((s) => s.id === id)?.personal_status);
 
   const handleFavoriteChange = async (checked: boolean, id: string) => {
     // חוסמים הוספה בלבד. הסרה נשארת פתוחה, כדי שמי שכבר במועדפים
     // והתארס מאז יוכל לצאת משם.
-    if (checked && isEngaged(id)) {
-      toast.info("לא ניתן להוסיף מאורס למועדפים");
+    if (checked && isOutOfShidduchim(id)) {
+      toast.info("לא ניתן להוסיף מאורס או נשוי למועדפים");
       return;
     }
 
@@ -289,6 +340,12 @@ export default function StudentsList() {
 
   return (
     <div className="mt-8">
+      {!isOutOfShidduchimStatus(query.personal_status) && (
+        <p className="mb-3 text-body-sm text-muted-foreground">
+          כרטיסים של נשואים ושל מי שהתארסו לפני יותר מחודש אינם מוצגים כאן.
+          לאיתורם בחרו את הסטטוס בסינון.
+        </p>
+      )}
       {students.length === 0 ? (
         <Empty>
           <EmptyHeader>
@@ -318,10 +375,16 @@ export default function StudentsList() {
                           🎉 מאורס/ת
                         </span>
                       )}
-                      {student.image_url && (
+                      {(student.photo_count ?? 0) > 0 && (
                         <Camera
                           className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
                           aria-label="יש תמונה"
+                        />
+                      )}
+                      {student.cv_url && (
+                        <FileText
+                          className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                          aria-label="יש קובץ קו״ח"
                         />
                       )}
                     </p>
@@ -356,13 +419,13 @@ export default function StudentsList() {
                       className="p-1 disabled:cursor-not-allowed disabled:opacity-40"
                       disabled={
                         !favSet.has(student.id) &&
-                        student.personal_status === "engaged"
+                        isOutOfShidduchimStatus(student.personal_status)
                       }
                       aria-label={
                         favSet.has(student.id)
                           ? "הסר ממועדפים"
-                          : student.personal_status === "engaged"
-                            ? "לא ניתן להוסיף מאורס למועדפים"
+                          : isOutOfShidduchimStatus(student.personal_status)
+                            ? "לא ניתן להוסיף מאורס או נשוי למועדפים"
                             : "הוסף למועדפים"
                       }
                     >
@@ -398,7 +461,7 @@ export default function StudentsList() {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        קו״ח
+                        קובץ קו״ח
                       </a>
                     </Button>
                   ) : (
@@ -453,13 +516,13 @@ export default function StudentsList() {
                     className="p-1 disabled:cursor-not-allowed disabled:opacity-40"
                     disabled={
                       !favSet.has(student.id) &&
-                      student.personal_status === "engaged"
+                      isOutOfShidduchimStatus(student.personal_status)
                     }
                     aria-label={
                       favSet.has(student.id)
                         ? "הסר ממועדפים"
-                        : student.personal_status === "engaged"
-                          ? "לא ניתן להוסיף מאורס למועדפים"
+                        : isOutOfShidduchimStatus(student.personal_status)
+                          ? "לא ניתן להוסיף מאורס או נשוי למועדפים"
                           : "הוסף למועדפים"
                     }
                   >
@@ -483,10 +546,16 @@ export default function StudentsList() {
                 </div>
                 <div className="flex items-center gap-1">
                   {parseStatus(student.personal_status, student.gender)}
-                  {student.image_url && (
+                  {(student.photo_count ?? 0) > 0 && (
                     <Camera
                       className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
                       aria-label="יש תמונה"
+                    />
+                  )}
+                  {student.cv_url && (
+                    <FileText
+                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                      aria-label="יש קובץ קו״ח"
                     />
                   )}
                 </div>
@@ -511,7 +580,7 @@ export default function StudentsList() {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        כרטיס קו״ח
+                        קובץ קו״ח
                       </a>
                     </Button>
                   ) : (

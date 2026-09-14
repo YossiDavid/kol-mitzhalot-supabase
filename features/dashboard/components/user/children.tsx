@@ -95,10 +95,12 @@ export default function Children({ childs }: { childs: Child[] }) {
                   <span className="text-body-sm">פעיל בשידוכים?</span>
                   <Switch
                     checked={child.in_shidduchim || false}
-                    onCheckedChange={(e) => handleIsInShidduchimChange(e, child.id)}
+                    onCheckedChange={(e) =>
+                      handleIsInShidduchimChange(e, child.id)
+                    }
                   />
                 </div>
-                <div className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 text-body-sm">
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-body-sm text-muted-foreground">
                   <span>{parseStatus(child.personal_status)}</span>
                   <span>גיל {calculateAge(child.birth_date || "")}</span>
                   {child.city && <span>{child.city}</span>}
@@ -106,18 +108,34 @@ export default function Children({ childs }: { childs: Child[] }) {
                 </div>
                 <div className="flex gap-2">
                   {child.cv_url ? (
-                    <Button asChild variant="outline" size="sm" className="flex-1">
-                      <a href={child.cv_url} target="_blank" rel="noopener noreferrer">
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      <a
+                        href={child.cv_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         קו״ח
                       </a>
                     </Button>
                   ) : (
-                    <Button asChild variant="outline" size="sm" className="flex-1 bg-amber-100">
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 bg-amber-100"
+                    >
                       <Link href={"/" as any}>הוספת קו״ח</Link>
                     </Button>
                   )}
                   <Button asChild size="sm" className="flex-1">
-                    <Link href={`/app/students/${child.id}` as Route}>כרטיס מלא</Link>
+                    <Link href={`/app/students/${child.id}` as Route}>
+                      כרטיס מלא
+                    </Link>
                   </Button>
                 </div>
               </Box>
@@ -148,7 +166,9 @@ export default function Children({ childs }: { childs: Child[] }) {
                 <div>
                   <Switch
                     checked={child.in_shidduchim || false}
-                    onCheckedChange={(e) => handleIsInShidduchimChange(e, child.id)}
+                    onCheckedChange={(e) =>
+                      handleIsInShidduchimChange(e, child.id)
+                    }
                   />
                 </div>
                 <div>{parseStatus(child.personal_status)}</div>
@@ -168,12 +188,20 @@ export default function Children({ childs }: { childs: Child[] }) {
                 <div className="flex gap-1">
                   {child.cv_url ? (
                     <Button asChild className="flex-1" variant={"outline"}>
-                      <a href={child.cv_url} target="_blank" rel="noopener noreferrer">
-                        כרטיס קו״ח
+                      <a
+                        href={child.cv_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        קובץ קו״ח
                       </a>
                     </Button>
                   ) : (
-                    <Button asChild className="flex-1 bg-amber-100" variant={"outline"}>
+                    <Button
+                      asChild
+                      className="flex-1 bg-amber-100"
+                      variant={"outline"}
+                    >
                       <Link href={"/" as any}>להוספת קו״ח</Link>
                     </Button>
                   )}
@@ -187,7 +215,6 @@ export default function Children({ childs }: { childs: Child[] }) {
             ))}
           </div>
         </>
-
       ) : (
         <Empty>
           <EmptyHeader>

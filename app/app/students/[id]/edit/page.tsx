@@ -12,6 +12,8 @@ import {
   studentToFormValues,
   type StudentRowWithRelations,
 } from "@/features/students/lib/student-to-form";
+import { loadStudentPhotos } from "@/features/students/lib/student-photos";
+import type { StudentPhotoItem } from "@/features/students/lib/student-photo-rules";
 import EditStudentForm from "./edit-student-form";
 
 // אין כאן export const dynamic — הוא אסור תחת Cache Components (ראה ההערה
@@ -159,15 +161,50 @@ async function EditStudentPageContent({
     );
   }
 
+  const photos = await loadEditablePhotos(supabase, {
+    userId: user.id,
+    studentId: id,
+    gender: student.gender,
+  });
+
   return (
     <EditStudentForm
       studentId={id}
-      initialValues={studentToFormValues(student)}
-      existingImageUrl={
-        typeof student.image_url === "string" ? student.image_url : null
-      }
+      initialValues={{ ...studentToFormValues(student), photos }}
       existingCvUrl={typeof student.cv_url === "string" ? student.cv_url : null}
       existingMedicalDocuments={existingMedicalDocuments(student)}
+      isCardOwner={student.user_id === user.id}
     />
   );
+}
+
+/**
+ * הגלריה לעריכה, לפי אותו כלל כמו בדף הכרטיס: תמונה של בת נחשפת רק למי
+ * ש-can_view_student_photo מאשר. תמונה שאין הרשאה לראות מגיעה בלי קישור -
+ * הטופס מציג אותה נעולה ושומר אותה במקומה.
+ */
+async function loadEditablePhotos(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  {
+    userId,
+    studentId,
+    gender,
+  }: { userId: string; studentId: string; gender: unknown },
+): Promise<StudentPhotoItem[]> {
+  const { data: canViewFemalePhoto } = await supabase.rpc(
+    "can_view_student_photo",
+    { uid: userId, sid: studentId },
+  );
+  const photoPrivate = gender === "female" && !canViewFemalePhoto;
+  const { paths, photos } = await loadStudentPhotos(studentId, {
+    canView: !photoPrivate,
+  });
+  const urlByPath = new Map(photos.map((photo) => [photo.path, photo.url]));
+
+  // לעורך שאינו רשאי לראות לא נשלח אפילו הנתיב - רק כמות התמונות הנעולות
+  return paths.map((path) => ({
+    kind: "existing",
+    path: photoPrivate ? "" : path,
+    url: urlByPath.get(path) ?? null,
+  }));
 }

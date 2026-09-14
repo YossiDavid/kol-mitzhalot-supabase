@@ -2,6 +2,8 @@
 
 import { z } from "zod";
 
+import type { StudentPhotoItem } from "@/features/students/lib/student-photo-rules";
+
 const req = (msg = "שדה חובה") => z.string().min(1, msg);
 const opt = z.string().default("");
 
@@ -25,7 +27,9 @@ export const studentFormSchema = z.object({
   lastName: req("נא למלא שם משפחה"),
   identityNumber: req("נא למלא תעודת זהות"),
   birthDate: req("נא לבחור תאריך לידה"),
-  image: z.object({ file: z.any().nullable() }).default({ file: null }),
+  // לא חובה בכוונה: גם השדה הקודם (תמונה בודדת) לא נאכף, וכרטיס קיים בלי
+  // תמונות חייב להמשיך להישמר. המגבלות על כל קובץ נבדקות בהוספה לגלריה.
+  photos: z.array(z.custom<StudentPhotoItem>()).default([]),
 
   country: req("נא למלא ארץ"),
   city: req("נא למלא עיר"),

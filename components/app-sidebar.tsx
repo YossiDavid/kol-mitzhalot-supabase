@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {
+  BookmarkCheck,
   ClipboardList,
   GraduationCap,
   HeartHandshake,
@@ -31,6 +32,7 @@ import {
 } from "@/components/ui/sidebar";
 
 import { SidebarLogo } from "./sidebar/logo";
+import { SITE_CONTENT_LINKS } from "./layout/site-content-links";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -49,11 +51,17 @@ const allItems = [
     url: "/app/shadchan/proposals",
     icon: ClipboardList,
   },
+  // טיוטות שנשמרו בלוח העבודה וטרם נשלחו
+  { title: "הצעות שמורות", url: "/app/shadchan/drafts", icon: BookmarkCheck },
   { title: "הגדרות", url: "/app/settings", icon: Settings },
 ] as const;
 
-// לוח ההתאמות הוא כלי עבודה של שדכן/מנהל בלבד.
-const shadchanOnlyUrls = ["/app/canvas", "/app/shadchan/proposals"];
+// לוח ההתאמות, רשימת השידוכים וההצעות השמורות הם כלי עבודה של שדכן/מנהל בלבד.
+const shadchanOnlyUrls = [
+  "/app/canvas",
+  "/app/shadchan/proposals",
+  "/app/shadchan/drafts",
+];
 // רשימת המיועדים חושפת מיועדים של אחרים, ולכן סגורה להורה. "הוספת
 // מיועד" נשארת פתוחה לכולם — הורה מוסיף את ילדיו.
 const staffVisibleUrls = ["/app/students"];
@@ -142,6 +150,28 @@ export function AppSidebar({ roles }: { roles: Role[] }) {
                   </SidebarMenuItem>
                 );
               })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* תוכן האתר הכללי - אחרת משתמש מחובר מגיע אליו רק דרך הפוטר */}
+        <SidebarGroup>
+          <SidebarGroupLabel>מידע ותוכן</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {SITE_CONTENT_LINKS.map(({ title, href, icon: Icon }) => (
+                <SidebarMenuItem key={href}>
+                  {withTooltip(
+                    <SidebarMenuButton asChild>
+                      <Link href={href} prefetch={false}>
+                        <Icon />
+                        <span>{title}</span>
+                      </Link>
+                    </SidebarMenuButton>,
+                    title,
+                  )}
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

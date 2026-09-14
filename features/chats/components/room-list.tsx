@@ -1,103 +1,35 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { toast } from "sonner";
 
-import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Box } from "@/components/layout";
 import { createClient } from "@/lib/supabase/client";
 import type { Room } from "@/app/app/chats/types";
+import {
+  getAvatarUrl,
+  getDisplayName,
+  type UserMetadata,
+} from "../lib/user-display";
 import { ChatEmptyState } from "./chat-empty-state";
+import { RoomRow, RoomRowSkeleton } from "./room-row";
 
-function formatTime(dateString: string | null): string {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  const diffDays = Math.floor(
-    (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24),
-  );
-  if (diffDays === 0)
-    return date.toLocaleTimeString("he-IL", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  if (diffDays < 7) return `${diffDays} ימים`;
-  return date.toLocaleDateString("he-IL", { day: "2-digit", month: "2-digit" });
+const SKELETON_ROWS = 6;
+
+type RoomChangePayload = {
+  room_id?: string;
+  last_message_id?: string | null;
+};
+
+function toTime(iso: string | null): number {
+  return iso ? new Date(iso).getTime() : 0;
 }
 
-const RoomRow = React.memo(function RoomRow({
-  room,
-  active,
-}: {
-  room: Room;
-  active: boolean;
-}) {
-  const initials = room.title
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
-
-  return (
-    <Link
-      href={`/app/chats/${room.room_id}`}
-      aria-current={active ? "page" : undefined}
-      className={cn(
-        "group relative mx-2 flex items-center gap-3 rounded-lg px-3 py-3 transition-colors",
-        // bg-slate-100 היה צבע קשיח שהתעלם מהתמה; טוקנים עובדים גם ב-dark.
-        active
-          ? "bg-primary/10 text-foreground"
-          : "hover:bg-muted focus-visible:bg-muted",
-      )}
-    >
-      {/* פס צד מסמן את השיחה הפתוחה — קריא יותר מרקע בלבד */}
-      <span
-        aria-hidden="true"
-        className={cn(
-          "absolute inset-y-2 end-0 w-0.5 rounded-full transition-colors",
-          active ? "bg-primary" : "bg-transparent",
-        )}
-      />
-      <Avatar className="size-10 shrink-0">
-        <AvatarFallback
-          className={cn(
-            "text-caption font-semibold",
-            active
-              ? "bg-primary/20 text-primary"
-              : "bg-muted text-muted-foreground",
-          )}
-        >
-          {initials}
-        </AvatarFallback>
-      </Avatar>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline justify-between gap-2">
-          <div className="truncate text-body-sm font-semibold">
-            {room.title}
-          </div>
-          {room.lastAt && (
-            <div className="shrink-0 text-caption text-muted-foreground tabular-nums">
-              {room.lastAt}
-            </div>
-          )}
-        </div>
-        {room.lastMessage ? (
-          <div className="truncate text-caption text-muted-foreground">
-            {room.lastMessage}
-          </div>
-        ) : (
-          <div className="text-caption text-muted-foreground/70">
-            אין הודעות עדיין
-          </div>
-        )}
-      </div>
-    </Link>
-  );
-});
+/** השיחה עם ההודעה האחרונה ביותר ראשונה; שיחות בלי הודעות בסוף. */
+function byLastAtDesc(a: Room, b: Room): number {
+  return toTime(b.lastAt) - toTime(a.lastAt);
+}
 
 export function RoomList() {
   const supabase = createClient();
@@ -129,6 +61,7 @@ export function RoomList() {
           .is("deleted_before", null);
 
         if (participantsError || !participants?.length) {
+          if (participantsError) toast.error("שגיאה בטעינת הצ׳אטים");
           if (isMounted) setRooms([]);
           return;
         }
@@ -142,6 +75,7 @@ export function RoomList() {
           .order("last_message_at", { ascending: false, nullsFirst: false });
 
         if (roomsError) {
+          toast.error("שגיאה בטעינת הצ׳אטים");
           if (isMounted) setRooms([]);
           return;
         }
@@ -166,21 +100,16 @@ export function RoomList() {
                 : Promise.resolve({ data: null }),
             ]);
 
-            const userData = userMetaResult.data;
-            let otherUserName = otherUserId.substring(0, 8);
-            if (userData?.firstName || userData?.lastName) {
-              otherUserName =
-                `${userData.firstName || ""} ${userData.lastName || ""}`.trim();
-            } else if (userData?.email) {
-              otherUserName = userData.email.split("@")[0];
-            }
-
+            const userData = userMetaResult.data as UserMetadata;
+            const otherUserName = getDisplayName(userData, otherUserId);
             const lastMsg = lastMsgResult.data;
+
             return {
               room_id: room.room_id,
               title: otherUserName,
               lastMessage: lastMsg?.content ?? null,
-              lastAt: lastMsg ? formatTime(lastMsg.created_at) : null,
+              lastAt: lastMsg?.created_at ?? null,
+              avatarUrl: getAvatarUrl(userData),
               other_user_id: otherUserId,
               other_user_name: otherUserName,
             };
@@ -212,7 +141,7 @@ export function RoomList() {
         "postgres_changes",
         { event: "*", schema: "public", table: "chat_rooms" },
         async (payload) => {
-          const updated = payload.new as any;
+          const updated = payload.new as RoomChangePayload;
           if (!updated?.room_id || !roomIdSet.has(updated.room_id)) return;
 
           let lastMessage: string | null = null;
@@ -225,10 +154,12 @@ export function RoomList() {
               .maybeSingle();
             if (!error && lastMsg) {
               lastMessage = lastMsg.content;
-              lastAt = formatTime(lastMsg.created_at);
+              lastAt = lastMsg.created_at;
             }
           }
 
+          // מיון לפי זמן ההודעה האחרונה בפועל. קודם המיון היה לפי עצם
+          // קיומו של lastAt, כך ששיחה שקיבלה הודעה לא עלתה לראש הרשימה.
           setRooms((prev) =>
             prev
               .map((r) =>
@@ -240,7 +171,7 @@ export function RoomList() {
                     }
                   : r,
               )
-              .toSorted((a, b) => (b.lastAt ? 1 : 0) - (a.lastAt ? 1 : 0)),
+              .toSorted(byLastAtDesc),
           );
         },
       )
@@ -249,7 +180,6 @@ export function RoomList() {
     return () => {
       supabase.removeChannel(channel);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUserId, supabase, rooms]);
 
   const activeRoomId = pathname.startsWith("/app/chats/")
@@ -257,40 +187,40 @@ export function RoomList() {
     : null;
 
   return (
-    <Box
-      asChild
-      className="my-4 h-[calc(100%-2rem)] p-0 md:rounded-l-none md:inset-shadow-[10px_0_10px_-10px_rgba(0,0,0,0.1)]"
-    >
-      <aside>
-        <div className="flex h-14 items-center justify-between gap-2 px-4">
-          <div className="text-subtitle font-bold">צ׳אטים</div>
-          {!loading && rooms.length > 0 && (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-caption text-muted-foreground tabular-nums">
-              {rooms.length}
-            </span>
-          )}
-        </div>
-        <Separator />
-        <ScrollArea className="h-[calc(100%-56px)]">
-          {loading ? (
-            <div className="p-4 text-center text-body-sm text-muted-foreground">
-              טוען...
-            </div>
-          ) : rooms.length === 0 ? (
-            <ChatEmptyState variant="no-rooms" className="py-14" />
-          ) : (
-            <div className="flex flex-col gap-0.5 py-2">
-              {rooms.map((r) => (
-                <RoomRow
-                  key={r.room_id}
-                  room={r}
-                  active={r.room_id === activeRoomId}
-                />
-              ))}
-            </div>
-          )}
-        </ScrollArea>
-      </aside>
-    </Box>
+    <aside aria-label="רשימת הצ׳אטים" className="flex h-full min-h-0 flex-col">
+      <div className="flex h-16 shrink-0 items-center gap-2 border-b border-border px-4">
+        <h2 className="text-subtitle font-bold text-foreground">צ׳אטים</h2>
+        {!loading && rooms.length > 0 && (
+          <span className="rounded-full bg-primary-muted px-2 py-0.5 text-caption font-semibold text-primary tabular-nums">
+            {rooms.length}
+            <span className="sr-only"> שיחות</span>
+          </span>
+        )}
+      </div>
+
+      <ScrollArea className="min-h-0 flex-1">
+        {loading ? (
+          <div
+            role="status"
+            aria-label="טוען צ׳אטים"
+            className="flex flex-col gap-1 p-2"
+          >
+            {Array.from({ length: SKELETON_ROWS }, (_, i) => (
+              <RoomRowSkeleton key={i} />
+            ))}
+          </div>
+        ) : rooms.length === 0 ? (
+          <ChatEmptyState variant="no-rooms" className="py-14" />
+        ) : (
+          <ul className="flex flex-col gap-1 p-2">
+            {rooms.map((r) => (
+              <li key={r.room_id}>
+                <RoomRow room={r} isActive={r.room_id === activeRoomId} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </ScrollArea>
+    </aside>
   );
 }

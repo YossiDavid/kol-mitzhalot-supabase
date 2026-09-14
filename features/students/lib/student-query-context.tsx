@@ -2,23 +2,31 @@
 
 import { createContext, useContext, useState } from "react";
 
+/**
+ * סינון רשימת המיועדים. כל שדה כאן מוחל בפועל בשאילתה ב-
+ * features/students/components/list.tsx - שדה שאין לו מימוש שם לא נכנס לכאן.
+ */
 export interface StudentQuery {
-  /** חיפוש חופשי על פני כמה עמודות */
+  /** חיפוש חופשי: שם, עיר, קהילה, שטיבל */
   search?: string;
   first_name?: string;
   last_name?: string;
+  /** parents_info.father.self.name */
+  father_name?: string;
   gender?: string;
   personal_status?: string;
-  ageMin?: string;
-  height?: string;
-  father_name?: string;
   city?: string;
+  ageMin?: string;
+  ageMax?: string;
+  /** בס״מ */
+  heightMin?: string;
+  heightMax?: string;
+  /** employment_history.category */
   employment?: string;
-  yeshiva_name?: string;
-  yeshiva_city?: string;
-  class?: string;
-  is_yeshiva?: string | boolean;
-  is_reservoir?: boolean;
+  /** שם מוסד לימודים - education_history.name */
+  institution?: string;
+  /** "true" / "false", ריק = הכל */
+  is_yeshiva?: string;
 }
 
 interface QueryContextType {

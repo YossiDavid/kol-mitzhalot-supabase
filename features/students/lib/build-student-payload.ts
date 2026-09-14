@@ -22,8 +22,9 @@ export type BuildStudentPayloadOptions = {
   /**
    * כתובות הקבצים. ביצירה הן נשלחות null כי הקבצים מועלים רק אחרי שנוצר
    * ה-student_id; בעריכה ה-id כבר קיים ולכן נשלחות הכתובות הסופיות.
+   * התמונות אינן כאן: הן נשמרות בנפרד דרך saveStudentPhotos, ו-image_url
+   * נשאר ריק בכוונה (ה-RPC כותב בו null).
    */
-  imageUrl?: string | null;
   cvUrl?: string | null;
   medicalDocuments?: string[];
 };
@@ -380,12 +381,7 @@ export function buildStudentPayload(
   values: StudentFormValues,
   options: BuildStudentPayloadOptions = {},
 ): StudentPayload {
-  const {
-    userId,
-    imageUrl = null,
-    cvUrl = null,
-    medicalDocuments = [],
-  } = options;
+  const { userId, cvUrl = null, medicalDocuments = [] } = options;
 
   return {
     ...(userId ? { user_id: userId } : {}),
@@ -408,7 +404,6 @@ export function buildStudentPayload(
     cellphone_type: mapCellphoneType(values.cellphoneType),
     plan_for_life: values.planForLife || null,
     head_cover_type: values.headCoverType || null,
-    image_url: imageUrl,
     cv_url: cvUrl,
     about: values.about || null,
     parents_info: buildParentsInfo(values),

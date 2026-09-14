@@ -14,6 +14,7 @@ import {
   missingRequiredStudentFields,
 } from "@/features/students/lib/build-student-payload";
 import {
+  saveStudentPhotos,
   uploadMedicalDocuments,
   uploadStudentFile,
 } from "@/features/students/lib/student-uploads";
@@ -74,12 +75,12 @@ export default function CreateStudentPage() {
         return;
       }
 
-      const imageFile = values.image?.file as File | null;
       const cvFile = values.cv?.file as File | null;
 
-      const imageUrl = imageFile
-        ? await uploadStudentFile(supabase, studentId, imageFile, "image")
-        : null;
+      const photoResult =
+        values.photos.length > 0
+          ? await saveStudentPhotos(supabase, studentId, values.photos)
+          : { failedUploads: 0, error: null };
       const cvUrl = cvFile
         ? await uploadStudentFile(supabase, studentId, cvFile, "cv")
         : null;
@@ -89,18 +90,19 @@ export default function CreateStudentPage() {
         values.medical?.documents ?? [],
       );
 
+      if (photoResult.error) {
+        toast.error(
+          `הקו״ח נשמר, אבל שמירת התמונות נכשלה: ${photoResult.error}`,
+        );
+      }
+
       const hasUploadErrors =
-        (Boolean(imageFile) && !imageUrl) || (Boolean(cvFile) && !cvUrl);
+        photoResult.failedUploads > 0 || (Boolean(cvFile) && !cvUrl);
 
-      const fileUrls = {
-        ...(imageUrl ? { image_url: imageUrl } : {}),
-        ...(cvUrl ? { cv_url: cvUrl } : {}),
-      };
-
-      if (Object.keys(fileUrls).length > 0) {
+      if (cvUrl) {
         const { error: updateError } = await supabase
           .from("students")
-          .update(fileUrls)
+          .update({ cv_url: cvUrl })
           .eq("id", studentId);
 
         if (updateError) {

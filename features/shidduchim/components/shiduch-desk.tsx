@@ -239,7 +239,12 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
         toast.error(data.error || "שגיאה בשמירה");
         return;
       }
-      toast.success("השידוך נשמר כטיוטה");
+      toast.success("השידוך נשמר כטיוטה", {
+        action: {
+          label: "להצעות השמורות",
+          onClick: () => router.push("/app/shadchan/drafts"),
+        },
+      });
       router.refresh();
       await fetchPairStatus();
     } catch (err) {

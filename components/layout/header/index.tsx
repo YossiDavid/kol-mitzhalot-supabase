@@ -85,13 +85,26 @@ export default async function Header({
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">
-            <WebMobileNav />
-            <Button asChild variant="ghost" className="hidden xl:inline-flex">
-              <Link href={"/auth/login" as any}>כניסה</Link>
-            </Button>
-            <Button asChild>
-              <Link href={"/auth/sign-up" as any}>הרשמה חינם</Link>
-            </Button>
+            <WebMobileNav isLoggedIn={!!user} />
+            {/* משתמש מחובר שגולש באתר חוזר למערכת, ולא מופנה שוב לכניסה */}
+            {user ? (
+              <Button asChild>
+                <Link href="/app">לאזור האישי</Link>
+              </Button>
+            ) : (
+              <>
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="hidden xl:inline-flex"
+                >
+                  <Link href={"/auth/login" as any}>כניסה</Link>
+                </Button>
+                <Button asChild>
+                  <Link href={"/auth/sign-up" as any}>הרשמה חינם</Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -151,7 +164,8 @@ export default async function Header({
           {!hasRole(user, "shadchan") ? (
             <Link href={"/app/students/create"}>הוספת מיועדים למערכת</Link>
           ) : (
-            <Link href={"/"}>לרשימת המיועדים</Link>
+            // "/" היה דף הבית של האתר, עם כפתורי כניסה - לא המקום שאליו שדכן מחובר מצפה להגיע
+            <Link href="/app">לרשימת המיועדים</Link>
           )}
         </Button>
       </div>

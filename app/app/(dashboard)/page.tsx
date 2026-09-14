@@ -89,6 +89,11 @@ async function DashboardSections() {
             note_for_bride,
             status,
             created_at,
+            updated_at,
+            sent_at,
+            recipient_scope,
+            groom_id,
+            bride_id,
             groom:students!shidduchim_groom_id_fkey(
               first_name,
               last_name,
@@ -114,12 +119,30 @@ async function DashboardSections() {
           .eq("shadchan_id", user.id)
           .neq("status", "draft")
           .order("created_at", { ascending: false })
+          // "ההצעות האחרונות שלך" — הרשימה המלאה ב-/app/shadchan/proposals
+          .limit(6)
       : { data: [], error: null };
 
   if (activeShidduchimRes.error) {
     console.error(activeShidduchimRes.error);
   }
   const activeShidduchimData = activeShidduchimRes.data || [];
+
+  // המספר בכותרת הוא כלל ההצעות שנשלחו, ולא רק האחרונות שמוצגות
+  const activeShidduchimCountRes =
+    user?.id && (isShadchan || isAdmin)
+      ? await supabase
+          .from("shidduchim")
+          .select("id", { count: "exact", head: true })
+          .eq("shadchan_id", user.id)
+          .neq("status", "draft")
+      : { count: 0, error: null };
+
+  if (activeShidduchimCountRes.error) {
+    console.error(activeShidduchimCountRes.error);
+  }
+  const activeShidduchimCount =
+    activeShidduchimCountRes.count ?? activeShidduchimData.length;
 
   // הצעות פתוחות שנשלחו לילדי המשתמש (כמנהל כרטיס) - החדשות קודם
   const OPEN_PROPOSALS_LIMIT = 5;
@@ -262,7 +285,7 @@ async function DashboardSections() {
         <>
           <DashboardSection
             title="שידוכים באויר"
-            titleNumber={activeShidduchimData.length.toString()}
+            titleNumber={activeShidduchimCount.toString()}
             subTitle="ההצעות האחרונות שלך"
             button={
               <Button asChild>

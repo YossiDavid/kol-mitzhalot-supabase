@@ -24,8 +24,9 @@ const NAV_LINKS = [
   { label: "צרו קשר", href: "/contact" },
 ];
 
-export function WebMobileNav() {
+export function WebMobileNav({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [open, setOpen] = useState(false);
+  const close = () => setOpen(false);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -73,16 +74,27 @@ export function WebMobileNav() {
           </ul>
         </nav>
         <SheetFooter className="border-t border-border">
-          <Button asChild variant="ghost">
-            <Link href={"/auth/login" as any} onClick={() => setOpen(false)}>
-              כניסה
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link href={"/auth/sign-up" as any} onClick={() => setOpen(false)}>
-              הרשמה חינם
-            </Link>
-          </Button>
+          {/* משתמש מחובר חוזר למערכת, ולא מופנה שוב לכניסה */}
+          {isLoggedIn ? (
+            <Button asChild>
+              <Link href="/app" onClick={close}>
+                לאזור האישי
+              </Link>
+            </Button>
+          ) : (
+            <>
+              <Button asChild variant="ghost">
+                <Link href={"/auth/login" as any} onClick={close}>
+                  כניסה
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href={"/auth/sign-up" as any} onClick={close}>
+                  הרשמה חינם
+                </Link>
+              </Button>
+            </>
+          )}
         </SheetFooter>
       </SheetContent>
     </Sheet>

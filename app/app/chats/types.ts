@@ -2,7 +2,9 @@ export type Room = {
   room_id: string;
   title: string;
   lastMessage: string | null;
+  /** זמן ההודעה האחרונה כ-ISO — פורמט התצוגה נעשה ברינדור, כדי שאפשר יהיה למיין לפיו. */
   lastAt: string | null;
+  avatarUrl: string | null;
   other_user_id: string;
   other_user_name: string;
 };

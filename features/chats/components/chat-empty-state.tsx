@@ -40,19 +40,19 @@ export function ChatEmptyState({ variant, className }: ChatEmptyStateProps) {
   return (
     <div
       className={cn(
-        "flex h-full flex-col items-center justify-center gap-3 px-6 py-10 text-center",
+        "flex h-full flex-col items-center justify-center gap-4 px-6 py-10 text-center",
         className,
       )}
     >
       <div
-        className="flex size-12 items-center justify-center rounded-full bg-muted"
+        className="flex size-16 items-center justify-center rounded-2xl bg-primary-muted"
         aria-hidden="true"
       >
-        <Icon className="size-6 text-muted-foreground" strokeWidth={1.5} />
+        <Icon className="size-8 text-primary" strokeWidth={1.5} />
       </div>
       <div className="space-y-1">
-        <p className="text-body-sm font-semibold text-foreground">{title}</p>
-        <p className="mx-auto max-w-[28ch] text-caption text-muted-foreground">
+        <p className="text-body font-bold text-foreground">{title}</p>
+        <p className="mx-auto max-w-[30ch] text-body-sm text-muted-foreground">
           {description}
         </p>
       </div>

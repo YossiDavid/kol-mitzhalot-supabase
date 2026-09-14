@@ -143,7 +143,7 @@ export default function Favorites({ favorites }: { favorites: Favorite[] }) {
                     onClick={() => handleFavoriteRemove(favorite.id)}
                   ></Button>
                 </div>
-                <div className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 text-body-sm">
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-body-sm text-muted-foreground">
                   <span>{parseStatus(favorite.personal_status)}</span>
                   <span>
                     גיל {calculateAge(new Date(favorite.birth_date || ""))}
@@ -228,7 +228,7 @@ export default function Favorites({ favorites }: { favorites: Favorite[] }) {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        כרטיס קו״ח
+                        קובץ קו״ח
                       </a>
                     </Button>
                   ) : (

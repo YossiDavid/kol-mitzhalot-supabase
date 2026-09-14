@@ -5,7 +5,10 @@ import calculateAge from "@/lib/calculateAge";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hasRole } from "@/lib/user";
-import { formatFullName, resolveDisplayName } from "@/lib/user-display-name";
+import {
+  loadMyShadchanNotes,
+  loadStaffFeedback,
+} from "@/features/students/lib/student-notes-data";
 import {
   User,
   Phone,
@@ -23,15 +26,19 @@ import {
   Lock,
   ImageIcon,
   MessageSquareText,
+  NotebookPen,
   Pencil,
 } from "lucide-react";
 import Link from "next/link";
 import ShareButton from "@/features/students/components/share-button";
 import MessageButton from "@/features/students/components/message-button";
 import DeleteStudentButton from "@/features/students/components/delete-student-button";
-import StudentPhoto from "@/features/students/components/student-photo";
-import StudentNotes, {
-  type Note,
+import LockedStudentPhoto from "@/features/students/components/student-photo";
+import StudentPhotoGallery from "@/features/students/components/student-photo-gallery";
+import { loadStudentPhotos } from "@/features/students/lib/student-photos";
+import {
+  ShadchanNotes,
+  StaffFeedbackList,
 } from "@/features/students/components/student-notes";
 import StatusUpdateButton from "./status-update-button";
 import { jewishDateHebrew } from "@/lib/jewishDatte";
@@ -170,87 +177,6 @@ function buildPublicStudent(row: AnonymousStudentRow): PublicStudent {
     age,
     ...(row.gender === "male" && image_url ? { image_url } : {}),
   };
-}
-
-// שליפת מחמאות/הערות למיועד + שם תצוגה לכל מחבר. הקריאה עצמה עוברת דרך
-// הלקוח המשויך למשתמש (RLS מסנן מי רואה מה - ראה
-// supabase/migrations/20260830170000_student_notes.sql), ורק פענוח השם של
-// כל מחבר (auth.users + user_profiles) דורש את לקוח ה-admin, כמו ב-
-// features/admin/lib/users.ts.
-async function loadStudentNotes(studentId: string): Promise<Note[]> {
-  const supabase = await createClient();
-  const { data: rows, error: notesError } = await supabase
-    .from("student_notes")
-    .select(
-      "id, body, created_at, author_id, author_role, author_institution_id, institutions(name, city, type)",
-    )
-    .eq("student_id", studentId)
-    .order("created_at", { ascending: false });
-
-  if (notesError) {
-    console.error("[students/notes]", notesError);
-    return [];
-  }
-  if (!rows || rows.length === 0) return [];
-
-  const admin = createAdminClient();
-  const authorIds = Array.from(new Set(rows.map((row) => row.author_id)));
-
-  const { data: profiles, error: profilesError } = await admin
-    .from("user_profiles")
-    .select("id, first_name, last_name")
-    .in("id", authorIds);
-
-  if (profilesError) {
-    console.error("[students/notes] user_profiles", profilesError);
-  }
-
-  const profileMap = new Map(
-    (profiles ?? []).map((profile) => [
-      profile.id,
-      { first_name: profile.first_name, last_name: profile.last_name },
-    ]),
-  );
-
-  const nameMap = new Map<string, string>();
-  await Promise.all(
-    authorIds.map(async (authorId) => {
-      try {
-        const { data: authorData, error: authorError } =
-          await admin.auth.admin.getUserById(authorId);
-        if (authorError || !authorData.user) {
-          nameMap.set(authorId, "משתמש");
-          return;
-        }
-        const { firstName, lastName } = resolveDisplayName(
-          authorData.user,
-          profileMap.get(authorId) ?? null,
-        );
-        nameMap.set(authorId, formatFullName(firstName, lastName) || "משתמש");
-      } catch (err) {
-        console.error("[students/notes] author lookup", err);
-        nameMap.set(authorId, "משתמש");
-      }
-    }),
-  );
-
-  return rows.map((row) => {
-    // PostgREST מחזיר את ה-embed כאובייקט יחיד (יחס many-to-one), אך ה-SDK
-    // מקליד אותו כמערך כשאין Database type - מנרמלים לאיבר הראשון בלבד
-    // (זהה לדפוס ב-features/settings/components/staff-card.tsx).
-    const institution = Array.isArray(row.institutions)
-      ? (row.institutions[0] ?? null)
-      : row.institutions;
-
-    return {
-      id: row.id,
-      body: row.body,
-      created_at: row.created_at,
-      author_name: nameMap.get(row.author_id) ?? "משתמש",
-      author_role: row.author_role,
-      author_institution: institution,
-    };
-  });
 }
 
 // --- שלד טעינה -----------------------------------------------------------
@@ -439,6 +365,9 @@ async function StudentPageContent({
     after(recordStudentCardView(supabase, student.id));
   }
 
+  // פידבק אנשי צוות גלוי לכל צופה בכרטיס - גם בענף הציבורי (קישור השיתוף)
+  const staffFeedback = await loadStaffFeedback(supabase, student.id);
+
   // --- ענף ציבורי (משתמש לא מחובר) --------------------------------------
   // התצוגה מוגבלת: אין שורת פעולות, אין הערות, ואין מקטעי "מה אני מחפש"/
   // "הצהרה רפואית"/"ממליצים"/"נישואין קודמים" - כי הטבלאות שמזינות אותם לא
@@ -454,12 +383,13 @@ async function StudentPageContent({
           ? "נקבה"
           : null;
 
-    // כלל מוחלט: אצל בת לעולם לא מוצגת תמונה בדף הציבורי (גם אם איכשהו
-    // תגיע לכאן) - publicStudent.image_url ממילא לא קיים במקרה הזה
-    // (ראה buildPublicStudent), זו רק הגנה כפולה בשכבת התצוגה.
-    const showMalePhoto =
-      publicStudent.gender === "male" && !!publicStudent.image_url;
+    // כלל מוחלט: אצל בת לעולם לא מוצגת תמונה בדף הציבורי - הגלריה נטענת
+    // ונחתמת רק לבן, ולבת לא נוצר אף קישור.
     const showFemaleLockPlaceholder = publicStudent.gender === "female";
+    const publicPhotos =
+      publicStudent.gender === "male"
+        ? (await loadStudentPhotos(student.id, { canView: true })).photos
+        : [];
 
     return (
       <div className="min-h-screen space-y-6 text-right">
@@ -480,9 +410,9 @@ async function StudentPageContent({
                 <Lock className="h-6 w-6 text-muted-foreground" />
                 <span className="text-caption text-muted-foreground">חסוי</span>
               </div>
-            ) : showMalePhoto ? (
-              <StudentPhoto
-                src={publicStudent.image_url!}
+            ) : publicPhotos.length > 0 ? (
+              <StudentPhotoGallery
+                photos={publicPhotos}
                 alt={`${publicStudent.first_name} ${publicStudent.last_name}`}
               />
             ) : (
@@ -977,6 +907,16 @@ async function StudentPageContent({
                   </div>
                 </Section>
               )}
+
+            {staffFeedback.length > 0 && (
+              <Section title="פידבק אנשי צוות" icon={MessageSquareText}>
+                <StaffFeedbackList
+                  studentId={student.id}
+                  initialFeedback={staffFeedback}
+                  canWrite={false}
+                />
+              </Section>
+            )}
           </div>
         </div>
       </div>
@@ -991,11 +931,24 @@ async function StudentPageContent({
     { uid: user?.id ?? null, sid: student.id },
   );
   const photoPrivate = student.gender === "female" && !canViewFemalePhoto;
+  // בלי הרשאה נטען רק מספר התמונות (למנעול) - אף קישור חתום לא נוצר
+  const studentPhotos = await loadStudentPhotos(student.id, {
+    canView: !photoPrivate,
+  });
 
-  // מי רואה את סעיף המחמאות וההערות בכלל: שדכן/מנהל/איש צוות. RLS הוא
-  // האכיפה האמיתית (מי רואה אילו הערות ספציפיות) - זה רק שער תצוגה.
-  const canAccessNotes = isShadchan || hasRole(user, "staff");
-  const notes = canAccessNotes ? await loadStudentNotes(student.id) : [];
+  // הערות שדכן פרטיות לכותב (RLS); פידבק אנשי צוות נשלף למעלה לכל צופה.
+  // איש צוות רשאי לכתוב פידבק - שיוכו למוסד של המיועד נאכף ב-RLS.
+  const canWriteStaffFeedback = hasRole(user, "staff");
+  const shadchanNotes =
+    isShadchan && user
+      ? await loadMyShadchanNotes(supabase, student.id, user.id)
+      : [];
+  const currentUserName = [
+    user?.user_metadata?.firstName,
+    user?.user_metadata?.lastName,
+  ]
+    .filter(Boolean)
+    .join(" ");
   // Section/InfoTag/IconComponent הוגדרו ב-module scope למעלה (משותפים עם
   // הענף הציבורי) - ראה ההערה שם.
 
@@ -1034,29 +987,25 @@ async function StudentPageContent({
 
       {/* Hero */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        {/* Photo */}
-        {student.image_url && (
-          <div className="shrink-0">
-            {photoPrivate ? (
-              // לחיצה פותחת בקשת צפייה למנהל
-              <StudentPhoto
-                locked
-                studentId={student.id}
-                alt={`${student.first_name} ${student.last_name}`}
-              />
-            ) : (
-              <StudentPhoto
-                src={student.image_url}
-                alt={`${student.first_name} ${student.last_name}`}
-              />
-            )}
-          </div>
-        )}
-        {!student.image_url && (
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border bg-muted sm:h-24 sm:w-24">
-            <ImageIcon className="h-8 w-8 text-muted-foreground" />
-          </div>
-        )}
+        {/* Photos */}
+        <div className="shrink-0">
+          {studentPhotos.count === 0 ? (
+            <div className="flex h-20 w-20 items-center justify-center rounded-full border bg-muted sm:h-24 sm:w-24">
+              <ImageIcon className="h-8 w-8 text-muted-foreground" />
+            </div>
+          ) : photoPrivate ? (
+            // לחיצה פותחת בקשת צפייה למנהל
+            <LockedStudentPhoto
+              studentId={student.id}
+              alt={`${student.first_name} ${student.last_name}`}
+            />
+          ) : (
+            <StudentPhotoGallery
+              photos={studentPhotos.photos}
+              alt={`${student.first_name} ${student.last_name}`}
+            />
+          )}
+        </div>
 
         <div className="min-w-0 flex-1">
           <h1 className="text-heading! leading-tight! font-bold!">
@@ -1104,7 +1053,7 @@ async function StudentPageContent({
                 rel="noopener noreferrer"
               >
                 <FileText className="h-4 w-4" />
-                קו"ח
+                קובץ קו״ח
               </Link>
             </Button>
           )}
@@ -1216,14 +1165,22 @@ async function StudentPageContent({
         </div>
       </Section>
 
-      {/* Notes/endorsements — full width, visible only to shadchan/admin/staff */}
-      {canAccessNotes && (
-        <Section title="מחמאות והערות" icon={MessageSquareText}>
-          <StudentNotes
+      {/* פידבק אנשי צוות - גלוי לכל צופה בכרטיס, וגם בשיתוף */}
+      {(staffFeedback.length > 0 || canWriteStaffFeedback) && (
+        <Section title="פידבק אנשי צוות" icon={MessageSquareText}>
+          <StaffFeedbackList
             studentId={student.id}
-            canWrite={canAccessNotes}
-            initialNotes={notes}
+            initialFeedback={staffFeedback}
+            canWrite={canWriteStaffFeedback}
+            currentUserName={currentUserName}
           />
+        </Section>
+      )}
+
+      {/* הערות שדכן - לעיני השדכן שכתב אותן בלבד, לא בשיתוף */}
+      {isShadchan && (
+        <Section title="הערות שדכן" icon={NotebookPen}>
+          <ShadchanNotes studentId={student.id} initialNotes={shadchanNotes} />
         </Section>
       )}
 

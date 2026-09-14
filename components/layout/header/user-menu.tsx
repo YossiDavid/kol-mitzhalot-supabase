@@ -7,6 +7,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -18,6 +19,7 @@ import {
   Settings,
 } from "lucide-react";
 import Link from "next/link";
+import { SITE_CONTENT_LINKS } from "@/components/layout/site-content-links";
 
 interface UserMenuProps {
   showShadchanJoin?: boolean;
@@ -72,6 +74,19 @@ export function UserMenu({
             </Link>
           </DropdownMenuItem>
         )}
+        {/* תוכן האתר - במובייל אין תפריט צד ופוטר, וזו הדרך היחידה אליו */}
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-caption text-muted-foreground">
+          מידע ותוכן
+        </DropdownMenuLabel>
+        {SITE_CONTENT_LINKS.map(({ title, href, icon: Icon }) => (
+          <DropdownMenuItem key={href} asChild>
+            <Link href={href} className="flex items-center gap-2">
+              <Icon className="h-4 w-4" />
+              {title}
+            </Link>
+          </DropdownMenuItem>
+        ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"
