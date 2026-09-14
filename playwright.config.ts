@@ -1,11 +1,15 @@
 import { defineConfig, devices } from "@playwright/test";
 
-import { loadEnvFile } from "./tests/load-env";
+import { assertLocalSupabase, loadEnvFile } from "./tests/load-env";
 
 // auth.setup.ts והעוזרים של הבדיקות זקוקים ל-NEXT_PUBLIC_SUPABASE_URL
 // ול-SUPABASE_SERVICE_ROLE_KEY, ו-Playwright אינו קורא בעצמו את קובצי ה-.env
 // של הפרויקט כפי ש-next dev עושה.
 loadEnvFile();
+
+// הבדיקות כותבות נתונים אמיתיים ואינן מנקות הכול, ולכן ריצה מול מסד שאינו
+// מקומי נחסמת כאן — לפני שנוצרה ולו רשומה אחת.
+assertLocalSupabase();
 
 export default defineConfig({
   testDir: "./tests/e2e",

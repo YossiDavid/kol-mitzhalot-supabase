@@ -59,6 +59,10 @@ jobs:
         run: pnpm test:e2e
         env:
           CI: true
+          # הבדיקות חוסמות ריצה מול מסד שאינו מקומי, כי הן כותבות נתונים
+          # אמיתיים. כאן החריגה מפורשת — ועל TEST_SUPABASE_URL להיות פרויקט
+          # בדיקות ייעודי, לעולם לא זה של הפרודקשן.
+          ALLOW_REMOTE_E2E: true
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TEST_SUPABASE_PUBLISHABLE_KEY }}
           NEXT_PUBLIC_APP_URL: http://localhost:3000
