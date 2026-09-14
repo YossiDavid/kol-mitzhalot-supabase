@@ -2,12 +2,14 @@ import { expect, request as apiRequest, test } from "@playwright/test";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
-  SEED,
   createServiceClient,
   deletePair,
   getShidduch,
   getTestUserId,
   insertShidduch,
+  setupShidduchFixtures,
+  teardownShidduchFixtures,
+  type ShidduchFixtures,
 } from "./fixtures";
 
 const shidduchEndpoint = (id: string) => `/api/v1/shidduchim/${id}`;
@@ -18,16 +20,22 @@ const shidduchPageUrl = (id: string) => `/app/shidduchim/${id}`;
  * ("Users can delete their own shidduchim") ולא בבדיקה בקוד, ולכן חשוב לבדוק
  * את ההתנהגות דרך המסלול האמיתי ולא רק מול המסד.
  *
- * הצמד groomFirst + brideSecond שמור לבדיקות כאן, כדי שלא יתנגש עם הטיוטה
- * שבזרע ועם הצמדים של offer-pair.spec.ts.
+ * הבדיקות מקימות לעצמן מיועדים ומשתמשים ואינן נשענות על supabase/seed.sql,
+ * שרץ רק על המסד המקומי — כך הן עובדות גם מול מסד בדיקות נקי ב-CI.
  */
 test.describe("מחיקת הצעת שידוך", () => {
   let admin: SupabaseClient;
   let testUserId: string;
+  let fx: ShidduchFixtures;
 
   test.beforeAll(async () => {
     admin = createServiceClient();
     testUserId = await getTestUserId(admin);
+    fx = await setupShidduchFixtures(admin);
+  });
+
+  test.afterAll(async () => {
+    await teardownShidduchFixtures(admin, fx);
   });
 
   /**
@@ -35,15 +43,18 @@ test.describe("מחיקת הצעת שידוך", () => {
    * ושארית מהרצה שנקטעה מפילה אותן על unique_shidduch_pair במקום לבדוק
    * את מה שהן אמורות לבדוק.
    */
-  const cleanPair = () => deletePair(admin, SEED.groomFirst, SEED.brideSecond);
+  const cleanPairs = async () => {
+    await deletePair(admin, fx.groomFirst, fx.brideSecond);
+    await deletePair(admin, fx.groomFirst, fx.brideFirst);
+  };
 
-  test.beforeEach(cleanPair);
-  test.afterEach(cleanPair);
+  test.beforeEach(cleanPairs);
+  test.afterEach(cleanPairs);
 
   test("השדכן מוחק הצעה שיצר — 200 והשורה נעלמת", async ({ request }) => {
     const id = await insertShidduch(admin, {
-      groomId: SEED.groomFirst,
-      brideId: SEED.brideSecond,
+      groomId: fx.groomFirst,
+      brideId: fx.brideSecond,
       shadchanId: testUserId,
     });
 
@@ -55,16 +66,20 @@ test.describe("מחיקת הצעת שידוך", () => {
   });
 
   test("הצעה של שדכן אחר — 404, והשורה נשארת במקומה", async ({ request }) => {
-    const response = await request.delete(
-      shidduchEndpoint(SEED.existingDraftId),
-    );
+    const othersId = await insertShidduch(admin, {
+      groomId: fx.groomFirst,
+      brideId: fx.brideFirst,
+      shadchanId: fx.otherShadchanId,
+    });
+
+    const response = await request.delete(shidduchEndpoint(othersId));
 
     // 404 ולא 403: אין לחשוף לזר שהצעה כזו בכלל קיימת
     expect(response.status()).toBe(404);
 
-    const survivor = await getShidduch(admin, SEED.existingDraftId);
+    const survivor = await getShidduch(admin, othersId);
     expect(survivor).not.toBeNull();
-    expect(survivor?.shadchan_id).toBe(SEED.shadchanUserId);
+    expect(survivor?.shadchan_id).toBe(fx.otherShadchanId);
   });
 
   test("מזהה שאינו UUID — 400 לפני כל פנייה למסד", async ({ request }) => {
@@ -76,8 +91,8 @@ test.describe("מחיקת הצעת שידוך", () => {
 
   test("בקשה ללא התחברות — 401, והשורה נשארת", async ({ baseURL }) => {
     const id = await insertShidduch(admin, {
-      groomId: SEED.groomFirst,
-      brideId: SEED.brideSecond,
+      groomId: fx.groomFirst,
+      brideId: fx.brideSecond,
       shadchanId: testUserId,
     });
 
@@ -101,8 +116,8 @@ test.describe("מחיקת הצעת שידוך", () => {
     page,
   }) => {
     const id = await insertShidduch(admin, {
-      groomId: SEED.groomFirst,
-      brideId: SEED.brideSecond,
+      groomId: fx.groomFirst,
+      brideId: fx.brideSecond,
       shadchanId: testUserId,
       noteForGroom: "הצעה שנוצרה לבדיקת המחיקה",
     });

@@ -1,20 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-/**
- * מזהי הזרע המקומי (supabase/seed.sql). הם קבועים בקובץ הזרע, ולכן הבדיקות
- * מסתמכות עליהם ישירות במקום לחפש רשומות לפי שם.
- */
-export const SEED = {
-  /** shadchan@local.test — הבעלים של הטיוטה שבזרע */
-  shadchanUserId: "22222222-2222-2222-2222-222222222222",
-  groomFirst: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-  groomSecond: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
-  brideFirst: "cccccccc-cccc-cccc-cccc-cccccccccccc",
-  brideSecond: "dddddddd-dddd-dddd-dddd-dddddddddddd",
-  /** טיוטה קיימת של shadchan@local.test לצמד groomFirst + brideFirst */
-  existingDraftId: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
-} as const;
-
 /** אותה ברירת מחדל כמו ב-tests/e2e/auth.setup.ts */
 export const TEST_USER_EMAIL =
   process.env.TEST_USER_EMAIL ?? "playwright-test@kol-mitzhalot.test";
@@ -33,6 +18,25 @@ export interface ShidduchRow {
   sent_at: string | null;
 }
 
+/** המיועדים והמשתמשים שהבדיקות מקימות לעצמן */
+export interface ShidduchFixtures {
+  /** מנהל הכרטיסים של ארבעת המיועדים */
+  cardManagerId: string;
+  /** שדכן שאינו משתמש הבדיקה ואינו המנהל — לבדיקות בעלות וסירוב */
+  otherShadchanId: string;
+  groomFirst: string;
+  groomSecond: string;
+  brideFirst: string;
+  brideSecond: string;
+}
+
+interface FixtureUser {
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+}
+
 interface InsertShidduchParams {
   groomId: string;
   brideId: string;
@@ -42,11 +46,32 @@ interface InsertShidduchParams {
   noteForBride?: string;
 }
 
+interface CreateStudentParams {
+  userId: string;
+  gender: "male" | "female";
+  firstName: string;
+  lastName: string;
+}
+
 const SHIDDUCH_COLUMNS =
   "id, groom_id, bride_id, shadchan_id, status, note_for_groom, note_for_bride, recipient_scope, sent_at";
 
+const CARD_MANAGER: FixtureUser = {
+  email: "playwright-card-manager@kol-mitzhalot.test",
+  firstName: "Fixture",
+  lastName: "Manager",
+  phone: "+972500000010",
+};
+
+const OTHER_SHADCHAN: FixtureUser = {
+  email: "playwright-other-shadchan@kol-mitzhalot.test",
+  firstName: "Fixture",
+  lastName: "Shadchan",
+  phone: "+972500000011",
+};
+
 /**
- * לקוח service role — עוקף RLS. משמש להכנת מצב ולאימות מצב בלבד, לעולם לא
+ * לקוח service role — עוקף RLS. משמש להקמת מצב ולאימות מצב בלבד, לעולם לא
  * כתחליף לבקשה שהבדיקה אמורה לבדוק.
  */
 export function createServiceClient(): SupabaseClient {
@@ -80,6 +105,149 @@ export async function getTestUserId(
   }
 
   return found.id;
+}
+
+/**
+ * הטריגר enforce_signup_identity דוחה יצירת משתמש בלי שם פרטי, שם משפחה,
+ * טלפון ואימייל, ולכן כולם נמסרים כבר ביצירה. הוא BEFORE INSERT בלבד, ולכן
+ * משתמש שכבר קיים מוחזר כמות שהוא ואינו נבדק שוב.
+ */
+async function ensureUser(
+  admin: SupabaseClient,
+  user: FixtureUser,
+): Promise<string> {
+  const { data, error } = await admin.auth.admin.listUsers({ perPage: 1000 });
+  if (error) {
+    throw new Error(`קריאת רשימת המשתמשים נכשלה: ${error.message}`);
+  }
+
+  const existing = data.users.find((candidate) => candidate.email === user.email);
+  if (existing) return existing.id;
+
+  const { data: created, error: createError } =
+    await admin.auth.admin.createUser({
+      email: user.email,
+      phone: user.phone,
+      email_confirm: true,
+      phone_confirm: true,
+      user_metadata: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone,
+        phone_verified: true,
+      },
+    });
+
+  if (createError || !created.user) {
+    throw new Error(
+      `יצירת משתמש הבדיקה ${user.email} נכשלה: ${createError?.message ?? "לא הוחזר משתמש"}`,
+    );
+  }
+
+  return created.user.id;
+}
+
+async function createStudent(
+  admin: SupabaseClient,
+  params: CreateStudentParams,
+): Promise<string> {
+  const { data, error } = await admin
+    .from("students")
+    .insert({
+      user_id: params.userId,
+      first_name: params.firstName,
+      last_name: params.lastName,
+      birth_date: "1998-01-01",
+      gender: params.gender,
+      personal_status: "single",
+      country: "ישראל",
+      city: "בני ברק",
+      in_shidduchim: true,
+      // identity_number נשאר ריק בכוונה: הוא ייחודי, וערך קבוע היה מתנגש
+      // בין הרצות או בין קובצי בדיקה שרצים באותו מסד.
+    })
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    throw new Error(
+      `יצירת מיועד לבדיקה נכשלה: ${error?.message ?? "לא הוחזרה שורה"}`,
+    );
+  }
+
+  return data.id as string;
+}
+
+/**
+ * מקים את כל מה שבדיקות השידוכים זקוקות לו.
+ *
+ * במכוון אינו נשען על supabase/seed.sql: הזרע רץ רק על המסד המקומי, ובדיקות
+ * שנשענו על המזהים שבו נשברו מול מסד בדיקות נקי ב-CI על הפרת מפתח זר.
+ */
+export async function setupShidduchFixtures(
+  admin: SupabaseClient,
+): Promise<ShidduchFixtures> {
+  const cardManagerId = await ensureUser(admin, CARD_MANAGER);
+  const otherShadchanId = await ensureUser(admin, OTHER_SHADCHAN);
+
+  const [groomFirst, groomSecond, brideFirst, brideSecond] = await Promise.all([
+    createStudent(admin, {
+      userId: cardManagerId,
+      gender: "male",
+      firstName: "מיועד",
+      lastName: "ראשון",
+    }),
+    createStudent(admin, {
+      userId: cardManagerId,
+      gender: "male",
+      firstName: "מיועד",
+      lastName: "שני",
+    }),
+    createStudent(admin, {
+      userId: cardManagerId,
+      gender: "female",
+      firstName: "מיועדת",
+      lastName: "ראשונה",
+    }),
+    createStudent(admin, {
+      userId: cardManagerId,
+      gender: "female",
+      firstName: "מיועדת",
+      lastName: "שנייה",
+    }),
+  ]);
+
+  return {
+    cardManagerId,
+    otherShadchanId,
+    groomFirst,
+    groomSecond,
+    brideFirst,
+    brideSecond,
+  };
+}
+
+/**
+ * מחיקת המיועדים גוררת מחיקת השידוכים שלהם ב-cascade, ולכן זהו כל הניקוי
+ * הדרוש. משתמשי הפיקסצ'ר נשארים ונעשה בהם שימוש חוזר בהרצה הבאה.
+ */
+export async function teardownShidduchFixtures(
+  admin: SupabaseClient,
+  fixtures: ShidduchFixtures,
+): Promise<void> {
+  const { error } = await admin
+    .from("students")
+    .delete()
+    .in("id", [
+      fixtures.groomFirst,
+      fixtures.groomSecond,
+      fixtures.brideFirst,
+      fixtures.brideSecond,
+    ]);
+
+  if (error) {
+    throw new Error(`ניקוי מיועדי הבדיקה נכשל: ${error.message}`);
+  }
 }
 
 export async function insertShidduch(
@@ -144,7 +312,7 @@ export async function countPairRows(
   return count ?? 0;
 }
 
-/** ניקוי אחרי בדיקה — הבדיקות מייצרות שורות אמיתיות במסד המקומי */
+/** ניקוי בין בדיקות — הבדיקות מייצרות שורות אמיתיות במסד */
 export async function deletePair(
   admin: SupabaseClient,
   groomId: string,

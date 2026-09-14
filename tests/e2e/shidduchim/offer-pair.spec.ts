@@ -2,13 +2,15 @@ import { expect, test } from "@playwright/test";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
-  SEED,
   countPairRows,
   createServiceClient,
   deletePair,
   getShidduch,
   getTestUserId,
   insertShidduch,
+  setupShidduchFixtures,
+  teardownShidduchFixtures,
+  type ShidduchFixtures,
 } from "./fixtures";
 
 const OFFER_ENDPOINT = "/api/v1/shidduchim/offer";
@@ -18,28 +20,33 @@ const OFFER_ENDPOINT = "/api/v1/shidduchim/offer";
  * קיימת בשלוש צורות, ולכל אחת התנהגות אחרת:
  *   טיוטה של שדכן אחר → סירוב, שורה שנדחתה → שימוש חוזר, טיוטה משלי → עדכון.
  *
- * הבדיקות רצות כמשתמש הבדיקה מ-auth.setup.ts, שהוא שדכן שאינו הבעלים של
- * הטיוטה שבזרע — וזה בדיוק ההבדל שמפעיל את הסירוב.
+ * הבדיקות מקימות לעצמן מיועדים ומשתמשים ואינן נשענות על supabase/seed.sql,
+ * שרץ רק על המסד המקומי — כך הן עובדות גם מול מסד בדיקות נקי ב-CI.
  */
 test.describe("הצעת שידוך — טיפול בשורה קיימת לאותו צמד", () => {
   let admin: SupabaseClient;
   let testUserId: string;
+  let fx: ShidduchFixtures;
 
   test.beforeAll(async () => {
     admin = createServiceClient();
     testUserId = await getTestUserId(admin);
+    fx = await setupShidduchFixtures(admin);
+  });
+
+  test.afterAll(async () => {
+    await teardownShidduchFixtures(admin, fx);
   });
 
   /**
-   * הצמדים שהבדיקות כאן מייצרות. הטיוטה שבזרע לא נמחקת.
-   *
    * מנקים גם לפני וגם אחרי: בלי הניקוי המקדים הבדיקות מניחות שהצמד פנוי,
    * ושארית מהרצה שנקטעה מפילה אותן על unique_shidduch_pair במקום לבדוק
    * את מה שהן אמורות לבדוק.
    */
   const cleanPairs = async () => {
-    await deletePair(admin, SEED.groomSecond, SEED.brideSecond);
-    await deletePair(admin, SEED.groomSecond, SEED.brideFirst);
+    await deletePair(admin, fx.groomFirst, fx.brideFirst);
+    await deletePair(admin, fx.groomSecond, fx.brideSecond);
+    await deletePair(admin, fx.groomSecond, fx.brideFirst);
   };
 
   test.beforeEach(cleanPairs);
@@ -48,10 +55,17 @@ test.describe("הצעת שידוך — טיפול בשורה קיימת לאות
   test("טיוטה של שדכן אחר — סירוב ב-409, והטיוטה נשארת אצל הבעלים", async ({
     request,
   }) => {
+    const othersDraftId = await insertShidduch(admin, {
+      groomId: fx.groomFirst,
+      brideId: fx.brideFirst,
+      shadchanId: fx.otherShadchanId,
+      noteForGroom: "הטיוטה של השדכן האחר",
+    });
+
     const response = await request.post(OFFER_ENDPOINT, {
       data: {
-        groomId: SEED.groomFirst,
-        brideId: SEED.brideFirst,
+        groomId: fx.groomFirst,
+        brideId: fx.brideFirst,
         action: "draft",
         noteForGroom: "ניסיון לדרוס טיוטה של שדכן אחר",
       },
@@ -62,31 +76,29 @@ test.describe("הצעת שידוך — טיפול בשורה קיימת לאות
     expect(body.error).toContain("טיוטה של שדכן אחר");
 
     // הטיוטה המקורית לא נגעה — לא הבעלות, לא הסטטוס, ולא ההערה
-    const original = await getShidduch(admin, SEED.existingDraftId);
+    const original = await getShidduch(admin, othersDraftId);
     expect(original).not.toBeNull();
-    expect(original?.shadchan_id).toBe(SEED.shadchanUserId);
+    expect(original?.shadchan_id).toBe(fx.otherShadchanId);
     expect(original?.status).toBe("draft");
-    expect(original?.note_for_groom).not.toContain("ניסיון לדרוס");
+    expect(original?.note_for_groom).toBe("הטיוטה של השדכן האחר");
 
-    expect(await countPairRows(admin, SEED.groomFirst, SEED.brideFirst)).toBe(
-      1,
-    );
+    expect(await countPairRows(admin, fx.groomFirst, fx.brideFirst)).toBe(1);
   });
 
   test("שורה שנדחתה — שימוש חוזר באותה שורה, והבעלות עוברת לשדכן ששולח", async ({
     request,
   }) => {
     const rejectedId = await insertShidduch(admin, {
-      groomId: SEED.groomSecond,
-      brideId: SEED.brideSecond,
-      shadchanId: SEED.shadchanUserId,
+      groomId: fx.groomSecond,
+      brideId: fx.brideSecond,
+      shadchanId: fx.otherShadchanId,
       status: "rejected",
     });
 
     const response = await request.post(OFFER_ENDPOINT, {
       data: {
-        groomId: SEED.groomSecond,
-        brideId: SEED.brideSecond,
+        groomId: fx.groomSecond,
+        brideId: fx.brideSecond,
         action: "draft",
         noteForGroom: "הצעה חדשה אחרי שהקודמת נדחתה",
       },
@@ -97,9 +109,7 @@ test.describe("הצעת שידוך — טיפול בשורה קיימת לאות
 
     // אותו מזהה = עדכון השורה הקיימת, ולא הכנסה שהייתה נשברת על האילוץ
     expect(body.id).toBe(rejectedId);
-    expect(await countPairRows(admin, SEED.groomSecond, SEED.brideSecond)).toBe(
-      1,
-    );
+    expect(await countPairRows(admin, fx.groomSecond, fx.brideSecond)).toBe(1);
 
     const reused = await getShidduch(admin, rejectedId);
     expect(reused?.status).toBe("draft");
@@ -110,8 +120,8 @@ test.describe("הצעת שידוך — טיפול בשורה קיימת לאות
   test("טיוטה משלי לאותו צמד — מתעדכנת ולא משוכפלת", async ({ request }) => {
     const first = await request.post(OFFER_ENDPOINT, {
       data: {
-        groomId: SEED.groomSecond,
-        brideId: SEED.brideFirst,
+        groomId: fx.groomSecond,
+        brideId: fx.brideFirst,
         action: "draft",
         noteForGroom: "נוסח ראשון",
       },
@@ -121,8 +131,8 @@ test.describe("הצעת שידוך — טיפול בשורה קיימת לאות
 
     const second = await request.post(OFFER_ENDPOINT, {
       data: {
-        groomId: SEED.groomSecond,
-        brideId: SEED.brideFirst,
+        groomId: fx.groomSecond,
+        brideId: fx.brideFirst,
         action: "draft",
         noteForGroom: "נוסח מעודכן",
       },
@@ -130,9 +140,7 @@ test.describe("הצעת שידוך — טיפול בשורה קיימת לאות
     expect(second.status()).toBe(200);
     expect((await second.json()).id).toBe(firstId);
 
-    expect(await countPairRows(admin, SEED.groomSecond, SEED.brideFirst)).toBe(
-      1,
-    );
+    expect(await countPairRows(admin, fx.groomSecond, fx.brideFirst)).toBe(1);
 
     const updated = await getShidduch(admin, firstId);
     expect(updated?.note_for_groom).toBe("נוסח מעודכן");
