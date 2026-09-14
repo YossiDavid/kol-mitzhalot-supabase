@@ -56,11 +56,7 @@ export default function SendOtherSideButton({
         return;
       }
 
-      toast.success(
-        Array.isArray(data.sentTo) && data.sentTo.length > 0
-          ? `נשלח בהצלחה ל: ${data.sentTo.join(", ")}`
-          : "נשלח בהצלחה לצד השני",
-      );
+      toast.success("ההצעה נשלחה במייל גם לצד השני");
       setOpen(false);
       setNote("");
       router.refresh();
@@ -74,7 +70,11 @@ export default function SendOtherSideButton({
   return (
     <>
       <div>
-        <Button onClick={() => setOpen(true)} disabled={loading} variant="outline">
+        <Button
+          onClick={() => setOpen(true)}
+          disabled={loading}
+          variant="outline"
+        >
           {loading ? "שולח..." : `שליחה גם ${targetLabel}`}
         </Button>
       </div>

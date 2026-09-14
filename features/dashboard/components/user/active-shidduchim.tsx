@@ -5,26 +5,27 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
+import ParentProposalListItem from "@/features/shidduchim/components/parent-proposal-list-item";
+import type { ParentProposal } from "@/features/shidduchim/lib/proposals-data";
 import { Crown } from "lucide-react";
 import Link from "next/link";
-
-type Shiduch = {
-  id: string;
-  name: string;
-  description: string;
-  image: string;
-  link: string;
-};
 
 export default function ActiveShidduchim({
   shiduchim,
 }: {
-  shiduchim: Shiduch[];
+  shiduchim: ParentProposal[];
 }) {
   return (
     <>
       {shiduchim.length > 0 ? (
-        <></>
+        <div className="space-y-3">
+          {shiduchim.map((proposal) => (
+            <ParentProposalListItem
+              key={`${proposal.shidduchId}-${proposal.side}`}
+              proposal={proposal}
+            />
+          ))}
+        </div>
       ) : (
         <Empty>
           <EmptyHeader>

@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import {
   Home,
+  Inbox,
   MessageCircle,
   Network,
   Plus,
@@ -17,6 +17,7 @@ import type { Role } from "@/lib/user-role";
 const allItems = [
   { title: "ראשי", url: "/app", icon: Home },
   { title: "מיועדים", url: "/app/students", icon: Users },
+  { title: "הצעות", url: "/app/proposals", icon: Inbox },
   { title: "צ'אטים", url: "/app/chats", icon: MessageCircle },
   { title: "לוח עבודה", url: "/app/canvas", icon: Network },
   { title: "הגדרות", url: "/app/settings", icon: Settings },
@@ -28,20 +29,20 @@ const shadchanOnlyUrls = ["/app/canvas"];
 // רשימת המיועדים חושפת מיועדים של אחרים, ולכן סגורה להורה. "הוספת
 // מיועד" נשארת פתוחה לכולם — הורה מוסיף את ילדיו.
 const staffVisibleUrls = ["/app/students"];
+// בסרגל התחתון אין מקום לכל הפריטים: לשדכן/מנהל יש כבר שישה, ולכן
+// "הצעות" מוצג בו רק להורה (בדשבורד ובסיידבר הוא זמין לכולם).
+const parentOnlyUrls = ["/app/proposals"];
 
 export function BottomNav({ roles }: { roles: Role[] }) {
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
-
-  const effectiveRoles: Role[] = mounted ? roles : ["user"];
+  const effectiveRoles: Role[] = roles;
   // ניווט חייב להציג את איחוד כל ההרשאות של המשתמש - מי שהוא גם שדכן וגם
   // איש צוות עדיין רואה את פריטי השדכן, ולא רק לפי תפקיד "ראשי" יחיד.
   const isShadchanOrAdmin =
     effectiveRoles.includes("shadchan") || effectiveRoles.includes("admin");
   const items = allItems.filter((item) => {
-    if (shadchanOnlyUrls.includes(item.url)) return isShadchanOrAdmin
+    if (shadchanOnlyUrls.includes(item.url)) return isShadchanOrAdmin;
+    if (parentOnlyUrls.includes(item.url)) return !isShadchanOrAdmin;
     if (staffVisibleUrls.includes(item.url))
       return isShadchanOrAdmin || effectiveRoles.includes("staff");
     return true;

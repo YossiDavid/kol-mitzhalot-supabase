@@ -1,23 +1,34 @@
-import { createClient } from "@/lib/supabase/server";
-import { hasRole } from "@/lib/user";
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
-export default async function AdminLayout({
+import { getUser, hasRole } from "@/lib/user";
+
+/**
+ * בדיקת הרשאת הניהול. אינה מציגה דבר, ולכן היא זורמת אחרי המסגרת במקום
+ * לעכב את הרינדור של כל /app/admin. המידע עצמו מוגן ב-RLS ובבדיקות
+ * שבצד השרת, וכאן מדובר בשער ניווט בלבד.
+ */
+async function AdminGate() {
+  const user = await getUser();
+
+  if (!hasRole(user, "admin")) {
+    redirect("/app");
+  }
+
+  return null;
+}
+
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // בדיקה שהמשתמש הוא אדמין
-  const isAdmin = hasRole(user, "admin");
-
-  if (!isAdmin) {
-    redirect("/app");
-  }
-
-  return <>{children}</>;
+  return (
+    <>
+      <Suspense fallback={null}>
+        <AdminGate />
+      </Suspense>
+      {children}
+    </>
+  );
 }

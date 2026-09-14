@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { hasRole } from "@/lib/user";
 
 const bodySchema = z.object({
-  shidduchId: z.string().uuid(),
+  shidduchId: z.guid(),
   note: z.string().max(8000).optional().default(""),
 });
 
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
   const { data: shidduch, error: shidduchErr } = await admin
     .from("shidduchim")
     .select(
-      "id, shadchan_id, groom_id, bride_id, note_for_groom, note_for_bride, recipient_scope",
+      "id, shadchan_id, groom_id, bride_id, note_for_groom, note_for_bride, recipient_scope, status",
     )
     .eq("id", shidduchId)
     .maybeSingle();
@@ -67,6 +67,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: "ניתן לבצע שליחה משלימה רק כשההצעה נשלחה לצד אחד" },
       { status: 400 },
+    );
+  }
+
+  if (shidduch.status === "rejected" || shidduch.status === "completed") {
+    return NextResponse.json(
+      { error: "ההצעה כבר נסגרה - לא ניתן לשלוח אותה לצד השני" },
+      { status: 409 },
     );
   }
 
@@ -131,7 +138,8 @@ export async function POST(req: NextRequest) {
       .update({
         ...notePatch,
         recipient_scope: "both",
-        status: "sent",
+        // לא מאפסים ל-"sent": הסטטוס נגזר מתגובות הצדדים (respond_to_shidduch),
+        // ותגובה שהצד הראשון כבר נתן חייבת להישאר בתוקף
         sent_at: now,
         updated_at: now,
       })
@@ -147,8 +155,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      sentTo: result.sentTo,
-      sendGridMessageIds: result.sendGridMessageIds,
+      // בלי כתובות מייל של ההורים — ראה offer/route.ts
+      sentCount: result.sentTo.length,
       recipientScope: "both",
     });
   } catch (e) {

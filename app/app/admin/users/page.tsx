@@ -14,6 +14,14 @@ import {
   type AdminUsersQuery,
   type UserStatsRow,
 } from "@/features/admin/lib/users";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// מספר שורות השלד בזמן הטעינה - מקרב את גובה הטבלה האמיתית ומונע קפיצת פריסה.
+const FALLBACK_ROW_COUNT = 6;
+
+type UsersPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 function formatDate(dateString: string | null): string {
   if (!dateString) return "לא זמין";
@@ -71,11 +79,7 @@ function buildUsersHref(
   return qs ? `/app/admin/users?${qs}` : "/app/admin/users";
 }
 
-export default async function UsersPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
+async function UsersContent({ searchParams }: UsersPageProps) {
   noStore();
   const sp = await searchParams;
   const query = parseUsersQuery(sp);
@@ -294,5 +298,44 @@ export default async function UsersPage({
         )}
       </DashboardSection>
     </div>
+  );
+}
+
+function UsersPageFallback() {
+  return (
+    <div className="space-y-10 py-4">
+      <DashboardSection
+        title="כל המשתמשים"
+        subTitle="רשימת משתמשים עם עימוד, סינון ומיון"
+        button={
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline">
+              <Link href="/app/admin">חזרה לדף הבית</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/app/admin/users/create">יצירת משתמש חדש</Link>
+            </Button>
+          </div>
+        }
+      >
+        <div role="status" aria-label="טוען">
+          <div className="mt-6 h-24 animate-pulse rounded-lg border bg-muted/30" />
+          <div className="space-y-3 pt-8">
+            <Skeleton className="h-6 w-full" />
+            {Array.from({ length: FALLBACK_ROW_COUNT }).map((_, index) => (
+              <Skeleton key={index} className="h-14 w-full" />
+            ))}
+          </div>
+        </div>
+      </DashboardSection>
+    </div>
+  );
+}
+
+export default function UsersPage(props: UsersPageProps) {
+  return (
+    <Suspense fallback={<UsersPageFallback />}>
+      <UsersContent {...props} />
+    </Suspense>
   );
 }

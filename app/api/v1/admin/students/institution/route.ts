@@ -9,8 +9,9 @@ import { hasRole } from "@/lib/user";
 // שיוך המוני של מוסד לימודים לכרטיסי מיועדים קיימים (מסך
 // app/app/admin/students/institutions). institutionId=null מנקה שיוך קיים.
 const bodySchema = z.object({
-  studentIds: z.array(z.string().uuid()).min(1).max(200),
-  institutionId: z.string().uuid().nullable(),
+  // z.guid ולא z.uuid: מ-zod 4 המאמת בודק גם ביטי גרסה לפי RFC 4122
+  studentIds: z.array(z.guid()).min(1).max(200),
+  institutionId: z.guid().nullable(),
 });
 
 export async function PATCH(req: NextRequest) {

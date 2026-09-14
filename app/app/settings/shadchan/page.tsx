@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,10 @@ import { useForm } from "react-hook-form";
 import Link from "next/link";
 import { isValidPhone, PHONE_INVALID_MESSAGE } from "@/lib/phone";
 import { hasRole } from "@/lib/user-role";
+import { Skeleton } from "@/components/ui/skeleton";
+
+/** מספר שדות הטופס, לשלד הטעינה. */
+const FORM_FIELD_COUNT = 6;
 
 interface ShadchanFormData {
   bio: string;
@@ -37,7 +41,50 @@ interface ShadchanFormData {
   closed_matches: string;
 }
 
+/** שלד עמוד הבקשה, זהה במבנה לתוכן האמיתי כדי שלא תהיה קפיצה. */
+function ShadchanPageSkeleton() {
+  return (
+    <div className="container mx-auto max-w-2xl py-8">
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-heading font-bold">הצטרפות כשדכן</h1>
+          <p className="mt-2 text-muted-foreground">
+            מלא את הפרטים הבאים כדי להגיש בקשה להצטרפות כשדכן במערכת
+          </p>
+        </div>
+        <div
+          role="status"
+          aria-label="טוען"
+          className="space-y-4 rounded-xl border border-border p-6"
+        >
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-4 w-72" />
+          {Array.from({ length: FORM_FIELD_COUNT }, (_, i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-9 w-full" />
+            </div>
+          ))}
+          <div className="flex justify-end gap-2">
+            <Skeleton className="h-9 w-20" />
+            <Skeleton className="h-9 w-24" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** הטופס נשען על react-hook-form, ולכן יושב מאחורי גבול Suspense. */
 export default function ShadchanApplicationPage() {
+  return (
+    <Suspense fallback={<ShadchanPageSkeleton />}>
+      <ShadchanApplicationForm />
+    </Suspense>
+  );
+}
+
+function ShadchanApplicationForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -188,11 +235,7 @@ export default function ShadchanApplicationPage() {
   };
 
   if (isFetching) {
-    return (
-      <div className="container mx-auto max-w-2xl py-8">
-        <div className="text-center">טוען...</div>
-      </div>
-    );
+    return <ShadchanPageSkeleton />;
   }
 
   return (

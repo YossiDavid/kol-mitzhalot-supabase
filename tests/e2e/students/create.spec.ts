@@ -6,14 +6,20 @@ const fill = (page: Page, fieldName: string, value: string) =>
 test.describe("יצירת תלמיד חדש", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/app/students/create");
-    await expect(page.locator("h1, h2, h3").first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("h1, h2, h3").first()).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
   test("טופס יצירת תלמיד מוצג בצורה תקינה", async ({ page }) => {
     // Step 0 should be visible
     await expect(page.locator("text=ברוכים הבאים")).toBeVisible();
-    await expect(page.getByRole("radio", { name: "מיועד", exact: true })).toBeVisible();
-    await expect(page.getByRole("radio", { name: "מיועדת", exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("radio", { name: "מיועד", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("radio", { name: "מיועדת", exact: true }),
+    ).toBeVisible();
   });
 
   test("ניווט בין שלבים עובד", async ({ page }) => {
@@ -64,14 +70,16 @@ test.describe("יצירת תלמיד חדש", () => {
     // personalStatus / cellphoneType / planForLife — use data-slot to avoid matching
     // the calendar's hidden <select id="month"> and <select id="year"> elements
     const selects = page.locator("[data-slot='native-select']");
-    await selects.nth(0).selectOption("single");  // personalStatus
-    await selects.nth(1).selectOption("kosher");   // cellphoneType
-    await selects.nth(2).selectOption("koilel");   // planForLife (male only)
+    await selects.nth(0).selectOption("single"); // personalStatus
+    await selects.nth(1).selectOption("kosher"); // cellphoneType
+    await selects.nth(2).selectOption("koilel"); // planForLife (male only)
 
     await page.locator("button:has-text('הבא')").click();
 
     // ── Step 2: Family info ─────────────────────────────────────────
-    await expect(page.locator("text=על המשפחה").first()).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator("text=על המשפחה").first()).toBeVisible({
+      timeout: 5_000,
+    });
 
     // father.self / grandFather / grandMother are textAndSelect fields — their
     // input id is "father-self" (no ".name" suffix), not "father-self-name"
@@ -93,23 +101,38 @@ test.describe("יצירת תלמיד חדש", () => {
     await page.locator("button:has-text('הבא')").click();
 
     // ── Step 3: Education ───────────────────────────────────────────
-    await expect(page.locator("button:has-text('הבא')")).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator("button:has-text('הבא')")).toBeVisible({
+      timeout: 5_000,
+    });
     await page.locator("button:has-text('הבא')").click();
 
     // ── Step 4: Parents status ──────────────────────────────────────
-    await expect(page.locator("button:has-text('הבא')")).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator("button:has-text('הבא')")).toBeVisible({
+      timeout: 5_000,
+    });
     await page.locator("button:has-text('הבא')").click();
 
     // ── Step 5: Medical ─────────────────────────────────────────────
-    await expect(page.locator("button:has-text('הבא')")).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator("button:has-text('הבא')")).toBeVisible({
+      timeout: 5_000,
+    });
     await page.locator("button:has-text('הבא')").click();
 
     // ── Step 6: Partner + Author ────────────────────────────────────
-    await expect(page.locator("button[type='submit']")).toBeVisible({ timeout: 5_000 });
+    await expect(page.locator("button[type='submit']")).toBeVisible({
+      timeout: 5_000,
+    });
 
-    await fill(page, "partner.additionalInformation", "מחפשים בן תורה עם מידות טובות");
+    await fill(
+      page,
+      "partner.additionalInformation",
+      "מחפשים בן תורה עם מידות טובות",
+    );
     await fill(page, "author.name", "יוסף ישראלי");
     await fill(page, "author.phone", "0521234567");
+    // שדה חובה בסכמה. בלי מילויו zodResolver חוסם את השליחה בלי טוסט ובלי
+    // שגיאת קונסול, והטופס פשוט נשאר במקומו.
+    await fill(page, "author.relation", "אב");
 
     // Submit
     const submitBtn = page.locator("button[type='submit']");
@@ -120,7 +143,10 @@ test.describe("יצירת תלמיד חדש", () => {
     // Log any console errors captured during submission to help diagnose failures
     await page.waitForTimeout(3_000);
     if (consoleErrors.length > 0) {
-      console.error("Browser console errors during submit:", consoleErrors.join("\n"));
+      console.error(
+        "Browser console errors during submit:",
+        consoleErrors.join("\n"),
+      );
     }
     await expect(page).toHaveURL(/\/app\/students\/[a-f0-9-]{36}/, {
       timeout: 20_000,

@@ -5,6 +5,11 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PhotoRequestActions } from "@/features/photo-requests/components/photo-request-actions";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Suspense } from "react";
+
+// מספר שורות השלד בזמן הטעינה - מקרב את גובה הטבלה האמיתית ומונע קפיצת פריסה.
+const FALLBACK_ROW_COUNT = 4;
 
 // ההרשאה עצמה נאכפת בשתי שכבות שאינן תלויות בדף הזה: app/app/admin/layout.tsx
 // מפנה החוצה כל מי שאינו מנהל, ומדיניות ה-RLS על photo_view_requests מחזירה
@@ -95,7 +100,7 @@ async function getPendingRequests(): Promise<PendingPhotoRequest[]> {
   }));
 }
 
-export default async function PhotoRequestsAdminPage() {
+async function PhotoRequestsContent() {
   noStore();
 
   let requests: PendingPhotoRequest[] = [];
@@ -211,5 +216,38 @@ export default async function PhotoRequestsAdminPage() {
         </Box>
       </DashboardSection>
     </div>
+  );
+}
+
+function PhotoRequestsFallback() {
+  return (
+    <div className="space-y-10 py-4">
+      <DashboardSection
+        title="בקשות צפייה בתמונה"
+        subTitle="שדכנים שביקשו הרשאה לצפות בתמונת מיועדת. אישור חושף את התמונה למבקש בכרטיס אחד בלבד."
+        button={
+          <Button asChild>
+            <Link href="/app/admin">חזרה לדף הבית</Link>
+          </Button>
+        }
+      >
+        <Box className="mt-6">
+          <div role="status" aria-label="טוען" className="space-y-4">
+            <Skeleton className="h-6 w-full" />
+            {Array.from({ length: FALLBACK_ROW_COUNT }).map((_, index) => (
+              <Skeleton key={index} className="h-12 w-full" />
+            ))}
+          </div>
+        </Box>
+      </DashboardSection>
+    </div>
+  );
+}
+
+export default function PhotoRequestsAdminPage() {
+  return (
+    <Suspense fallback={<PhotoRequestsFallback />}>
+      <PhotoRequestsContent />
+    </Suspense>
   );
 }

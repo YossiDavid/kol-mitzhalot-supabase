@@ -10,6 +10,11 @@ import {
   INSTITUTION_TYPE_LABELS,
   type InstitutionType,
 } from "@/features/institutions/lib/institution-labels";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Suspense } from "react";
+
+// מספר כרטיסי השלד בזמן הטעינה - מקרב את גובה הרשימה האמיתית.
+const FALLBACK_CARD_COUNT = 3;
 
 type StaffRequestInstitution = {
   name: string;
@@ -109,7 +114,7 @@ function formatDate(dateString: string | null): string {
   }).format(date);
 }
 
-export default async function StaffRequestsPage() {
+async function StaffRequestsContent() {
   noStore();
   let requests: StaffRequest[] = [];
   let error: Error | null = null;
@@ -252,5 +257,44 @@ export default async function StaffRequestsPage() {
         )}
       </DashboardSection>
     </div>
+  );
+}
+
+function StaffRequestsFallback() {
+  return (
+    <div className="space-y-10 py-4">
+      <DashboardSection
+        title="בקשות הצטרפות כאיש צוות"
+        subTitle="טוען בקשות…"
+        button={
+          <Button asChild>
+            <Link href="/app/admin">חזרה לדף הבית</Link>
+          </Button>
+        }
+      >
+        <div role="status" aria-label="טוען" className="mt-6 space-y-6">
+          {Array.from({ length: FALLBACK_CARD_COUNT }).map((_, index) => (
+            <Box key={index} className="p-6">
+              <div className="space-y-4">
+                <Skeleton className="h-6 w-56" />
+                <Skeleton className="h-4 w-72" />
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-16 w-full" />
+                </div>
+              </div>
+            </Box>
+          ))}
+        </div>
+      </DashboardSection>
+    </div>
+  );
+}
+
+export default function StaffRequestsPage() {
+  return (
+    <Suspense fallback={<StaffRequestsFallback />}>
+      <StaffRequestsContent />
+    </Suspense>
   );
 }

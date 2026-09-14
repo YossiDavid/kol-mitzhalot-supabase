@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ClipboardList,
   GraduationCap,
   HeartHandshake,
   Home,
+  Inbox,
   LogOut,
   MessageCircle,
   Network,
@@ -41,6 +41,8 @@ const allItems = [
   { title: "מיועדים", url: "/app/students", icon: Users },
   { title: "הוספת מיועד", url: "/app/students/create", icon: Plus },
   { title: "צ'אטים", url: "/app/chats", icon: MessageCircle },
+  // הצעות שנשלחו לילדי המשתמש - לכל משתמש, גם שדכן יכול להיות הורה
+  { title: "הצעות שקיבלתי", url: "/app/proposals", icon: Inbox },
   { title: "לוח העבודה", url: "/app/canvas", icon: Network },
   {
     title: "כל השידוכים שלי",
@@ -57,16 +59,12 @@ const shadchanOnlyUrls = ["/app/canvas", "/app/shadchan/proposals"];
 const staffVisibleUrls = ["/app/students"];
 
 export function AppSidebar({ roles }: { roles: Role[] }) {
-  const [mounted, setMounted] = useState(false);
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
   const pathname = usePathname();
   const router = useRouter();
 
-  useEffect(() => setMounted(true), []);
-
-  // Use roles only after mount so server and client initial render match (avoid hydration mismatch)
-  const effectiveRoles: Role[] = mounted ? roles : ["user"];
+  const effectiveRoles: Role[] = roles;
   // ניווט חייב להציג את איחוד כל ההרשאות של המשתמש - מי שהוא גם שדכן וגם
   // איש צוות עדיין רואה את פריטי השדכן, ולא רק לפי תפקיד "ראשי" יחיד.
   const isShadchanOrAdmin =
@@ -95,7 +93,7 @@ export function AppSidebar({ roles }: { roles: Role[] }) {
     );
 
   const items = allItems.filter((item) => {
-    if (shadchanOnlyUrls.includes(item.url)) return isShadchanOrAdmin
+    if (shadchanOnlyUrls.includes(item.url)) return isShadchanOrAdmin;
     if (staffVisibleUrls.includes(item.url))
       return isShadchanOrAdmin || effectiveRoles.includes("staff");
     return true;

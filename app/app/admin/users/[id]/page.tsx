@@ -10,6 +10,16 @@ import { unstable_noStore as noStore } from "next/cache";
 import { getEffectiveRole, getRoleLabel, getRoles } from "@/lib/user";
 import type { Role } from "@/lib/user";
 import { UserRolesEditor } from "@/features/admin/components/user-roles-editor";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Suspense } from "react";
+
+// מספר קופסאות השלד בזמן הטעינה - מקרב את מבנה הדף האמיתי (מידע, תפקידים,
+// סטטיסטיקות וילדים) ומונע קפיצת פריסה.
+const FALLBACK_SECTION_COUNT = 4;
+
+type UserDetailsPageProps = {
+  params: Promise<{ id: string }>;
+};
 
 type UserDetails = {
   id: string;
@@ -186,11 +196,7 @@ function formatDate(dateString: string | null): string {
   }).format(date);
 }
 
-export default async function UserDetailsPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+async function UserDetailsContent({ params }: UserDetailsPageProps) {
   noStore();
   const { id } = await params;
   let userDetails: UserDetails | null = null;
@@ -417,5 +423,43 @@ export default async function UserDetailsPage({
         </div>
       </DashboardSection>
     </div>
+  );
+}
+
+function UserDetailsFallback() {
+  return (
+    <div className="space-y-10 py-4">
+      <DashboardSection
+        title="פרטי משתמש"
+        subTitle="מידע מפורט על המשתמש"
+        button={
+          <Button asChild variant="outline">
+            <Link href="/app/admin/users">חזרה לרשימת המשתמשים</Link>
+          </Button>
+        }
+      >
+        <div role="status" aria-label="טוען" className="mt-6 space-y-6">
+          {Array.from({ length: FALLBACK_SECTION_COUNT }).map((_, index) => (
+            <Box key={index}>
+              <Skeleton className="mb-4 h-6 w-40" />
+              <div className="grid grid-cols-2 gap-4">
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-5 w-full" />
+              </div>
+            </Box>
+          ))}
+        </div>
+      </DashboardSection>
+    </div>
+  );
+}
+
+export default function UserDetailsPage(props: UserDetailsPageProps) {
+  return (
+    <Suspense fallback={<UserDetailsFallback />}>
+      <UserDetailsContent {...props} />
+    </Suspense>
   );
 }

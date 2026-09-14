@@ -1,0 +1,8 @@
+allowBuilds:
+  sharp: true
+  unrs-resolver: true
+
+# גרסה אחת בכל העץ - אחרת browserslist (דרך Babel של @svgr/webpack)
+# מושך עותק ישן ומדפיס "The data in this module is over two months old"
+overrides:
+  baseline-browser-mapping: ^2.11.21

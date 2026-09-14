@@ -50,6 +50,10 @@ import {
   workStatusToHebrew,
 } from "@/features/students/lib/profile-labels";
 import { unstable_noStore as noStore } from "next/cache";
+import { after } from "next/server";
+import { recordStudentCardView } from "@/features/students/lib/record-card-view";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // הערה: אין כאן export const dynamic — הוא אסור תחת Cache Components
 // (next.config: cacheComponents) והבנייה נכשלת עליו. גם אין בו צורך:
@@ -249,7 +253,110 @@ async function loadStudentNotes(studentId: string): Promise<Note[]> {
   });
 }
 
-export default async function StudentPage({
+// --- שלד טעינה -----------------------------------------------------------
+// תחת Cache Components כל קריאת runtime (cookies/headers/auth/DB) חייבת לשבת
+// מתחת ל-Suspense, ולכן הדף עצמו הוא הקומפוננטה שמתחת לגבול. השלד מחקה את
+// מבנה הכרטיס האמיתי (חזרה לרשימה, hero, מקטע פרטים אישיים ורשת 3+1) כדי
+// שלא יהיה layout shift ברגע שהתוכן מגיע. כל המידות קבועות - אין כאן שום
+// ערך אקראי או תלוי-זמן, כי השלד עצמו מוכן מראש (prerendered).
+const SKELETON_INFO_TAGS = 8;
+const SKELETON_MAIN_SECTIONS = 2;
+const SKELETON_SIDE_SECTIONS = 3;
+const SKELETON_SECTION_ROWS = 4;
+
+function SkeletonSection({ rows }: { rows: number }) {
+  return (
+    <Box className="space-y-4">
+      <div className="flex items-center gap-3 border-b border-border pb-3">
+        <Skeleton className="h-9 w-9 rounded-lg" />
+        <Skeleton className="h-6 w-40" />
+      </div>
+      <div className="space-y-3">
+        {Array.from({ length: rows }, (_, index) => (
+          <Skeleton key={index} className="h-4 w-full" />
+        ))}
+      </div>
+    </Box>
+  );
+}
+
+function StudentCardSkeleton() {
+  return (
+    <div
+      role="status"
+      aria-label="טוען"
+      className="min-h-screen space-y-6 text-right"
+    >
+      {/* Back - מרקאפ סטטי זהה לזה שבתוכן האמיתי */}
+      <span className="inline-flex items-center gap-1 text-body-sm text-muted-foreground">
+        <ChevronRight className="h-4 w-4" />
+        חזרה לרשימה
+      </span>
+
+      {/* Hero */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <Skeleton className="h-20 w-20 shrink-0 rounded-full sm:h-24 sm:w-24" />
+        <div className="min-w-0 flex-1 space-y-2">
+          <Skeleton className="h-8 w-56" />
+          <Skeleton className="h-4 w-72 max-w-full" />
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-8 w-20" />
+        </div>
+      </div>
+
+      {/* פרטים אישיים */}
+      <Box className="space-y-4">
+        <div className="flex items-center gap-3 border-b border-border pb-3">
+          <Skeleton className="h-9 w-9 rounded-lg" />
+          <Skeleton className="h-6 w-32" />
+        </div>
+        <div className="grid grid-cols-2 gap-4 rounded-lg bg-muted/50 p-4 sm:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: SKELETON_INFO_TAGS }, (_, index) => (
+            <div key={index} className="flex flex-col gap-1.5">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          ))}
+        </div>
+      </Box>
+
+      {/* Main Content */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
+        <div className="space-y-6 lg:col-span-3">
+          {Array.from({ length: SKELETON_MAIN_SECTIONS }, (_, index) => (
+            <SkeletonSection key={index} rows={SKELETON_SECTION_ROWS} />
+          ))}
+        </div>
+        <div className="space-y-6">
+          {Array.from({ length: SKELETON_SIDE_SECTIONS }, (_, index) => (
+            <SkeletonSection key={index} rows={2} />
+          ))}
+        </div>
+      </div>
+
+      <span className="sr-only">טוען כרטיס מיועד…</span>
+    </div>
+  );
+}
+
+export default function StudentPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  return (
+    <Suspense fallback={<StudentCardSkeleton />}>
+      <StudentPageContent params={params} />
+    </Suspense>
+  );
+}
+
+// הקומפוננטה שקוראת את ה-session ומחליטה מה נחשף (כולל הענף הציבורי לגולש
+// לא מחובר) נשארה ללא שינוי - היא רק ירדה אל מתחת ל-Suspense.
+async function StudentPageContent({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -323,6 +430,13 @@ export default async function StudentPage({
         </div>
       </div>
     );
+  }
+
+  // רישום צפייה של שדכן בכרטיס ("שדכנים שפעלו בשבילך" בלוח ההורה).
+  // הקריאה יוצאת עכשיו (כל עוד ה-cookies של הבקשה זמינים) ו-after() רק
+  // מבטיח שהיא תסתיים גם אחרי שהעמוד נשלח - הרינדור לא ממתין לה.
+  if (user && hasRole(user, "shadchan") && student.user_id !== user.id) {
+    after(recordStudentCardView(supabase, student.id));
   }
 
   // --- ענף ציבורי (משתמש לא מחובר) --------------------------------------

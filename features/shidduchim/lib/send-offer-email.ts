@@ -99,16 +99,44 @@ function buildCombinedBody(params: SendOfferParams): string {
   return lines.join("\n");
 }
 
+type Personalization = { to?: { email?: string }[]; subject?: string };
+
+/**
+ * שליחה אמיתית רק ב-production. בפיתוח כתובת בדיקה שאינה קיימת נרשמת
+ * כ-bounce בחשבון הדיוור, וכתובת אמיתית באמת מקבלת מייל מזהות השולח
+ * של המערכת. לבדיקת מסירה אמיתית מכוונת: SENDGRID_SEND_IN_DEV=true
+ */
+function isRealSendingEnabled(): boolean {
+  return (
+    process.env.NODE_ENV === "production" ||
+    process.env.SENDGRID_SEND_IN_DEV === "true"
+  );
+}
+
 /** מזהה הודעה מהתגובה — לחיפוש ב-Email Activity ב-SendGrid */
 async function sendSendGridRequest(
   body: Record<string, unknown>,
 ): Promise<{ messageId: string | null }> {
+  if (!isRealSendingEnabled()) {
+    const recipients =
+      (body.personalizations as Personalization[] | undefined)?.flatMap(
+        (p) => p.to?.map((t) => t.email).filter(Boolean) ?? [],
+      ) ?? [];
+    console.info(
+      "[send-offer-email] פיתוח: המייל לא נשלח בפועל. נמענים:",
+      recipients,
+    );
+    return { messageId: null };
+  }
+
   const key = process.env.SENDGRID_API_KEY;
   const fromEmail = process.env.SENDGRID_FROM_EMAIL;
   const fromName = process.env.SENDGRID_FROM_NAME || "קול מצהלות";
 
   if (!key || !fromEmail) {
-    throw new Error("SENDGRID_API_KEY או SENDGRID_FROM_EMAIL לא מוגדרים בסביבה");
+    throw new Error(
+      "SENDGRID_API_KEY או SENDGRID_FROM_EMAIL לא מוגדרים בסביבה",
+    );
   }
 
   const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
@@ -174,7 +202,9 @@ function getShidduchTemplateId(): string | null {
  * אם מוגדר `SENDGRID_TEMPLATE_ID_SHIDDUCH_OFFER` — נעשה שימוש בתבנית Dynamic (HTML).
  * אחרת — נשלח טקסט גולמי (תאימות לאחור).
  */
-export async function sendShidduchOfferEmails(params: SendOfferParams): Promise<{
+export async function sendShidduchOfferEmails(
+  params: SendOfferParams,
+): Promise<{
   sentTo: string[];
   /** מזהי SendGrid (תגובת X-Message-Id) — לחיפוש ב-Email Activity */
   sendGridMessageIds: string[];
@@ -214,11 +244,7 @@ export async function sendShidduchOfferEmails(params: SendOfferParams): Promise<
   };
 
   if (g && b && g === b && sendGroom && sendBride) {
-    await sendOne(
-      params.groomParentEmail!,
-      "both",
-      buildCombinedBody(params),
-    );
+    await sendOne(params.groomParentEmail!, "both", buildCombinedBody(params));
     sentTo.push(params.groomParentEmail!);
     return { sentTo, sendGridMessageIds };
   }

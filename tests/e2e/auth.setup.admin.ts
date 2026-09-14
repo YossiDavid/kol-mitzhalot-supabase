@@ -22,7 +22,13 @@ setup("authenticate admin test user", async ({ page }) => {
   if (existing) {
     userId = existing.id;
     await admin.auth.admin.updateUserById(userId, {
-      user_metadata: { role: "admin", phone_verified: true, phone: ADMIN_PHONE, firstName: "Admin", lastName: "Test" },
+      user_metadata: {
+        role: "admin",
+        phone_verified: true,
+        phone: ADMIN_PHONE,
+        firstName: "Admin",
+        lastName: "Test",
+      },
     });
   } else {
     const { data, error } = await admin.auth.admin.createUser({
@@ -46,11 +52,6 @@ setup("authenticate admin test user", async ({ page }) => {
   await admin
     .from("user_profiles")
     .upsert({ id: userId, first_name: "Admin", last_name: "Test" });
-
-  // Grant admin role in user_roles table
-  await admin
-    .from("user_roles")
-    .upsert({ user_id: userId, role: "admin" });
 
   // Generate magic link
   const { data: linkData, error: linkError } =

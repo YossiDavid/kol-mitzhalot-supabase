@@ -2,11 +2,36 @@ import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "@/features/settings/components/profile-form";
 import { ShadchanCard } from "@/features/settings/components/shadchan-card";
 import { StaffCard } from "@/features/settings/components/staff-card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { redirect } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 import { getPhoneVerificationEnabled } from "@/lib/system-settings";
+import { Suspense } from "react";
 
-export default async function SettingsPage({
+/** שדות הפרופיל: שם פרטי, שם משפחה, אימייל, טלפון. */
+const PROFILE_FIELD_COUNT = 4;
+
+/** שלד הטופס והכרטיסים, בגובה דומה לתוכן האמיתי כדי למנוע קפיצה. */
+function SettingsContentSkeleton() {
+  return (
+    <div role="status" aria-label="טוען" className="space-y-6">
+      <div className="space-y-4 rounded-xl border border-border p-6">
+        <Skeleton className="h-6 w-32" />
+        {Array.from({ length: PROFILE_FIELD_COUNT }, (_, i) => (
+          <div key={i} className="space-y-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-9 w-full" />
+          </div>
+        ))}
+        <Skeleton className="h-9 w-28" />
+      </div>
+      <Skeleton className="h-32 w-full rounded-xl" />
+      <Skeleton className="h-32 w-full rounded-xl" />
+    </div>
+  );
+}
+
+async function SettingsContent({
   searchParams,
 }: {
   searchParams: Promise<{ required?: string }>;
@@ -41,6 +66,33 @@ export default async function SettingsPage({
   const phoneVerificationEnabled = await getPhoneVerificationEnabled();
 
   return (
+    <>
+      {missingIdentityField && (
+        <div
+          className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-body-sm text-foreground"
+          role="status"
+        >
+          {missingIdentityField === "name"
+            ? "נא להשלים שם פרטי ושם משפחה כדי להמשיך לשימוש באפליקציה."
+            : "נא להשלים מספר טלפון כדי להמשיך לשימוש באפליקציה."}
+        </div>
+      )}
+      <ProfileForm
+        initialData={initialData}
+        phoneVerificationEnabled={phoneVerificationEnabled}
+      />
+      <ShadchanCard />
+      <StaffCard />
+    </>
+  );
+}
+
+export default function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ required?: string }>;
+}) {
+  return (
     <div className="container mx-auto max-w-2xl py-8">
       <div className="space-y-6">
         <div>
@@ -49,22 +101,9 @@ export default async function SettingsPage({
             נהל את הגדרות החשבון והפרופיל שלך
           </p>
         </div>
-        {missingIdentityField && (
-          <div
-            className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-body-sm text-foreground"
-            role="status"
-          >
-            {missingIdentityField === "name"
-              ? "נא להשלים שם פרטי ושם משפחה כדי להמשיך לשימוש באפליקציה."
-              : "נא להשלים מספר טלפון כדי להמשיך לשימוש באפליקציה."}
-          </div>
-        )}
-        <ProfileForm
-          initialData={initialData}
-          phoneVerificationEnabled={phoneVerificationEnabled}
-        />
-        <ShadchanCard />
-        <StaffCard />
+        <Suspense fallback={<SettingsContentSkeleton />}>
+          <SettingsContent searchParams={searchParams} />
+        </Suspense>
       </div>
     </div>
   );
