@@ -121,7 +121,9 @@ async function ensureUser(
     throw new Error(`קריאת רשימת המשתמשים נכשלה: ${error.message}`);
   }
 
-  const existing = data.users.find((candidate) => candidate.email === user.email);
+  const existing = data.users.find(
+    (candidate) => candidate.email === user.email,
+  );
   if (existing) return existing.id;
 
   const { data: created, error: createError } =

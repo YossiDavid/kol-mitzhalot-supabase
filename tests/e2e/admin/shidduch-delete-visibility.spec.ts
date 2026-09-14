@@ -43,9 +43,9 @@ test.describe("כרטיס שידוך — כפתור המחיקה מוצג לבע
     await page.goto(`/app/shidduchim/${othersShidduchId}`);
 
     // המנהל אכן מגיע לתצוגת הניהול של הכרטיס, ולא ל-404
-    await expect(page.getByRole("heading", { name: "כרטיס שידוך" })).toBeVisible(
-      { timeout: 15_000 },
-    );
+    await expect(
+      page.getByRole("heading", { name: "כרטיס שידוך" }),
+    ).toBeVisible({ timeout: 15_000 });
 
     await expect(page.getByRole("button", { name: "מחיקת ההצעה" })).toHaveCount(
       0,
