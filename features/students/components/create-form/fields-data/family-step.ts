@@ -154,8 +154,11 @@ export const familyStep: FormSteps = {
           emptyText: "עדיין לא נוספו מחותנים.",
           fields: [
             {
-              // TODO(בעלים): /users/mechutanim לא קיים ומחזיר 404 - טרם הוחלט
-              // מאיפה החיפוש (docs/design-refactor/PLAN.md, סעיף 9)
+              // מושבת בהחלטת הבעלים, ונשמר לשימוש עתידי: /users/mechutanim לא
+              // קיים (404) וטרם הוחלט מאיפה החיפוש. בינתיים ממלאים את פרטי
+              // המחותן ידנית. להפעלה: מוחקים את hidden ומממשים את החיפוש
+              // (למשל table + fillOnSelect כמו במוסדות הלימוד)
+              hidden: true,
               name: "family.mechutanim.id",
               type: "select2",
               placeholder: "חיפוש במאגר",

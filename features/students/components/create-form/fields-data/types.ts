@@ -71,6 +71,11 @@ interface BaseField {
   /** רוחב סמנטי - ממופה לרשת ב-field-layout.ts. בלי width: שורה מלאה */
   width?: FieldWidth;
   condition?: Condition[];
+  /**
+   * שדה מושבת: ההגדרה נשמרת בנתונים לשימוש עתידי, אבל השדה לא מוצג ולא
+   * נחשב בורר שנועל את השורה. להפעלה - מוחקים את הדגל.
+   */
+  hidden?: boolean;
 }
 
 export interface TextField extends BaseField {

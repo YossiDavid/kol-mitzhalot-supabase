@@ -20,6 +20,7 @@ import type {
 import { readText } from "./field-values";
 import {
   createRepeaterTemplate,
+  getRenderedChildFields,
   getRowIdFieldPaths,
   toRowFieldConfig,
 } from "./repeater-rows";
@@ -110,7 +111,7 @@ function RepeaterRow({
   ...fieldProps
 }: RepeaterRowProps) {
   const idFieldPaths = getRowIdFieldPaths(repeater, index);
-  const innerFields: FieldMetadata[] = repeater.fields;
+  const innerFields: FieldMetadata[] = getRenderedChildFields(repeater);
 
   return (
     <li className="rounded-lg border border-border p-4">
