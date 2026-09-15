@@ -205,7 +205,7 @@
 |---|---|---|
 | 2א | `PageHeader` ו-`Page` ב-`components/layout`, גווני סטטוס ב-`Badge`, 3 רוחבי דיאלוג | `9ee4afd` |
 | 2ב | `DataTable` עם כרטיסים במובייל, `StudentsTable` משותפת | `3c77287` |
-| 2ג | מתכון `Card` אחד, `ApplicationStatusCard` במקום `shadchan-card` ו-`staff-card`, `Empty` בשני גדלים בכל ההודעות הריקות, שלדי טעינה משותפים (`PageHeaderSkeleton`, `DataTableSkeleton`, `CardSkeleton`/`CardGridSkeleton`, `ListSkeleton`) | ממתין ל-commit |
+| 2ג | מתכון `Card` אחד, `ApplicationStatusCard` במקום `shadchan-card` ו-`staff-card`, `Empty` בשני גדלים בכל ההודעות הריקות, שלדי טעינה משותפים (`PageHeaderSkeleton`, `DataTableSkeleton`, `CardSkeleton`/`CardGridSkeleton`, `ListSkeleton`) | `3abe2ec` |
 
 **פערים שנשארו אחרי שלב 2:**
 
