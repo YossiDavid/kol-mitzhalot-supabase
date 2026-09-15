@@ -79,7 +79,8 @@ export interface DataTableProps<T> {
   className?: string;
 }
 
-const BREAKPOINT_CLASS = {
+/** מאיזה רוחב טבלה ומתחתיו כרטיסים - משותף לטבלה ולשלד הטעינה */
+export const DATA_TABLE_BREAKPOINT_CLASS = {
   md: { table: "hidden md:block", cards: "md:hidden" },
   lg: { table: "hidden lg:block", cards: "lg:hidden" },
   xl: { table: "hidden xl:block", cards: "xl:hidden" },
@@ -314,7 +315,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
   } = props;
   if (rows.length === 0) return <>{emptyState ?? null}</>;
 
-  const visibility = BREAKPOINT_CLASS[breakpoint];
+  const visibility = DATA_TABLE_BREAKPOINT_CLASS[breakpoint];
   return (
     <div data-slot="data-table" className={className}>
       <div className={cn(visibility.table, surface && "box px-2 py-1")}>

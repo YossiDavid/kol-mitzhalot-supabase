@@ -5,8 +5,19 @@ import type { Route } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Box, Page, PageHeader } from "@/components/layout";
-import { DataTable, type DataTableColumn } from "@/components/data-table";
+import {
+  DataTable,
+  DataTableSkeleton,
+  type DataTableColumn,
+} from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
@@ -37,30 +48,43 @@ export default function ArticlesAdminPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("articles")
-      .select("id, slug, title, category, is_published, published_at, created_at")
+      .select(
+        "id, slug, title, category, is_published, published_at, created_at",
+      )
       .order("created_at", { ascending: false });
     if (error) toast.error("שגיאה בטעינת מאמרים");
     else setArticles(data ?? []);
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   async function togglePublish(article: Article) {
     const newVal = !article.is_published;
     const { error } = await supabase
       .from("articles")
-      .update({ is_published: newVal, published_at: newVal ? new Date().toISOString() : null })
+      .update({
+        is_published: newVal,
+        published_at: newVal ? new Date().toISOString() : null,
+      })
       .eq("id", article.id);
     if (error) toast.error("שגיאה בעדכון סטטוס");
-    else { toast.success(newVal ? "פורסם" : "הוסר מפרסום"); load(); }
+    else {
+      toast.success(newVal ? "פורסם" : "הוסר מפרסום");
+      load();
+    }
   }
 
   async function deleteArticle(id: string) {
     if (!confirm("למחוק את המאמר?")) return;
     const { error } = await supabase.from("articles").delete().eq("id", id);
     if (error) toast.error("שגיאה במחיקה");
-    else { toast.success("המאמר נמחק"); load(); }
+    else {
+      toast.success("המאמר נמחק");
+      load();
+    }
   }
 
   const articleColumns: DataTableColumn<Article>[] = [
@@ -111,7 +135,11 @@ export default function ArticlesAdminPage() {
             aria-label={a.is_published ? "הסר פרסום" : "פרסם"}
             onClick={() => togglePublish(a)}
           >
-            {a.is_published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {a.is_published ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
           </Button>
           <Button variant="ghost" size="icon" asChild title="עריכה">
             <Link
@@ -154,30 +182,34 @@ export default function ArticlesAdminPage() {
           </div>
         }
       />
-        <Box>
-          {loading ? (
-            <div className="py-10 text-center text-muted-foreground">טוען...</div>
-          ) : (
-            <DataTable
-              surface={false}
-              caption="מאמרים"
-              columns={articleColumns}
-              rows={articles}
-              getRowKey={(a) => a.id}
-              emptyState={
-                <div className="py-16 text-center">
-                  <p className="text-subtitle font-semibold text-muted-foreground">אין מאמרים עדיין</p>
-                  <p className="mt-2 text-body-sm text-muted-foreground">צור את המאמר הראשון</p>
-                  <Button asChild className="mt-6">
+      <Box>
+        {loading ? (
+          <DataTableSkeleton surface={false} />
+        ) : (
+          <DataTable
+            surface={false}
+            caption="מאמרים"
+            columns={articleColumns}
+            rows={articles}
+            getRowKey={(a) => a.id}
+            emptyState={
+              <Empty size="compact" surface={false}>
+                <EmptyHeader>
+                  <EmptyTitle>אין מאמרים עדיין</EmptyTitle>
+                  <EmptyDescription>צור את המאמר הראשון</EmptyDescription>
+                </EmptyHeader>
+                <EmptyContent>
+                  <Button asChild>
                     <Link href={"/app/admin/content/articles/new" as any}>
                       <Plus className="me-1 h-4 w-4" /> מאמר חדש
                     </Link>
                   </Button>
-                </div>
-              }
-            />
-          )}
-        </Box>
+                </EmptyContent>
+              </Empty>
+            }
+          />
+        )}
+      </Box>
     </Page>
   );
 }

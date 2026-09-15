@@ -74,7 +74,7 @@ export default function Favorites({
       students={localFavorites}
       onRemoveFavorite={handleFavoriteRemove}
       emptyState={
-        <Empty>
+        <Empty size="compact">
           <EmptyHeader>
             <EmptyTitle>עוד לא הוספת שמות מועדפים ללוח העבודה</EmptyTitle>
             <EmptyDescription>

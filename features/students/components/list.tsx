@@ -5,12 +5,13 @@ import { createClient } from "@/lib/supabase/client";
 import { hasRole } from "@/lib/user-role";
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
+import { DataTableSkeleton } from "@/components/data-table";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
 import {
@@ -220,12 +221,7 @@ export default function StudentsList() {
     if (data) setUser(data.user || undefined);
   };
 
-  if (loading)
-    return (
-      <div className="flex items-center justify-center gap-2 p-8 text-center">
-        <Spinner /> טוען נתונים...
-      </div>
-    );
+  if (loading) return <DataTableSkeleton breakpoint="lg" className="mt-8" />;
 
   // כשל בטעינה אינו "אין תוצאות" — מציגים אותו במפורש עם אפשרות לנסות שוב
   if (loadError)
@@ -239,20 +235,21 @@ export default function StudentsList() {
               המערכת.
             </EmptyDescription>
           </EmptyHeader>
-          <p
-            className="mt-2 text-center text-body-sm text-muted-foreground"
-            dir="ltr"
-            role="alert"
-          >
-            {loadError}
-          </p>
-          <Button
-            variant="outline"
-            className="mt-4"
-            onClick={() => setReloadKey((k) => k + 1)}
-          >
-            נסו שוב
-          </Button>
+          <EmptyContent>
+            <p
+              className="text-body-sm text-muted-foreground"
+              dir="ltr"
+              role="alert"
+            >
+              {loadError}
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => setReloadKey((k) => k + 1)}
+            >
+              נסו שוב
+            </Button>
+          </EmptyContent>
         </Empty>
       </div>
     );

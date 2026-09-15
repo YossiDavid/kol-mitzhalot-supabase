@@ -1,6 +1,11 @@
 import { Page, PageHeader } from "@/components/layout";
-import { DataTable, type DataTableColumn } from "@/components/data-table";
+import {
+  DataTable,
+  DataTableSkeleton,
+  type DataTableColumn,
+} from "@/components/data-table";
 import { Button } from "@/components/ui/button";
+import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import Link from "next/link";
 import type { Route } from "next";
 import { unstable_noStore as noStore } from "next/cache";
@@ -263,18 +268,16 @@ async function UsersContent({ searchParams }: UsersPageProps) {
           </div>
         }
       />
-      <Suspense
-        fallback={
-          <div className="h-24 animate-pulse rounded-lg border bg-muted/30" />
-        }
-      >
+      <Suspense fallback={<Skeleton className="h-24 rounded-lg" />}>
         <AdminUsersFilters />
       </Suspense>
 
       {total === 0 ? (
-        <div className="py-10 text-center text-muted-foreground">
-          לא נמצאו משתמשים לפי הסינון
-        </div>
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle>לא נמצאו משתמשים לפי הסינון</EmptyTitle>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <div>
           <div className="flex flex-wrap items-center justify-between gap-2 text-body-sm text-muted-foreground">
@@ -344,15 +347,12 @@ function UsersPageFallback() {
           </div>
         }
       />
-      <div role="status" aria-label="טוען">
-        <div className="h-24 animate-pulse rounded-lg border bg-muted/30" />
-        <div className="space-y-3 pt-8">
-          <Skeleton className="h-6 w-full" />
-          {Array.from({ length: FALLBACK_ROW_COUNT }).map((_, index) => (
-            <Skeleton key={index} className="h-14 w-full" />
-          ))}
-        </div>
-      </div>
+      <Skeleton aria-hidden className="h-24 rounded-lg" />
+      <DataTableSkeleton
+        breakpoint="xl"
+        rows={FALLBACK_ROW_COUNT}
+        columns={8}
+      />
     </Page>
   );
 }

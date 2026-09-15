@@ -19,7 +19,7 @@ type ForumPost = {
 export default function Forum({ posts }: { posts: ForumPost[] }) {
   if (posts.length === 0) {
     return (
-      <Empty>
+      <Empty size="compact">
         <EmptyHeader>
           <EmptyTitle>עדיין אין הודעות בפורום השדכנים</EmptyTitle>
           <EmptyDescription>מה דעתך לכתוב את ההודעה הראשונה?</EmptyDescription>

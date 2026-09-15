@@ -1,6 +1,7 @@
-import { Box, Page, PageTitle } from "@/components/layout";
+import { Page, PageTitle } from "@/components/layout";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
 import ContactShadchanDialog from "@/features/shadchanim/components/contact-shadchan-dialog";
 import {
   ShadchanAvatar,
@@ -63,7 +64,7 @@ async function ShadchanProfileContent({
   const stats = statsLine(profile.experienceYears, profile.closedMatches);
 
   return (
-    <Box className="flex flex-col gap-5 rounded-2xl p-6">
+    <Card>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-4">
           <ShadchanAvatar shadchan={profile} className="size-20" />
@@ -98,18 +99,15 @@ async function ShadchanProfileContent({
 
       <TagList title="התמחויות" items={profile.specializations} />
       <TagList title="שפות" items={profile.languages} />
-    </Box>
+    </Card>
   );
 }
 
 /** שלד כרטיס השדכן, באותו מבנה כדי שלא תהיה קפיצה. */
 function ShadchanProfileSkeleton() {
   return (
-    <div
-      role="status"
-      aria-label="טוען"
-      className="flex flex-col gap-5 rounded-2xl border border-border p-6"
-    >
+    <SkeletonRegion>
+      <Card aria-hidden>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-4">
           <Skeleton className="size-20 rounded-full" />
@@ -138,7 +136,8 @@ function ShadchanProfileSkeleton() {
           ))}
         </div>
       </div>
-    </div>
+      </Card>
+    </SkeletonRegion>
   );
 }
 

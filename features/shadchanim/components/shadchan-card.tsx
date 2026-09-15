@@ -1,4 +1,4 @@
-import { Box } from "@/components/layout";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import ContactShadchanDialog from "@/features/shadchanim/components/contact-shadchan-dialog";
@@ -30,7 +30,7 @@ export default function ShadchanCard({
   actionTypes,
 }: ShadchanCardProps) {
   return (
-    <Box className="flex h-full flex-col gap-4 rounded-2xl p-5">
+    <Card size="sm" className="h-full">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <ShadchanAvatar shadchan={shadchan} />
@@ -70,6 +70,6 @@ export default function ShadchanCard({
         quota={quota}
         triggerClassName="mt-auto w-full"
       />
-    </Box>
+    </Card>
   );
 }

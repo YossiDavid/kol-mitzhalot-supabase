@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { Page, PageHeader } from "@/components/layout";
 import { ProfileForm } from "@/features/settings/components/profile-form";
-import { ShadchanCard } from "@/features/settings/components/shadchan-card";
-import { StaffCard } from "@/features/settings/components/staff-card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ApplicationStatusCard } from "@/features/settings/components/application-status-card";
+import { CardSkeleton } from "@/components/ui/card-skeleton";
+import { SkeletonRegion } from "@/components/ui/skeleton";
 import { redirect } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 import { getPhoneVerificationEnabled } from "@/lib/system-settings";
@@ -15,20 +15,11 @@ const PROFILE_FIELD_COUNT = 4;
 /** שלד הטופס והכרטיסים, בגובה דומה לתוכן האמיתי כדי למנוע קפיצה. */
 function SettingsContentSkeleton() {
   return (
-    <div role="status" aria-label="טוען" className="space-y-6">
-      <div className="space-y-4 rounded-xl border border-border p-6">
-        <Skeleton className="h-6 w-32" />
-        {Array.from({ length: PROFILE_FIELD_COUNT }, (_, i) => (
-          <div key={i} className="space-y-2">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-9 w-full" />
-          </div>
-        ))}
-        <Skeleton className="h-9 w-28" />
-      </div>
-      <Skeleton className="h-32 w-full rounded-xl" />
-      <Skeleton className="h-32 w-full rounded-xl" />
-    </div>
+    <SkeletonRegion className="space-y-6">
+      <CardSkeleton fields={PROFILE_FIELD_COUNT} footer />
+      <CardSkeleton footer />
+      <CardSkeleton footer />
+    </SkeletonRegion>
   );
 }
 
@@ -82,8 +73,8 @@ async function SettingsContent({
         initialData={initialData}
         phoneVerificationEnabled={phoneVerificationEnabled}
       />
-      <ShadchanCard />
-      <StaffCard />
+      <ApplicationStatusCard role="shadchan" />
+      <ApplicationStatusCard role="staff" />
     </>
   );
 }

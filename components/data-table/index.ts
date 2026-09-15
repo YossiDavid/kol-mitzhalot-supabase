@@ -7,3 +7,4 @@ export {
   type DataTableProps,
   type DataTableRowLink,
 } from "./data-table";
+export { DataTableSkeleton } from "./data-table-skeleton";

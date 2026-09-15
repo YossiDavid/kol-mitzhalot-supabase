@@ -8,6 +8,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Box, Page, PageHeader } from "@/components/layout";
 import { Badge, type BadgeVariant } from "@/components/ui/badge";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { ListSkeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Archive, Eye, Mail } from "lucide-react";
@@ -212,13 +219,13 @@ export default function SubmissionsAdminPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Box>
           {loading ? (
-            <div className="py-10 text-center text-muted-foreground">
-              טוען...
-            </div>
+            <ListSkeleton />
           ) : items.length === 0 ? (
-            <div className="py-16 text-center text-muted-foreground">
-              אין פניות להצגה
-            </div>
+            <Empty size="compact" surface={false}>
+              <EmptyHeader>
+                <EmptyTitle>אין פניות להצגה</EmptyTitle>
+              </EmptyHeader>
+            </Empty>
           ) : (
             <div className="divide-y">
               {items.map((item) => (
@@ -255,9 +262,11 @@ export default function SubmissionsAdminPage() {
 
         <Box>
           {!selected ? (
-            <div className="flex h-full min-h-48 items-center justify-center text-muted-foreground">
-              בחרו פנייה לצפייה
-            </div>
+            <Empty size="compact" surface={false} className="h-full min-h-48">
+              <EmptyHeader>
+                <EmptyDescription>בחרו פנייה לצפייה</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
             <div className="space-y-4">
               <div className="flex flex-wrap gap-2">

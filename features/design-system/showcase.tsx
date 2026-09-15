@@ -5,12 +5,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { CardGridSkeleton, CardSkeleton } from "@/components/ui/card-skeleton";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { PageHeaderSkeleton } from "@/components/layout/page-header";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -38,7 +49,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -52,7 +63,11 @@ import {
   type AxisItem,
 } from "./variant-table";
 import { FormFoundationsDemo } from "./form-foundations-demo";
-import { DataTable, type DataTableColumn } from "@/components/data-table";
+import {
+  DataTable,
+  DataTableSkeleton,
+  type DataTableColumn,
+} from "@/components/data-table";
 import {
   colorGroupLabels,
   colorTokens,
@@ -83,13 +98,37 @@ type DemoTableRow = {
 };
 
 const demoTableRows: DemoTableRow[] = [
-  { id: "1", name: "ישראל ישראלי", email: "israel.israeli.long-address@example.com", city: "בני ברק", isActive: true },
-  { id: "2", name: "שרה כהן", email: "sara@example.com", city: "ירושלים", isActive: false },
+  {
+    id: "1",
+    name: "ישראל ישראלי",
+    email: "israel.israeli.long-address@example.com",
+    city: "בני ברק",
+    isActive: true,
+  },
+  {
+    id: "2",
+    name: "שרה כהן",
+    email: "sara@example.com",
+    city: "ירושלים",
+    isActive: false,
+  },
 ];
 
 const demoTableColumns: DataTableColumn<DemoTableRow>[] = [
-  { key: "name", header: "שם", size: "grow", mobile: "title", cell: (row) => row.name },
-  { key: "email", header: "אימייל", size: "grow", className: "wrap-anywhere", cell: (row) => row.email },
+  {
+    key: "name",
+    header: "שם",
+    size: "grow",
+    mobile: "title",
+    cell: (row) => row.name,
+  },
+  {
+    key: "email",
+    header: "אימייל",
+    size: "grow",
+    className: "wrap-anywhere",
+    cell: (row) => row.email,
+  },
   { key: "city", header: "עיר", cell: (row) => row.city },
   {
     key: "status",
@@ -611,26 +650,101 @@ export function DesignSystemShowcase() {
             </div>
 
             <div className="space-y-3">
-              <h3 className="text-subtitle">Card</h3>
-              <Card className="max-w-md">
-                <CardHeader>
-                  <CardTitle>כרטיס לדוגמה</CardTitle>
-                  <CardDescription>
-                    תיאור קצר עם text-muted-foreground
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-body-sm">
-                    תוכן הכרטיס — משטחי card על רקע background.
-                  </p>
-                </CardContent>
-                <CardFooter className="gap-2">
-                  <Button size="sm">שמירה</Button>
-                  <Button size="sm" variant="outline">
-                    ביטול
-                  </Button>
-                </CardFooter>
-              </Card>
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 className="text-subtitle">Card</h3>
+                <p className="text-caption text-muted-foreground">
+                  default לכרטיס עצמאי, sm לרשימה ולרשת
+                </p>
+              </div>
+              <div className="grid items-start gap-4 md:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>כרטיס לדוגמה</CardTitle>
+                    <CardDescription>
+                      תיאור קצר עם text-muted-foreground
+                    </CardDescription>
+                    <CardAction>
+                      <Badge variant="success">אושר</Badge>
+                    </CardAction>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-body-sm">
+                      תוכן הכרטיס — משטח .box עם מסגרת, והריפוד שייך לכרטיס.
+                    </p>
+                  </CardContent>
+                  <CardFooter>
+                    <Button>שמירה</Button>
+                    <Button variant="outline">ביטול</Button>
+                  </CardFooter>
+                </Card>
+                <Card size="sm">
+                  <CardHeader>
+                    <CardTitle>כרטיס קטן</CardTitle>
+                    <CardDescription>
+                      size=&quot;sm&quot; בתוך רשימה
+                    </CardDescription>
+                  </CardHeader>
+                  <CardFooter>
+                    <Button size="sm" variant="outline">
+                      פתיחה
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 className="text-subtitle">Empty</h3>
+                <p className="text-caption text-muted-foreground">
+                  default לרשימה ריקה, compact בתוך מקטע או Box
+                </p>
+              </div>
+              <div className="grid items-start gap-4 md:grid-cols-2">
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyTitle>אין הצעות עדיין</EmptyTitle>
+                    <EmptyDescription>
+                      כשתגיע הצעת שידוך, היא תופיע כאן.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                  <EmptyContent>
+                    <Button>ליצירת הצעה</Button>
+                  </EmptyContent>
+                </Empty>
+                <div className="box p-4">
+                  <Empty size="compact" surface={false}>
+                    <EmptyMedia variant="icon">
+                      <AlertCircle />
+                    </EmptyMedia>
+                    <EmptyHeader>
+                      <EmptyTitle>אין בקשות ממתינות</EmptyTitle>
+                      <EmptyDescription>
+                        בקשה חדשה תופיע כאן ותישלח גם כהתראה
+                      </EmptyDescription>
+                    </EmptyHeader>
+                  </Empty>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 className="text-subtitle">שלדי טעינה</h3>
+                <p className="text-caption text-muted-foreground">
+                  PageHeaderSkeleton, DataTableSkeleton, CardGridSkeleton
+                </p>
+              </div>
+              <div className="space-y-6">
+                <PageHeaderSkeleton actions={1} />
+                <DataTableSkeleton rows={3} columns={4} />
+                <CardGridSkeleton count={3} columns={3} size="sm" lines={2} />
+                <div className="max-w-md">
+                  <SkeletonRegion>
+                    <CardSkeleton fields={2} footer />
+                  </SkeletonRegion>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-3">

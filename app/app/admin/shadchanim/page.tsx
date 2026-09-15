@@ -134,9 +134,7 @@ function ShadchanimPageFallback() {
           </div>
         }
       />
-        <div role="status" aria-label="טוען">
-          <ShadchanimListFallback />
-        </div>
+        <ShadchanimListFallback />
     </Page>
   );
 }

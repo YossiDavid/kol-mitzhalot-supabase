@@ -73,7 +73,7 @@ export default function Chat({ chats }: { chats: Chat[] }) {
           ))}
         </Box>
       ) : (
-        <Empty>
+        <Empty size="compact">
           <EmptyHeader>
             <EmptyTitle>עדיין לא קיבלת הודעות פרטיות בצ’אט</EmptyTitle>
             <EmptyDescription>רוצה לשאול משהו מישהו?</EmptyDescription>

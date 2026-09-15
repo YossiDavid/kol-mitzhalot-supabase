@@ -37,7 +37,8 @@ import {
   type InstitutionType,
 } from "@/features/institutions/lib/institution-labels";
 import { hasRole } from "@/lib/user-role";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
+import { CardSkeleton } from "@/components/ui/card-skeleton";
 
 /** כמה שורות שיוך מסומנות בשלד הטעינה. */
 const SKELETON_AFFILIATION_COUNT = 2;
@@ -80,34 +81,26 @@ function StaffPageSkeleton() {
         title="הצטרפות כאיש צוות"
         description="ההצטרפות כאיש צוות נועדה לכתיבת משוב חיובי על כרטיסי המיועדים שמתחנכים אצלכם — מחמאות ותשבחות שיעזרו לשדכנים להכיר אותם טוב יותר. מלאו את המוסדות שבהם אתם מלמדים ואת התפקיד בכל אחד מהם."
       />
-      <div className="space-y-6">
-        <div
-          role="status"
-          aria-label="טוען"
-          className="space-y-4 rounded-xl border border-border p-6"
-        >
-          <Skeleton className="h-6 w-32" />
-          <Skeleton className="h-4 w-72" />
-          <div className="flex items-center justify-between gap-2">
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-8 w-28" />
-          </div>
-          {Array.from({ length: SKELETON_AFFILIATION_COUNT }, (_, i) => (
-            <div
-              key={i}
-              className="flex flex-col gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-start"
-            >
-              <Skeleton className="h-9 flex-1" />
-              <Skeleton className="h-9 flex-1" />
-              <Skeleton className="size-9 shrink-0" />
+      <SkeletonRegion>
+        <CardSkeleton footer>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-9 w-28 md:h-8" />
             </div>
-          ))}
-          <div className="flex justify-end gap-2">
-            <Skeleton className="h-9 w-20" />
-            <Skeleton className="h-9 w-24" />
+            {Array.from({ length: SKELETON_AFFILIATION_COUNT }, (_, i) => (
+              <div
+                key={i}
+                className="flex flex-col gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-start"
+              >
+                <Skeleton className="h-11 flex-1 md:h-10" />
+                <Skeleton className="h-11 flex-1 md:h-10" />
+                <Skeleton className="size-11 shrink-0 md:size-10" />
+              </div>
+            ))}
           </div>
-        </div>
-      </div>
+        </CardSkeleton>
+      </SkeletonRegion>
     </Page>
   );
 }

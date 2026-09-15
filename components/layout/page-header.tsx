@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 /**
@@ -64,5 +65,45 @@ export function PageHeader({
         </div>
       ) : null}
     </header>
+  );
+}
+
+type PageHeaderSkeletonProps = {
+  description?: boolean;
+  /** מספר כפתורי הפעולה */
+  actions?: number;
+  className?: string;
+};
+
+/**
+ * שלד כותרת עמוד, לעמוד שהכותרת שלו תלויה בנתונים. כשהכותרת קבועה - מציגים
+ * PageHeader אמיתי גם בשלד. aria-hidden: אזור הטעינה (SkeletonRegion) מכריז.
+ */
+export function PageHeaderSkeleton({
+  description = true,
+  actions = 0,
+  className,
+}: PageHeaderSkeletonProps) {
+  return (
+    <div
+      aria-hidden
+      data-slot="page-header-skeleton"
+      className={cn(
+        "flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6",
+        className,
+      )}
+    >
+      <div className="min-w-0 flex-1 space-y-2">
+        <Skeleton className="h-9 w-64 max-w-full md:h-10" />
+        {description ? <Skeleton className="h-5 w-80 max-w-full" /> : null}
+      </div>
+      {actions > 0 ? (
+        <div className="flex flex-wrap gap-2 sm:shrink-0">
+          {Array.from({ length: actions }, (_, index) => (
+            <Skeleton key={index} className="h-11 w-28 md:h-10" />
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }

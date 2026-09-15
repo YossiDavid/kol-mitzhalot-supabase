@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
@@ -27,19 +28,21 @@ export default function ActiveShidduchim({
           ))}
         </div>
       ) : (
-        <Empty>
+        <Empty size="compact">
           <EmptyHeader>
             <EmptyTitle>עדיין לא קיבלת הצעות משדכנים</EmptyTitle>
             <EmptyDescription>
               רוצה להצטרף למנוי פרימיום ולהבליט את המיועד/ת ברשימות השדכנים?
             </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
             <Button asChild>
               <Link href="/app/premium">
                 <Crown className="text-favorite fill-current" /> להצטרפות למנוי
                 פרימיום
               </Link>
             </Button>
-          </EmptyHeader>
+          </EmptyContent>
         </Empty>
       )}
     </>

@@ -6,7 +6,7 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Skeleton } from "@/components/ui/skeleton";
+import { CardGridSkeleton } from "@/components/ui/card-skeleton";
 import ShadchanCard from "@/features/shadchanim/components/shadchan-card";
 import {
   DASHBOARD_SHADCHANIM_LIMIT,
@@ -22,7 +22,7 @@ const SKELETON_CARDS = 3;
 
 function ShadchanimEmptyState() {
   return (
-    <Empty>
+    <Empty size="compact">
       <EmptyHeader>
         <EmptyTitle>עדיין אין שדכנים שפעלו בקו”ח של ילדיך</EmptyTitle>
         <EmptyDescription>
@@ -43,11 +43,14 @@ function ShadchanimEmptyState() {
 
 function ShadchanimGridSkeleton() {
   return (
-    <div className={GRID_CLASS} aria-busy>
-      {Array.from({ length: SKELETON_CARDS }, (_, i) => (
-        <Skeleton key={i} className="h-64 rounded-2xl" />
-      ))}
-    </div>
+    <CardGridSkeleton
+      count={SKELETON_CARDS}
+      columns={3}
+      size="sm"
+      lines={3}
+      footer
+      className="pt-2"
+    />
   );
 }
 

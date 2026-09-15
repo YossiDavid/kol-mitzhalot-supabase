@@ -1,4 +1,18 @@
 import { Page, PageHeader } from "@/components/layout";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { CardGridSkeleton } from "@/components/ui/card-skeleton";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/server";
 import { hasRole } from "@/lib/user";
@@ -60,35 +74,39 @@ async function ForumPosts() {
 
   if (postList.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed p-12 text-center text-muted-foreground">
-        <p className="text-subtitle font-medium">אין פוסטים עדיין</p>
-        <p className="mt-1 text-body-sm">
-          {canPost
-            ? "היה הראשון לפרסם!"
-            : "הפורום יתמלא בקרוב בתוכן מהשדכנים."}
-        </p>
-      </div>
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>אין פוסטים עדיין</EmptyTitle>
+          <EmptyDescription>
+            {canPost
+              ? "היה הראשון לפרסם!"
+              : "הפורום יתמלא בקרוב בתוכן מהשדכנים."}
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
   return (
     <>
       {postList.map((post) => (
-        <article
-          key={post.id}
-          className="rounded-xl border bg-card p-5 text-right shadow-sm transition-shadow hover:shadow-md"
-          dir="rtl"
-        >
-          <h2 className="text-subtitle leading-snug font-semibold">
-            {post.title}
-          </h2>
-          <p className="mt-0.5 text-caption text-muted-foreground">
-            {formatDate(post.created_at)}
-          </p>
-          <p className="mt-3 text-body-sm leading-relaxed whitespace-pre-wrap">
-            {post.body}
-          </p>
-        </article>
+        <Card key={post.id} asChild>
+          <article>
+            <CardHeader>
+              <CardTitle asChild>
+                <h2>{post.title}</h2>
+              </CardTitle>
+              <CardDescription className="text-caption">
+                {formatDate(post.created_at)}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-body-sm leading-relaxed whitespace-pre-wrap">
+                {post.body}
+              </p>
+            </CardContent>
+          </article>
+        </Card>
       ))}
     </>
   );
@@ -96,18 +114,7 @@ async function ForumPosts() {
 
 /** שלד רשימת הפוסטים, במבנה של כרטיס פוסט אמיתי. */
 function ForumPostsSkeleton() {
-  return (
-    <div role="status" aria-label="טוען" className="space-y-4">
-      {Array.from({ length: SKELETON_POST_COUNT }, (_, i) => (
-        <div key={i} className="rounded-xl border bg-card p-5 shadow-sm">
-          <Skeleton className="h-5 w-1/2" />
-          <Skeleton className="mt-2 h-3 w-40" />
-          <Skeleton className="mt-4 h-4 w-full" />
-          <Skeleton className="mt-2 h-4 w-4/5" />
-        </div>
-      ))}
-    </div>
-  );
+  return <CardGridSkeleton count={SKELETON_POST_COUNT} lines={2} />;
 }
 
 export default function ForumsPage() {
@@ -119,7 +126,7 @@ export default function ForumsPage() {
         actions={
           <Suspense
             fallback={
-              <Skeleton role="status" aria-label="טוען" className="h-9 w-28" />
+              <Skeleton role="status" aria-label="טוען" className="h-11 w-28 md:h-10" />
             }
           >
             <ForumActions />

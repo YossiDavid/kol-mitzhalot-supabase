@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Page, PageHeader } from "@/components/layout";
+import { LinkCard, Page, PageHeader } from "@/components/layout";
 import {
   BookOpen,
   FileText,
@@ -21,91 +20,54 @@ export default function AdminPage() {
         actions={<Button disabled>דף הבית</Button>}
       />
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <Link href="/app/admin/shadchanim">
-          <div className="cursor-pointer rounded-lg border p-6 transition-colors hover:bg-accent">
-            <UserCheck className="mb-4 h-8 w-8" />
-            <h3 className="mb-2 text-subtitle font-semibold">כל השדכנים</h3>
-            <p className="text-body-sm text-muted-foreground">
-              ניהול וצפייה בכל השדכנים במערכת
-            </p>
-          </div>
-        </Link>
-
-        <Link href="/app/admin/staff/requests">
-          <div className="cursor-pointer rounded-lg border p-6 transition-colors hover:bg-accent">
-            <UserPlus className="mb-4 h-8 w-8" />
-            <h3 className="mb-2 text-subtitle font-semibold">
-              בקשות הצטרפות כאיש צוות
-            </h3>
-            <p className="text-body-sm text-muted-foreground">
-              אישור ודחייה של בקשות הצטרפות כאיש צוות
-            </p>
-          </div>
-        </Link>
-
-        <Link href="/app/admin/photo-requests">
-          <div className="cursor-pointer rounded-lg border p-6 transition-colors hover:bg-accent">
-            <ImageIcon className="mb-4 h-8 w-8" />
-            <h3 className="mb-2 text-subtitle font-semibold">
-              בקשות צפייה בתמונה
-            </h3>
-            <p className="text-body-sm text-muted-foreground">
-              אישור ודחייה של בקשות שדכנים לצפות בתמונת מיועדת
-            </p>
-          </div>
-        </Link>
-
-        <Link href="/app/admin/users">
-          <div className="cursor-pointer rounded-lg border p-6 transition-colors hover:bg-accent">
-            <Users className="mb-4 h-8 w-8" />
-            <h3 className="mb-2 text-subtitle font-semibold">כל המשתמשים</h3>
-            <p className="text-body-sm text-muted-foreground">
-              ניהול וצפייה בכל המשתמשים במערכת
-            </p>
-          </div>
-        </Link>
-
-        <Link href="/app/admin/settings">
-          <div className="cursor-pointer rounded-lg border p-6 transition-colors hover:bg-accent">
-            <FileText className="mb-4 h-8 w-8" />
-            <h3 className="mb-2 text-subtitle font-semibold">הגדרות מערכת</h3>
-            <p className="text-body-sm text-muted-foreground">
-              עריכת תוכן מערכת כמו מדיניות פרטיות
-            </p>
-          </div>
-        </Link>
-
-        <Link href={"/app/admin/content" as any}>
-          <div className="cursor-pointer rounded-lg border p-6 transition-colors hover:bg-accent">
-            <BookOpen className="mb-4 h-8 w-8" />
-            <h3 className="mb-2 text-subtitle font-semibold">ניהול תוכן</h3>
-            <p className="text-body-sm text-muted-foreground">
-              מאמרים, מאורסים, והמלצות רבנים
-            </p>
-          </div>
-        </Link>
-
-        <Link href={"/app/admin/institutions" as any}>
-          <div className="cursor-pointer rounded-lg border p-6 transition-colors hover:bg-accent">
-            <GraduationCap className="mb-4 h-8 w-8" />
-            <h3 className="mb-2 text-subtitle font-semibold">מוסדות לימוד</h3>
-            <p className="text-body-sm text-muted-foreground">
-              ניהול מאגר מוסדות הלימוד לבחירה באשף יצירת כרטיס מיועד
-            </p>
-          </div>
-        </Link>
-
-        <Link href={"/app/admin/students/institutions" as any}>
-          <div className="cursor-pointer rounded-lg border p-6 transition-colors hover:bg-accent">
-            <Link2 className="mb-4 h-8 w-8" />
-            <h3 className="mb-2 text-subtitle font-semibold">
-              שיוך מוסד המוני
-            </h3>
-            <p className="text-body-sm text-muted-foreground">
-              שיוך מוסד לימודים למספר כרטיסי מיועדים בבת אחת
-            </p>
-          </div>
-        </Link>
+        <LinkCard
+          href="/app/admin/shadchanim"
+          icon={UserCheck}
+          title="כל השדכנים"
+          description="ניהול וצפייה בכל השדכנים במערכת"
+        />
+        <LinkCard
+          href="/app/admin/staff/requests"
+          icon={UserPlus}
+          title="בקשות הצטרפות כאיש צוות"
+          description="אישור ודחייה של בקשות הצטרפות כאיש צוות"
+        />
+        <LinkCard
+          href="/app/admin/photo-requests"
+          icon={ImageIcon}
+          title="בקשות צפייה בתמונה"
+          description="אישור ודחייה של בקשות שדכנים לצפות בתמונת מיועדת"
+        />
+        <LinkCard
+          href="/app/admin/users"
+          icon={Users}
+          title="כל המשתמשים"
+          description="ניהול וצפייה בכל המשתמשים במערכת"
+        />
+        <LinkCard
+          href="/app/admin/settings"
+          icon={FileText}
+          title="הגדרות מערכת"
+          description="עריכת תוכן מערכת כמו מדיניות פרטיות"
+        />
+        <LinkCard
+          href="/app/admin/content"
+          icon={BookOpen}
+          title="ניהול תוכן"
+          description="מאמרים, מאורסים, והמלצות רבנים"
+        />
+        <LinkCard
+          href="/app/admin/institutions"
+          icon={GraduationCap}
+          title="מוסדות לימוד"
+          description="ניהול מאגר מוסדות הלימוד לבחירה באשף יצירת כרטיס מיועד"
+        />
+        <LinkCard
+          href="/app/admin/students/institutions"
+          icon={Link2}
+          title="שיוך מוסד המוני"
+          description="שיוך מוסד לימודים למספר כרטיסי מיועדים בבת אחת"
+        />
       </div>
     </Page>
   );

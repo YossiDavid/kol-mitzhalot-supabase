@@ -49,7 +49,7 @@ export default function Children({ childs }: { childs: StudentTableRow[] }) {
       students={localChilds}
       onInShidduchimChange={handleIsInShidduchimChange}
       emptyState={
-        <Empty>
+        <Empty size="compact">
           <EmptyHeader>
             <EmptyTitle>
               לא ידוע לנו על ילדים בגיל שידוכים במשפחה שלך

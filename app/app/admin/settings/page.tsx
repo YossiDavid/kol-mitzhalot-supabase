@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Page, PageHeader } from "@/components/layout";
+import { LinkCard, Page, PageHeader } from "@/components/layout";
 import { Shield, FileCheck, Accessibility } from "lucide-react";
 import { PhoneVerificationToggle } from "@/features/admin/components/phone-verification-toggle";
 
@@ -10,42 +10,33 @@ export default function SettingsPage() {
       <PageHeader
         title="הגדרות מערכת"
         description="עריכת תוכן מערכת"
-        actions={<Button asChild><Link href="/app/admin">חזרה לדף הבית</Link></Button>}
+        actions={
+          <Button asChild>
+            <Link href="/app/admin">חזרה לדף הבית</Link>
+          </Button>
+        }
       />
-        <div className="space-y-6">
-          <PhoneVerificationToggle />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-          <Link href="/app/admin/settings/privacy-policy">
-            <div className="p-6 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
-              <Shield className="h-8 w-8 mb-4" />
-              <h3 className="text-subtitle font-semibold mb-2">מדיניות פרטיות</h3>
-              <p className="text-body-sm text-muted-foreground">
-                עריכת מדיניות הפרטיות של המערכת
-              </p>
-            </div>
-          </Link>
-
-          <Link href="/app/admin/settings/terms-of-service">
-            <div className="p-6 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
-              <FileCheck className="h-8 w-8 mb-4" />
-              <h3 className="text-subtitle font-semibold mb-2">תנאי שימוש</h3>
-              <p className="text-body-sm text-muted-foreground">
-                עריכת תנאי השימוש של המערכת
-              </p>
-            </div>
-          </Link>
-
-          <Link href="/app/admin/settings/accessibility">
-            <div className="p-6 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
-              <Accessibility className="h-8 w-8 mb-4" />
-              <h3 className="text-subtitle font-semibold mb-2">הצהרת נגישות</h3>
-              <p className="text-body-sm text-muted-foreground">
-                עריכת הצהרת הנגישות של המערכת
-              </p>
-            </div>
-          </Link>
-        </div>
+      <PhoneVerificationToggle />
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <LinkCard
+          href="/app/admin/settings/privacy-policy"
+          icon={Shield}
+          title="מדיניות פרטיות"
+          description="עריכת מדיניות הפרטיות של המערכת"
+        />
+        <LinkCard
+          href="/app/admin/settings/terms-of-service"
+          icon={FileCheck}
+          title="תנאי שימוש"
+          description="עריכת תנאי השימוש של המערכת"
+        />
+        <LinkCard
+          href="/app/admin/settings/accessibility"
+          icon={Accessibility}
+          title="הצהרת נגישות"
+          description="עריכת הצהרת הנגישות של המערכת"
+        />
+      </div>
     </Page>
   );
 }

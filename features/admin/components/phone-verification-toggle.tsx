@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
 export function PhoneVerificationToggle() {
@@ -50,10 +51,7 @@ export function PhoneVerificationToggle() {
   };
 
   return (
-    <div
-      className="flex items-center justify-between gap-4 rounded-lg border p-6"
-      dir="rtl"
-    >
+    <Card className="flex-row items-center justify-between gap-4">
       <div className="space-y-1 text-right flex-1 min-w-0">
         <Label htmlFor="phone-verification-switch" className="text-body font-semibold">
           אימות טלפוני
@@ -70,6 +68,6 @@ export function PhoneVerificationToggle() {
         dir="ltr"
         className="shrink-0"
       />
-    </div>
+    </Card>
   );
 }

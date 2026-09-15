@@ -27,7 +27,8 @@ import { useForm } from "react-hook-form";
 import Link from "next/link";
 import { isValidPhone, PHONE_INVALID_MESSAGE } from "@/lib/phone";
 import { hasRole } from "@/lib/user-role";
-import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonRegion } from "@/components/ui/skeleton";
+import { CardSkeleton } from "@/components/ui/card-skeleton";
 
 /** מספר שדות הטופס, לשלד הטעינה. */
 const FORM_FIELD_COUNT = 6;
@@ -50,26 +51,9 @@ function ShadchanPageSkeleton() {
         title="הצטרפות כשדכן"
         description="מלא את הפרטים הבאים כדי להגיש בקשה להצטרפות כשדכן במערכת"
       />
-      <div className="space-y-6">
-        <div
-          role="status"
-          aria-label="טוען"
-          className="space-y-4 rounded-xl border border-border p-6"
-        >
-          <Skeleton className="h-6 w-32" />
-          <Skeleton className="h-4 w-72" />
-          {Array.from({ length: FORM_FIELD_COUNT }, (_, i) => (
-            <div key={i} className="space-y-2">
-              <Skeleton className="h-4 w-28" />
-              <Skeleton className="h-9 w-full" />
-            </div>
-          ))}
-          <div className="flex justify-end gap-2">
-            <Skeleton className="h-9 w-20" />
-            <Skeleton className="h-9 w-24" />
-          </div>
-        </div>
-      </div>
+      <SkeletonRegion>
+        <CardSkeleton fields={FORM_FIELD_COUNT} footer />
+      </SkeletonRegion>
     </Page>
   );
 }

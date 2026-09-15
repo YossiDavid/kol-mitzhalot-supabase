@@ -4,8 +4,18 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Box, Page, PageHeader } from "@/components/layout";
-import { DataTable, type DataTableColumn } from "@/components/data-table";
+import {
+  DataTable,
+  DataTableSkeleton,
+  type DataTableColumn,
+} from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
@@ -50,27 +60,40 @@ export default function EngagementsAdminPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("engagements")
-      .select("id, groom_name, bride_name, groom_city, bride_city, shadchan_name, is_published, created_at")
+      .select(
+        "id, groom_name, bride_name, groom_city, bride_city, shadchan_name, is_published, created_at",
+      )
       .order("created_at", { ascending: false });
     if (error) toast.error("שגיאה בטעינה");
     else setEngagements(data ?? []);
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   async function togglePublish(e: Engagement) {
     const newVal = !e.is_published;
-    const { error } = await supabase.from("engagements").update({ is_published: newVal }).eq("id", e.id);
+    const { error } = await supabase
+      .from("engagements")
+      .update({ is_published: newVal })
+      .eq("id", e.id);
     if (error) toast.error("שגיאה בעדכון");
-    else { toast.success(newVal ? "פורסם" : "הוסר מפרסום"); load(); }
+    else {
+      toast.success(newVal ? "פורסם" : "הוסר מפרסום");
+      load();
+    }
   }
 
   async function deleteEngagement(id: string) {
     if (!confirm("למחוק מודעה זו?")) return;
     const { error } = await supabase.from("engagements").delete().eq("id", id);
     if (error) toast.error("שגיאה במחיקה");
-    else { toast.success("נמחק"); load(); }
+    else {
+      toast.success("נמחק");
+      load();
+    }
   }
 
   async function handleCreate(e: React.FormEvent) {
@@ -80,7 +103,9 @@ export default function EngagementsAdminPage() {
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from("engagements").insert({ ...form, is_published: false });
+    const { error } = await supabase
+      .from("engagements")
+      .insert({ ...form, is_published: false });
     if (error) toast.error(`שגיאה: ${error.message}`);
     else {
       toast.success("מודעה נוצרה");
@@ -144,7 +169,11 @@ export default function EngagementsAdminPage() {
             aria-label={e.is_published ? "הסר פרסום" : "פרסם"}
             onClick={() => togglePublish(e)}
           >
-            {e.is_published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {e.is_published ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
           </Button>
           <Button
             variant="ghost"
@@ -185,64 +214,78 @@ export default function EngagementsAdminPage() {
               <Link href={"/app/admin/content" as any}>חזרה</Link>
             </Button>
             <Button onClick={() => setShowForm(!showForm)}>
-              {showForm ? <X className="me-1 h-4 w-4" /> : <Plus className="me-1 h-4 w-4" />}
+              {showForm ? (
+                <X className="me-1 h-4 w-4" />
+              ) : (
+                <Plus className="me-1 h-4 w-4" />
+              )}
               {showForm ? "ביטול" : "הוסף מאורסים"}
             </Button>
           </div>
         }
       />
-        {showForm && (
-          <Box>
-            <form onSubmit={handleCreate} className="space-y-6">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div className="space-y-4">
-                  <p className="font-semibold text-primary">החתן</p>
-                  {F("groom_name", "שם החתן *")}
-                  {F("groom_father", "שם אביו")}
-                  {F("groom_city", "עיר")}
-                  {F("groom_yeshiva", "מישיבת")}
-                </div>
-                <div className="space-y-4">
-                  <p className="font-semibold text-primary">הכלה</p>
-                  {F("bride_name", "שם הכלה *")}
-                  {F("bride_father", "שם אביה")}
-                  {F("bride_city", "עיר")}
-                  {F("bride_seminary", "סמינר")}
-                </div>
-              </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                {F("shadchan_name", "שם השדכן")}
-                {F("submitter_name", "שם השולח")}
-                {F("submitter_phone", "טלפון", "tel")}
-              </div>
-              {F("submitter_email", "מייל השולח", "email")}
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setShowForm(false)}>ביטול</Button>
-                <Button type="submit" disabled={saving}>{saving ? "שומר..." : "צור מודעה"}</Button>
-              </div>
-            </form>
-          </Box>
-        )}
-
+      {showForm && (
         <Box>
-          {loading ? (
-            <div className="py-10 text-center text-muted-foreground">טוען...</div>
-          ) : (
-            <DataTable
-              surface={false}
-              caption="מודעות מאורסים"
-              columns={engagementColumns}
-              rows={engagements}
-              getRowKey={(e) => e.id}
-              emptyState={
-                <div className="py-16 text-center">
-                  <p className="text-subtitle font-semibold text-muted-foreground">אין מודעות עדיין</p>
-                  <p className="mt-2 text-body-sm text-muted-foreground">מודעות מהטופס באתר יופיעו כאן לאישור</p>
-                </div>
-              }
-            />
-          )}
+          <form onSubmit={handleCreate} className="space-y-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="space-y-4">
+                <p className="font-semibold text-primary">החתן</p>
+                {F("groom_name", "שם החתן *")}
+                {F("groom_father", "שם אביו")}
+                {F("groom_city", "עיר")}
+                {F("groom_yeshiva", "מישיבת")}
+              </div>
+              <div className="space-y-4">
+                <p className="font-semibold text-primary">הכלה</p>
+                {F("bride_name", "שם הכלה *")}
+                {F("bride_father", "שם אביה")}
+                {F("bride_city", "עיר")}
+                {F("bride_seminary", "סמינר")}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {F("shadchan_name", "שם השדכן")}
+              {F("submitter_name", "שם השולח")}
+              {F("submitter_phone", "טלפון", "tel")}
+            </div>
+            {F("submitter_email", "מייל השולח", "email")}
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowForm(false)}
+              >
+                ביטול
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? "שומר..." : "צור מודעה"}
+              </Button>
+            </div>
+          </form>
         </Box>
+      )}
+
+      <Box>
+        {loading ? (
+          <DataTableSkeleton surface={false} />
+        ) : (
+          <DataTable
+            surface={false}
+            caption="מודעות מאורסים"
+            columns={engagementColumns}
+            rows={engagements}
+            getRowKey={(e) => e.id}
+            emptyState={
+              <Empty size="compact" surface={false}>
+                <EmptyHeader>
+                  <EmptyTitle>אין מודעות עדיין</EmptyTitle>
+                  <EmptyDescription>מודעות מהטופס באתר יופיעו כאן לאישור</EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            }
+          />
+        )}
+      </Box>
     </Page>
   );
 }

@@ -1,7 +1,11 @@
-import { DataTable, type DataTableColumn } from "@/components/data-table";
+import {
+  DataTable,
+  DataTableSkeleton,
+  type DataTableColumn,
+} from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { applicationStatusVariant } from "@/lib/application-status";
-import { Spinner } from "@/components/ui/spinner";
+import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import {
   ShadchanimPagination,
   ShadchanimPerPageSelect,
@@ -94,12 +98,7 @@ const SHADCHAN_COLUMNS: DataTableColumn<ShadchanRow>[] = [
 ];
 
 export function ShadchanimListFallback() {
-  return (
-    <div className="flex items-center justify-center gap-2 py-16 text-body-sm">
-      <Spinner />
-      טוען רשימת שדכנים…
-    </div>
-  );
+  return <DataTableSkeleton breakpoint="xl" columns={8} className="pt-2" />;
 }
 
 export async function ShadchanimList({
@@ -117,9 +116,11 @@ export async function ShadchanimList({
 
   if (total === 0) {
     return (
-      <div className="py-10 text-center text-muted-foreground">
-        לא נמצאו שדכנים במערכת
-      </div>
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>לא נמצאו שדכנים במערכת</EmptyTitle>
+        </EmptyHeader>
+      </Empty>
     );
   }
 

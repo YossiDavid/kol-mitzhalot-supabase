@@ -4,6 +4,13 @@ import {
   MessageSquarePlus,
 } from "lucide-react";
 
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { cn } from "@/lib/utils";
 
 type ChatEmptyStateProps = {
@@ -34,28 +41,21 @@ const COPY = {
   },
 } as const;
 
+/** מצב ריק בחלונית הצ'אט - Empty קומפקטי, בלי משטח (החלונית היא המשטח) */
 export function ChatEmptyState({ variant, className }: ChatEmptyStateProps) {
   const { Icon, title, description } = COPY[variant];
 
   return (
-    <div
-      className={cn(
-        "flex h-full flex-col items-center justify-center gap-4 px-6 py-10 text-center",
-        className,
-      )}
-    >
-      <div
-        className="flex size-16 items-center justify-center rounded-2xl bg-primary-muted"
-        aria-hidden="true"
-      >
-        <Icon className="size-8 text-primary" strokeWidth={1.5} />
-      </div>
-      <div className="space-y-1">
-        <p className="text-body font-bold text-foreground">{title}</p>
-        <p className="mx-auto max-w-[30ch] text-body-sm text-muted-foreground">
+    <Empty size="compact" surface={false} className={cn("h-full", className)}>
+      <EmptyMedia variant="icon" className="size-16 rounded-2xl">
+        <Icon className="size-8" strokeWidth={1.5} />
+      </EmptyMedia>
+      <EmptyHeader>
+        <EmptyTitle>{title}</EmptyTitle>
+        <EmptyDescription className="max-w-[30ch]">
           {description}
-        </p>
-      </div>
-    </div>
+        </EmptyDescription>
+      </EmptyHeader>
+    </Empty>
   );
 }

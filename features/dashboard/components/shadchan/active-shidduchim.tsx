@@ -118,7 +118,7 @@ export default function ActiveShidduchim({
 
   if (proposals.length === 0) {
     return (
-      <Empty>
+      <Empty size="compact">
         <EmptyHeader>
           <EmptyTitle>עדיין לא שלחת הצעות לשידוכים</EmptyTitle>
           <EmptyDescription>זה נראה כמו זמן מצוין להתחיל, לא?</EmptyDescription>

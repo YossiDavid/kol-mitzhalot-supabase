@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import type { SideResponse } from "@/features/shidduchim/lib/proposals-data";
 import {
   displayName,
@@ -91,59 +92,58 @@ export default function ShadchanProposalCard({
       : null;
 
   return (
-    <article
-      aria-labelledby={titleId}
-      className="box @container flex h-full flex-col gap-4 border p-4 md:p-5"
-    >
-      <header className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <HeadingTag id={titleId} className="sr-only">
-          {pairLabel}
-        </HeadingTag>
-        <Badge variant={SHIDDUCH_STATUS_BADGE_VARIANT[proposal.status]}>
-          {SHIDDUCH_STATUS_LABELS[proposal.status]}
-        </Badge>
-        <p className="text-caption text-muted-foreground">
-          {dateLine(proposal)}
-        </p>
-      </header>
+    <Card asChild size="sm" className="@container h-full">
+      <article aria-labelledby={titleId}>
+        <header className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <HeadingTag id={titleId} className="sr-only">
+            {pairLabel}
+          </HeadingTag>
+          <Badge variant={SHIDDUCH_STATUS_BADGE_VARIANT[proposal.status]}>
+            {SHIDDUCH_STATUS_LABELS[proposal.status]}
+          </Badge>
+          <p className="text-caption text-muted-foreground">
+            {dateLine(proposal)}
+          </p>
+        </header>
 
-      <div className="grid flex-1 gap-4 @lg:grid-cols-2 @lg:gap-0">
-        <ShadchanProposalSide
-          side="groom"
-          person={proposal.groom}
-          note={proposal.noteForGroom}
-          responseState={responseStateFor("groom", proposal, responses)}
-          nameAs={nameAs}
-          className="@lg:pe-5"
-          {...extras?.groom}
-        />
-        <ShadchanProposalSide
-          side="bride"
-          person={proposal.bride}
-          note={proposal.noteForBride}
-          responseState={responseStateFor("bride", proposal, responses)}
-          nameAs={nameAs}
-          className="border-t pt-4 @lg:border-s @lg:border-t-0 @lg:ps-5 @lg:pt-0"
-          {...extras?.bride}
-        />
-      </div>
-
-      <footer className="flex flex-wrap items-center gap-3 border-t pt-3">
-        {scopeLabel ? (
-          <p className="text-caption text-muted-foreground">{scopeLabel}</p>
-        ) : null}
-        <div className="ms-auto flex flex-wrap items-center gap-2">
-          {actions}
-          <Button asChild variant="outline" size="sm">
-            <Link
-              href={`/app/shidduchim/${proposal.id}`}
-              aria-label={`פתיחת ההצעה ${pairLabel}`}
-            >
-              פתיחה
-            </Link>
-          </Button>
+        <div className="grid flex-1 gap-4 @lg:grid-cols-2 @lg:gap-0">
+          <ShadchanProposalSide
+            side="groom"
+            person={proposal.groom}
+            note={proposal.noteForGroom}
+            responseState={responseStateFor("groom", proposal, responses)}
+            nameAs={nameAs}
+            className="@lg:pe-5"
+            {...extras?.groom}
+          />
+          <ShadchanProposalSide
+            side="bride"
+            person={proposal.bride}
+            note={proposal.noteForBride}
+            responseState={responseStateFor("bride", proposal, responses)}
+            nameAs={nameAs}
+            className="border-t pt-4 @lg:border-s @lg:border-t-0 @lg:ps-5 @lg:pt-0"
+            {...extras?.bride}
+          />
         </div>
-      </footer>
-    </article>
+
+        <footer className="flex flex-wrap items-center gap-3 border-t pt-3">
+          {scopeLabel ? (
+            <p className="text-caption text-muted-foreground">{scopeLabel}</p>
+          ) : null}
+          <div className="ms-auto flex flex-wrap items-center gap-2">
+            {actions}
+            <Button asChild variant="outline" size="sm">
+              <Link
+                href={`/app/shidduchim/${proposal.id}`}
+                aria-label={`פתיחת ההצעה ${pairLabel}`}
+              >
+                פתיחה
+              </Link>
+            </Button>
+          </div>
+        </footer>
+      </article>
+    </Card>
   );
 }

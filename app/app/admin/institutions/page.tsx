@@ -3,8 +3,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Box, Page, PageHeader } from "@/components/layout";
-import { DataTable, type DataTableColumn } from "@/components/data-table";
+import {
+  DataTable,
+  DataTableSkeleton,
+  type DataTableColumn,
+} from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -295,7 +306,7 @@ export default function InstitutionsAdminPage() {
         </div>
 
         {loading ? (
-          <div className="py-10 text-center text-muted-foreground">טוען...</div>
+          <DataTableSkeleton surface={false} />
         ) : (
           <DataTable
             surface={false}
@@ -304,17 +315,17 @@ export default function InstitutionsAdminPage() {
             rows={filteredInstitutions}
             getRowKey={(institution) => institution.id}
             emptyState={
-              <div className="py-16 text-center">
-                <p className="text-subtitle font-semibold text-muted-foreground">
-                  אין מוסדות להצגה
-                </p>
-                <p className="mt-2 text-body-sm text-muted-foreground">
-                  הוסיפו מוסד ראשון למאגר
-                </p>
-                <Button className="mt-6" onClick={openCreateDialog}>
-                  <Plus className="me-1 h-4 w-4" /> מוסד חדש
-                </Button>
-              </div>
+              <Empty size="compact" surface={false}>
+                <EmptyHeader>
+                  <EmptyTitle>אין מוסדות להצגה</EmptyTitle>
+                  <EmptyDescription>הוסיפו מוסד ראשון למאגר</EmptyDescription>
+                </EmptyHeader>
+                <EmptyContent>
+                  <Button onClick={openCreateDialog}>
+                    <Plus className="me-1 h-4 w-4" /> מוסד חדש
+                  </Button>
+                </EmptyContent>
+              </Empty>
             }
           />
         )}

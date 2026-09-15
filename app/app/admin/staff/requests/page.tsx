@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { Box, Page, PageHeader } from "@/components/layout";
+import { Page, PageHeader } from "@/components/layout";
+import { Card } from "@/components/ui/card";
+import { CardGridSkeleton } from "@/components/ui/card-skeleton";
+import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Badge } from "@/components/ui/badge";
 import { APPLICATION_STATUS_BADGE_VARIANT } from "@/lib/application-status";
 import { Button } from "@/components/ui/button";
@@ -11,7 +14,6 @@ import {
   INSTITUTION_TYPE_LABELS,
   type InstitutionType,
 } from "@/features/institutions/lib/institution-labels";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Suspense } from "react";
 
 // מספר כרטיסי השלד בזמן הטעינה - מקרב את גובה הרשימה האמיתית.
@@ -162,13 +164,15 @@ async function StaffRequestsContent() {
         }
       />
       {requests.length === 0 ? (
-        <div className="py-10 text-center text-muted-foreground">
-          אין בקשות ממתינות לאישור
-        </div>
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle>אין בקשות ממתינות לאישור</EmptyTitle>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <div className="space-y-6">
           {requests.map((request) => (
-            <Box key={request.id} className="p-6">
+            <Card key={request.id}>
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
@@ -249,7 +253,7 @@ async function StaffRequestsContent() {
                   )}
                 </div>
               </div>
-            </Box>
+            </Card>
           ))}
         </div>
       )}
@@ -269,20 +273,11 @@ function StaffRequestsFallback() {
           </Button>
         }
       />
-      <div role="status" aria-label="טוען" className="space-y-6">
-        {Array.from({ length: FALLBACK_CARD_COUNT }).map((_, index) => (
-          <Box key={index} className="p-6">
-            <div className="space-y-4">
-              <Skeleton className="h-6 w-56" />
-              <Skeleton className="h-4 w-72" />
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
-              </div>
-            </div>
-          </Box>
-        ))}
-      </div>
+      <CardGridSkeleton
+        count={FALLBACK_CARD_COUNT}
+        lines={2}
+        className="gap-6"
+      />
     </Page>
   );
 }

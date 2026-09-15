@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Box, Page, PageHeader } from "@/components/layout";
+import { Box, Page, PageHeader, PageHeaderSkeleton } from "@/components/layout";
+import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { createClient } from "@/lib/supabase/client";
@@ -106,11 +107,13 @@ export default function EditContentPage({
   if (loading) {
     return (
       <Page>
-        <PageHeader
-          title="טוען..."
-          actions={<Button disabled>שמירה</Button>}
-        />
-          <div className="text-center py-10">טוען תוכן...</div>
+        <PageHeaderSkeleton actions={2} />
+        <SkeletonRegion label="טוען תוכן...">
+          <Box aria-hidden className="space-y-4">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-96 w-full" />
+          </Box>
+        </SkeletonRegion>
       </Page>
     );
   }

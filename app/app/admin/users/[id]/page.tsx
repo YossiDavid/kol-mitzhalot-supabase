@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { Box, Page, PageHeader } from "@/components/layout";
+import { Page, PageHeader } from "@/components/layout";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardSkeleton } from "@/components/ui/card-skeleton";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import type { Route } from "next";
@@ -11,7 +13,8 @@ import { unstable_noStore as noStore } from "next/cache";
 import { getEffectiveRole, getRoleLabel, getRoles } from "@/lib/user";
 import type { Role } from "@/lib/user";
 import { UserRolesEditor } from "@/features/admin/components/user-roles-editor";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
+import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Suspense } from "react";
 
 // מספר קופסאות השלד בזמן הטעינה - מקרב את מבנה הדף האמיתי (מידע, תפקידים,
@@ -358,8 +361,12 @@ async function UserDetailsContent({ params }: UserDetailsPageProps) {
       />
       <div className="space-y-6">
         {/* מידע בסיסי */}
-        <Box>
-          <h3 className="mb-4 text-subtitle font-semibold">מידע בסיסי</h3>
+        <Card>
+          <CardHeader>
+            <CardTitle asChild>
+              <h2>מידע בסיסי</h2>
+            </CardTitle>
+          </CardHeader>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <span className="text-muted-foreground">שם פרטי:</span>{" "}
@@ -392,23 +399,29 @@ async function UserDetailsContent({ params }: UserDetailsPageProps) {
               {formatDate(userDetails.lastSignInAt)}
             </div>
           </div>
-        </Box>
+        </Card>
 
         {/* עריכת תפקידים - משתמש יכול להיות גם וגם (למשל שדכן וגם איש צוות) */}
-        <Box>
-          <h3 className="mb-4 text-subtitle font-semibold">תפקידים</h3>
+        <Card>
+          <CardHeader>
+            <CardTitle asChild>
+              <h2>תפקידים</h2>
+            </CardTitle>
+          </CardHeader>
           <UserRolesEditor
             userId={userDetails.id}
             initialRoles={userDetails.roles}
             initialInstitutionId={userDetails.staffInstitutionId}
           />
-        </Box>
+        </Card>
 
         {/* סטטיסטיקות שידוכים */}
-        <Box>
-          <h3 className="mb-4 text-subtitle font-semibold">
-            סטטיסטיקות שידוכים
-          </h3>
+        <Card>
+          <CardHeader>
+            <CardTitle asChild>
+              <h2>סטטיסטיקות שידוכים</h2>
+            </CardTitle>
+          </CardHeader>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <span className="text-muted-foreground">
@@ -423,13 +436,15 @@ async function UserDetailsContent({ params }: UserDetailsPageProps) {
               <strong>{userDetails.shidduchimStats.totalCompleted}</strong>
             </div>
           </div>
-        </Box>
+        </Card>
 
         {/* ילדים */}
-        <Box>
-          <h3 className="mb-4 text-subtitle font-semibold">
-            ילדים במערכת ({userDetails.children.length})
-          </h3>
+        <Card>
+          <CardHeader>
+            <CardTitle asChild>
+              <h2>ילדים במערכת ({userDetails.children.length})</h2>
+            </CardTitle>
+          </CardHeader>
           <DataTable
             surface={false}
             caption="ילדים במערכת"
@@ -437,10 +452,14 @@ async function UserDetailsContent({ params }: UserDetailsPageProps) {
             rows={userDetails.children}
             getRowKey={(child) => child.id}
             emptyState={
-              <p className="text-muted-foreground">אין ילדים רשומים במערכת</p>
+              <Empty size="compact" surface={false}>
+                <EmptyHeader>
+                  <EmptyTitle>אין ילדים רשומים במערכת</EmptyTitle>
+                </EmptyHeader>
+              </Empty>
             }
           />
-        </Box>
+        </Card>
       </div>
     </Page>
   );
@@ -458,19 +477,19 @@ function UserDetailsFallback() {
           </Button>
         }
       />
-      <div role="status" aria-label="טוען" className="space-y-6">
+      <SkeletonRegion className="space-y-6">
         {Array.from({ length: FALLBACK_SECTION_COUNT }).map((_, index) => (
-          <Box key={index}>
-            <Skeleton className="mb-4 h-6 w-40" />
+          <CardSkeleton key={index} header={false}>
+            <Skeleton className="h-6 w-40" />
             <div className="grid grid-cols-2 gap-4">
               <Skeleton className="h-5 w-full" />
               <Skeleton className="h-5 w-full" />
               <Skeleton className="h-5 w-full" />
               <Skeleton className="h-5 w-full" />
             </div>
-          </Box>
+          </CardSkeleton>
         ))}
-      </div>
+      </SkeletonRegion>
     </Page>
   );
 }

@@ -1,6 +1,6 @@
-import { Box, PageHeader } from "@/components/layout";
+import { Box, PageHeader, PageHeaderSkeleton } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   isShidduchStatus,
@@ -263,13 +263,10 @@ async function ShidduchCardContent({
 /** שלד כרטיס השידוך: כותרת, שמות שני הצדדים, ואזורי הסטטוס וההערות. */
 function ShidduchCardSkeleton() {
   return (
-    <div role="status" aria-label="טוען" className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-9 w-36" />
-      </div>
+    <SkeletonRegion className="space-y-6">
+      <PageHeaderSkeleton description={false} actions={1} />
 
-      <div className="space-y-6 rounded-xl border border-border p-6">
+      <Box aria-hidden className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Skeleton className="h-4 w-16" />
@@ -290,8 +287,8 @@ function ShidduchCardSkeleton() {
         </div>
 
         <Skeleton className="h-3 w-48" />
-      </div>
-    </div>
+      </Box>
+    </SkeletonRegion>
   );
 }
 

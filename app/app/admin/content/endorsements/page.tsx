@@ -5,6 +5,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Box, Page, PageHeader } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { ListSkeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
@@ -241,12 +248,14 @@ export default function EndorsementsAdminPage() {
 
         <Box>
           {loading ? (
-            <div className="py-10 text-center text-muted-foreground">טוען...</div>
+            <ListSkeleton />
           ) : items.length === 0 ? (
-            <div className="py-16 text-center">
-              <p className="text-subtitle font-semibold text-muted-foreground">אין המלצות עדיין</p>
-              <p className="mt-2 text-body-sm text-muted-foreground">הוסף המלצות רבנים שיוצגו בדף הבית</p>
-            </div>
+            <Empty size="compact" surface={false}>
+              <EmptyHeader>
+                <EmptyTitle>אין המלצות עדיין</EmptyTitle>
+                <EmptyDescription>הוסף המלצות רבנים שיוצגו בדף הבית</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
             <div className="divide-y">
               {items.map((item, idx) => (

@@ -12,7 +12,8 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonRegion } from "@/components/ui/skeleton";
+import { CardSkeleton } from "@/components/ui/card-skeleton";
 import { createClient } from "@/lib/supabase/server";
 import ParentProposalListItem from "@/features/shidduchim/components/parent-proposal-list-item";
 import { getMyProposals } from "@/features/shidduchim/lib/proposals-data";
@@ -91,21 +92,13 @@ async function ProposalsList() {
 /** שלד רשימת ההצעות, במבנה של שורת הצעה אמיתית. */
 function ProposalsListSkeleton() {
   return (
-    <div role="status" aria-label="טוען" className="space-y-4">
-      {Array.from({ length: SKELETON_PROPOSAL_COUNT }, (_, i) => (
-        <div
-          key={i}
-          className="flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-start sm:justify-between"
-        >
-          <div className="min-w-0 flex-1 space-y-2">
-            <Skeleton className="h-5 w-56" />
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-4 w-full max-w-md" />
-          </div>
-          <Skeleton className="h-8 w-24 self-end sm:self-start" />
-        </div>
-      ))}
-    </div>
+    <SkeletonRegion>
+      <Box className="space-y-4">
+        {Array.from({ length: SKELETON_PROPOSAL_COUNT }, (_, i) => (
+          <CardSkeleton key={i} size="sm" lines={1} />
+        ))}
+      </Box>
+    </SkeletonRegion>
   );
 }
 

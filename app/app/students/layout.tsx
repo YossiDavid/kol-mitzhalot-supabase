@@ -2,7 +2,8 @@ import { Suspense } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeaderSkeleton } from "@/components/layout";
+import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
 import { StudentsNoAccess } from "@/features/students/components/no-access";
 import { getUser, hasRole } from "@/lib/user";
 
@@ -17,10 +18,10 @@ const STUDENTS_LIST_PATH_REGEX = /^\/app\/students\/?$/;
 
 function StudentsSkeleton() {
   return (
-    <div role="status" aria-label="טוען" className="space-y-3 py-4">
-      <Skeleton className="h-7 w-44" />
-      <Skeleton className="h-64 w-full rounded-2xl" />
-    </div>
+    <SkeletonRegion className="flex flex-col gap-6 py-2 md:py-4">
+      <PageHeaderSkeleton />
+      <Skeleton aria-hidden className="h-64 w-full rounded-xl" />
+    </SkeletonRegion>
   );
 }
 

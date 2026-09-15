@@ -2,12 +2,21 @@ import type { Route } from "next";
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { Box, Page, PageHeader } from "@/components/layout";
-import { DataTable, type DataTableColumn } from "@/components/data-table";
+import {
+  DataTable,
+  DataTableSkeleton,
+  type DataTableColumn,
+} from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PhotoRequestActions } from "@/features/photo-requests/components/photo-request-actions";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Suspense } from "react";
 
 // מספר שורות השלד בזמן הטעינה - מקרב את גובה הטבלה האמיתית ומונע קפיצת פריסה.
@@ -212,14 +221,14 @@ async function PhotoRequestsContent() {
           rows={requests}
           getRowKey={(request) => request.id}
           emptyState={
-            <div className="py-16 text-center">
-              <p className="text-subtitle font-semibold text-muted-foreground">
-                אין בקשות ממתינות
-              </p>
-              <p className="mt-2 text-body-sm text-muted-foreground">
-                בקשה חדשה תופיע כאן ותישלח אליכם גם כהתראה
-              </p>
-            </div>
+            <Empty size="compact" surface={false}>
+              <EmptyHeader>
+                <EmptyTitle>אין בקשות ממתינות</EmptyTitle>
+                <EmptyDescription>
+                  בקשה חדשה תופיע כאן ותישלח אליכם גם כהתראה
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           }
         />
       </Box>
@@ -240,12 +249,11 @@ function PhotoRequestsFallback() {
         }
       />
       <Box>
-        <div role="status" aria-label="טוען" className="space-y-4">
-          <Skeleton className="h-6 w-full" />
-          {Array.from({ length: FALLBACK_ROW_COUNT }).map((_, index) => (
-            <Skeleton key={index} className="h-12 w-full" />
-          ))}
-        </div>
+        <DataTableSkeleton
+          surface={false}
+          rows={FALLBACK_ROW_COUNT}
+          columns={4}
+        />
       </Box>
     </Page>
   );

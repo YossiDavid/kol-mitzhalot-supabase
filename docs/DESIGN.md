@@ -150,11 +150,88 @@ const COLUMNS: DataTableColumn<User>[] = [
 
 ### כרטיסים (`Card`)
 
-`rounded-xl border bg-card shadow`, כותרת `text-subtitle font-bold`, תיאור ב־`text-muted-foreground text-body-sm` — `components/ui/card.tsx`.
+מתכון אחד — `components/ui/card.tsx`. המשטח הוא `.box` (`bg-card rounded-xl`) עם `border`, והריפוד והמרווח בין החלקים שייכים ל־`Card` עצמו: `CardHeader`, `CardContent` ו־`CardFooter` לא מוסיפים ריפוד.
 
-### תיבת תוכן (`Box`)
+| חלק | מחלקות ושימוש |
+|------|--------|
+| `Card` (ברירת מחדל) | `box border flex flex-col gap-5 p-5 md:p-6` — כרטיס עצמאי: טופס, פרופיל, פוסט, בקשה |
+| `Card size="sm"` | `gap-4 p-4 md:p-5` — כרטיס ברשימה או ברשת, או כרטיס בתוך `Box` |
+| `CardHeader` | רשת: `CardTitle` ו־`CardDescription` זה מתחת לזה, `CardAction` (תג, כפתור) בעמודה צמודה בצד השני |
+| `CardTitle` | `text-subtitle font-bold leading-tight`. כותרת סמנטית: `<CardTitle asChild><h2>…</h2></CardTitle>` |
+| `CardDescription` | `text-body-sm text-muted-foreground` |
+| `CardFooter` | `flex flex-wrap items-center gap-2` |
 
-רכיב `components/layout/box.tsx`: המחלקה `.box` (`bg-card rounded-xl`, מוגדרת ב־`app/design-system.css`) + `p-4`. כל ה־props (id, onClick, aria, data) מועברים לאלמנט.
+```tsx
+<Card asChild size="sm">
+  <article aria-labelledby={titleId}>
+    <CardHeader>
+      <CardTitle asChild><h2 id={titleId}>{title}</h2></CardTitle>
+      <CardDescription>{date}</CardDescription>
+      <CardAction><Badge variant="success">אושר</Badge></CardAction>
+    </CardHeader>
+    <CardContent>…</CardContent>
+    <CardFooter><Button size="sm" variant="outline">פתיחה</Button></CardFooter>
+  </article>
+</Card>
+```
+
+- `asChild` כשהכרטיס הוא `article` או קישור. כרטיס ניווט שכולו קישור: `LinkCard` (`components/layout/link-card.tsx`).
+- אין כרטיס ידני (`rounded-xl border bg-card p-5`), אין `rounded-2xl` ואין `shadow`: ההפרדה מהרקע היא המסגרת. כרטיס אינטראקטיבי מקבל `hover:bg-accent`.
+- כרטיס בקשת הצטרפות בהגדרות: `ApplicationStatusCard role="shadchan" | "staff"` (`features/settings/components/application-status-card.tsx`).
+
+### תיבת תוכן (`Box`) מול `Card`
+
+**החלטה:** `.box` נשאר משטח הבסיס (`app/design-system.css`), ושני רכיבים נשענים עליו:
+
+- **`Box`** (`components/layout/box.tsx`) — `.box p-4` בלי מסגרת: חלונית שמקבצת תוכן בעמוד (טבלה, רשימה, עורך, מקטע של כרטיס מיועד). כל ה־props (id, onClick, aria, data) מועברים לאלמנט.
+- **`Card`** — `.box` עם מסגרת, ריפוד וחלקים: יחידה עצמאית עם כותרת, או פריט ברשימה (גם בתוך `Box`).
+
+`.box` ישירות ב־`className` — רק ברכיבי תשתית (`DataTable`, `Empty`, חלונית הצ'אט).
+
+### מצבים ריקים (`Empty`)
+
+כל הודעת "אין …", "לא נמצאו …" או "עדיין לא …" היא `Empty` (`components/ui/empty.tsx`), לא `div` או `p` ידניים. גם שגיאת טעינה ברשימה, עם כפתור "נסו שוב".
+
+| תכונה | ערכים |
+|------|--------|
+| `size` | `default` — רשימה או עמוד שלמים ריקים (כותרת `text-title`, תיאור `text-body`); `compact` — בתוך מקטע, כרטיס או טבלה (כותרת `text-subtitle`, תיאור `text-body-sm`) |
+| `surface` | `true` (ברירת מחדל) — משטח `.box` משלו; `false` — כשהוא כבר יושב על `Box`, `Card` או חלונית |
+
+```tsx
+<Box>
+  <DataTable
+    surface={false}
+    emptyState={
+      <Empty size="compact" surface={false}>
+        <EmptyHeader>
+          <EmptyTitle>אין בקשות ממתינות</EmptyTitle>
+          <EmptyDescription>בקשה חדשה תופיע כאן ותישלח אליכם גם כהתראה</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent><Button>…</Button></EmptyContent>
+      </Empty>
+    }
+    …
+  />
+</Box>
+```
+
+- הכותרת היא ההודעה, התיאור הוא ההסבר, וכפתור פעולה תמיד בתוך `EmptyContent`.
+- אייקון אופציונלי: `<EmptyMedia variant="icon"><Icon /></EmptyMedia>` (למשל בחלונית הצ'אט).
+- מקטעי לוח הבקרה — `compact` עם משטח; רשימות עמוד מלא (הצעות, פורום, מיועדים, בקשות) — `default`.
+
+### מצבי טעינה
+
+- **שלד לתוכן, `Spinner` לפעולה.** עמוד או מקטע שנטענים מציגים שלד בצורת התוכן; `Spinner` רק בתוך כפתור או פעולה נקודתית.
+- **אין `loading.tsx`.** המעטפת של `/app` חוסמת בכוונה (`app/app/layout.tsx`), וכל עמוד עוטף את החלק שתלוי בנתונים ב־`Suspense` עם שלד. כותרת קבועה מוצגת כ־`PageHeader` אמיתי גם בזמן הטעינה; `PageHeaderSkeleton` רק כשהכותרת עצמה תלויה בנתונים.
+- **אזור טעינה אחד.** כל שלד עטוף ב־`SkeletonRegion` (`role="status"`, `aria-label="טוען"`), והחלקים בתוכו `aria-hidden`. הבדיקות ממתינות לו.
+- גובה פקד בשלד כמו בסולם הגבהים (`h-11 md:h-10`), כדי שלא תהיה קפיצה.
+
+| חלק | קובץ | שימוש |
+|------|------|--------|
+| `Skeleton`, `SkeletonRegion`, `ListSkeleton` | `components/ui/skeleton.tsx` | פס בודד; אזור הטעינה; רשימת `divide-y` בתוך `Box` |
+| `PageHeaderSkeleton` | `components/layout/page-header.tsx` | כותרת שתלויה בנתונים (עורך מאמר, דף הגדרה, כרטיס שידוך) |
+| `DataTableSkeleton` | `components/data-table/data-table-skeleton.tsx` | אותה צורה כמו `DataTable`: טבלה מה־`breakpoint`, כרטיסים מתחתיו, אותו `surface` |
+| `CardSkeleton`, `CardGridSkeleton` | `components/ui/card-skeleton.tsx` | כרטיס טופס (`fields`), טקסט (`lines`), כפתור (`footer`); רשימה או רשת כרטיסים (`columns`) |
 
 ### סרגל צד
 

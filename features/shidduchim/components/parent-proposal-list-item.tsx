@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import ProposalResponseDialog from "@/features/shidduchim/components/proposal-response-dialog";
 import type { ParentProposal } from "@/features/shidduchim/lib/proposals-data";
 import {
@@ -47,7 +48,10 @@ export default function ParentProposalListItem({
   const receivedAt = proposal.sentAt ?? proposal.createdAt;
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-start sm:justify-between">
+    <Card
+      size="sm"
+      className="gap-3 sm:flex-row sm:items-start sm:justify-between"
+    >
       <div className="min-w-0 space-y-1">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="truncate text-body font-semibold">
@@ -92,6 +96,6 @@ export default function ParentProposalListItem({
           <Link href={`/app/shidduchim/${proposal.shidduchId}`}>פתיחה</Link>
         </Button>
       </div>
-    </div>
+    </Card>
   );
 }

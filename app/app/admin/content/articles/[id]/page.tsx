@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Box, Page, PageHeader } from "@/components/layout";
+import { Box, Page, PageHeader, PageHeaderSkeleton } from "@/components/layout";
+import { CardSkeleton } from "@/components/ui/card-skeleton";
+import { SkeletonRegion } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
@@ -143,8 +145,10 @@ export default function ArticleEditPage({
   if (loading) {
     return (
       <Page>
-        <PageHeader title="טוען..." actions={<Button disabled>שמירה</Button>} />
-          <div className="py-10 text-center">טוען...</div>
+        <PageHeaderSkeleton actions={3} />
+        <SkeletonRegion>
+          <CardSkeleton surface="panel" header={false} fields={4} />
+        </SkeletonRegion>
       </Page>
     );
   }

@@ -11,6 +11,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Box, Page, PageHeader } from "@/components/layout";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { ListSkeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
@@ -68,11 +74,13 @@ export default function NewsletterAdminPage() {
       />
         <Box>
           {loading ? (
-            <div className="py-10 text-center text-muted-foreground">טוען...</div>
+            <ListSkeleton />
           ) : items.length === 0 ? (
-            <div className="py-16 text-center text-muted-foreground">
-              אין נרשמים עדיין
-            </div>
+            <Empty size="compact" surface={false}>
+              <EmptyHeader>
+                <EmptyTitle>אין נרשמים עדיין</EmptyTitle>
+              </EmptyHeader>
+            </Empty>
           ) : (
             <div className="divide-y">
               {items.map((item) => (

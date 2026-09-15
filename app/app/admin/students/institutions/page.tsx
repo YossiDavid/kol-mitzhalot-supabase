@@ -7,8 +7,19 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Box, Page, PageHeader } from "@/components/layout";
-import { DataTable, type DataTableColumn } from "@/components/data-table";
+import {
+  DataTable,
+  DataTableSkeleton,
+  type DataTableColumn,
+} from "@/components/data-table";
 import { Label } from "@/components/ui/label";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -280,28 +291,32 @@ export default function BulkInstitutionAssignmentPage() {
       />
       <Box className="space-y-4">
         {loading ? (
-          <div className="py-10 text-center text-muted-foreground">טוען...</div>
+          <DataTableSkeleton surface={false} />
         ) : loadError ? (
-          <div className="py-16 text-center">
-            <p className="text-subtitle font-semibold text-muted-foreground">
-              שגיאה בטעינת הנתונים
-            </p>
-            <Button className="mt-6" onClick={load}>
-              נסה שוב
-            </Button>
-          </div>
+          <Empty size="compact" surface={false}>
+            <EmptyHeader>
+              <EmptyTitle>שגיאה בטעינת הנתונים</EmptyTitle>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button onClick={load}>נסה שוב</Button>
+            </EmptyContent>
+          </Empty>
         ) : institutions.length === 0 ? (
-          <div className="py-16 text-center">
-            <p className="text-subtitle font-semibold text-muted-foreground">
-              אין מוסדות פעילים במאגר
-            </p>
-            <p className="mt-2 text-body-sm text-muted-foreground">
-              יש ליצור מוסדות תחילה במסך ניהול המוסדות
-            </p>
-            <Link href={"/app/admin/institutions" as any}>
-              <Button className="mt-6">מעבר לניהול מוסדות</Button>
-            </Link>
-          </div>
+          <Empty size="compact" surface={false}>
+            <EmptyHeader>
+              <EmptyTitle>אין מוסדות פעילים במאגר</EmptyTitle>
+              <EmptyDescription>
+                יש ליצור מוסדות תחילה במסך ניהול המוסדות
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button asChild>
+                <Link href={"/app/admin/institutions" as any}>
+                  מעבר לניהול מוסדות
+                </Link>
+              </Button>
+            </EmptyContent>
+          </Empty>
         ) : (
           <>
             <div className="flex flex-wrap items-end gap-3">
@@ -411,11 +426,11 @@ export default function BulkInstitutionAssignmentPage() {
               rows={filteredStudents}
               getRowKey={(student) => student.id}
               emptyState={
-                <div className="py-16 text-center">
-                  <p className="text-subtitle font-semibold text-muted-foreground">
-                    אין כרטיסים להצגה לפי הסינון הנוכחי
-                  </p>
-                </div>
+                <Empty size="compact" surface={false}>
+                  <EmptyHeader>
+                    <EmptyTitle>אין כרטיסים להצגה לפי הסינון הנוכחי</EmptyTitle>
+                  </EmptyHeader>
+                </Empty>
               }
             />
           </>

@@ -1,4 +1,5 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui/card";
+import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
 
 /** כמה כרטיסי הצעה מסומנים בשלד הרשימה */
 const DEFAULT_SKELETON_COUNT = 3;
@@ -24,12 +25,9 @@ export default function ShadchanProposalListSkeleton({
   count?: number;
 }) {
   return (
-    <div role="status" aria-label="טוען" className="mt-6 grid gap-4">
+    <SkeletonRegion className="grid gap-4">
       {Array.from({ length: count }, (_, i) => (
-        <div
-          key={i}
-          className="box @container flex flex-col gap-4 border p-4 md:p-5"
-        >
+        <Card key={i} size="sm" aria-hidden className="@container">
           <div className="flex items-center gap-3">
             <Skeleton className="h-5 w-16 rounded-md" />
             <Skeleton className="h-4 w-44" />
@@ -39,10 +37,10 @@ export default function ShadchanProposalListSkeleton({
             <SideSkeleton className="border-t pt-4 @lg:border-s @lg:border-t-0 @lg:ps-5 @lg:pt-0" />
           </div>
           <div className="flex justify-end border-t pt-3">
-            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-9 w-20 md:h-8" />
           </div>
-        </div>
+        </Card>
       ))}
-    </div>
+    </SkeletonRegion>
   );
 }
