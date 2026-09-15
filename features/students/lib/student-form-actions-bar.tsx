@@ -83,7 +83,10 @@ export function StudentFormActionsBar({
         {saveProgress && isDirty && !isBusy && <UnsavedChangesNotice />}
 
         {saveProgress && !isLastStep && (
-          <SaveProgressButton {...saveProgress} isDisabled={isBusy || !isDirty} />
+          <SaveProgressButton
+            {...saveProgress}
+            isDisabled={isBusy || !isDirty}
+          />
         )}
 
         {isLastStep ? (
@@ -134,8 +137,12 @@ function SaveProgressButton({
       className="relative max-sm:px-3"
     >
       <Save aria-hidden className="size-4" />
-      <span className="max-sm:hidden">{isSaving ? savingLabel : SAVE_LABEL}</span>
-      <span className="sm:hidden">{isSaving ? savingLabel : SAVE_LABEL_SHORT}</span>
+      <span className="max-sm:hidden">
+        {isSaving ? savingLabel : SAVE_LABEL}
+      </span>
+      <span className="sm:hidden">
+        {isSaving ? savingLabel : SAVE_LABEL_SHORT}
+      </span>
       {/* במובייל אין מקום לטקסט "יש שינויים שלא נשמרו" - נקודה על הכפתור */}
       {isDirty && !isSaving && (
         <span

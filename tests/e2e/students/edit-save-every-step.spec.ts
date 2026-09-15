@@ -129,7 +129,9 @@ const stepsNav = (page: Page) =>
   page.getByRole("navigation", { name: "שלבי הטופס" });
 
 async function openStep(page: Page, title: string) {
-  await stepsNav(page).getByRole("button", { name: title, exact: true }).click();
+  await stepsNav(page)
+    .getByRole("button", { name: title, exact: true })
+    .click();
   await expect(page.getByRole("heading", { name: title })).toBeVisible();
 }
 
@@ -180,7 +182,9 @@ test.describe.serial("שמירת שינויים מכל שלב בעריכת כר�
       timeout: SAVE_TIMEOUT_MS,
     });
     await expect(saveButton(page)).toBeDisabled({ timeout: SAVE_TIMEOUT_MS });
-    await expect(page).toHaveURL(new RegExp(`/app/students/${studentId}/edit$`));
+    await expect(page).toHaveURL(
+      new RegExp(`/app/students/${studentId}/edit$`),
+    );
     await expect(
       page.getByRole("heading", { name: PERSONAL_STEP }),
     ).toBeVisible();
@@ -205,7 +209,9 @@ test.describe.serial("שמירת שינויים מכל שלב בעריכת כר�
 
     // Assert
     await expect(page.getByText(INVALID_SAVE_MESSAGE)).toBeVisible();
-    await expect(page.getByRole("heading", { name: FAMILY_STEP })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: FAMILY_STEP }),
+    ).toBeVisible();
     await expect(page.locator("#father-self")).toBeFocused();
     await expect(page.locator("#father-self")).toHaveAttribute(
       "aria-invalid",
@@ -217,9 +223,7 @@ test.describe.serial("שמירת שינויים מכל שלב בעריכת כר�
     expect(student.parents_info?.father?.self?.name).toBe(FATHER_NAME);
   });
 
-  test("קו״ח שהועלה בשמירה אחת לא מועלה שוב בשמירה הבאה", async ({
-    page,
-  }) => {
+  test("קו״ח שהועלה בשמירה אחת לא מועלה שוב בשמירה הבאה", async ({ page }) => {
     test.setTimeout(SLOW_TEST_TIMEOUT_MS);
 
     // Arrange
