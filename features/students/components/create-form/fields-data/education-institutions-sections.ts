@@ -3,7 +3,11 @@ import { genderIs } from "./shared-options";
 import type { FormSection, SelectField } from "./types";
 
 /** סוגי המוסדות בטבלת institutions (supabase/migrations/20260830140000_institutions.sql) */
-type InstitutionType = "yeshiva_gedola" | "yeshiva_ketana" | "seminary" | "kollel";
+type InstitutionType =
+  | "yeshiva_gedola"
+  | "yeshiva_ketana"
+  | "seminary"
+  | "kollel";
 
 /**
  * "לבחירה מתוך המאגר" ברשומות ההשכלה: חיפוש במאגר המוסדות לפי סוג ומגדר.

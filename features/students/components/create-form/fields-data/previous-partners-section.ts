@@ -3,14 +3,20 @@ import type { FormSection } from "./types";
 
 function separationIs(type: "divorce" | "death"): FieldCondition[] {
   return [
-    { parameter: "previousPartners.separationType", operator: "===", value: type },
+    {
+      parameter: "previousPartners.separationType",
+      operator: "===",
+      value: type,
+    },
   ];
 }
 
 export const previousPartnersSection: FormSection = {
   name: "previousPartners",
   title: "פרטי בן/בת זוג קודם/ת",
-  condition: [{ parameter: "personalStatus", operator: "!==", value: "single" }],
+  condition: [
+    { parameter: "personalStatus", operator: "!==", value: "single" },
+  ],
   fields: [
     {
       type: "repeater",

@@ -29,7 +29,10 @@ export function FieldCell({
     <Fragment>
       {renderBeforeField(field.beforeField ?? field.before)}
       <div
-        className={cn(getFieldWidthClass(field.width), FIELD_SCROLL_MARGIN_CLASS)}
+        className={cn(
+          getFieldWidthClass(field.width),
+          FIELD_SCROLL_MARGIN_CLASS,
+        )}
         {...fieldCellAttributes(field.name)}
       >
         {children}

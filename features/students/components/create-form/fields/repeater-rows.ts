@@ -1,7 +1,4 @@
-import {
-  resolveRepeaterPath,
-  resolveRowConditions,
-} from "../field-visibility";
+import { resolveRepeaterPath, resolveRowConditions } from "../field-visibility";
 import type { FieldMetadata } from "./field-control-types";
 import { getLastPathSegment, getParentPath, isRecord } from "./field-values";
 

@@ -71,7 +71,9 @@ export function matchesConditionsWith(
   readValue: ReadFieldValue,
 ): boolean {
   if (!conditions || conditions.length === 0) return true;
-  return conditions.every((condition) => matchesCondition(condition, readValue));
+  return conditions.every((condition) =>
+    matchesCondition(condition, readValue),
+  );
 }
 
 /** הנתיבים שהתנאים קוראים, בלי כפילויות - אלה הערכים שצריך לצפות בהם */

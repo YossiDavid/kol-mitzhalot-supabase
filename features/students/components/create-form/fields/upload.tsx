@@ -177,10 +177,10 @@ function ReplaceStoredFileState() {
       <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
         <UploadIcon size={16} />
       </div>
-      <p className="my-2 w-full font-medium text-wrap text-body-sm">
+      <p className="my-2 w-full text-body-sm font-medium text-wrap">
         החלפת הקובץ
       </p>
-      <p className="w-full text-wrap text-caption text-muted-foreground">
+      <p className="w-full text-caption text-wrap text-muted-foreground">
         גררו לכאן קובץ חדש, או לחצו לבחירה מהתיקייה
       </p>
     </div>

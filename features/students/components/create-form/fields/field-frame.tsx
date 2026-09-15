@@ -10,12 +10,7 @@ import type { FieldControlProps } from "./field-control-types";
 
 type FieldFrameProps = Pick<
   FieldControlProps,
-  | "control"
-  | "name"
-  | "label"
-  | "isRequired"
-  | "description"
-  | "formatMessage"
+  "control" | "name" | "label" | "isRequired" | "description" | "formatMessage"
 > & {
   htmlFor?: string;
   className?: string;

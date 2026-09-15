@@ -75,9 +75,9 @@ test.describe("חיפוש מוסד ברשומות ההשכלה", () => {
     await expect(
       listbox.getByRole("option", { name: KETANA.name }),
     ).toBeVisible();
-    await expect(listbox.getByRole("option", { name: KOLLEL.name })).toHaveCount(
-      0,
-    );
+    await expect(
+      listbox.getByRole("option", { name: KOLLEL.name }),
+    ).toHaveCount(0);
 
     // Act
     await listbox.getByRole("option", { name: KETANA.name }).click();

@@ -27,9 +27,13 @@ export function SearchSelectFormField(props: FieldControlProps) {
         if (!row) return;
         const rowPath = getParentPath(name);
         Object.entries(fillOnSelect).forEach(([siblingName, column]) =>
-          setValue(`${rowPath}.${siblingName}`, ensureStringValue(row[column]), {
-            shouldDirty: true,
-          }),
+          setValue(
+            `${rowPath}.${siblingName}`,
+            ensureStringValue(row[column]),
+            {
+              shouldDirty: true,
+            },
+          ),
         );
       }
     : undefined;

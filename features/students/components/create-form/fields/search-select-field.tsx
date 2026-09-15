@@ -1,71 +1,71 @@
 // components/ui/search-select-field.tsx
-"use client"
+"use client";
 
-import * as React from "react"
-import { Combobox, type Option } from "@/components/ui/combobox"
-import { createClient } from "@/lib/supabase/client"
+import * as React from "react";
+import { Combobox, type Option } from "@/components/ui/combobox";
+import { createClient } from "@/lib/supabase/client";
 
-type Primitive = string | number | boolean | null | undefined
+type Primitive = string | number | boolean | null | undefined;
 
 export type SearchSelectFieldProps = {
-  placeholder?: string
-  searchPlaceholder?: string
-  empty?: string
+  placeholder?: string;
+  searchPlaceholder?: string;
+  empty?: string;
 
-  value?: string
-  onChange?: (value: string) => void
-  className?: string
-  disabled?: boolean
+  value?: string;
+  onChange?: (value: string) => void;
+  className?: string;
+  disabled?: boolean;
 
   /** אופציות סטטיות/ברירת מחדל (אופציונלי) */
-  options?: Option[]
+  options?: Option[];
 
   /** Endpoint שמחזיר: { options: Option[] } */
-  endpoint?: string
+  endpoint?: string;
 
   /** Supabase source */
-  table?: string
-  valueColumn?: string // default: "id"
+  table?: string;
+  valueColumn?: string; // default: "id"
   /** תומך גם ב-"first_name,last_name" */
-  labelColumn?: string // default: "name"
+  labelColumn?: string; // default: "name"
   /** תומך גם ב-"first_name,last_name" */
-  searchColumn?: string // default: labelColumn
+  searchColumn?: string; // default: labelColumn
 
   /** פילטרים של eq */
-  filters?: Record<string, Primitive>
+  filters?: Record<string, Primitive>;
   /** פרמטרים כלליים (למשל { limit: 50 }) */
-  params?: Record<string, Primitive>
+  params?: Record<string, Primitive>;
 
-  debounceMs?: number
-  minQueryLength?: number
-  limit?: number
+  debounceMs?: number;
+  minQueryLength?: number;
+  limit?: number;
 
   /** אם תרצה להעביר ידנית */
-  selectedLabel?: string
+  selectedLabel?: string;
 
   /**
    * אם value נבחר אבל לא נמצא בתוצאות – נטען label לפי ה-id (Supabase בלבד)
    * ברירת מחדל: true
    */
-  resolveSelectedLabel?: boolean
+  resolveSelectedLabel?: boolean;
 
   /** עמודות נוספות שנשלפות מהטבלה ומועברות ל-onSelectRow (Supabase בלבד) */
-  extraColumns?: string[]
+  extraColumns?: string[];
   /** השורה המלאה של האפשרות שנבחרה, או null כשהבחירה נוקתה */
-  onSelectRow?: (row: Record<string, unknown> | null) => void
+  onSelectRow?: (row: Record<string, unknown> | null) => void;
 
   /** מ-FormControl, מועברים לכפתור הפותח */
-  id?: string
-  "aria-invalid"?: boolean | "true" | "false"
-  "aria-describedby"?: string
-}
+  id?: string;
+  "aria-invalid"?: boolean | "true" | "false";
+  "aria-describedby"?: string;
+};
 
 /** מפתח יציב ל-deps */
 function stableKey(obj: unknown) {
   try {
-    return JSON.stringify(obj ?? {})
+    return JSON.stringify(obj ?? {});
   } catch {
-    return ""
+    return "";
   }
 }
 
@@ -75,16 +75,16 @@ function stableKey(obj: unknown) {
  * - סוגריים יכולים לשבור parsing
  */
 function escapePostgrestLike(input: string) {
-  return input.replace(/[(),]/g, " ").replace(/\s+/g, " ").trim()
+  return input.replace(/[(),]/g, " ").replace(/\s+/g, " ").trim();
 }
 
 function parseLimit(limit?: unknown, fallback = 50) {
-  if (typeof limit === "number" && Number.isFinite(limit)) return limit
+  if (typeof limit === "number" && Number.isFinite(limit)) return limit;
   if (typeof limit === "string") {
-    const n = Number(limit)
-    if (Number.isFinite(n)) return n
+    const n = Number(limit);
+    if (Number.isFinite(n)) return n;
   }
-  return fallback
+  return fallback;
 }
 
 export function SearchSelectField({
@@ -114,94 +114,103 @@ export function SearchSelectField({
   "aria-invalid": ariaInvalid,
   "aria-describedby": ariaDescribedBy,
 }: SearchSelectFieldProps) {
-  const [query, setQuery] = React.useState("")
-  const [options, setOptions] = React.useState<Option[]>(initialOptions)
-  const [isLoading, setIsLoading] = React.useState(false)
+  const [query, setQuery] = React.useState("");
+  const [options, setOptions] = React.useState<Option[]>(initialOptions);
+  const [isLoading, setIsLoading] = React.useState(false);
   // השורות המלאות של התוצאות האחרונות, לפי value - עבור onSelectRow
-  const rowsByValueRef = React.useRef(new Map<string, Record<string, unknown>>())
-  const extraColumnsKey = React.useMemo(() => stableKey(extraColumns), [extraColumns])
+  const rowsByValueRef = React.useRef(
+    new Map<string, Record<string, unknown>>(),
+  );
+  const extraColumnsKey = React.useMemo(
+    () => stableKey(extraColumns),
+    [extraColumns],
+  );
 
   // label שמוצג עבור value גם אם לא נמצא ב-options
-  const [resolvedSelectedLabel, setResolvedSelectedLabel] = React.useState<string>(
-    selectedLabelProp ?? ""
-  )
+  const [resolvedSelectedLabel, setResolvedSelectedLabel] =
+    React.useState<string>(selectedLabelProp ?? "");
 
   // Request guard (anti-race)
-  const reqIdRef = React.useRef(0)
+  const reqIdRef = React.useRef(0);
 
-  const filtersKey = React.useMemo(() => stableKey(filters), [filters])
-  const paramsKey = React.useMemo(() => stableKey(params), [params])
+  const filtersKey = React.useMemo(() => stableKey(filters), [filters]);
+  const paramsKey = React.useMemo(() => stableKey(params), [params]);
 
   // שמור selectedLabelProp מעודכן
   React.useEffect(() => {
     if (typeof selectedLabelProp === "string") {
-      setResolvedSelectedLabel(selectedLabelProp)
+      setResolvedSelectedLabel(selectedLabelProp);
     }
-  }, [selectedLabelProp])
+  }, [selectedLabelProp]);
 
   // כשאין מקור מרוחק, תציג initialOptions
   React.useEffect(() => {
     if (!endpoint && !table) {
-      setOptions(initialOptions)
+      setOptions(initialOptions);
     }
-  }, [endpoint, table, initialOptions])
+  }, [endpoint, table, initialOptions]);
 
   // Resolve label לפי value (Supabase בלבד)
   React.useEffect(() => {
-    if (!resolveSelectedLabel) return
-    if (!table) return
+    if (!resolveSelectedLabel) return;
+    if (!table) return;
     if (!value) {
-      setResolvedSelectedLabel(selectedLabelProp ?? "")
-      return
+      setResolvedSelectedLabel(selectedLabelProp ?? "");
+      return;
     }
 
     // אם כבר יש label בתוך options, אין צורך
-    const inOptions = options.find((o) => o.value === value)?.label
+    const inOptions = options.find((o) => o.value === value)?.label;
     if (inOptions) {
-      setResolvedSelectedLabel(inOptions)
-      return
+      setResolvedSelectedLabel(inOptions);
+      return;
     }
 
     // אם כבר יש selectedLabelProp – נשתמש בו, ועדיין אפשר לשדרג בעתיד אם תרצה
     // כאן ננסה להביא label מה-DB רק אם אין.
-    if (selectedLabelProp) return
+    if (selectedLabelProp) return;
 
-    let cancelled = false
+    let cancelled = false;
     const run = async () => {
       try {
-        const supabase = createClient()
-        const valCol = valueColumn || "id"
-        const labCol = labelColumn || "name"
-        const labelCols = labCol.split(",").map((c) => c.trim()).filter(Boolean)
-        const selectCols = [valCol, ...labelCols].join(",")
+        const supabase = createClient();
+        const valCol = valueColumn || "id";
+        const labCol = labelColumn || "name";
+        const labelCols = labCol
+          .split(",")
+          .map((c) => c.trim())
+          .filter(Boolean);
+        const selectCols = [valCol, ...labelCols].join(",");
 
         const { data, error } = await supabase
           .from(table)
           .select(selectCols)
           .eq(valCol, value)
-          .maybeSingle()
+          .maybeSingle();
 
-        if (cancelled) return
-        if (error) throw error
-        if (!data) return
+        if (cancelled) return;
+        if (error) throw error;
+        if (!data) return;
 
         const label = labelCols
           .map((col) => (data as any)?.[col])
-          .filter((v) => v !== null && v !== undefined && String(v).trim() !== "")
+          .filter(
+            (v) => v !== null && v !== undefined && String(v).trim() !== "",
+          )
           .join(" ")
-          .trim()
+          .trim();
 
-        if (label) setResolvedSelectedLabel(label)
+        if (label) setResolvedSelectedLabel(label);
       } catch (e) {
         // לא מפיל UX; פשוט נשאר בלי label resolved
-        console.error("Resolve selected label error:", e)
+        console.error("Resolve selected label error:", e);
       }
-    }
+    };
 
-    run()
+    run();
     return () => {
-      cancelled = true
-    }
+      cancelled = true;
+    };
   }, [
     resolveSelectedLabel,
     table,
@@ -210,131 +219,148 @@ export function SearchSelectField({
     labelColumn,
     options,
     selectedLabelProp,
-  ])
+  ]);
 
   // Fetch options (endpoint או supabase)
   React.useEffect(() => {
-    const hasRemote = Boolean(endpoint || table)
-    if (!hasRemote) return
+    const hasRemote = Boolean(endpoint || table);
+    if (!hasRemote) return;
 
-    const trimmed = query.trim()
+    const trimmed = query.trim();
 
     // אם המשתמש התחיל להקליד אבל פחות מהמינימום – לא נטען
-    if (minQueryLength > 0 && trimmed.length > 0 && trimmed.length < minQueryLength) {
-      setOptions([])
-      setIsLoading(false)
-      return
+    if (
+      minQueryLength > 0 &&
+      trimmed.length > 0 &&
+      trimmed.length < minQueryLength
+    ) {
+      setOptions([]);
+      setIsLoading(false);
+      return;
     }
 
-    const currentReqId = ++reqIdRef.current
-    const controller = endpoint ? new AbortController() : null
+    const currentReqId = ++reqIdRef.current;
+    const controller = endpoint ? new AbortController() : null;
 
     const run = async () => {
-      setIsLoading(true)
+      setIsLoading(true);
 
       try {
         // Endpoint mode (רק אם אין table)
         if (endpoint && !table) {
-          const url = new URL(endpoint, window.location.origin)
-          if (trimmed) url.searchParams.set("search", trimmed)
+          const url = new URL(endpoint, window.location.origin);
+          if (trimmed) url.searchParams.set("search", trimmed);
 
           if (params) {
             Object.entries(params).forEach(([k, v]) => {
-              if (v === null || v === undefined) return
-              url.searchParams.set(k, String(v))
-            })
+              if (v === null || v === undefined) return;
+              url.searchParams.set(k, String(v));
+            });
           }
 
-          const res = await fetch(url.toString(), { signal: controller?.signal })
-          if (!res.ok) throw new Error("Failed to fetch options")
-          const data = (await res.json()) as { options?: Option[] }
+          const res = await fetch(url.toString(), {
+            signal: controller?.signal,
+          });
+          if (!res.ok) throw new Error("Failed to fetch options");
+          const data = (await res.json()) as { options?: Option[] };
 
-          if (currentReqId !== reqIdRef.current) return
-          setOptions(data.options ?? [])
-          return
+          if (currentReqId !== reqIdRef.current) return;
+          setOptions(data.options ?? []);
+          return;
         }
 
         // Supabase mode
         if (table) {
-          const supabase = createClient()
-          const valCol = valueColumn || "id"
-          const labCol = labelColumn || "name"
-          const searchCol = searchColumn || labCol
+          const supabase = createClient();
+          const valCol = valueColumn || "id";
+          const labCol = labelColumn || "name";
+          const searchCol = searchColumn || labCol;
 
-          const labelCols = labCol.split(",").map((c) => c.trim()).filter(Boolean)
-          const searchCols = searchCol.split(",").map((c) => c.trim()).filter(Boolean)
+          const labelCols = labCol
+            .split(",")
+            .map((c) => c.trim())
+            .filter(Boolean);
+          const searchCols = searchCol
+            .split(",")
+            .map((c) => c.trim())
+            .filter(Boolean);
 
           const selectCols = Array.from(
-            new Set([valCol, ...labelCols, ...(extraColumns ?? [])])
-          ).join(",")
+            new Set([valCol, ...labelCols, ...(extraColumns ?? [])]),
+          ).join(",");
 
-          let qb = supabase.from(table).select(selectCols)
+          let qb = supabase.from(table).select(selectCols);
 
           // Filters (eq)
           if (filters) {
             Object.entries(filters).forEach(([k, v]) => {
-              if (v === null || v === undefined) return
-              qb = qb.eq(k, v as any)
-            })
+              if (v === null || v === undefined) return;
+              qb = qb.eq(k, v as any);
+            });
           }
 
           // Search
           if (trimmed) {
-            const q = escapePostgrestLike(trimmed)
+            const q = escapePostgrestLike(trimmed);
             if (searchCols.length > 1) {
-              const orConditions = searchCols.map((col) => `${col}.ilike.%${q}%`).join(",")
-              qb = qb.or(orConditions)
+              const orConditions = searchCols
+                .map((col) => `${col}.ilike.%${q}%`)
+                .join(",");
+              qb = qb.or(orConditions);
             } else if (searchCols.length === 1) {
-              qb = qb.ilike(searchCols[0], `%${q}%`)
+              qb = qb.ilike(searchCols[0], `%${q}%`);
             }
           }
 
-          const effectiveLimit = parseLimit(limit ?? params?.limit, 50)
-          qb = qb.limit(effectiveLimit)
+          const effectiveLimit = parseLimit(limit ?? params?.limit, 50);
+          qb = qb.limit(effectiveLimit);
 
-          const { data, error } = await qb
-          if (error) throw error
+          const { data, error } = await qb;
+          if (error) throw error;
 
-          if (currentReqId !== reqIdRef.current) return
+          if (currentReqId !== reqIdRef.current) return;
 
           rowsByValueRef.current = new Map(
-            (data ?? []).map((row: any) => [String(row?.[valCol] ?? ""), row])
-          )
+            (data ?? []).map((row: any) => [String(row?.[valCol] ?? ""), row]),
+          );
 
           const transformed: Option[] =
             data?.map((row: any) => {
               const label = labelCols
                 .map((col) => row?.[col])
-                .filter((v) => v !== null && v !== undefined && String(v).trim() !== "")
+                .filter(
+                  (v) =>
+                    v !== null && v !== undefined && String(v).trim() !== "",
+                )
                 .join(" ")
-                .trim()
+                .trim();
 
               return {
                 value: String(row?.[valCol] ?? ""),
                 label,
-              }
-            }) ?? []
+              };
+            }) ?? [];
 
-          setOptions(transformed.filter((o) => o.value))
-          return
+          setOptions(transformed.filter((o) => o.value));
+          return;
         }
       } catch (e: any) {
-        if (e?.name === "AbortError") return
-        if (currentReqId !== reqIdRef.current) return
+        if (e?.name === "AbortError") return;
+        if (currentReqId !== reqIdRef.current) return;
 
-        console.error("SearchSelectField fetch error:", e)
-        setOptions(initialOptions)
+        console.error("SearchSelectField fetch error:", e);
+        setOptions(initialOptions);
       } finally {
-        if (currentReqId === reqIdRef.current) setIsLoading(false)
+        if (currentReqId === reqIdRef.current) setIsLoading(false);
       }
-    }
+    };
 
-    const t = window.setTimeout(run, debounceMs)
+    const t = window.setTimeout(run, debounceMs);
 
     return () => {
-      window.clearTimeout(t)
-      controller?.abort()
-    }
+      window.clearTimeout(t);
+      controller?.abort();
+    };
   }, [
     endpoint,
     table,
@@ -349,14 +375,14 @@ export function SearchSelectField({
     limit,
     initialOptions,
     extraColumnsKey,
-  ])
+  ]);
 
   const handleChange = (nextValue: string) => {
-    onChange?.(nextValue)
+    onChange?.(nextValue);
     onSelectRow?.(
-      nextValue ? rowsByValueRef.current.get(nextValue) ?? null : null
-    )
-  }
+      nextValue ? (rowsByValueRef.current.get(nextValue) ?? null) : null,
+    );
+  };
 
   return (
     <Combobox
@@ -377,5 +403,5 @@ export function SearchSelectField({
       allowClearOnReselect
       resetQueryOnClose
     />
-  )
+  );
 }

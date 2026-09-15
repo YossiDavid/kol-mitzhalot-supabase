@@ -299,8 +299,10 @@ export function StudentFormWizard({
 
   // האשף צופה רק במגדר (תוויות ושמות שלבים). תנאי תצוגה נצפים בכל שדה ומקטע
   // לחוד (use-form-conditions.ts), כדי שהקלדה לא תרנדר את כל הטופס
-  const gender = (useWatch({ control: form.control, name: "gender" }) ??
-    "") as "male" | "female" | "";
+  const gender = (useWatch({ control: form.control, name: "gender" }) ?? "") as
+    | "male"
+    | "female"
+    | "";
 
   const steps = studentFields;
   const currentStep = steps[currentStepIndex];
