@@ -1,5 +1,6 @@
 "use client";
 
+import { Page, PageHeader } from "@/components/layout";
 import { Suspense, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -44,14 +45,12 @@ interface ShadchanFormData {
 /** שלד עמוד הבקשה, זהה במבנה לתוכן האמיתי כדי שלא תהיה קפיצה. */
 function ShadchanPageSkeleton() {
   return (
-    <div className="container mx-auto max-w-2xl py-8">
+    <Page width="form">
+      <PageHeader
+        title="הצטרפות כשדכן"
+        description="מלא את הפרטים הבאים כדי להגיש בקשה להצטרפות כשדכן במערכת"
+      />
       <div className="space-y-6">
-        <div>
-          <h1 className="text-heading font-bold">הצטרפות כשדכן</h1>
-          <p className="mt-2 text-muted-foreground">
-            מלא את הפרטים הבאים כדי להגיש בקשה להצטרפות כשדכן במערכת
-          </p>
-        </div>
         <div
           role="status"
           aria-label="טוען"
@@ -71,7 +70,7 @@ function ShadchanPageSkeleton() {
           </div>
         </div>
       </div>
-    </div>
+    </Page>
   );
 }
 
@@ -239,15 +238,12 @@ function ShadchanApplicationForm() {
   }
 
   return (
-    <div className="container mx-auto max-w-2xl py-8">
+    <Page width="form">
+      <PageHeader
+        title="הצטרפות כשדכן"
+        description="מלא את הפרטים הבאים כדי להגיש בקשה להצטרפות כשדכן במערכת"
+      />
       <div className="space-y-6">
-        <div>
-          <h1 className="text-heading font-bold">הצטרפות כשדכן</h1>
-          <p className="mt-2 text-muted-foreground">
-            מלא את הפרטים הבאים כדי להגיש בקשה להצטרפות כשדכן במערכת
-          </p>
-        </div>
-
         <Card>
           <CardHeader>
             <CardTitle>טופס הצטרפות</CardTitle>
@@ -436,6 +432,6 @@ function ShadchanApplicationForm() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </Page>
   );
 }

@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { DashboardSection } from "@/components/layout";
-import { Box } from "@/components/layout";
+import { Box, Page, PageHeader } from "@/components/layout";
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
@@ -152,11 +152,11 @@ export default function EndorsementsAdminPage() {
   );
 
   return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
+    <Page>
+      <PageHeader
         title="המלצות רבנים"
-        subTitle="הסכמות ומלצות רבני הקהילה"
-        button={
+        description="הסכמות ומלצות רבני הקהילה"
+        actions={
           <div className="flex gap-2">
             <Button asChild variant="outline">
               <Link href={"/app/admin/content" as any}>חזרה</Link>
@@ -167,9 +167,9 @@ export default function EndorsementsAdminPage() {
             </Button>
           </div>
         }
-      >
+      />
         {showForm && (
-          <Box className="mb-6 mt-4">
+          <Box>
             <form onSubmit={handleSave} className="space-y-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {F("rav_name", "שם הרב *")}
@@ -239,7 +239,7 @@ export default function EndorsementsAdminPage() {
           </Box>
         )}
 
-        <Box className="mt-4">
+        <Box>
           {loading ? (
             <div className="py-10 text-center text-muted-foreground">טוען...</div>
           ) : items.length === 0 ? (
@@ -267,9 +267,9 @@ export default function EndorsementsAdminPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <span className={`rounded-full px-2 py-0.5 text-caption font-semibold ${item.is_published ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                    <Badge variant={item.is_published ? "success" : "neutral"}>
                       {item.is_published ? "פורסם" : "מוסתר"}
-                    </span>
+                    </Badge>
                     <Button variant="ghost" size="icon" onClick={() => moveOrder(item, "up")} disabled={idx === 0}>
                       <ChevronUp className="h-4 w-4" />
                     </Button>
@@ -293,7 +293,6 @@ export default function EndorsementsAdminPage() {
             </div>
           )}
         </Box>
-      </DashboardSection>
-    </div>
+    </Page>
   );
 }

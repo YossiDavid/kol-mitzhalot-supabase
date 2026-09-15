@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 import ProposalResponseDialog from "@/features/shidduchim/components/proposal-response-dialog";
 import type { ParentProposal } from "@/features/shidduchim/lib/proposals-data";
 import {
-  SHIDDUCH_RESPONSE_BADGE_CLASS,
+  SHIDDUCH_RESPONSE_BADGE_VARIANT,
   SHIDDUCH_RESPONSE_LABELS,
   canRespondToProposal,
   displayName,
   formatDate,
 } from "@/features/shidduchim/lib/responses";
 import {
-  SHIDDUCH_STATUS_BADGE_CLASS,
+  SHIDDUCH_STATUS_BADGE_VARIANT,
   SHIDDUCH_STATUS_LABELS,
 } from "@/features/shidduchim/lib/status";
 
@@ -53,16 +53,12 @@ export default function ParentProposalListItem({
           <h3 className="truncate text-body font-semibold">
             {myName} - {otherName}
           </h3>
-          <Badge
-            variant="outline"
-            className={SHIDDUCH_STATUS_BADGE_CLASS[proposal.status]}
-          >
+          <Badge variant={SHIDDUCH_STATUS_BADGE_VARIANT[proposal.status]}>
             {SHIDDUCH_STATUS_LABELS[proposal.status]}
           </Badge>
           {proposal.myResponse ? (
             <Badge
-              variant="outline"
-              className={SHIDDUCH_RESPONSE_BADGE_CLASS[proposal.myResponse]}
+              variant={SHIDDUCH_RESPONSE_BADGE_VARIANT[proposal.myResponse]}
             >
               התגובה שלכם: {SHIDDUCH_RESPONSE_LABELS[proposal.myResponse]}
             </Badge>

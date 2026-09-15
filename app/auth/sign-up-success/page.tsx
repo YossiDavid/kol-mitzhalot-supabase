@@ -3,14 +3,14 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { PageTitle } from "@/components/layout/page-header";
 
 export default function Page() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-heading">תודה שנרשמת!</CardTitle>
+        <PageTitle>תודה שנרשמת!</PageTitle>
         <CardDescription>נא לבדוק את האימייל שלך לאישור</CardDescription>
       </CardHeader>
       <CardContent>

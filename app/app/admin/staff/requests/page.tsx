@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { DashboardSection } from "@/components/layout";
-import { Box } from "@/components/layout";
+import { Box, Page, PageHeader } from "@/components/layout";
+import { Badge } from "@/components/ui/badge";
+import { APPLICATION_STATUS_BADGE_VARIANT } from "@/lib/application-status";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
@@ -128,166 +129,161 @@ async function StaffRequestsContent() {
 
   if (error) {
     return (
-      <div className="space-y-10 py-4">
-        <DashboardSection
+      <Page>
+        <PageHeader
           title="שגיאה"
-          subTitle="אירעה שגיאה בטעינת הבקשות"
-          button={
+          description="אירעה שגיאה בטעינת הבקשות"
+          actions={
             <Button asChild>
               <Link href="/app/admin">חזרה לדף הבית</Link>
             </Button>
           }
-        >
-          <div className="mt-6 rounded-lg border border-destructive bg-destructive/10 p-6">
-            <h3 className="mb-2 text-subtitle font-semibold text-destructive">
-              שגיאה בטעינת הבקשות
-            </h3>
-            <p className="text-body-sm">{error.message}</p>
-          </div>
-        </DashboardSection>
-      </div>
+        />
+        <div className="rounded-lg border border-destructive bg-destructive/10 p-6">
+          <h3 className="mb-2 text-subtitle font-semibold text-destructive">
+            שגיאה בטעינת הבקשות
+          </h3>
+          <p className="text-body-sm">{error.message}</p>
+        </div>
+      </Page>
     );
   }
 
   return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
+    <Page>
+      <PageHeader
         title="בקשות הצטרפות כאיש צוות"
-        titleNumber={requests.length}
-        subTitle={`${requests.filter((r) => r.application_status === "pending").length} ממתינות · ${requests.filter((r) => r.application_status === "approved").length} מאושרות · ${requests.filter((r) => r.application_status === "rejected").length} נדחות`}
-        button={
+        count={requests.length}
+        description={`${requests.filter((r) => r.application_status === "pending").length} ממתינות · ${requests.filter((r) => r.application_status === "approved").length} מאושרות · ${requests.filter((r) => r.application_status === "rejected").length} נדחות`}
+        actions={
           <Button asChild>
             <Link href="/app/admin">חזרה לדף הבית</Link>
           </Button>
         }
-      >
-        {requests.length === 0 ? (
-          <div className="py-10 text-center text-muted-foreground">
-            אין בקשות ממתינות לאישור
-          </div>
-        ) : (
-          <div className="mt-6 space-y-6">
-            {requests.map((request) => (
-              <Box key={request.id} className="p-6">
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-subtitle font-semibold">
-                          {request.user_first_name || request.user_last_name
-                            ? `${request.user_first_name || ""} ${request.user_last_name || ""}`.trim()
-                            : `בקשה #${request.id.substring(0, 8)}`}
-                        </h3>
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-caption font-medium ${
-                            request.application_status === "approved"
-                              ? "bg-green-100 text-green-800"
-                              : request.application_status === "rejected"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {request.application_status === "approved"
-                            ? "מאושר"
-                            : request.application_status === "rejected"
-                              ? "נדחה"
-                              : "ממתין לאישור"}
-                        </span>
-                      </div>
-                      {request.user_email && (
-                        <p className="text-body-sm text-muted-foreground">
-                          אימייל: {request.user_email}
+      />
+      {requests.length === 0 ? (
+        <div className="py-10 text-center text-muted-foreground">
+          אין בקשות ממתינות לאישור
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {requests.map((request) => (
+            <Box key={request.id} className="p-6">
+              <div className="space-y-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-subtitle font-semibold">
+                        {request.user_first_name || request.user_last_name
+                          ? `${request.user_first_name || ""} ${request.user_last_name || ""}`.trim()
+                          : `בקשה #${request.id.substring(0, 8)}`}
+                      </h3>
+                      <Badge
+                        variant={
+                          APPLICATION_STATUS_BADGE_VARIANT[
+                            request.application_status ?? "pending"
+                          ]
+                        }
+                      >
+                        {request.application_status === "approved"
+                          ? "מאושר"
+                          : request.application_status === "rejected"
+                            ? "נדחה"
+                            : "ממתין לאישור"}
+                      </Badge>
+                    </div>
+                    {request.user_email && (
+                      <p className="text-body-sm text-muted-foreground">
+                        אימייל: {request.user_email}
+                      </p>
+                    )}
+                    <p className="text-body-sm text-muted-foreground">
+                      תאריך הגשה: {formatDate(request.submitted_at)}
+                    </p>
+                    {request.application_status === "approved" &&
+                      request.approved_at && (
+                        <p className="text-body-sm text-success-muted-foreground">
+                          אושר ב: {formatDate(request.approved_at)}
                         </p>
                       )}
-                      <p className="text-body-sm text-muted-foreground">
-                        תאריך הגשה: {formatDate(request.submitted_at)}
-                      </p>
-                      {request.application_status === "approved" &&
-                        request.approved_at && (
-                          <p className="text-body-sm text-green-700">
-                            אושר ב: {formatDate(request.approved_at)}
+                    {request.application_status === "rejected" && (
+                      <>
+                        {request.rejected_at && (
+                          <p className="text-body-sm text-destructive">
+                            נדחה ב: {formatDate(request.rejected_at)}
                           </p>
                         )}
-                      {request.application_status === "rejected" && (
-                        <>
-                          {request.rejected_at && (
-                            <p className="text-body-sm text-red-700">
-                              נדחה ב: {formatDate(request.rejected_at)}
-                            </p>
-                          )}
-                          {request.rejected_reason && (
-                            <p className="text-body-sm text-red-700">
-                              סיבה: {request.rejected_reason}
-                            </p>
-                          )}
-                        </>
-                      )}
-                    </div>
-                    {request.application_status === "pending" && (
-                      <StaffRequestActions requestId={request.user_id} />
+                        {request.rejected_reason && (
+                          <p className="text-body-sm text-destructive">
+                            סיבה: {request.rejected_reason}
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
-
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div>
-                      <h4 className="mb-1 font-semibold">מוסד לימודים:</h4>
-                      <p className="text-body-sm">
-                        {request.institutions
-                          ? `${request.institutions.name}${request.institutions.city ? ` · ${request.institutions.city}` : ""} · ${INSTITUTION_TYPE_LABELS[request.institutions.type]}`
-                          : "לא נבחר"}
-                      </p>
-                    </div>
-                    {request.city && (
-                      <div>
-                        <h4 className="mb-1 font-semibold">עיר:</h4>
-                        <p className="text-body-sm">{request.city}</p>
-                      </div>
-                    )}
-                    {request.position && (
-                      <div>
-                        <h4 className="mb-1 font-semibold">תפקיד:</h4>
-                        <p className="text-body-sm">{request.position}</p>
-                      </div>
-                    )}
-                  </div>
+                  {request.application_status === "pending" && (
+                    <StaffRequestActions requestId={request.user_id} />
+                  )}
                 </div>
-              </Box>
-            ))}
-          </div>
-        )}
-      </DashboardSection>
-    </div>
-  );
-}
 
-function StaffRequestsFallback() {
-  return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
-        title="בקשות הצטרפות כאיש צוות"
-        subTitle="טוען בקשות…"
-        button={
-          <Button asChild>
-            <Link href="/app/admin">חזרה לדף הבית</Link>
-          </Button>
-        }
-      >
-        <div role="status" aria-label="טוען" className="mt-6 space-y-6">
-          {Array.from({ length: FALLBACK_CARD_COUNT }).map((_, index) => (
-            <Box key={index} className="p-6">
-              <div className="space-y-4">
-                <Skeleton className="h-6 w-56" />
-                <Skeleton className="h-4 w-72" />
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <Skeleton className="h-16 w-full" />
-                  <Skeleton className="h-16 w-full" />
+                  <div>
+                    <h4 className="mb-1 font-semibold">מוסד לימודים:</h4>
+                    <p className="text-body-sm">
+                      {request.institutions
+                        ? `${request.institutions.name}${request.institutions.city ? ` · ${request.institutions.city}` : ""} · ${INSTITUTION_TYPE_LABELS[request.institutions.type]}`
+                        : "לא נבחר"}
+                    </p>
+                  </div>
+                  {request.city && (
+                    <div>
+                      <h4 className="mb-1 font-semibold">עיר:</h4>
+                      <p className="text-body-sm">{request.city}</p>
+                    </div>
+                  )}
+                  {request.position && (
+                    <div>
+                      <h4 className="mb-1 font-semibold">תפקיד:</h4>
+                      <p className="text-body-sm">{request.position}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </Box>
           ))}
         </div>
-      </DashboardSection>
-    </div>
+      )}
+    </Page>
+  );
+}
+
+function StaffRequestsFallback() {
+  return (
+    <Page>
+      <PageHeader
+        title="בקשות הצטרפות כאיש צוות"
+        description="טוען בקשות…"
+        actions={
+          <Button asChild>
+            <Link href="/app/admin">חזרה לדף הבית</Link>
+          </Button>
+        }
+      />
+      <div role="status" aria-label="טוען" className="space-y-6">
+        {Array.from({ length: FALLBACK_CARD_COUNT }).map((_, index) => (
+          <Box key={index} className="p-6">
+            <div className="space-y-4">
+              <Skeleton className="h-6 w-56" />
+              <Skeleton className="h-4 w-72" />
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            </div>
+          </Box>
+        ))}
+      </div>
+    </Page>
   );
 }
 

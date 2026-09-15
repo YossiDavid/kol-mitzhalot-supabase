@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { DashboardSection } from "@/components/layout";
-import { Box } from "@/components/layout";
+import { Box, Page, PageHeader } from "@/components/layout";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { createClient } from "@/lib/supabase/client";
@@ -106,24 +105,22 @@ export default function EditContentPage({
 
   if (loading) {
     return (
-      <div className="space-y-10 py-4">
-        <DashboardSection
+      <Page>
+        <PageHeader
           title="טוען..."
-          subTitle=""
-          button={<Button disabled>שמירה</Button>}
-        >
+          actions={<Button disabled>שמירה</Button>}
+        />
           <div className="text-center py-10">טוען תוכן...</div>
-        </DashboardSection>
-      </div>
+      </Page>
     );
   }
 
   return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
+    <Page>
+      <PageHeader
         title={title}
-        subTitle={CONTENT_KEYS[key]?.description || ""}
-        button={
+        description={CONTENT_KEYS[key]?.description}
+        actions={
           <div className="flex gap-2">
             <Button asChild variant="outline">
               <Link href="/app/admin/settings">ביטול</Link>
@@ -133,8 +130,8 @@ export default function EditContentPage({
             </Button>
           </div>
         }
-      >
-        <Box className="mt-6 space-y-4">
+      />
+        <Box className="space-y-4">
           <div>
             <Label htmlFor="content">תוכן</Label>
             <div className="mt-2">
@@ -150,7 +147,6 @@ export default function EditContentPage({
             </p>
           </div>
         </Box>
-      </DashboardSection>
-    </div>
+    </Page>
   );
 }

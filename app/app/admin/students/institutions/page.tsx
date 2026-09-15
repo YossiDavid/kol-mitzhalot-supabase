@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DashboardSection, Box } from "@/components/layout";
+import { Box, Page, PageHeader } from "@/components/layout";
 import { Label } from "@/components/ui/label";
 import {
   NativeSelect,
@@ -218,198 +218,193 @@ export default function BulkInstitutionAssignmentPage() {
     !selectedInstitutionId;
 
   return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
+    <Page>
+      <PageHeader
         title="שיוך מוסד המוני"
-        subTitle="שיוך מוסד לימודים למספר כרטיסי מיועדים בבת אחת"
-      >
-        <Box className="mt-6 space-y-4">
-          {loading ? (
-            <div className="py-10 text-center text-muted-foreground">
-              טוען...
-            </div>
-          ) : loadError ? (
-            <div className="py-16 text-center">
-              <p className="text-subtitle font-semibold text-muted-foreground">
-                שגיאה בטעינת הנתונים
-              </p>
-              <Button className="mt-6" onClick={load}>
-                נסה שוב
-              </Button>
-            </div>
-          ) : institutions.length === 0 ? (
-            <div className="py-16 text-center">
-              <p className="text-subtitle font-semibold text-muted-foreground">
-                אין מוסדות פעילים במאגר
-              </p>
-              <p className="mt-2 text-body-sm text-muted-foreground">
-                יש ליצור מוסדות תחילה במסך ניהול המוסדות
-              </p>
-              <Link href={"/app/admin/institutions" as any}>
-                <Button className="mt-6">מעבר לניהול מוסדות</Button>
-              </Link>
-            </div>
-          ) : (
-            <>
-              <div className="flex flex-wrap items-end gap-3">
-                <div className="w-48">
-                  <Label htmlFor="assignmentFilter">סטטוס שיוך</Label>
-                  <NativeSelect
-                    id="assignmentFilter"
-                    className="mt-1"
-                    value={assignmentFilter}
-                    onChange={(e) =>
-                      setAssignmentFilter(e.target.value as AssignmentFilter)
-                    }
-                  >
-                    <NativeSelectOption value="all">הכל</NativeSelectOption>
-                    <NativeSelectOption value="unassigned">
-                      ללא מוסד
-                    </NativeSelectOption>
-                    <NativeSelectOption value="assigned">
-                      עם מוסד
-                    </NativeSelectOption>
-                  </NativeSelect>
-                </div>
-                <div className="w-40">
-                  <Label htmlFor="genderFilterStudents">מגדר</Label>
-                  <NativeSelect
-                    id="genderFilterStudents"
-                    className="mt-1"
-                    value={genderFilter}
-                    onChange={(e) =>
-                      setGenderFilter(e.target.value as GenderFilter)
-                    }
-                  >
-                    <NativeSelectOption value="all">הכל</NativeSelectOption>
-                    <NativeSelectOption value="male">בנים</NativeSelectOption>
-                    <NativeSelectOption value="female">בנות</NativeSelectOption>
-                  </NativeSelect>
-                </div>
+        description="שיוך מוסד לימודים למספר כרטיסי מיועדים בבת אחת"
+      />
+      <Box className="space-y-4">
+        {loading ? (
+          <div className="py-10 text-center text-muted-foreground">טוען...</div>
+        ) : loadError ? (
+          <div className="py-16 text-center">
+            <p className="text-subtitle font-semibold text-muted-foreground">
+              שגיאה בטעינת הנתונים
+            </p>
+            <Button className="mt-6" onClick={load}>
+              נסה שוב
+            </Button>
+          </div>
+        ) : institutions.length === 0 ? (
+          <div className="py-16 text-center">
+            <p className="text-subtitle font-semibold text-muted-foreground">
+              אין מוסדות פעילים במאגר
+            </p>
+            <p className="mt-2 text-body-sm text-muted-foreground">
+              יש ליצור מוסדות תחילה במסך ניהול המוסדות
+            </p>
+            <Link href={"/app/admin/institutions" as any}>
+              <Button className="mt-6">מעבר לניהול מוסדות</Button>
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="w-48">
+                <Label htmlFor="assignmentFilter">סטטוס שיוך</Label>
+                <NativeSelect
+                  id="assignmentFilter"
+                  className="mt-1"
+                  value={assignmentFilter}
+                  onChange={(e) =>
+                    setAssignmentFilter(e.target.value as AssignmentFilter)
+                  }
+                >
+                  <NativeSelectOption value="all">הכל</NativeSelectOption>
+                  <NativeSelectOption value="unassigned">
+                    ללא מוסד
+                  </NativeSelectOption>
+                  <NativeSelectOption value="assigned">
+                    עם מוסד
+                  </NativeSelectOption>
+                </NativeSelect>
+              </div>
+              <div className="w-40">
+                <Label htmlFor="genderFilterStudents">מגדר</Label>
+                <NativeSelect
+                  id="genderFilterStudents"
+                  className="mt-1"
+                  value={genderFilter}
+                  onChange={(e) =>
+                    setGenderFilter(e.target.value as GenderFilter)
+                  }
+                >
+                  <NativeSelectOption value="all">הכל</NativeSelectOption>
+                  <NativeSelectOption value="male">בנים</NativeSelectOption>
+                  <NativeSelectOption value="female">בנות</NativeSelectOption>
+                </NativeSelect>
+              </div>
 
-                <div className="flex flex-1 flex-wrap items-end gap-3">
-                  <div className="min-w-52 flex-1">
-                    <Label htmlFor="institutionPicker">מוסד לשיוך</Label>
-                    <NativeSelect
-                      id="institutionPicker"
-                      className="mt-1"
-                      value={selectedInstitutionId}
-                      disabled={
-                        selectedIds.length === 0 || hasMixedGenderSelection
-                      }
-                      onChange={(e) => setSelectedInstitutionId(e.target.value)}
-                    >
-                      <NativeSelectOption value="">
-                        בחר מוסד...
+              <div className="flex flex-1 flex-wrap items-end gap-3">
+                <div className="min-w-52 flex-1">
+                  <Label htmlFor="institutionPicker">מוסד לשיוך</Label>
+                  <NativeSelect
+                    id="institutionPicker"
+                    className="mt-1"
+                    value={selectedInstitutionId}
+                    disabled={
+                      selectedIds.length === 0 || hasMixedGenderSelection
+                    }
+                    onChange={(e) => setSelectedInstitutionId(e.target.value)}
+                  >
+                    <NativeSelectOption value="">
+                      בחר מוסד...
+                    </NativeSelectOption>
+                    {eligibleInstitutions.map((institution) => (
+                      <NativeSelectOption
+                        key={institution.id}
+                        value={institution.id}
+                      >
+                        {institution.name}
+                        {institution.city ? ` (${institution.city})` : ""}
                       </NativeSelectOption>
-                      {eligibleInstitutions.map((institution) => (
-                        <NativeSelectOption
-                          key={institution.id}
-                          value={institution.id}
-                        >
-                          {institution.name}
-                          {institution.city ? ` (${institution.city})` : ""}
-                        </NativeSelectOption>
-                      ))}
-                    </NativeSelect>
-                  </div>
-                  <Button onClick={handleAssign} disabled={assignDisabled}>
-                    {submitting ? "משייך..." : "שייך מוסד"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="text-destructive hover:text-destructive"
-                    disabled={submitting || selectedIds.length === 0}
-                    onClick={handleClear}
-                  >
-                    הסר שיוך
-                  </Button>
+                    ))}
+                  </NativeSelect>
                 </div>
+                <Button onClick={handleAssign} disabled={assignDisabled}>
+                  {submitting ? "משייך..." : "שייך מוסד"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="text-destructive hover:text-destructive"
+                  disabled={submitting || selectedIds.length === 0}
+                  onClick={handleClear}
+                >
+                  הסר שיוך
+                </Button>
               </div>
+            </div>
 
-              {hasMixedGenderSelection && (
-                <p className="rounded-md bg-amber-50 p-3 text-body-sm text-amber-800">
-                  הבחירה כוללת גם בנים וגם בנות - מוסד לימודים אחד לא יכול
-                  להתאים לשני המגדרים. סננו לפי מגדר לפני בחירת מוסד לשיוך.
+            {hasMixedGenderSelection && (
+              <p className="rounded-md bg-warning-muted p-3 text-body-sm text-warning-muted-foreground">
+                הבחירה כוללת גם בנים וגם בנות - מוסד לימודים אחד לא יכול להתאים
+                לשני המגדרים. סננו לפי מגדר לפני בחירת מוסד לשיוך.
+              </p>
+            )}
+
+            <div className="flex flex-wrap gap-4 text-body-sm text-muted-foreground">
+              <span>נבחרו {selectedIds.length} כרטיסים</span>
+              <span>ללא מוסד: {unassignedCount}</span>
+            </div>
+
+            {filteredStudents.length === 0 ? (
+              <div className="py-16 text-center">
+                <p className="text-subtitle font-semibold text-muted-foreground">
+                  אין כרטיסים להצגה לפי הסינון הנוכחי
                 </p>
-              )}
-
-              <div className="flex flex-wrap gap-4 text-body-sm text-muted-foreground">
-                <span>נבחרו {selectedIds.length} כרטיסים</span>
-                <span>ללא מוסד: {unassignedCount}</span>
               </div>
-
-              {filteredStudents.length === 0 ? (
-                <div className="py-16 text-center">
-                  <p className="text-subtitle font-semibold text-muted-foreground">
-                    אין כרטיסים להצגה לפי הסינון הנוכחי
-                  </p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-body-sm">
-                    <thead>
-                      <tr className="border-b text-right text-muted-foreground">
-                        <th className="py-2 pe-3 font-medium">
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-body-sm">
+                  <thead>
+                    <tr className="border-b text-right text-muted-foreground">
+                      <th className="py-2 pe-3 font-medium">
+                        <Checkbox
+                          checked={allFilteredSelected}
+                          onCheckedChange={toggleSelectAll}
+                          aria-label="בחר הכל"
+                        />
+                      </th>
+                      <th className="py-2 pe-3 font-medium">שם</th>
+                      <th className="py-2 pe-3 font-medium">מגדר</th>
+                      <th className="py-2 pe-3 font-medium">עיר</th>
+                      <th className="py-2 font-medium">מוסד נוכחי</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredStudents.map((student) => (
+                      <tr
+                        key={student.id}
+                        className="border-b last:border-0 hover:bg-muted/40"
+                      >
+                        <td className="py-3 pe-3">
                           <Checkbox
-                            checked={allFilteredSelected}
-                            onCheckedChange={toggleSelectAll}
-                            aria-label="בחר הכל"
+                            checked={selectedIds.includes(student.id)}
+                            onCheckedChange={() => toggleSelectOne(student.id)}
+                            aria-label={`בחר את ${student.first_name} ${student.last_name}`}
                           />
-                        </th>
-                        <th className="py-2 pe-3 font-medium">שם</th>
-                        <th className="py-2 pe-3 font-medium">מגדר</th>
-                        <th className="py-2 pe-3 font-medium">עיר</th>
-                        <th className="py-2 font-medium">מוסד נוכחי</th>
+                        </td>
+                        <td className="py-3 pe-3 font-medium">
+                          {student.first_name} {student.last_name}
+                        </td>
+                        <td className="py-3 pe-3 text-muted-foreground">
+                          {INSTITUTION_GENDER_LABELS[student.gender]}
+                        </td>
+                        <td className="py-3 pe-3 text-muted-foreground">
+                          {student.city ?? "-"}
+                        </td>
+                        <td className="py-3 text-muted-foreground">
+                          {student.institutions
+                            ? `${student.institutions.name}${
+                                student.institutions.city
+                                  ? ` (${student.institutions.city})`
+                                  : ""
+                              } - ${
+                                INSTITUTION_TYPE_LABELS[
+                                  student.institutions.type
+                                ]
+                              }`
+                            : "—"}
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {filteredStudents.map((student) => (
-                        <tr
-                          key={student.id}
-                          className="border-b last:border-0 hover:bg-muted/40"
-                        >
-                          <td className="py-3 pe-3">
-                            <Checkbox
-                              checked={selectedIds.includes(student.id)}
-                              onCheckedChange={() =>
-                                toggleSelectOne(student.id)
-                              }
-                              aria-label={`בחר את ${student.first_name} ${student.last_name}`}
-                            />
-                          </td>
-                          <td className="py-3 pe-3 font-medium">
-                            {student.first_name} {student.last_name}
-                          </td>
-                          <td className="py-3 pe-3 text-muted-foreground">
-                            {INSTITUTION_GENDER_LABELS[student.gender]}
-                          </td>
-                          <td className="py-3 pe-3 text-muted-foreground">
-                            {student.city ?? "-"}
-                          </td>
-                          <td className="py-3 text-muted-foreground">
-                            {student.institutions
-                              ? `${student.institutions.name}${
-                                  student.institutions.city
-                                    ? ` (${student.institutions.city})`
-                                    : ""
-                                } - ${
-                                  INSTITUTION_TYPE_LABELS[
-                                    student.institutions.type
-                                  ]
-                                }`
-                              : "—"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </>
-          )}
-        </Box>
-      </DashboardSection>
-    </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
+      </Box>
+    </Page>
   );
 }

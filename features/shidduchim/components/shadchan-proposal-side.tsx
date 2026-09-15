@@ -1,10 +1,10 @@
 import { FileText } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeVariant } from "@/components/ui/badge";
 import calculateAge from "@/lib/calculateAge";
 import { cn } from "@/lib/utils";
 import {
-  SHIDDUCH_RESPONSE_BADGE_CLASS,
+  SHIDDUCH_RESPONSE_BADGE_VARIANT,
   SHIDDUCH_RESPONSE_LABELS,
   displayName,
   type ShidduchResponse,
@@ -30,24 +30,22 @@ const NOTE_TITLE: Record<ShidduchSide, string> = {
   bride: "הערה למיועדת",
 };
 
-/** תג ניטרלי למצבים שאינם תגובה בפועל */
-const NEUTRAL_CHIP_CLASS = "border-border bg-muted text-muted-foreground";
-
 function ResponseChip({ state }: { state: SideResponseState }) {
   if (!state) return null;
 
-  const { label, className } =
+  // מצבים שאינם תגובה בפועל מקבלים תג ניטרלי
+  const { label, variant }: { label: string; variant: BadgeVariant } =
     state.kind === "responded"
       ? {
           label: SHIDDUCH_RESPONSE_LABELS[state.response],
-          className: SHIDDUCH_RESPONSE_BADGE_CLASS[state.response],
+          variant: SHIDDUCH_RESPONSE_BADGE_VARIANT[state.response],
         }
       : state.kind === "pending"
-        ? { label: "ממתינים לתגובה", className: NEUTRAL_CHIP_CLASS }
-        : { label: "לא נשלחה לצד זה", className: NEUTRAL_CHIP_CLASS };
+        ? { label: "ממתינים לתגובה", variant: "neutral" }
+        : { label: "לא נשלחה לצד זה", variant: "neutral" };
 
   return (
-    <Badge variant="outline" className={cn("self-start", className)}>
+    <Badge variant={variant} className="self-start">
       <span className="sr-only">תגובת הצד: </span>
       {label}
     </Badge>

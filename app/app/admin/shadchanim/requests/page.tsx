@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { DashboardSection } from "@/components/layout";
-import { Box } from "@/components/layout";
+import { Box, Page, PageHeader } from "@/components/layout";
+import { Badge } from "@/components/ui/badge";
+import { APPLICATION_STATUS_BADGE_VARIANT } from "@/lib/application-status";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
@@ -119,34 +120,33 @@ async function ShadchanRequestsContent() {
 
   if (error) {
     return (
-      <div className="space-y-10 py-4">
-        <DashboardSection
+      <Page>
+        <PageHeader
           title="שגיאה"
-          subTitle="אירעה שגיאה בטעינת הבקשות"
-          button={
+          description="אירעה שגיאה בטעינת הבקשות"
+          actions={
             <Button asChild>
               <Link href="/app/admin">חזרה לדף הבית</Link>
             </Button>
           }
-        >
-          <div className="border-destructive bg-destructive/10 mt-6 rounded-lg border p-6">
+        />
+          <div className="border-destructive bg-destructive/10 rounded-lg border p-6">
             <h3 className="text-destructive mb-2 text-subtitle font-semibold">
               שגיאה בטעינת הבקשות
             </h3>
             <p className="text-body-sm">{error.message}</p>
           </div>
-        </DashboardSection>
-      </div>
+      </Page>
     );
   }
 
   return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
+    <Page>
+      <PageHeader
         title="בקשות הצטרפות כשדכן"
-        titleNumber={requests.length}
-        subTitle={`${requests.filter(r => r.application_status === "pending").length} ממתינות · ${requests.filter(r => r.application_status === "approved").length} מאושרות · ${requests.filter(r => r.application_status === "rejected").length} נדחות`}
-        button={
+        count={requests.length}
+        description={`${requests.filter(r => r.application_status === "pending").length} ממתינות · ${requests.filter(r => r.application_status === "approved").length} מאושרות · ${requests.filter(r => r.application_status === "rejected").length} נדחות`}
+        actions={
           <div className="flex items-center gap-2">
             <Button asChild variant="outline">
               <Link href="/app/admin/shadchanim">כל השדכנים</Link>
@@ -156,13 +156,13 @@ async function ShadchanRequestsContent() {
             </Button>
           </div>
         }
-      >
+      />
         {requests.length === 0 ? (
           <div className="text-muted-foreground py-10 text-center">
             אין בקשות ממתינות לאישור
           </div>
         ) : (
-          <div className="space-y-6 mt-6">
+          <div className="space-y-6">
             {requests.map((request) => (
               <Box key={request.id} className="p-6">
                 <div className="space-y-4">
@@ -174,19 +174,19 @@ async function ShadchanRequestsContent() {
                             ? `${request.user_first_name || ""} ${request.user_last_name || ""}`.trim()
                             : `בקשה #${request.id.substring(0, 8)}`}
                         </h3>
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-caption font-medium ${
-                          request.application_status === "approved"
-                            ? "bg-green-100 text-green-800"
-                            : request.application_status === "rejected"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}>
+                        <Badge
+                          variant={
+                            APPLICATION_STATUS_BADGE_VARIANT[
+                              request.application_status ?? "pending"
+                            ]
+                          }
+                        >
                           {request.application_status === "approved"
                             ? "מאושר"
                             : request.application_status === "rejected"
                             ? "נדחה"
                             : "ממתין לאישור"}
-                        </span>
+                        </Badge>
                       </div>
                       {request.user_email && (
                         <p className="text-body-sm text-muted-foreground">
@@ -197,19 +197,19 @@ async function ShadchanRequestsContent() {
                         תאריך הגשה: {formatDate(request.submitted_at)}
                       </p>
                       {request.application_status === "approved" && request.approved_at && (
-                        <p className="text-body-sm text-green-700">
+                        <p className="text-body-sm text-success-muted-foreground">
                           אושר ב: {formatDate(request.approved_at)}
                         </p>
                       )}
                       {request.application_status === "rejected" && (
                         <>
                           {request.rejected_at && (
-                            <p className="text-body-sm text-red-700">
+                            <p className="text-body-sm text-destructive">
                               נדחה ב: {formatDate(request.rejected_at)}
                             </p>
                           )}
                           {request.rejected_reason && (
-                            <p className="text-body-sm text-red-700">
+                            <p className="text-body-sm text-destructive">
                               סיבה: {request.rejected_reason}
                             </p>
                           )}
@@ -295,18 +295,17 @@ async function ShadchanRequestsContent() {
             ))}
           </div>
         )}
-      </DashboardSection>
-    </div>
+    </Page>
   );
 }
 
 function ShadchanRequestsFallback() {
   return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
+    <Page>
+      <PageHeader
         title="בקשות הצטרפות כשדכן"
-        subTitle="טוען בקשות…"
-        button={
+        description="טוען בקשות…"
+        actions={
           <div className="flex items-center gap-2">
             <Button asChild variant="outline">
               <Link href="/app/admin/shadchanim">כל השדכנים</Link>
@@ -316,8 +315,8 @@ function ShadchanRequestsFallback() {
             </Button>
           </div>
         }
-      >
-        <div role="status" aria-label="טוען" className="mt-6 space-y-6">
+      />
+        <div role="status" aria-label="טוען" className="space-y-6">
           {Array.from({ length: FALLBACK_CARD_COUNT }).map((_, index) => (
             <Box key={index} className="p-6">
               <div className="space-y-4">
@@ -331,8 +330,7 @@ function ShadchanRequestsFallback() {
             </Box>
           ))}
         </div>
-      </DashboardSection>
-    </div>
+    </Page>
   );
 }
 

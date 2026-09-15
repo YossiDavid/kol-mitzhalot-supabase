@@ -61,7 +61,7 @@ export function ImpersonationBanner() {
   return (
     <div
       role="banner"
-      className="bg-amber-500/15 text-amber-900 dark:text-amber-100 border-b border-amber-500/30 px-4 py-2 flex flex-wrap items-center justify-center gap-3"
+      className="flex flex-wrap items-center justify-center gap-3 border-b border-warning bg-warning-muted px-4 py-2 text-warning-muted-foreground"
     >
       <span>
         אתה צופה כמשתמש <strong>{userName}</strong>
@@ -71,7 +71,7 @@ export function ImpersonationBanner() {
         variant="outline"
         size="sm"
         onClick={handleReturnToAdmin}
-        className="gap-1.5 border-amber-600 text-amber-800 dark:border-amber-400 dark:text-amber-200 hover:bg-amber-500/20"
+        className="gap-1.5 border-warning-muted-foreground bg-transparent text-warning-muted-foreground hover:bg-warning/25"
       >
         <LogOut className="h-4 w-4" />
         חזרה למנהל

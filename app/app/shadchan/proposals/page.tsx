@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { BookmarkCheck } from "lucide-react";
 
-import { Section } from "@/components/layout";
+import { Page, PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -44,7 +44,7 @@ async function ShadchanProposalsList() {
 
   if (failed) {
     return (
-      <Empty className="mt-6">
+      <Empty>
         <EmptyHeader>
           <EmptyTitle>טעינת ההצעות נכשלה</EmptyTitle>
           <EmptyDescription>אפשר לנסות לרענן את הדף בעוד רגע.</EmptyDescription>
@@ -55,7 +55,7 @@ async function ShadchanProposalsList() {
 
   if (proposals.length === 0) {
     return (
-      <Empty className="mt-6">
+      <Empty>
         <EmptyHeader>
           <EmptyTitle>עדיין לא נשלחו הצעות</EmptyTitle>
           <EmptyDescription>
@@ -78,7 +78,7 @@ async function ShadchanProposalsList() {
   );
 
   return (
-    <ul className="mt-6 grid gap-4">
+    <ul className="grid gap-4">
       {proposals.map((proposal) => (
         <li key={proposal.id}>
           <ShadchanProposalCard proposal={proposal} responses={responses} />
@@ -108,27 +108,25 @@ async function DraftsLink() {
 
 export default function ShadchanProposalsPage() {
   return (
-    <Section containerClassName="py-10">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-heading font-bold">כל השידוכים שלי</h1>
-          <p className="mt-1 text-body-sm text-muted-foreground">
-            ההצעות ששלחת לצדדים והתגובות שהתקבלו
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Suspense fallback={null}>
-            <DraftsLink />
-          </Suspense>
-          <Button asChild variant="outline">
-            <Link href="/app/canvas">חזרה ללוח העבודה</Link>
-          </Button>
-        </div>
-      </div>
+    <Page>
+      <PageHeader
+        title="כל השידוכים שלי"
+        description="ההצעות ששלחת לצדדים והתגובות שהתקבלו"
+        actions={
+          <>
+            <Suspense fallback={null}>
+              <DraftsLink />
+            </Suspense>
+            <Button asChild variant="outline">
+              <Link href="/app/canvas">חזרה ללוח העבודה</Link>
+            </Button>
+          </>
+        }
+      />
 
       <Suspense fallback={<ShadchanProposalListSkeleton />}>
         <ShadchanProposalsList />
       </Suspense>
-    </Section>
+    </Page>
   );
 }

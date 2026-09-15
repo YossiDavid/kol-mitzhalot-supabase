@@ -7,7 +7,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Box } from "@/components/layout";
+import { Box, PageTitle } from "@/components/layout";
 import { studentFields } from "@/features/students/components/create-form/fields-data";
 import { DynamicField } from "@/features/students/components/create-form/fields/dynamic-field";
 import { FIELD_GRID_CLASS } from "@/features/students/components/create-form/field-layout";
@@ -407,7 +407,7 @@ export function StudentFormWizard({
 
   return (
     <div className="my-2 space-y-4 md:my-6 md:space-y-6">
-      <h1 className="text-title font-bold md:text-heading">{heading}</h1>
+      <PageTitle>{heading}</PageTitle>
       {/* במובייל הכרטיס נפרש עד קצוות המסך, כדי שהשדות יקבלו את כל הרוחב */}
       <Box
         ref={shellRef}

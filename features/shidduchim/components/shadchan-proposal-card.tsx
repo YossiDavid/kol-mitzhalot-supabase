@@ -10,7 +10,7 @@ import {
   type ShidduchSide,
 } from "@/features/shidduchim/lib/responses";
 import {
-  SHIDDUCH_STATUS_BADGE_CLASS,
+  SHIDDUCH_STATUS_BADGE_VARIANT,
   SHIDDUCH_STATUS_LABELS,
 } from "@/features/shidduchim/lib/status";
 
@@ -99,10 +99,7 @@ export default function ShadchanProposalCard({
         <HeadingTag id={titleId} className="sr-only">
           {pairLabel}
         </HeadingTag>
-        <Badge
-          variant="outline"
-          className={SHIDDUCH_STATUS_BADGE_CLASS[proposal.status]}
-        >
+        <Badge variant={SHIDDUCH_STATUS_BADGE_VARIANT[proposal.status]}>
           {SHIDDUCH_STATUS_LABELS[proposal.status]}
         </Badge>
         <p className="text-caption text-muted-foreground">

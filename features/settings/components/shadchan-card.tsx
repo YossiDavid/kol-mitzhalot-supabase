@@ -12,6 +12,10 @@ import {
 } from "@/components/ui/card";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import {
+  APPLICATION_STATUS_BADGE_VARIANT,
+  APPLICATION_STATUS_LABELS,
+} from "@/lib/application-status";
 import { hasRole } from "@/lib/user-role";
 
 type ApplicationStatus = "pending" | "approved" | "rejected" | null;
@@ -88,41 +92,16 @@ export function ShadchanCard() {
   }
 
   const getStatusBadge = () => {
-    if (!application?.application_status) {
+    const status = application?.application_status;
+    if (!status) {
       return null;
     }
 
-    switch (application.application_status) {
-      case "pending":
-        return (
-          <Badge
-            variant="outline"
-            className="border-yellow-200 bg-yellow-50 text-yellow-800"
-          >
-            ממתין לאישור
-          </Badge>
-        );
-      case "approved":
-        return (
-          <Badge
-            variant="outline"
-            className="border-green-200 bg-green-50 text-green-800"
-          >
-            אושר
-          </Badge>
-        );
-      case "rejected":
-        return (
-          <Badge
-            variant="outline"
-            className="border-red-200 bg-red-50 text-red-800"
-          >
-            נדחה
-          </Badge>
-        );
-      default:
-        return null;
-    }
+    return (
+      <Badge variant={APPLICATION_STATUS_BADGE_VARIANT[status]}>
+        {APPLICATION_STATUS_LABELS[status]}
+      </Badge>
+    );
   };
 
   const formatDate = (dateString: string | null) => {

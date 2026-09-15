@@ -1,4 +1,4 @@
-import { Box } from "@/components/layout";
+import { Box, PageTitle } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import calculateAge from "@/lib/calculateAge";
@@ -423,9 +423,9 @@ async function StudentPageContent({
           </div>
 
           <div className="min-w-0 flex-1">
-            <h1 className="text-heading! leading-tight! font-bold!">
+            <PageTitle>
               {publicStudent.first_name} {publicStudent.last_name}
-            </h1>
+            </PageTitle>
             <p className="mt-1.5 flex flex-wrap gap-x-2 gap-y-1 text-body-sm text-muted-foreground">
               {genderLabel && <span>{genderLabel}</span>}
               {publicStudent.age !== null && (
@@ -1008,9 +1008,9 @@ async function StudentPageContent({
         </div>
 
         <div className="min-w-0 flex-1">
-          <h1 className="text-heading! leading-tight! font-bold!">
+          <PageTitle>
             {student.first_name} {student.last_name}
-          </h1>
+          </PageTitle>
           <p className="mt-1.5 flex flex-wrap gap-x-2 gap-y-1 text-body-sm text-muted-foreground">
             {genderLabel && <span>{genderLabel}</span>}
             {student.birth_date && (

@@ -12,8 +12,8 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { PageTitle } from "@/components/layout/page-header";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
@@ -71,7 +71,7 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-heading">התחברות</CardTitle>
+          <PageTitle>התחברות</PageTitle>
           <CardDescription>
             הכנס את האימייל שלך ונשלח אליך קישור להתחברות (Magic Link)
           </CardDescription>

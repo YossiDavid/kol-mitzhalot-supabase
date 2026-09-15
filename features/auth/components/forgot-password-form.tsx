@@ -8,8 +8,8 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { PageTitle } from "@/components/layout/page-header";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
@@ -53,7 +53,7 @@ export function ForgotPasswordForm({
       {success ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-heading">בדוק את האימייל שלך</CardTitle>
+            <PageTitle>בדוק את האימייל שלך</PageTitle>
             <CardDescription>
               נשלחה לך מייל עם פקודות שחזור סיסמה
             </CardDescription>
@@ -68,7 +68,7 @@ export function ForgotPasswordForm({
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle className="text-heading">שחזר את הסיסמה שלך</CardTitle>
+            <PageTitle>שחזר את הסיסמה שלך</PageTitle>
             <CardDescription>
               הכנס את האימייל שלך ונשלח לך קישור לשחזור הסיסמה שלך
             </CardDescription>
@@ -87,7 +87,9 @@ export function ForgotPasswordForm({
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
-                {error && <p className="text-body-sm text-red-500">{error}</p>}
+                {error && (
+                  <p className="text-body-sm text-destructive">{error}</p>
+                )}
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "שולח..." : "שלח מייל שחזור סיסמה"}
                 </Button>

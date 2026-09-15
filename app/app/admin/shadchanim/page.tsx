@@ -1,4 +1,4 @@
-import { DashboardSection } from "@/components/layout";
+import { Page, PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
@@ -51,17 +51,17 @@ async function ShadchanimContent({ searchParams }: ShadchanimPageProps) {
     );
 
     return (
-      <div className="space-y-10 py-4">
-        <DashboardSection
+      <Page>
+        <PageHeader
           title="שגיאה"
-          subTitle="אירעה שגיאה בטעינת השדכנים"
-          button={
+          description="אירעה שגיאה בטעינת השדכנים"
+          actions={
             <Button asChild>
               <Link href="/app/admin">חזרה לדף הבית</Link>
             </Button>
           }
-        >
-          <div className="border-destructive bg-destructive/10 mt-6 rounded-lg border p-6">
+        />
+          <div className="border-destructive bg-destructive/10 rounded-lg border p-6">
             <h3 className="text-destructive mb-2 text-subtitle font-semibold">
               שגיאה בהגדרת האדמין
             </h3>
@@ -79,19 +79,18 @@ async function ShadchanimContent({ searchParams }: ShadchanimPageProps) {
               <p className="text-body-sm">{error.message}</p>
             )}
           </div>
-        </DashboardSection>
-      </div>
+      </Page>
     );
   }
 
   const listKey = `${query.page}-${query.perPage}`;
 
   return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
+    <Page>
+      <PageHeader
         title="כל השדכנים"
-        titleNumber={total}
-        button={
+        count={total}
+        actions={
           <div className="flex items-center gap-2">
             {pendingCount > 0 ? (
               <Button asChild variant="outline">
@@ -109,21 +108,22 @@ async function ShadchanimContent({ searchParams }: ShadchanimPageProps) {
             </Button>
           </div>
         }
-      >
-        <Suspense key={listKey} fallback={<ShadchanimListFallback />}>
-          <ShadchanimList query={query} />
-        </Suspense>
-      </DashboardSection>
-    </div>
+      />
+        <div>
+          <Suspense key={listKey} fallback={<ShadchanimListFallback />}>
+            <ShadchanimList query={query} />
+          </Suspense>
+        </div>
+    </Page>
   );
 }
 
 function ShadchanimPageFallback() {
   return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
+    <Page>
+      <PageHeader
         title="כל השדכנים"
-        button={
+        actions={
           <div className="flex items-center gap-2">
             <Button asChild variant="outline">
               <Link href="/app/admin/shadchanim/requests">בקשות ממתינות</Link>
@@ -133,12 +133,11 @@ function ShadchanimPageFallback() {
             </Button>
           </div>
         }
-      >
+      />
         <div role="status" aria-label="טוען">
           <ShadchanimListFallback />
         </div>
-      </DashboardSection>
-    </div>
+    </Page>
   );
 }
 

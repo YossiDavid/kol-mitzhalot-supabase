@@ -59,8 +59,7 @@ type Student = {
 const CLICKABLE_ROW_CLASS =
   "box cursor-pointer p-4 outline-none transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50";
 
-const ENGAGED_ROW_CLASS =
-  "border-yellow-400 bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-950/30 dark:hover:bg-yellow-950/50";
+const ENGAGED_ROW_CLASS = "border-warning bg-warning-muted hover:bg-warning/30";
 
 /**
  * סטטוסים שמוציאים את הכרטיס משידוכים (in_shidduchim=false). ברשימה
@@ -371,7 +370,7 @@ export default function StudentsList() {
                     <p className="flex items-center gap-1.5 font-semibold">
                       {student.first_name} {student.last_name}
                       {isRecentlyEngaged(student) && (
-                        <span className="text-caption font-medium text-yellow-700 dark:text-yellow-400">
+                        <span className="text-caption font-medium text-warning-muted-foreground">
                           🎉 מאורס/ת
                         </span>
                       )}

@@ -8,8 +8,8 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { PageTitle } from "@/components/layout/page-header";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
@@ -46,7 +46,7 @@ export function UpdatePasswordForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-heading">שחזר את הסיסמה שלך</CardTitle>
+          <PageTitle>שחזר את הסיסמה שלך</PageTitle>
           <CardDescription>
             הכנס את הסיסמה החדשה שלך שמטה.
           </CardDescription>
@@ -65,7 +65,7 @@ export function UpdatePasswordForm({
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
-              {error && <p className="text-body-sm text-red-500">{error}</p>}
+              {error && <p className="text-body-sm text-destructive">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "שומר..." : "שמור סיסמה חדשה"}
               </Button>

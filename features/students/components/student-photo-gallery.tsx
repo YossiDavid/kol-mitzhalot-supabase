@@ -149,7 +149,6 @@ function PhotoLightbox({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        dir="rtl"
         showCloseButton={false}
         onKeyDown={handleKeyDown}
         className="w-[95vw] max-w-[95vw] gap-3 border-none bg-transparent p-0 shadow-none sm:max-w-3xl"

@@ -1,3 +1,4 @@
+import type { BadgeVariant } from "@/components/ui/badge";
 import type { ShidduchStatus } from "@/features/shidduchim/lib/status";
 
 /**
@@ -26,10 +27,14 @@ export const SHIDDUCH_RESPONSE_LABELS: Record<ShidduchResponse, string> = {
   rejected: "לא מעוניינים",
 };
 
-export const SHIDDUCH_RESPONSE_BADGE_CLASS: Record<ShidduchResponse, string> = {
-  interested: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  more_info_needed: "bg-orange-100 text-orange-800 border-orange-200",
-  rejected: "bg-rose-100 text-rose-800 border-rose-200",
+/** גוון התג לכל תגובה - באותה משמעות כמו הסטטוסים המקבילים ב-status.ts */
+export const SHIDDUCH_RESPONSE_BADGE_VARIANT: Record<
+  ShidduchResponse,
+  BadgeVariant
+> = {
+  interested: "success",
+  more_info_needed: "warning",
+  rejected: "danger",
 };
 
 export const SHIDDUCH_SIDE_LABELS: Record<ShidduchSide, string> = {

@@ -1,3 +1,5 @@
+import type { BadgeVariant } from "@/components/ui/badge";
+
 export const SHIDDUCH_STATUS_VALUES = [
   "draft",
   "sent",
@@ -22,15 +24,24 @@ export const SHIDDUCH_STATUS_LABELS: Record<ShidduchStatus, string> = {
   completed: "הושלם",
 };
 
-export const SHIDDUCH_STATUS_BADGE_CLASS: Record<ShidduchStatus, string> = {
-  draft: "bg-slate-100 text-slate-700 border-slate-200",
-  sent: "bg-blue-100 text-blue-800 border-blue-200",
-  waiting_response: "bg-amber-100 text-amber-800 border-amber-200",
-  interested: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  more_info_needed: "bg-orange-100 text-orange-800 border-orange-200",
-  in_progress: "bg-violet-100 text-violet-800 border-violet-200",
-  rejected: "bg-rose-100 text-rose-800 border-rose-200",
-  completed: "bg-green-100 text-green-800 border-green-200",
+/**
+ * גוון התג של כל סטטוס - המקום היחיד שקובע צבע לסטטוס שידוך.
+ * לטוקנים אין גוונים נפרדים לסגול ולכתום, ולכן sent/in_progress חולקים
+ * info, waiting_response/more_info_needed חולקים warning ו-interested/completed
+ * חולקים success. התווית היא שמבדילה ביניהם.
+ */
+export const SHIDDUCH_STATUS_BADGE_VARIANT: Record<
+  ShidduchStatus,
+  BadgeVariant
+> = {
+  draft: "neutral",
+  sent: "info",
+  waiting_response: "warning",
+  interested: "success",
+  more_info_needed: "warning",
+  in_progress: "info",
+  rejected: "danger",
+  completed: "success",
 };
 
 export const SHIDDUCH_STATUS_OPTIONS = SHIDDUCH_STATUS_VALUES.map((value) => ({

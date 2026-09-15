@@ -66,7 +66,7 @@ export default function DeleteShidduchButton({
           מחיקת ההצעה
         </Button>
       </DialogTrigger>
-      <DialogContent dir="rtl">
+      <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>מחיקת הצעת שידוך</DialogTitle>
           <DialogDescription>

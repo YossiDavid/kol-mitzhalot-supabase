@@ -1,4 +1,4 @@
-import { DashboardSection } from "@/components/layout";
+import { DashboardSection, Page, PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import {
   ActiveShidduchim,
@@ -269,17 +269,13 @@ async function DashboardSections() {
 
   return (
     <>
-      {/* ברכה */}
-      {user && (
-        <div className="pb-2 md:hidden">
-          <p className="text-heading font-bold text-foreground">
-            שלום{firstName ? `, ${firstName}` : ""}
-          </p>
-          <p className="mt-1 text-body-sm text-muted-foreground">
-            ברוך הבא למערכת קול מצהלות · {roleLabel}
-          </p>
-        </div>
-      )}
+      {/* ברכה: גלויה במובייל. בדסקטופ הברכה כבר בכותרת העליונה, והכותרת
+          נשארת לקוראי מסך בלבד - כך לכל עמוד יש h1 אחד */}
+      <PageHeader
+        className="md:sr-only"
+        title={`שלום${firstName ? `, ${firstName}` : ""}`}
+        description={`ברוך הבא למערכת קול מצהלות · ${roleLabel}`}
+      />
 
       {(isShadchan || isAdmin) && (
         <>
@@ -388,10 +384,10 @@ async function DashboardSections() {
 
 export default function Home() {
   return (
-    <div className="space-y-10 py-4">
+    <Page className="gap-10">
       <Suspense fallback={<DashboardSkeleton />}>
         <DashboardSections />
       </Suspense>
-    </div>
+    </Page>
   );
 }

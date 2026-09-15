@@ -158,7 +158,7 @@ export function InstitutionsImportDialog({
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent size="lg" className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>ייבוא מוסדות מקובץ אקסל</DialogTitle>
           <DialogDescription>

@@ -153,7 +153,7 @@ export default function Upload({
                         src={PDF.src}
                         width={40}
                         height={40}
-                        className="absolute inset-0 h-full w-full bg-red-50 object-contain p-4"
+                        className="absolute inset-0 h-full w-full bg-destructive-muted object-contain p-4"
                       />
                     )}
                   </div>

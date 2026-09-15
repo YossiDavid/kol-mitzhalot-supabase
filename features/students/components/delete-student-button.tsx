@@ -77,7 +77,7 @@ export default function DeleteStudentButton({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent dir="rtl">
+      <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>מחיקת כרטיס</DialogTitle>
           <DialogDescription>

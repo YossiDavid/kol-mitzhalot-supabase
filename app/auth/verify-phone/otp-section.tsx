@@ -7,8 +7,8 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { PageTitle } from "@/components/layout/page-header";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
@@ -94,7 +94,7 @@ export default function OTPSection({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>הוספת מספר טלפון</CardTitle>
+          <PageTitle>הוספת מספר טלפון</PageTitle>
           <CardDescription>
             נדרש מספר טלפון לאימות. הזן את המספר שלך.
           </CardDescription>
@@ -149,7 +149,7 @@ export default function OTPSection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>אימות מספר הטלפון</CardTitle>
+        <PageTitle>אימות מספר הטלפון</PageTitle>
         <CardDescription>
           {maskedPhone ? (
             <>

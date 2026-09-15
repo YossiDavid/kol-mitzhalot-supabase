@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { DashboardSection } from "@/components/layout";
-import { Box } from "@/components/layout";
+import { Box, Page, PageHeader } from "@/components/layout";
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
@@ -104,11 +104,11 @@ export default function EngagementsAdminPage() {
   );
 
   return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
+    <Page>
+      <PageHeader
         title="מודעות מאורסים"
-        subTitle="אישור ופרסום שידוכים שנסגרו"
-        button={
+        description="אישור ופרסום שידוכים שנסגרו"
+        actions={
           <div className="flex gap-2">
             <Button asChild variant="outline">
               <Link href={"/app/admin/content" as any}>חזרה</Link>
@@ -119,9 +119,9 @@ export default function EngagementsAdminPage() {
             </Button>
           </div>
         }
-      >
+      />
         {showForm && (
-          <Box className="mb-6 mt-4">
+          <Box>
             <form onSubmit={handleCreate} className="space-y-6">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="space-y-4">
@@ -153,7 +153,7 @@ export default function EngagementsAdminPage() {
           </Box>
         )}
 
-        <Box className="mt-4">
+        <Box>
           {loading ? (
             <div className="py-10 text-center text-muted-foreground">טוען...</div>
           ) : engagements.length === 0 ? (
@@ -182,9 +182,9 @@ export default function EngagementsAdminPage() {
                       {[e.groom_city, e.bride_city].filter(Boolean).join(" / ")}
                     </td>
                     <td className="py-3 pe-3">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-caption font-semibold ${e.is_published ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                      <Badge variant={e.is_published ? "success" : "warning"}>
                         {e.is_published ? "מפורסם" : "ממתין"}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="py-3 pe-3 text-muted-foreground">
                       {new Date(e.created_at).toLocaleDateString("he-IL")}
@@ -216,7 +216,6 @@ export default function EngagementsAdminPage() {
             </table>
           )}
         </Box>
-      </DashboardSection>
-    </div>
+    </Page>
   );
 }

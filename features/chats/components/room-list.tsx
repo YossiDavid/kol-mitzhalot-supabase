@@ -189,7 +189,7 @@ export function RoomList() {
   return (
     <aside aria-label="רשימת הצ׳אטים" className="flex h-full min-h-0 flex-col">
       <div className="flex h-16 shrink-0 items-center gap-2 border-b border-border px-4">
-        <h2 className="text-subtitle font-bold text-foreground">צ׳אטים</h2>
+        <h1 className="text-subtitle font-bold text-foreground">צ׳אטים</h1>
         {!loading && rooms.length > 0 && (
           <span className="rounded-full bg-primary-muted px-2 py-0.5 text-caption font-semibold text-primary tabular-nums">
             {rooms.length}

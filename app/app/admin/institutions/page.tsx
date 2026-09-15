@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { DashboardSection } from "@/components/layout";
-import { Box } from "@/components/layout";
+import { Box, Page, PageHeader } from "@/components/layout";
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -170,11 +170,11 @@ export default function InstitutionsAdminPage() {
   }
 
   return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
+    <Page>
+      <PageHeader
         title="מוסדות לימוד"
-        subTitle="ניהול מאגר מוסדות הלימוד לבחירה באשף יצירת כרטיס מיועד"
-        button={
+        description="ניהול מאגר מוסדות הלימוד לבחירה באשף יצירת כרטיס מיועד"
+        actions={
           <div className="flex flex-wrap items-center gap-2">
             <InstitutionsImportDialog onImported={load} />
             <Button onClick={openCreateDialog}>
@@ -182,132 +182,123 @@ export default function InstitutionsAdminPage() {
             </Button>
           </div>
         }
-      >
-        <Box className="mt-6 space-y-4">
-          <div className="flex flex-wrap gap-3">
-            <div className="w-40">
-              <Label htmlFor="genderFilter">סינון לפי מגדר</Label>
-              <NativeSelect
-                id="genderFilter"
-                className="mt-1"
-                value={genderFilter}
-                onChange={(e) =>
-                  setGenderFilter(e.target.value as InstitutionGender | "")
-                }
-              >
-                <NativeSelectOption value="">הכל</NativeSelectOption>
-                {INSTITUTION_GENDER_OPTIONS.map((option) => (
-                  <NativeSelectOption key={option.value} value={option.value}>
-                    {option.label}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-            </div>
-            <div className="w-52">
-              <Label htmlFor="typeFilter">סינון לפי סוג מוסד</Label>
-              <NativeSelect
-                id="typeFilter"
-                className="mt-1"
-                value={typeFilter}
-                onChange={(e) =>
-                  setTypeFilter(e.target.value as InstitutionType | "")
-                }
-              >
-                <NativeSelectOption value="">הכל</NativeSelectOption>
-                {INSTITUTION_TYPE_OPTIONS.map((option) => (
-                  <NativeSelectOption key={option.value} value={option.value}>
-                    {option.label}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-            </div>
+      />
+      <Box className="space-y-4">
+        <div className="flex flex-wrap gap-3">
+          <div className="w-40">
+            <Label htmlFor="genderFilter">סינון לפי מגדר</Label>
+            <NativeSelect
+              id="genderFilter"
+              className="mt-1"
+              value={genderFilter}
+              onChange={(e) =>
+                setGenderFilter(e.target.value as InstitutionGender | "")
+              }
+            >
+              <NativeSelectOption value="">הכל</NativeSelectOption>
+              {INSTITUTION_GENDER_OPTIONS.map((option) => (
+                <NativeSelectOption key={option.value} value={option.value}>
+                  {option.label}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
           </div>
+          <div className="w-52">
+            <Label htmlFor="typeFilter">סינון לפי סוג מוסד</Label>
+            <NativeSelect
+              id="typeFilter"
+              className="mt-1"
+              value={typeFilter}
+              onChange={(e) =>
+                setTypeFilter(e.target.value as InstitutionType | "")
+              }
+            >
+              <NativeSelectOption value="">הכל</NativeSelectOption>
+              {INSTITUTION_TYPE_OPTIONS.map((option) => (
+                <NativeSelectOption key={option.value} value={option.value}>
+                  {option.label}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+          </div>
+        </div>
 
-          {loading ? (
-            <div className="py-10 text-center text-muted-foreground">
-              טוען...
-            </div>
-          ) : filteredInstitutions.length === 0 ? (
-            <div className="py-16 text-center">
-              <p className="text-subtitle font-semibold text-muted-foreground">
-                אין מוסדות להצגה
-              </p>
-              <p className="mt-2 text-body-sm text-muted-foreground">
-                הוסיפו מוסד ראשון למאגר
-              </p>
-              <Button className="mt-6" onClick={openCreateDialog}>
-                <Plus className="me-1 h-4 w-4" /> מוסד חדש
-              </Button>
-            </div>
-          ) : (
-            <table className="w-full text-body-sm">
-              <thead>
-                <tr className="border-b text-right text-muted-foreground">
-                  <th className="py-2 pe-3 font-medium">שם המוסד</th>
-                  <th className="py-2 pe-3 font-medium">עיר</th>
-                  <th className="py-2 pe-3 font-medium">מגדר</th>
-                  <th className="py-2 pe-3 font-medium">סוג מוסד</th>
-                  <th className="py-2 pe-3 font-medium">סטטוס</th>
-                  <th className="py-2 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredInstitutions.map((institution) => (
-                  <tr
-                    key={institution.id}
-                    className="border-b last:border-0 hover:bg-muted/40"
-                  >
-                    <td className="py-3 pe-3 font-medium">
-                      {institution.name}
-                    </td>
-                    <td className="py-3 pe-3 text-muted-foreground">
-                      {institution.city ?? "-"}
-                    </td>
-                    <td className="py-3 pe-3 text-muted-foreground">
-                      {INSTITUTION_GENDER_LABELS[institution.gender]}
-                    </td>
-                    <td className="py-3 pe-3 text-muted-foreground">
-                      {INSTITUTION_TYPE_LABELS[institution.type]}
-                    </td>
-                    <td className="py-3 pe-3">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-caption font-semibold ${
-                          institution.is_active
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-600"
-                        }`}
+        {loading ? (
+          <div className="py-10 text-center text-muted-foreground">טוען...</div>
+        ) : filteredInstitutions.length === 0 ? (
+          <div className="py-16 text-center">
+            <p className="text-subtitle font-semibold text-muted-foreground">
+              אין מוסדות להצגה
+            </p>
+            <p className="mt-2 text-body-sm text-muted-foreground">
+              הוסיפו מוסד ראשון למאגר
+            </p>
+            <Button className="mt-6" onClick={openCreateDialog}>
+              <Plus className="me-1 h-4 w-4" /> מוסד חדש
+            </Button>
+          </div>
+        ) : (
+          <table className="w-full text-body-sm">
+            <thead>
+              <tr className="border-b text-right text-muted-foreground">
+                <th className="py-2 pe-3 font-medium">שם המוסד</th>
+                <th className="py-2 pe-3 font-medium">עיר</th>
+                <th className="py-2 pe-3 font-medium">מגדר</th>
+                <th className="py-2 pe-3 font-medium">סוג מוסד</th>
+                <th className="py-2 pe-3 font-medium">סטטוס</th>
+                <th className="py-2 font-medium"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredInstitutions.map((institution) => (
+                <tr
+                  key={institution.id}
+                  className="border-b last:border-0 hover:bg-muted/40"
+                >
+                  <td className="py-3 pe-3 font-medium">{institution.name}</td>
+                  <td className="py-3 pe-3 text-muted-foreground">
+                    {institution.city ?? "-"}
+                  </td>
+                  <td className="py-3 pe-3 text-muted-foreground">
+                    {INSTITUTION_GENDER_LABELS[institution.gender]}
+                  </td>
+                  <td className="py-3 pe-3 text-muted-foreground">
+                    {INSTITUTION_TYPE_LABELS[institution.type]}
+                  </td>
+                  <td className="py-3 pe-3">
+                    <Badge
+                      variant={institution.is_active ? "success" : "neutral"}
+                    >
+                      {institution.is_active ? "פעיל" : "לא פעיל"}
+                    </Badge>
+                  </td>
+                  <td className="py-3">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="עריכה"
+                        onClick={() => openEditDialog(institution)}
                       >
-                        {institution.is_active ? "פעיל" : "לא פעיל"}
-                      </span>
-                    </td>
-                    <td className="py-3">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title="עריכה"
-                          onClick={() => openEditDialog(institution)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive"
-                          title="מחיקה"
-                          onClick={() => deleteInstitution(institution)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </Box>
-      </DashboardSection>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:text-destructive"
+                        title="מחיקה"
+                        onClick={() => deleteInstitution(institution)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Box>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
@@ -414,6 +405,6 @@ export default function InstitutionsAdminPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </Page>
   );
 }

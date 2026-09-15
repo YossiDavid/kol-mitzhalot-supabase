@@ -86,7 +86,7 @@ export default function MessageButton({ authorId }: { authorId: string }) {
         </Button>
         {/* <Button variant="outline">Open Dialog</Button> */}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent>
         <form onSubmit={handleMessageSubmit} className="grid gap-4">
           <DialogHeader>
             <DialogTitle>שליחת פנייה</DialogTitle>

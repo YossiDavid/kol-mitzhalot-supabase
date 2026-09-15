@@ -1,4 +1,4 @@
-import Section from "@/components/layout/section";
+import { Page, PageHeader } from "@/components/layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import ShiduchDesk from "@/features/shidduchim/components/shiduch-desk";
 import { createClient } from "@/lib/supabase/server";
@@ -26,7 +26,7 @@ async function ShiduchDeskContent() {
 /** שלד שולחן העבודה: אזור השידוך למעלה, ורצועת המועדפים בתחתית. */
 function ShiduchDeskSkeleton() {
   return (
-    <div role="status" aria-label="טוען" className="mt-6 space-y-6">
+    <div role="status" aria-label="טוען" className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <Skeleton className="h-48 rounded-2xl" />
         <Skeleton className="h-48 rounded-2xl" />
@@ -42,17 +42,15 @@ function ShiduchDeskSkeleton() {
 
 export default function CanvasPage() {
   return (
-    <Section containerClassName="py-4 md:py-10">
-      <h1 className="text-center">לוח עבודה ליצירת שידוכים</h1>
-      <p className="mx-auto max-w-2xl text-center text-balance">
-        המועדפים שהוספתם מופיעים בתחתית הלוח. כדי להוסיף אותם לשידוך חדש פשוט יש
-        לגרור את הכרטיס אל עבר התיבה הייעודית או ללחוץ על כפתור ״הוספה לשידוך״
-        בתחתית הכרטיס
-      </p>
+    <Page>
+      <PageHeader
+        title="לוח עבודה ליצירת שידוכים"
+        description="המועדפים שהוספתם מופיעים בתחתית הלוח. כדי להוסיף אותם לשידוך חדש פשוט יש לגרור את הכרטיס אל עבר התיבה הייעודית או ללחוץ על כפתור ״הוספה לשידוך״ בתחתית הכרטיס"
+      />
       {/* שולחן העבודה עצמו (client) תלוי במועדפים של המשתמש */}
       <Suspense fallback={<ShiduchDeskSkeleton />}>
         <ShiduchDeskContent />
       </Suspense>
-    </Section>
+    </Page>
   );
 }

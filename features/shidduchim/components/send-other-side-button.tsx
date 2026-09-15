@@ -79,7 +79,7 @@ export default function SendOtherSideButton({
         </Button>
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent dir="rtl">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>{`שליחה גם ${targetLabel}`}</DialogTitle>
             <DialogDescription>

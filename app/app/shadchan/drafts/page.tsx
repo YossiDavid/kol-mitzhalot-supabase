@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Network } from "lucide-react";
 
-import { Section } from "@/components/layout";
+import { Page, PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -81,7 +81,7 @@ async function DraftsList() {
 
   if (failed) {
     return (
-      <Empty className="mt-6">
+      <Empty>
         <EmptyHeader>
           <EmptyTitle>טעינת ההצעות השמורות נכשלה</EmptyTitle>
           <EmptyDescription>אפשר לנסות לרענן את הדף בעוד רגע.</EmptyDescription>
@@ -92,7 +92,7 @@ async function DraftsList() {
 
   if (proposals.length === 0) {
     return (
-      <Empty className="mt-6">
+      <Empty>
         <EmptyHeader>
           <EmptyTitle>אין הצעות שמורות</EmptyTitle>
           <EmptyDescription>
@@ -112,7 +112,7 @@ async function DraftsList() {
   }
 
   return (
-    <ul className="mt-6 grid gap-4">
+    <ul className="grid gap-4">
       {proposals.map((proposal) => (
         <li key={proposal.id}>
           <ShadchanProposalCard
@@ -127,27 +127,25 @@ async function DraftsList() {
 
 export default function ShadchanDraftsPage() {
   return (
-    <Section containerClassName="py-10">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-heading font-bold">הצעות שמורות</h1>
-          <p className="mt-1 text-body-sm text-muted-foreground">
-            הצעות שנשמרו וטרם נשלחו לצדדים
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button asChild variant="outline">
-            <Link href="/app/shadchan/proposals">כל השידוכים שלי</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/app/canvas">ללוח העבודה</Link>
-          </Button>
-        </div>
-      </div>
+    <Page>
+      <PageHeader
+        title="הצעות שמורות"
+        description="הצעות שנשמרו וטרם נשלחו לצדדים"
+        actions={
+          <>
+            <Button asChild variant="outline">
+              <Link href="/app/shadchan/proposals">כל השידוכים שלי</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/app/canvas">ללוח העבודה</Link>
+            </Button>
+          </>
+        }
+      />
 
       <Suspense fallback={<ShadchanProposalListSkeleton />}>
         <DraftsList />
       </Suspense>
-    </Section>
+    </Page>
   );
 }

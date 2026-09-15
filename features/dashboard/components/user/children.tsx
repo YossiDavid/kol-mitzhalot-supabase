@@ -127,7 +127,7 @@ export default function Children({ childs }: { childs: Child[] }) {
                       asChild
                       variant="outline"
                       size="sm"
-                      className="flex-1 bg-amber-100"
+                      className="flex-1 border-warning bg-warning-muted text-warning-muted-foreground hover:bg-warning/30"
                     >
                       <Link href={"/" as any}>הוספת קו״ח</Link>
                     </Button>
@@ -199,7 +199,7 @@ export default function Children({ childs }: { childs: Child[] }) {
                   ) : (
                     <Button
                       asChild
-                      className="flex-1 bg-amber-100"
+                      className="flex-1 border-warning bg-warning-muted text-warning-muted-foreground hover:bg-warning/30"
                       variant={"outline"}
                     >
                       <Link href={"/" as any}>להוספת קו״ח</Link>

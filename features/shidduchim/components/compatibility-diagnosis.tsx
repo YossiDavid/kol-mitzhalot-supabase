@@ -19,8 +19,8 @@ export default function CompatibilityDiagnosis({ issues, onDismiss }: Props) {
       <div
         className={
           hasIssues
-            ? "relative w-full max-w-lg rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 shadow-sm dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100"
-            : "relative w-full max-w-lg rounded-md border border-emerald-200 bg-emerald-50/80 p-4 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-100"
+            ? "relative w-full max-w-lg rounded-md border border-warning bg-warning-muted p-4 text-warning-muted-foreground shadow-sm"
+            : "relative w-full max-w-lg rounded-md border border-success bg-success-muted p-4 text-success-muted-foreground"
         }
       >
         {onDismiss && (
@@ -40,7 +40,7 @@ export default function CompatibilityDiagnosis({ issues, onDismiss }: Props) {
             שהכותרת מתחילה ב-RTL. מפנים לו מקום כדי שלא יעלה עליה. */}
         <div className={cn("flex gap-2", onDismiss && "ps-9")}>
           {hasIssues ? (
-            <AlertTriangleIcon className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
+            <AlertTriangleIcon className="mt-0.5 size-5 shrink-0 text-warning-muted-foreground" />
           ) : null}
           <div className="min-w-0 flex-1 space-y-2">
             <h3 className="text-body font-bold">

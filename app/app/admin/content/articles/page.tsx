@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { DashboardSection } from "@/components/layout";
-import { Box } from "@/components/layout";
+import { Box, Page, PageHeader } from "@/components/layout";
+import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
@@ -62,11 +62,11 @@ export default function ArticlesAdminPage() {
   }
 
   return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
+    <Page>
+      <PageHeader
         title="מאמרים"
-        subTitle="ניהול מאמרי מרכז הידע"
-        button={
+        description="ניהול מאמרי מרכז הידע"
+        actions={
           <div className="flex gap-2">
             <Button asChild variant="outline">
               <Link href={"/app/admin/content" as any}>חזרה</Link>
@@ -78,8 +78,8 @@ export default function ArticlesAdminPage() {
             </Button>
           </div>
         }
-      >
-        <Box className="mt-6">
+      />
+        <Box>
           {loading ? (
             <div className="py-10 text-center text-muted-foreground">טוען...</div>
           ) : articles.length === 0 ? (
@@ -109,9 +109,9 @@ export default function ArticlesAdminPage() {
                     <td className="py-3 pe-3 font-medium">{a.title}</td>
                     <td className="py-3 pe-3 text-muted-foreground">{CATEGORY_LABELS[a.category] ?? a.category}</td>
                     <td className="py-3 pe-3">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-caption font-semibold ${a.is_published ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                      <Badge variant={a.is_published ? "success" : "neutral"}>
                         {a.is_published ? "מפורסם" : "טיוטה"}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="py-3 pe-3 text-muted-foreground">
                       {new Date(a.created_at).toLocaleDateString("he-IL")}
@@ -148,7 +148,6 @@ export default function ArticlesAdminPage() {
             </table>
           )}
         </Box>
-      </DashboardSection>
-    </div>
+    </Page>
   );
 }

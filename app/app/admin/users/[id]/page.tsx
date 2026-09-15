@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { DashboardSection } from "@/components/layout";
-import { Box } from "@/components/layout";
+import { Box, Page, PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -215,76 +214,75 @@ async function UserDetailsContent({ params }: UserDetailsPageProps) {
     );
 
     return (
-      <div className="space-y-10 py-4">
-        <DashboardSection
+      <Page>
+        <PageHeader
           title="שגיאה"
-          subTitle="אירעה שגיאה בטעינת פרטי המשתמש"
-          button={
+          description="אירעה שגיאה בטעינת פרטי המשתמש"
+          actions={
             <Button asChild variant="outline">
               <Link href="/app/admin/users">חזרה לרשימת המשתמשים</Link>
             </Button>
           }
-        >
-          <div className="mt-6 rounded-lg border border-destructive bg-destructive/10 p-6">
-            <h3 className="mb-2 text-subtitle font-semibold text-destructive">
-              שגיאה בהגדרת האדמין
-            </h3>
-            {isServiceRoleKeyError ? (
-              <div className="space-y-4">
-                <p className="text-body-sm">
-                  המשתנה{" "}
-                  <code className="rounded bg-muted px-2 py-1">
-                    SUPABASE_SERVICE_ROLE_KEY
-                  </code>{" "}
-                  לא מוגדר.
-                </p>
-                <div className="space-y-2 rounded-lg bg-muted p-4">
-                  <p className="font-semibold">הוראות התקנה:</p>
-                  <ol className="list-inside list-decimal space-y-1 text-body-sm">
-                    <li>
-                      פתח את קובץ{" "}
-                      <code className="rounded bg-background px-1">
-                        .env.local
-                      </code>{" "}
-                      בתיקיית הפרויקט
-                    </li>
-                    <li>
-                      הוסף את השורה:{" "}
-                      <code className="rounded bg-background px-1">
-                        SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
-                      </code>
-                    </li>
-                    <li>
-                      מצא את ה-Service Role Key ב-{" "}
-                      <a
-                        href="https://supabase.com/dashboard/project/_/settings/api"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary underline"
-                      >
-                        Supabase Dashboard → Settings → API
-                      </a>
-                    </li>
-                    <li>
-                      הפעל מחדש את שרת הפיתוח (
-                      <code className="rounded bg-background px-1">
-                        npm run dev
-                      </code>
-                      )
-                    </li>
-                  </ol>
-                </div>
-                <p className="text-caption text-muted-foreground">
-                  ⚠️ ה-Service Role Key רגיש מאוד - אל תחלוק אותו או תעלה אותו
-                  ל-Git
-                </p>
+        />
+        <div className="rounded-lg border border-destructive bg-destructive/10 p-6">
+          <h3 className="mb-2 text-subtitle font-semibold text-destructive">
+            שגיאה בהגדרת האדמין
+          </h3>
+          {isServiceRoleKeyError ? (
+            <div className="space-y-4">
+              <p className="text-body-sm">
+                המשתנה{" "}
+                <code className="rounded bg-muted px-2 py-1">
+                  SUPABASE_SERVICE_ROLE_KEY
+                </code>{" "}
+                לא מוגדר.
+              </p>
+              <div className="space-y-2 rounded-lg bg-muted p-4">
+                <p className="font-semibold">הוראות התקנה:</p>
+                <ol className="list-inside list-decimal space-y-1 text-body-sm">
+                  <li>
+                    פתח את קובץ{" "}
+                    <code className="rounded bg-background px-1">
+                      .env.local
+                    </code>{" "}
+                    בתיקיית הפרויקט
+                  </li>
+                  <li>
+                    הוסף את השורה:{" "}
+                    <code className="rounded bg-background px-1">
+                      SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+                    </code>
+                  </li>
+                  <li>
+                    מצא את ה-Service Role Key ב-{" "}
+                    <a
+                      href="https://supabase.com/dashboard/project/_/settings/api"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline"
+                    >
+                      Supabase Dashboard → Settings → API
+                    </a>
+                  </li>
+                  <li>
+                    הפעל מחדש את שרת הפיתוח (
+                    <code className="rounded bg-background px-1">
+                      npm run dev
+                    </code>
+                    )
+                  </li>
+                </ol>
               </div>
-            ) : (
-              <p className="text-body-sm">{error.message}</p>
-            )}
-          </div>
-        </DashboardSection>
-      </div>
+              <p className="text-caption text-muted-foreground">
+                ⚠️ ה-Service Role Key רגיש מאוד - אל תחלוק אותו או תעלה אותו
+                ל-Git
+              </p>
+            </div>
+          ) : (
+            <p className="text-body-sm">{error.message}</p>
+          )}
+        </div>
+      </Page>
     );
   }
 
@@ -293,166 +291,164 @@ async function UserDetailsContent({ params }: UserDetailsPageProps) {
   }
 
   return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
+    <Page>
+      <PageHeader
         title={`פרטי משתמש: ${userDetails.firstName} ${userDetails.lastName}`}
-        subTitle="מידע מפורט על המשתמש"
-        button={
+        description="מידע מפורט על המשתמש"
+        actions={
           <Button asChild variant="outline">
             <Link href="/app/admin/users">חזרה לרשימת המשתמשים</Link>
           </Button>
         }
-      >
-        <div className="mt-6 space-y-6">
-          {/* מידע בסיסי */}
-          <Box>
-            <h3 className="mb-4 text-subtitle font-semibold">מידע בסיסי</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <span className="text-muted-foreground">שם פרטי:</span>{" "}
-                {userDetails.firstName || "לא זמין"}
-              </div>
-              <div>
-                <span className="text-muted-foreground">שם משפחה:</span>{" "}
-                {userDetails.lastName || "לא זמין"}
-              </div>
-              <div>
-                <span className="text-muted-foreground">אימייל:</span>{" "}
-                {userDetails.email || "לא זמין"}
-              </div>
-              <div>
-                <span className="text-muted-foreground">טלפון:</span>{" "}
-                {userDetails.phone || "לא זמין"}
-              </div>
-              <div>
-                <span className="text-muted-foreground">
-                  {userDetails.roles.length > 1 ? "תפקידים:" : "תפקיד:"}
-                </span>{" "}
-                {userDetails.roles.map(getRoleLabel).join(" · ")}
-              </div>
-              <div>
-                <span className="text-muted-foreground">תאריך הצטרפות:</span>{" "}
-                {formatDate(userDetails.createdAt)}
-              </div>
-              <div>
-                <span className="text-muted-foreground">התחברות אחרונה:</span>{" "}
-                {formatDate(userDetails.lastSignInAt)}
-              </div>
+      />
+      <div className="space-y-6">
+        {/* מידע בסיסי */}
+        <Box>
+          <h3 className="mb-4 text-subtitle font-semibold">מידע בסיסי</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <span className="text-muted-foreground">שם פרטי:</span>{" "}
+              {userDetails.firstName || "לא זמין"}
             </div>
-          </Box>
-
-          {/* עריכת תפקידים - משתמש יכול להיות גם וגם (למשל שדכן וגם איש צוות) */}
-          <Box>
-            <h3 className="mb-4 text-subtitle font-semibold">תפקידים</h3>
-            <UserRolesEditor
-              userId={userDetails.id}
-              initialRoles={userDetails.roles}
-              initialInstitutionId={userDetails.staffInstitutionId}
-            />
-          </Box>
-
-          {/* סטטיסטיקות שידוכים */}
-          <Box>
-            <h3 className="mb-4 text-subtitle font-semibold">
-              סטטיסטיקות שידוכים
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <span className="text-muted-foreground">
-                  סה"כ שידוכים שהוצעו:
-                </span>{" "}
-                <strong>{userDetails.shidduchimStats.totalOffered}</strong>
-              </div>
-              <div>
-                <span className="text-muted-foreground">
-                  סה"כ שידוכים שנסגרו:
-                </span>{" "}
-                <strong>{userDetails.shidduchimStats.totalCompleted}</strong>
-              </div>
+            <div>
+              <span className="text-muted-foreground">שם משפחה:</span>{" "}
+              {userDetails.lastName || "לא זמין"}
             </div>
-          </Box>
+            <div>
+              <span className="text-muted-foreground">אימייל:</span>{" "}
+              {userDetails.email || "לא זמין"}
+            </div>
+            <div>
+              <span className="text-muted-foreground">טלפון:</span>{" "}
+              {userDetails.phone || "לא זמין"}
+            </div>
+            <div>
+              <span className="text-muted-foreground">
+                {userDetails.roles.length > 1 ? "תפקידים:" : "תפקיד:"}
+              </span>{" "}
+              {userDetails.roles.map(getRoleLabel).join(" · ")}
+            </div>
+            <div>
+              <span className="text-muted-foreground">תאריך הצטרפות:</span>{" "}
+              {formatDate(userDetails.createdAt)}
+            </div>
+            <div>
+              <span className="text-muted-foreground">התחברות אחרונה:</span>{" "}
+              {formatDate(userDetails.lastSignInAt)}
+            </div>
+          </div>
+        </Box>
 
-          {/* ילדים */}
-          <Box>
-            <h3 className="mb-4 text-subtitle font-semibold">
-              ילדים במערכת ({userDetails.children.length})
-            </h3>
-            {userDetails.children.length === 0 ? (
-              <p className="text-muted-foreground">אין ילדים רשומים במערכת</p>
-            ) : (
-              <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 pt-4">
-                <div
-                  data-slot="table-header"
-                  className="col-span-full grid grid-cols-subgrid font-semibold"
-                >
-                  <div>שם</div>
-                  <div>מגדר</div>
-                  <div>גיל</div>
-                  <div>עיר</div>
-                  <div>שידוכים הוצעו</div>
-                  <div>שידוכים נסגרו</div>
-                </div>
-                {userDetails.children.map((child) => {
-                  const stats = userDetails.shidduchimStats.byChild.find(
-                    (s) => s.childId === child.id,
-                  ) || { offered: 0, completed: 0 };
-                  return (
-                    <div
-                      key={child.id}
-                      className="col-span-full grid grid-cols-subgrid items-center border-b p-2"
-                    >
-                      <div>
-                        <Link
-                          href={`/app/students/${child.id}`}
-                          className="text-primary hover:underline"
-                        >
-                          {child.firstName} {child.lastName}
-                        </Link>
-                      </div>
-                      <div>{child.gender === "male" ? "זכר" : "נקבה"}</div>
-                      <div>{calculateAge(new Date(child.birthDate))}</div>
-                      <div>{child.city}</div>
-                      <div className="text-center">{stats.offered}</div>
-                      <div className="text-center">{stats.completed}</div>
+        {/* עריכת תפקידים - משתמש יכול להיות גם וגם (למשל שדכן וגם איש צוות) */}
+        <Box>
+          <h3 className="mb-4 text-subtitle font-semibold">תפקידים</h3>
+          <UserRolesEditor
+            userId={userDetails.id}
+            initialRoles={userDetails.roles}
+            initialInstitutionId={userDetails.staffInstitutionId}
+          />
+        </Box>
+
+        {/* סטטיסטיקות שידוכים */}
+        <Box>
+          <h3 className="mb-4 text-subtitle font-semibold">
+            סטטיסטיקות שידוכים
+          </h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <span className="text-muted-foreground">
+                סה"כ שידוכים שהוצעו:
+              </span>{" "}
+              <strong>{userDetails.shidduchimStats.totalOffered}</strong>
+            </div>
+            <div>
+              <span className="text-muted-foreground">
+                סה"כ שידוכים שנסגרו:
+              </span>{" "}
+              <strong>{userDetails.shidduchimStats.totalCompleted}</strong>
+            </div>
+          </div>
+        </Box>
+
+        {/* ילדים */}
+        <Box>
+          <h3 className="mb-4 text-subtitle font-semibold">
+            ילדים במערכת ({userDetails.children.length})
+          </h3>
+          {userDetails.children.length === 0 ? (
+            <p className="text-muted-foreground">אין ילדים רשומים במערכת</p>
+          ) : (
+            <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 pt-4">
+              <div
+                data-slot="table-header"
+                className="col-span-full grid grid-cols-subgrid font-semibold"
+              >
+                <div>שם</div>
+                <div>מגדר</div>
+                <div>גיל</div>
+                <div>עיר</div>
+                <div>שידוכים הוצעו</div>
+                <div>שידוכים נסגרו</div>
+              </div>
+              {userDetails.children.map((child) => {
+                const stats = userDetails.shidduchimStats.byChild.find(
+                  (s) => s.childId === child.id,
+                ) || { offered: 0, completed: 0 };
+                return (
+                  <div
+                    key={child.id}
+                    className="col-span-full grid grid-cols-subgrid items-center border-b p-2"
+                  >
+                    <div>
+                      <Link
+                        href={`/app/students/${child.id}`}
+                        className="text-primary hover:underline"
+                      >
+                        {child.firstName} {child.lastName}
+                      </Link>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </Box>
-        </div>
-      </DashboardSection>
-    </div>
+                    <div>{child.gender === "male" ? "זכר" : "נקבה"}</div>
+                    <div>{calculateAge(new Date(child.birthDate))}</div>
+                    <div>{child.city}</div>
+                    <div className="text-center">{stats.offered}</div>
+                    <div className="text-center">{stats.completed}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Box>
+      </div>
+    </Page>
   );
 }
 
 function UserDetailsFallback() {
   return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
+    <Page>
+      <PageHeader
         title="פרטי משתמש"
-        subTitle="מידע מפורט על המשתמש"
-        button={
+        description="מידע מפורט על המשתמש"
+        actions={
           <Button asChild variant="outline">
             <Link href="/app/admin/users">חזרה לרשימת המשתמשים</Link>
           </Button>
         }
-      >
-        <div role="status" aria-label="טוען" className="mt-6 space-y-6">
-          {Array.from({ length: FALLBACK_SECTION_COUNT }).map((_, index) => (
-            <Box key={index}>
-              <Skeleton className="mb-4 h-6 w-40" />
-              <div className="grid grid-cols-2 gap-4">
-                <Skeleton className="h-5 w-full" />
-                <Skeleton className="h-5 w-full" />
-                <Skeleton className="h-5 w-full" />
-                <Skeleton className="h-5 w-full" />
-              </div>
-            </Box>
-          ))}
-        </div>
-      </DashboardSection>
-    </div>
+      />
+      <div role="status" aria-label="טוען" className="space-y-6">
+        {Array.from({ length: FALLBACK_SECTION_COUNT }).map((_, index) => (
+          <Box key={index}>
+            <Skeleton className="mb-4 h-6 w-40" />
+            <div className="grid grid-cols-2 gap-4">
+              <Skeleton className="h-5 w-full" />
+              <Skeleton className="h-5 w-full" />
+              <Skeleton className="h-5 w-full" />
+              <Skeleton className="h-5 w-full" />
+            </div>
+          </Box>
+        ))}
+      </div>
+    </Page>
   );
 }
 

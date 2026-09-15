@@ -63,12 +63,12 @@ export function DateField(props: FieldControlProps) {
             calendarWrapper="absolute z-10 mt-1 w-full rounded-lg border bg-white p-2 shadow-lg scale-y-0 origin-top transition"
             calendarWrapperOpen="scale-y-100"
             calendar="w-full bg-white"
-            header="flex items-center justify-between py-2 px-1 bg-gray-100 rounded-t-md border-b border-gray-300"
-            navButton="p-1 rounded hover:bg-gray-200"
+            header="flex items-center justify-between py-2 px-1 bg-muted rounded-t-md border-b border-border"
+            navButton="p-1 rounded hover:bg-accent"
             select="font-light"
-            weekdayHeader="mb-2 grid grid-cols-7 text-center text-caption font-bold text-gray-600"
+            weekdayHeader="mb-2 grid grid-cols-7 text-center text-caption font-bold text-muted-foreground"
             dayCell="flex flex-col items-center justify-center rounded-md border px-2 py-2"
-            dayCellSelected="border-blue-500 bg-blue-100 font-bold"
+            dayCellSelected="border-primary bg-primary-muted font-bold"
             dayCellOutsideMonth="opacity-50"
             onChange={() => {
               if (typeof window === "undefined") {

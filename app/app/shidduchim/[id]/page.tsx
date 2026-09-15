@@ -1,4 +1,4 @@
-import { Box } from "@/components/layout";
+import { Box, PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -98,12 +98,14 @@ async function ShidduchCardContent({
     }
     return (
       <div className="space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-heading font-bold">הצעת שידוך</h1>
-          <Button variant="outline" asChild>
-            <Link href="/app/proposals">לכל ההצעות</Link>
-          </Button>
-        </div>
+        <PageHeader
+          title="הצעת שידוך"
+          actions={
+            <Button variant="outline" asChild>
+              <Link href="/app/proposals">לכל ההצעות</Link>
+            </Button>
+          }
+        />
         {parentProposals.map((proposal) => (
           <ParentProposalView
             key={proposal.side}
@@ -150,12 +152,14 @@ async function ShidduchCardContent({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-heading font-bold">כרטיס שידוך</h1>
-        <Button variant="outline" asChild>
-          <Link href="/app">חזרה לאפליקציה</Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="כרטיס שידוך"
+        actions={
+          <Button variant="outline" asChild>
+            <Link href="/app">חזרה לאפליקציה</Link>
+          </Button>
+        }
+      />
 
       <Box className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2">

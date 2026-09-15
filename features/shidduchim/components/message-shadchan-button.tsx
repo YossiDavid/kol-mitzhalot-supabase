@@ -73,7 +73,7 @@ export default function MessageShadchanButton({
           שליחת הודעה לשדכן
         </Button>
       </DialogTrigger>
-      <DialogContent dir="rtl" className="sm:max-w-[500px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>שליחת הודעה לשדכן</DialogTitle>
           <DialogDescription>

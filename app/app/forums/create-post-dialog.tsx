@@ -57,7 +57,7 @@ export default function CreatePostDialog() {
         פוסט חדש
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent dir="rtl" className="max-w-lg">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>פוסט חדש בפורום</DialogTitle>
             <DialogDescription>

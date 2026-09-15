@@ -1,4 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { PageTitle } from "@/components/layout/page-header";
 import { Suspense } from "react";
 import Link from "next/link";
 
@@ -41,7 +42,7 @@ export default function Page({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-heading">מצטערים, משהו השתבש.</CardTitle>
+        <PageTitle>מצטערים, משהו השתבש.</PageTitle>
       </CardHeader>
       <CardContent>
         <Suspense>

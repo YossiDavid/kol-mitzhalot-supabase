@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Lock } from "lucide-react";
 
+import { PageTitle } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -18,9 +19,7 @@ export function StudentsNoAccess() {
         <Lock className="size-6 text-muted-foreground" strokeWidth={1.5} />
       </div>
       <div className="space-y-1">
-        <h1 className="text-body font-semibold text-foreground">
-          אין לך הרשאה לצפות בתוכן זה
-        </h1>
+        <PageTitle>אין לך הרשאה לצפות בתוכן זה</PageTitle>
         <p className="mx-auto max-w-[38ch] text-body-sm text-muted-foreground">
           רשימת המיועדים פתוחה לשדכנים, לאנשי צוות ולמנהלים בלבד. את הכרטיסים של
           ילדיך אפשר לראות בעמוד הראשי.

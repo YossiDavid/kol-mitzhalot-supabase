@@ -3,7 +3,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
-import { Box, Section } from "@/components/layout";
+import { Box, Page, PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -55,7 +55,7 @@ async function ProposalsList() {
 
   if (proposals.length === 0) {
     return (
-      <Empty className="mt-8">
+      <Empty>
         <EmptyHeader>
           <EmptyTitle>אין הצעות עדיין</EmptyTitle>
           <EmptyDescription>
@@ -76,7 +76,7 @@ async function ProposalsList() {
   }
 
   return (
-    <Box className="mt-6 space-y-4">
+    <Box className="space-y-4">
       {proposals.map((proposal) => (
         <ParentProposalListItem
           key={`${proposal.shidduchId}-${proposal.side}`}
@@ -91,7 +91,7 @@ async function ProposalsList() {
 /** שלד רשימת ההצעות, במבנה של שורת הצעה אמיתית. */
 function ProposalsListSkeleton() {
   return (
-    <div role="status" aria-label="טוען" className="mt-6 space-y-4">
+    <div role="status" aria-label="טוען" className="space-y-4">
       {Array.from({ length: SKELETON_PROPOSAL_COUNT }, (_, i) => (
         <div
           key={i}
@@ -111,22 +111,20 @@ function ProposalsListSkeleton() {
 
 export default function ProposalsPage() {
   return (
-    <Section containerClassName="py-10">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-heading font-bold">הצעות שקיבלתי</h1>
-          <p className="mt-1 text-body-sm text-muted-foreground">
-            כל הצעות השידוך שנשלחו אליכם, ואפשרות להשיב לשדכן ישירות מכאן.
-          </p>
-        </div>
-        <Button asChild variant="outline">
-          <Link href="/app">חזרה לאפליקציה</Link>
-        </Button>
-      </div>
+    <Page>
+      <PageHeader
+        title="הצעות שקיבלתי"
+        description="כל הצעות השידוך שנשלחו אליכם, ואפשרות להשיב לשדכן ישירות מכאן."
+        actions={
+          <Button asChild variant="outline">
+            <Link href="/app">חזרה לאפליקציה</Link>
+          </Button>
+        }
+      />
 
       <Suspense fallback={<ProposalsListSkeleton />}>
         <ProposalsList />
       </Suspense>
-    </Section>
+    </Page>
   );
 }

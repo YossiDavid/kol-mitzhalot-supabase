@@ -5,14 +5,14 @@ import MessageShadchanButton from "@/features/shidduchim/components/message-shad
 import ProposalResponseForm from "@/features/shidduchim/components/proposal-response-form";
 import type { ParentProposal } from "@/features/shidduchim/lib/proposals-data";
 import {
-  SHIDDUCH_RESPONSE_BADGE_CLASS,
+  SHIDDUCH_RESPONSE_BADGE_VARIANT,
   SHIDDUCH_RESPONSE_LABELS,
   canRespondToProposal,
   displayName,
   formatDateTime,
 } from "@/features/shidduchim/lib/responses";
 import {
-  SHIDDUCH_STATUS_BADGE_CLASS,
+  SHIDDUCH_STATUS_BADGE_VARIANT,
   SHIDDUCH_STATUS_LABELS,
 } from "@/features/shidduchim/lib/status";
 
@@ -64,10 +64,7 @@ export default function ParentProposalView({
     <Box className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-subtitle font-semibold">הצעה עבור {myName}</h2>
-        <Badge
-          variant="outline"
-          className={SHIDDUCH_STATUS_BADGE_CLASS[proposal.status]}
-        >
+        <Badge variant={SHIDDUCH_STATUS_BADGE_VARIANT[proposal.status]}>
           {SHIDDUCH_STATUS_LABELS[proposal.status]}
         </Badge>
       </div>
@@ -103,8 +100,7 @@ export default function ParentProposalView({
         <Field label="התגובה שלכם">
           <div className="flex flex-wrap items-center gap-2">
             <Badge
-              variant="outline"
-              className={SHIDDUCH_RESPONSE_BADGE_CLASS[proposal.myResponse]}
+              variant={SHIDDUCH_RESPONSE_BADGE_VARIANT[proposal.myResponse]}
             >
               {SHIDDUCH_RESPONSE_LABELS[proposal.myResponse]}
             </Badge>

@@ -1,23 +1,23 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { DashboardSection } from "@/components/layout";
+import { Page, PageHeader } from "@/components/layout";
 import { FileText, Heart, Star, Inbox, Mail } from "lucide-react";
 
 // Callers: admin dashboard. User: "1. להוסיף אזורים במערכת הניהול" + forms inbox links.
 
 export default function ContentHubPage() {
   return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
+    <Page>
+      <PageHeader
         title="ניהול תוכן"
-        subTitle="מאמרים, מאורסים, המלצות רבנים ופניות מהאתר"
-        button={
+        description="מאמרים, מאורסים, המלצות רבנים ופניות מהאתר"
+        actions={
           <Button asChild variant="outline">
             <Link href={"/app/admin" as any}>חזרה לדשבורד</Link>
           </Button>
         }
-      >
-        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+      />
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <Link href={"/app/admin/content/articles" as any}>
             <div className="cursor-pointer rounded-lg border p-6 transition-colors hover:bg-accent">
               <FileText className="mb-4 h-8 w-8" />
@@ -68,7 +68,6 @@ export default function ContentHubPage() {
             </div>
           </Link>
         </div>
-      </DashboardSection>
-    </div>
+    </Page>
   );
 }

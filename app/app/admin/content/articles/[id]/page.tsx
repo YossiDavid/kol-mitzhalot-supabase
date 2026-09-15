@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { DashboardSection } from "@/components/layout";
-import { Box } from "@/components/layout";
+import { Box, Page, PageHeader } from "@/components/layout";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
@@ -143,20 +142,19 @@ export default function ArticleEditPage({
 
   if (loading) {
     return (
-      <div className="space-y-10 py-4">
-        <DashboardSection title="טוען..." subTitle="" button={<Button disabled>שמירה</Button>}>
+      <Page>
+        <PageHeader title="טוען..." actions={<Button disabled>שמירה</Button>} />
           <div className="py-10 text-center">טוען...</div>
-        </DashboardSection>
-      </div>
+      </Page>
     );
   }
 
   return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
+    <Page>
+      <PageHeader
         title={isNew ? "מאמר חדש" : "עריכת מאמר"}
-        subTitle={isNew ? "צור מאמר חדש למרכז הידע" : title}
-        button={
+        description={isNew ? "צור מאמר חדש למרכז הידע" : title}
+        actions={
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="outline">
               <Link href={"/app/admin/content/articles" as any}>ביטול</Link>
@@ -169,8 +167,8 @@ export default function ArticleEditPage({
             </Button>
           </div>
         }
-      >
-        <div className="mt-6 space-y-6">
+      />
+        <div className="space-y-6">
           <Box className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
@@ -267,7 +265,6 @@ export default function ArticleEditPage({
             </Box>
           )}
         </div>
-      </DashboardSection>
-    </div>
+    </Page>
   );
 }

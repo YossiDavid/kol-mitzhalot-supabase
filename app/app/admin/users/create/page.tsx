@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { DashboardSection, Box } from "@/components/layout";
+import { Box, Page, PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -91,17 +91,17 @@ export default function CreateAdminUserPage() {
   };
 
   return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
+    <Page>
+      <PageHeader
         title="יצירת משתמש חדש"
-        subTitle="הוספת משתמש חדש למערכת"
-        button={
+        description="הוספת משתמש חדש למערכת"
+        actions={
           <Button asChild variant="outline">
             <Link href="/app/admin/users">חזרה לרשימת המשתמשים</Link>
           </Button>
         }
-      >
-        <Box className="mt-6 max-w-xl space-y-6">
+      />
+        <Box className="max-w-xl space-y-6">
           {error && (
             <div className="border-destructive bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-body-sm">
               {error}
@@ -184,8 +184,7 @@ export default function CreateAdminUserPage() {
             </div>
           </form>
         </Box>
-      </DashboardSection>
-    </div>
+    </Page>
   );
 }
 

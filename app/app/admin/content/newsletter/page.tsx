@@ -10,7 +10,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { DashboardSection, Box } from "@/components/layout";
+import { Box, Page, PageHeader } from "@/components/layout";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
@@ -56,17 +56,17 @@ export default function NewsletterAdminPage() {
   }
 
   return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
+    <Page>
+      <PageHeader
         title="רשימת תפוצה"
-        subTitle="נרשמים מהפוטר — עד חיבור למסוף ניוזלטרים"
-        button={
+        description="נרשמים מהפוטר — עד חיבור למסוף ניוזלטרים"
+        actions={
           <Button asChild variant="outline">
             <Link href={"/app/admin/content" as any}>חזרה</Link>
           </Button>
         }
-      >
-        <Box className="mt-4">
+      />
+        <Box>
           {loading ? (
             <div className="py-10 text-center text-muted-foreground">טוען...</div>
           ) : items.length === 0 ? (
@@ -100,7 +100,6 @@ export default function NewsletterAdminPage() {
             </div>
           )}
         </Box>
-      </DashboardSection>
-    </div>
+    </Page>
   );
 }

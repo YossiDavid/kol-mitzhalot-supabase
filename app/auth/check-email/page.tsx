@@ -3,15 +3,15 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { PageTitle } from "@/components/layout/page-header";
 import Link from "next/link";
 
 export default function CheckEmailPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-heading">בדוק את האימייל שלך</CardTitle>
+        <PageTitle>בדוק את האימייל שלך</PageTitle>
         <CardDescription>
           שלחנו לך קישור להתחברות. לחץ על הקישור באימייל כדי להיכנס.
         </CardDescription>

@@ -1,4 +1,4 @@
-import { Box } from "@/components/layout";
+import { Box, Page, PageTitle } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import ContactShadchanDialog from "@/features/shadchanim/components/contact-shadchan-dialog";
@@ -68,7 +68,7 @@ async function ShadchanProfileContent({
         <div className="flex min-w-0 items-center gap-4">
           <ShadchanAvatar shadchan={profile} className="size-20" />
           <div className="min-w-0">
-            <h1 className="truncate">{profile.name}</h1>
+            <PageTitle className="truncate">{profile.name}</PageTitle>
             {profile.sinceYear && (
               <p className="text-body-sm text-muted-foreground">
                 שדכן משנת {profile.sinceYear}
@@ -149,7 +149,7 @@ export default function ShadchanProfilePage({
   params: Promise<{ id: string }>;
 }) {
   return (
-    <div className="mx-auto max-w-3xl space-y-6 py-4">
+    <Page width="content">
       <Link
         href="/app"
         className="inline-flex items-center gap-1.5 text-body-sm text-muted-foreground hover:text-foreground"
@@ -161,6 +161,6 @@ export default function ShadchanProfilePage({
       <Suspense fallback={<ShadchanProfileSkeleton />}>
         <ShadchanProfileContent params={params} />
       </Suspense>
-    </div>
+    </Page>
   );
 }

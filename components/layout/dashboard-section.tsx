@@ -1,4 +1,3 @@
-import Section from "./section";
 import { cn } from "@/lib/utils";
 
 type DashboardSectionProps = {
@@ -17,10 +16,7 @@ export default function DashboardSection({
   ...props
 }: DashboardSectionProps) {
   return (
-    <Section
-      className={props.className}
-      containerClassName={props.containerClassName}
-    >
+    <section className={cn(props.className, props.containerClassName)}>
       <div
         className={cn(
           "col-span-full mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between",
@@ -28,7 +24,7 @@ export default function DashboardSection({
         )}
       >
         <div>
-          <h2>
+          <h2 className="text-subtitle md:text-title">
             {props.title}
             {props.titleNumber && Number(props.titleNumber) > 0 && (
               <span className="ms-1.5 font-normal">
@@ -45,6 +41,6 @@ export default function DashboardSection({
         {props.button ?? null}
       </div>
       {children}
-    </Section>
+    </section>
   );
 }

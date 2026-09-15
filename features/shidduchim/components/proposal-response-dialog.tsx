@@ -40,7 +40,7 @@ export default function ProposalResponseDialog({
       <DialogTrigger asChild>
         <Button size="sm">{currentResponse ? "עדכון תגובה" : "תגובה"}</Button>
       </DialogTrigger>
-      <DialogContent dir="rtl" className="sm:max-w-[520px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>תגובה להצעה</DialogTitle>
           <DialogDescription>{title}</DialogDescription>

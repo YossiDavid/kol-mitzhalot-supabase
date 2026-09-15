@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import type { SideResponse } from "@/features/shidduchim/lib/proposals-data";
 import {
-  SHIDDUCH_RESPONSE_BADGE_CLASS,
+  SHIDDUCH_RESPONSE_BADGE_VARIANT,
   SHIDDUCH_RESPONSE_LABELS,
   SHIDDUCH_SIDE_LABELS,
   SHIDDUCH_SIDES,
@@ -46,8 +46,7 @@ export default function SideResponsesPanel({
                 <>
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge
-                      variant="outline"
-                      className={SHIDDUCH_RESPONSE_BADGE_CLASS[response.response]}
+                      variant={SHIDDUCH_RESPONSE_BADGE_VARIANT[response.response]}
                     >
                       {SHIDDUCH_RESPONSE_LABELS[response.response]}
                     </Badge>

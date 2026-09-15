@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
-import { Box, DashboardSection } from "@/components/layout";
+import { Box, Page, PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -114,133 +114,130 @@ async function PhotoRequestsContent() {
 
   if (error) {
     return (
-      <div className="space-y-10 py-4">
-        <DashboardSection
+      <Page>
+        <PageHeader
           title="בקשות צפייה בתמונה"
-          subTitle="אירעה שגיאה בטעינת הבקשות"
-          button={
+          description="אירעה שגיאה בטעינת הבקשות"
+          actions={
             <Button asChild>
               <Link href="/app/admin">חזרה לדף הבית</Link>
             </Button>
           }
-        >
-          <div className="mt-6 rounded-lg border border-destructive bg-destructive/10 p-6">
-            <h3 className="mb-2 text-subtitle font-semibold text-destructive">
-              שגיאה בטעינת הבקשות
-            </h3>
-            <p className="text-body-sm">{error.message}</p>
-          </div>
-        </DashboardSection>
-      </div>
+        />
+        <div className="rounded-lg border border-destructive bg-destructive/10 p-6">
+          <h3 className="mb-2 text-subtitle font-semibold text-destructive">
+            שגיאה בטעינת הבקשות
+          </h3>
+          <p className="text-body-sm">{error.message}</p>
+        </div>
+      </Page>
     );
   }
 
   return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
+    <Page>
+      <PageHeader
         title="בקשות צפייה בתמונה"
-        titleNumber={requests.length}
-        subTitle="שדכנים שביקשו הרשאה לצפות בתמונת מיועדת. אישור חושף את התמונה למבקש בכרטיס אחד בלבד."
-        button={
+        count={requests.length}
+        description="שדכנים שביקשו הרשאה לצפות בתמונת מיועדת. אישור חושף את התמונה למבקש בכרטיס אחד בלבד."
+        actions={
           <Button asChild>
             <Link href="/app/admin">חזרה לדף הבית</Link>
           </Button>
         }
-      >
-        <Box className="mt-6 space-y-4">
-          {requests.length === 0 ? (
-            <div className="py-16 text-center">
-              <p className="text-subtitle font-semibold text-muted-foreground">
-                אין בקשות ממתינות
-              </p>
-              <p className="mt-2 text-body-sm text-muted-foreground">
-                בקשה חדשה תופיע כאן ותישלח אליכם גם כהתראה
-              </p>
-            </div>
-          ) : (
-            <table className="w-full text-body-sm">
-              <thead>
-                <tr className="border-b text-right text-muted-foreground">
-                  <th className="py-2 pe-3 font-medium">מבקש</th>
-                  <th className="py-2 pe-3 font-medium">מיועדת</th>
-                  <th className="py-2 pe-3 font-medium">נימוק</th>
-                  <th className="py-2 pe-3 font-medium">תאריך הבקשה</th>
-                  <th className="py-2 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {requests.map((request) => (
-                  <tr
-                    key={request.id}
-                    className="border-b last:border-0 hover:bg-muted/40"
-                  >
-                    <td className="py-3 pe-3">
-                      <span className="font-medium">
-                        {request.requester_name ?? "משתמש לא מזוהה"}
+      />
+      <Box className="space-y-4">
+        {requests.length === 0 ? (
+          <div className="py-16 text-center">
+            <p className="text-subtitle font-semibold text-muted-foreground">
+              אין בקשות ממתינות
+            </p>
+            <p className="mt-2 text-body-sm text-muted-foreground">
+              בקשה חדשה תופיע כאן ותישלח אליכם גם כהתראה
+            </p>
+          </div>
+        ) : (
+          <table className="w-full text-body-sm">
+            <thead>
+              <tr className="border-b text-right text-muted-foreground">
+                <th className="py-2 pe-3 font-medium">מבקש</th>
+                <th className="py-2 pe-3 font-medium">מיועדת</th>
+                <th className="py-2 pe-3 font-medium">נימוק</th>
+                <th className="py-2 pe-3 font-medium">תאריך הבקשה</th>
+                <th className="py-2 font-medium"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {requests.map((request) => (
+                <tr
+                  key={request.id}
+                  className="border-b last:border-0 hover:bg-muted/40"
+                >
+                  <td className="py-3 pe-3">
+                    <span className="font-medium">
+                      {request.requester_name ?? "משתמש לא מזוהה"}
+                    </span>
+                    {request.requester_email && (
+                      <span className="block text-caption text-muted-foreground">
+                        {request.requester_email}
                       </span>
-                      {request.requester_email && (
-                        <span className="block text-caption text-muted-foreground">
-                          {request.requester_email}
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 pe-3">
-                      {request.students ? (
-                        <Link
-                          href={`/app/students/${request.student_id}`}
-                          className="font-medium underline-offset-2 hover:underline"
-                        >
-                          {request.students.first_name}{" "}
-                          {request.students.last_name}
-                        </Link>
-                      ) : (
-                        <span className="text-muted-foreground">
-                          כרטיס לא נמצא
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 pe-3 text-muted-foreground">
-                      {request.reason ?? "-"}
-                    </td>
-                    <td className="py-3 pe-3 text-muted-foreground">
-                      {formatDate(request.created_at)}
-                    </td>
-                    <td className="py-3">
-                      <PhotoRequestActions requestId={request.id} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </Box>
-      </DashboardSection>
-    </div>
+                    )}
+                  </td>
+                  <td className="py-3 pe-3">
+                    {request.students ? (
+                      <Link
+                        href={`/app/students/${request.student_id}`}
+                        className="font-medium underline-offset-2 hover:underline"
+                      >
+                        {request.students.first_name}{" "}
+                        {request.students.last_name}
+                      </Link>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        כרטיס לא נמצא
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-3 pe-3 text-muted-foreground">
+                    {request.reason ?? "-"}
+                  </td>
+                  <td className="py-3 pe-3 text-muted-foreground">
+                    {formatDate(request.created_at)}
+                  </td>
+                  <td className="py-3">
+                    <PhotoRequestActions requestId={request.id} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Box>
+    </Page>
   );
 }
 
 function PhotoRequestsFallback() {
   return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
+    <Page>
+      <PageHeader
         title="בקשות צפייה בתמונה"
-        subTitle="שדכנים שביקשו הרשאה לצפות בתמונת מיועדת. אישור חושף את התמונה למבקש בכרטיס אחד בלבד."
-        button={
+        description="שדכנים שביקשו הרשאה לצפות בתמונת מיועדת. אישור חושף את התמונה למבקש בכרטיס אחד בלבד."
+        actions={
           <Button asChild>
             <Link href="/app/admin">חזרה לדף הבית</Link>
           </Button>
         }
-      >
-        <Box className="mt-6">
-          <div role="status" aria-label="טוען" className="space-y-4">
-            <Skeleton className="h-6 w-full" />
-            {Array.from({ length: FALLBACK_ROW_COUNT }).map((_, index) => (
-              <Skeleton key={index} className="h-12 w-full" />
-            ))}
-          </div>
-        </Box>
-      </DashboardSection>
-    </div>
+      />
+      <Box>
+        <div role="status" aria-label="טוען" className="space-y-4">
+          <Skeleton className="h-6 w-full" />
+          {Array.from({ length: FALLBACK_ROW_COUNT }).map((_, index) => (
+            <Skeleton key={index} className="h-12 w-full" />
+          ))}
+        </div>
+      </Box>
+    </Page>
   );
 }
 

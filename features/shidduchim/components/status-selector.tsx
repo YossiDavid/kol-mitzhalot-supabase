@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import {
-  SHIDDUCH_STATUS_BADGE_CLASS,
+  SHIDDUCH_STATUS_BADGE_VARIANT,
   SHIDDUCH_STATUS_LABELS,
   SHIDDUCH_STATUS_OPTIONS,
   type ShidduchStatus,
@@ -62,10 +62,7 @@ export default function StatusSelector({
     <div className="space-y-2">
       <p className="text-muted-foreground text-body-sm font-medium">סטטוס</p>
       <div className="flex flex-wrap items-center gap-3">
-        <Badge
-          variant="outline"
-          className={SHIDDUCH_STATUS_BADGE_CLASS[status]}
-        >
+        <Badge variant={SHIDDUCH_STATUS_BADGE_VARIANT[status]}>
           {SHIDDUCH_STATUS_LABELS[status]}
         </Badge>
         <div className="w-full max-w-[260px]">

@@ -38,7 +38,7 @@ export default function ShareButton({ studentId, studentName }: ShareButtonProps
     <Button variant="outline" onClick={handleShare}>
       {copied ? (
         <>
-          <Check className="h-4 w-4 text-green-600" />
+          <Check className="h-4 w-4 text-success" />
           הקישור הועתק
         </>
       ) : (

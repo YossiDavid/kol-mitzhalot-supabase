@@ -257,7 +257,7 @@ export default function Favorites({ favorites }: { favorites: Favorite[] }) {
                     variant={"ghost"}
                     onClick={() => handleFavoriteRemove(favorite.id)}
                   >
-                    <Trash2 className="text-red-500" />
+                    <Trash2 className="text-destructive" />
                   </Button>
                 </div>
               </Box>

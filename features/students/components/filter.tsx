@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, Search, SlidersHorizontal, X } from "lucide-react";
 
-import { Box, DashboardSection } from "@/components/layout";
+import { Box, PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -267,12 +267,17 @@ export default function FilterSection() {
 
   return (
     <>
-      {/* מובייל: כל השדות בפאנל אחד שנפתח בלחיצה */}
-      <div className="space-y-4 md:hidden">
-        <div className="text-center">
-          <h1>רשימת פרחי אנ״ש</h1>
-        </div>
+      <PageHeader
+        title="רשימת פרחי אנ״ש"
+        actions={
+          <Button asChild className="max-md:hidden">
+            <Link href={"/app"}>לכל ההצעות האחרונות</Link>
+          </Button>
+        }
+      />
 
+      {/* מובייל: כל השדות בפאנל אחד שנפתח בלחיצה */}
+      <div className="mt-4 space-y-4 md:hidden">
         <button
           type="button"
           onClick={() => setMobileOpen((open) => !open)}
@@ -319,62 +324,48 @@ export default function FilterSection() {
       </div>
 
       {/* דסקטופ: שורת סינון בסיסית, והשאר מאחורי "סינון מתקדם" */}
-      <div className="hidden md:block">
-        <DashboardSection
-          title="רשימת פרחי אנ״ש"
-          button={
-            <Button asChild>
-              <Link href={"/app"}>לכל ההצעות האחרונות</Link>
-            </Button>
-          }
-          containerClassName="p-0 space-y-4"
-        >
-          <div className="box space-y-4 p-4">
-            <div className="grid grid-cols-12 gap-4">
-              <BasicFields
+      <div className="mt-6 hidden md:block">
+        <div className="box space-y-4 p-4">
+          <div className="grid grid-cols-12 gap-4">
+            <BasicFields idPrefix="" filter={filter} onChange={updateFilter} />
+          </div>
+
+          {advancedOpen && (
+            <div
+              id="advanced-student-filters"
+              className="grid grid-cols-12 gap-4"
+            >
+              <AdvancedFields
                 idPrefix=""
                 filter={filter}
                 onChange={updateFilter}
               />
             </div>
+          )}
 
-            {advancedOpen && (
-              <div
-                id="advanced-student-filters"
-                className="grid grid-cols-12 gap-4"
-              >
-                <AdvancedFields
-                  idPrefix=""
-                  filter={filter}
-                  onChange={updateFilter}
-                />
-              </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setAdvancedOpen((open) => !open)}
+              aria-expanded={advancedOpen}
+              aria-controls="advanced-student-filters"
+            >
+              <SlidersHorizontal />
+              סינון מתקדם
+              <ChevronDown
+                className={cn(
+                  "transition-transform duration-200",
+                  advancedOpen && "rotate-180",
+                )}
+              />
+            </Button>
+            {activeFilterCount > 0 && (
+              <ClearFiltersButton onClick={clearFilter} />
             )}
-
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setAdvancedOpen((open) => !open)}
-                aria-expanded={advancedOpen}
-                aria-controls="advanced-student-filters"
-              >
-                <SlidersHorizontal />
-                סינון מתקדם
-                <ChevronDown
-                  className={cn(
-                    "transition-transform duration-200",
-                    advancedOpen && "rotate-180",
-                  )}
-                />
-              </Button>
-              {activeFilterCount > 0 && (
-                <ClearFiltersButton onClick={clearFilter} />
-              )}
-            </div>
           </div>
-        </DashboardSection>
+        </div>
       </div>
     </>
   );

@@ -97,7 +97,7 @@ export default function ContactShadchanDialog({
           <MessageSquare />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent>
         <form onSubmit={handleSubmit} className="grid gap-4">
           <DialogHeader>
             <DialogTitle>פניה ל{shadchanName}</DialogTitle>

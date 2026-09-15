@@ -73,10 +73,7 @@ export default function SendProposalModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="max-h-[90vh] overflow-y-auto sm:max-w-lg"
-        dir="rtl"
-      >
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>שליחת הצעת שידוך</DialogTitle>
           <DialogDescription>

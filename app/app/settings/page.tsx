@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { Page, PageHeader } from "@/components/layout";
 import { ProfileForm } from "@/features/settings/components/profile-form";
 import { ShadchanCard } from "@/features/settings/components/shadchan-card";
 import { StaffCard } from "@/features/settings/components/staff-card";
@@ -93,18 +94,14 @@ export default function SettingsPage({
   searchParams: Promise<{ required?: string }>;
 }) {
   return (
-    <div className="container mx-auto max-w-2xl py-8">
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-heading font-bold">הגדרות</h1>
-          <p className="mt-2 text-muted-foreground">
-            נהל את הגדרות החשבון והפרופיל שלך
-          </p>
-        </div>
-        <Suspense fallback={<SettingsContentSkeleton />}>
-          <SettingsContent searchParams={searchParams} />
-        </Suspense>
-      </div>
-    </div>
+    <Page width="form">
+      <PageHeader
+        title="הגדרות"
+        description="נהל את הגדרות החשבון והפרופיל שלך"
+      />
+      <Suspense fallback={<SettingsContentSkeleton />}>
+        <SettingsContent searchParams={searchParams} />
+      </Suspense>
+    </Page>
   );
 }

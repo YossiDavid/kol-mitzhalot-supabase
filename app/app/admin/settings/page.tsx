@@ -1,21 +1,21 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { DashboardSection } from "@/components/layout";
+import { Page, PageHeader } from "@/components/layout";
 import { Shield, FileCheck, Accessibility } from "lucide-react";
 import { PhoneVerificationToggle } from "@/features/admin/components/phone-verification-toggle";
 
 export default function SettingsPage() {
   return (
-    <div className="space-y-10 py-4">
-      <DashboardSection
+    <Page>
+      <PageHeader
         title="הגדרות מערכת"
-        subTitle="עריכת תוכן מערכת"
-        button={<Button asChild><Link href="/app/admin">חזרה לדף הבית</Link></Button>}
-      >
-        <div className="mt-6 space-y-6">
+        description="עריכת תוכן מערכת"
+        actions={<Button asChild><Link href="/app/admin">חזרה לדף הבית</Link></Button>}
+      />
+        <div className="space-y-6">
           <PhoneVerificationToggle />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
           <Link href="/app/admin/settings/privacy-policy">
             <div className="p-6 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
               <Shield className="h-8 w-8 mb-4" />
@@ -46,7 +46,6 @@ export default function SettingsPage() {
             </div>
           </Link>
         </div>
-      </DashboardSection>
-    </div>
+    </Page>
   );
 }

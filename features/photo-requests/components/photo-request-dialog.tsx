@@ -128,7 +128,7 @@ export function PhotoRequestDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent dir="rtl" className="text-right">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>צפייה בתמונה</DialogTitle>
           <DialogDescription>
@@ -153,7 +153,7 @@ export function PhotoRequestDialog({
           </div>
         ) : state === "approved" ? (
           <div className="flex items-start gap-3 rounded-md border bg-muted/40 p-4">
-            <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+            <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-success" />
             <div>
               <p className="font-medium">הבקשה אושרה</p>
               <p className="mt-1 text-body-sm text-muted-foreground">

@@ -1,5 +1,6 @@
 "use client";
 
+import { Page, PageHeader } from "@/components/layout";
 import { Suspense, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -74,16 +75,12 @@ const STAFF_INSTITUTION_TYPE_OPTIONS = INSTITUTION_TYPE_OPTIONS.filter(
 /** שלד עמוד הבקשה, זהה במבנה לתוכן האמיתי כדי שלא תהיה קפיצה. */
 function StaffPageSkeleton() {
   return (
-    <div className="container mx-auto max-w-2xl py-8">
+    <Page width="form">
+      <PageHeader
+        title="הצטרפות כאיש צוות"
+        description="ההצטרפות כאיש צוות נועדה לכתיבת משוב חיובי על כרטיסי המיועדים שמתחנכים אצלכם — מחמאות ותשבחות שיעזרו לשדכנים להכיר אותם טוב יותר. מלאו את המוסדות שבהם אתם מלמדים ואת התפקיד בכל אחד מהם."
+      />
       <div className="space-y-6">
-        <div>
-          <h1 className="text-heading font-bold">הצטרפות כאיש צוות</h1>
-          <p className="mt-2 text-muted-foreground">
-            ההצטרפות כאיש צוות נועדה לכתיבת משוב חיובי על כרטיסי המיועדים
-            שמתחנכים אצלכם — מחמאות ותשבחות שיעזרו לשדכנים להכיר אותם טוב יותר.
-            מלאו את המוסדות שבהם אתם מלמדים ואת התפקיד בכל אחד מהם.
-          </p>
-        </div>
         <div
           role="status"
           aria-label="טוען"
@@ -111,7 +108,7 @@ function StaffPageSkeleton() {
           </div>
         </div>
       </div>
-    </div>
+    </Page>
   );
 }
 
@@ -415,17 +412,12 @@ function StaffApplicationForm() {
   }
 
   return (
-    <div className="container mx-auto max-w-2xl py-8">
+    <Page width="form">
+      <PageHeader
+        title="הצטרפות כאיש צוות"
+        description="ההצטרפות כאיש צוות נועדה לכתיבת משוב חיובי על כרטיסי המיועדים שמתחנכים אצלכם — מחמאות ותשבחות שיעזרו לשדכנים להכיר אותם טוב יותר. מלאו את המוסדות שבהם אתם מלמדים ואת התפקיד בכל אחד מהם."
+      />
       <div className="space-y-6">
-        <div>
-          <h1 className="text-heading font-bold">הצטרפות כאיש צוות</h1>
-          <p className="mt-2 text-muted-foreground">
-            ההצטרפות כאיש צוות נועדה לכתיבת משוב חיובי על כרטיסי המיועדים
-            שמתחנכים אצלכם — מחמאות ותשבחות שיעזרו לשדכנים להכיר אותם טוב יותר.
-            מלאו את המוסדות שבהם אתם מלמדים ואת התפקיד בכל אחד מהם.
-          </p>
-        </div>
-
         <Card>
           <CardHeader>
             <CardTitle>טופס הצטרפות</CardTitle>
@@ -655,6 +647,6 @@ function StaffApplicationForm() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </Page>
   );
 }

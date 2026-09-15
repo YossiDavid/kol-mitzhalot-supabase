@@ -13,7 +13,7 @@ export default function ShiduchAlert({ issues, status, onClose }: Props) {
 		<div className="w-full p-6 flex justify-center">
 			<div className="w-full max-w-lg">
 				{issues && (
-					<Alert className="border-yellow-200 bg-yellow-50 text-yellow-800 dark:border-yellow-800 dark:bg-yellow-950/30 dark:text-yellow-200 [&>svg]:text-yellow-600 dark:[&>svg]:text-yellow-400">
+					<Alert className="border-warning bg-warning-muted text-warning-muted-foreground [&>svg]:text-warning-muted-foreground">
 						<Button
 							onClick={onClose}
 							variant={"ghost"}
@@ -27,7 +27,7 @@ export default function ShiduchAlert({ issues, status, onClose }: Props) {
 							זיהינו כמה נקודות שכדאי לשים לב אליהם לפני שליחת
 							ההצעה:
 						</AlertTitle>
-						<AlertDescription className="text-yellow-700 dark:text-yellow-300">
+						<AlertDescription className="text-warning-muted-foreground">
 							<ul className="list-disc list-inside space-y-1 mt-2">
 								{issues?.map((issue, index) => (
 									<li key={index}>{issue}</li>
@@ -37,7 +37,7 @@ export default function ShiduchAlert({ issues, status, onClose }: Props) {
 					</Alert>
 				)}
 				{status === "ok" && (
-					<Alert className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950/30 dark:text-green-200 [&>svg]:text-green-600 dark:[&>svg]:text-green-400">
+					<Alert className="border-success bg-success-muted text-success-muted-foreground [&>svg]:text-success-muted-foreground">
 						<CheckCircle2Icon />
 						<AlertTitle>
 							לא נמצאו בעיות בשידוך, אפשר לשלוח הצעה בביטחון!

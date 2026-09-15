@@ -1,4 +1,4 @@
-import { Section } from "@/components/layout";
+import { Page, PageHeader } from "@/components/layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/server";
 import { hasRole } from "@/lib/user";
@@ -112,28 +112,26 @@ function ForumPostsSkeleton() {
 
 export default function ForumsPage() {
   return (
-    <Section containerClassName="py-10">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-heading font-bold">פורום שדכנים</h1>
-          <p className="mt-1 text-body-sm text-muted-foreground">
-            מקום לשאלות, עצות, ושיתוף ידע בין שדכנים
-          </p>
-        </div>
-        <Suspense
-          fallback={
-            <Skeleton role="status" aria-label="טוען" className="h-9 w-28" />
-          }
-        >
-          <ForumActions />
-        </Suspense>
-      </div>
+    <Page>
+      <PageHeader
+        title="פורום שדכנים"
+        description="מקום לשאלות, עצות, ושיתוף ידע בין שדכנים"
+        actions={
+          <Suspense
+            fallback={
+              <Skeleton role="status" aria-label="טוען" className="h-9 w-28" />
+            }
+          >
+            <ForumActions />
+          </Suspense>
+        }
+      />
 
-      <div className="mt-8 space-y-4">
+      <div className="space-y-4">
         <Suspense fallback={<ForumPostsSkeleton />}>
           <ForumPosts />
         </Suspense>
       </div>
-    </Section>
+    </Page>
   );
 }

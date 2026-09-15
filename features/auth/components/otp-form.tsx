@@ -4,8 +4,8 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { PageTitle } from "@/components/layout/page-header";
 import {
   Field,
   FieldDescription,
@@ -50,7 +50,7 @@ export function OTPForm({
   return (
     <Card {...props}>
       <CardHeader>
-        <CardTitle>{c.title}</CardTitle>
+        <PageTitle>{c.title}</PageTitle>
         <CardDescription>{c.description}</CardDescription>
       </CardHeader>
       <CardContent>
