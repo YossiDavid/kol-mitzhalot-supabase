@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Box, Page, PageHeader } from "@/components/layout";
+import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -169,6 +170,76 @@ export default function InstitutionsAdminPage() {
     load();
   }
 
+  const institutionColumns: DataTableColumn<Institution>[] = [
+    {
+      key: "name",
+      header: "שם המוסד",
+      size: "grow",
+      mobile: "title",
+      className: "font-medium",
+      cell: (institution) => institution.name,
+    },
+    {
+      key: "city",
+      header: "עיר",
+      className: "text-muted-foreground",
+      cell: (institution) => institution.city ?? "-",
+    },
+    {
+      key: "gender",
+      header: "מגדר",
+      size: "min",
+      className: "text-muted-foreground",
+      cell: (institution) => INSTITUTION_GENDER_LABELS[institution.gender],
+    },
+    {
+      key: "type",
+      header: "סוג מוסד",
+      className: "text-muted-foreground",
+      cell: (institution) => INSTITUTION_TYPE_LABELS[institution.type],
+    },
+    {
+      key: "status",
+      header: "סטטוס",
+      size: "min",
+      mobile: "aside",
+      cell: (institution) => (
+        <Badge variant={institution.is_active ? "success" : "neutral"}>
+          {institution.is_active ? "פעיל" : "לא פעיל"}
+        </Badge>
+      ),
+    },
+    {
+      key: "actions",
+      header: <span className="sr-only">פעולות</span>,
+      size: "min",
+      mobile: "actions",
+      cell: (institution) => (
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            title="עריכה"
+            aria-label={`עריכה: ${institution.name}`}
+            onClick={() => openEditDialog(institution)}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-destructive hover:text-destructive"
+            title="מחיקה"
+            aria-label={`מחיקה: ${institution.name}`}
+            onClick={() => deleteInstitution(institution)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <Page>
       <PageHeader
@@ -225,78 +296,27 @@ export default function InstitutionsAdminPage() {
 
         {loading ? (
           <div className="py-10 text-center text-muted-foreground">טוען...</div>
-        ) : filteredInstitutions.length === 0 ? (
-          <div className="py-16 text-center">
-            <p className="text-subtitle font-semibold text-muted-foreground">
-              אין מוסדות להצגה
-            </p>
-            <p className="mt-2 text-body-sm text-muted-foreground">
-              הוסיפו מוסד ראשון למאגר
-            </p>
-            <Button className="mt-6" onClick={openCreateDialog}>
-              <Plus className="me-1 h-4 w-4" /> מוסד חדש
-            </Button>
-          </div>
         ) : (
-          <table className="w-full text-body-sm">
-            <thead>
-              <tr className="border-b text-right text-muted-foreground">
-                <th className="py-2 pe-3 font-medium">שם המוסד</th>
-                <th className="py-2 pe-3 font-medium">עיר</th>
-                <th className="py-2 pe-3 font-medium">מגדר</th>
-                <th className="py-2 pe-3 font-medium">סוג מוסד</th>
-                <th className="py-2 pe-3 font-medium">סטטוס</th>
-                <th className="py-2 font-medium"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredInstitutions.map((institution) => (
-                <tr
-                  key={institution.id}
-                  className="border-b last:border-0 hover:bg-muted/40"
-                >
-                  <td className="py-3 pe-3 font-medium">{institution.name}</td>
-                  <td className="py-3 pe-3 text-muted-foreground">
-                    {institution.city ?? "-"}
-                  </td>
-                  <td className="py-3 pe-3 text-muted-foreground">
-                    {INSTITUTION_GENDER_LABELS[institution.gender]}
-                  </td>
-                  <td className="py-3 pe-3 text-muted-foreground">
-                    {INSTITUTION_TYPE_LABELS[institution.type]}
-                  </td>
-                  <td className="py-3 pe-3">
-                    <Badge
-                      variant={institution.is_active ? "success" : "neutral"}
-                    >
-                      {institution.is_active ? "פעיל" : "לא פעיל"}
-                    </Badge>
-                  </td>
-                  <td className="py-3">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        title="עריכה"
-                        onClick={() => openEditDialog(institution)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive"
-                        title="מחיקה"
-                        onClick={() => deleteInstitution(institution)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <DataTable
+            surface={false}
+            caption="מוסדות לימוד"
+            columns={institutionColumns}
+            rows={filteredInstitutions}
+            getRowKey={(institution) => institution.id}
+            emptyState={
+              <div className="py-16 text-center">
+                <p className="text-subtitle font-semibold text-muted-foreground">
+                  אין מוסדות להצגה
+                </p>
+                <p className="mt-2 text-body-sm text-muted-foreground">
+                  הוסיפו מוסד ראשון למאגר
+                </p>
+                <Button className="mt-6" onClick={openCreateDialog}>
+                  <Plus className="me-1 h-4 w-4" /> מוסד חדש
+                </Button>
+              </div>
+            }
+          />
         )}
       </Box>
 

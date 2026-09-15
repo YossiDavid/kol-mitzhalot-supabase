@@ -87,7 +87,7 @@ ESLint (`no-restricted-syntax` ב־`eslint.config.mjs`) אוכף את החוזה
 - **אזור תוכן אפליקציה**: `main` עם `className="container flex-1 py-5"` ב־`app/app/layout.tsx`.
 - **כותרת עליונה**: גובה קבוע `h-16`, גבול תחתון עדין `border-b border-b-foreground/10`, טקסט `font-semibold` — ראו `components/layout/header/index.tsx`.
 - **רשת תוכן מותאמת**: המחלקה `.content-grid` — רשת עם `gap: 20px` ותבנית עמודות `1fr 3fr 1fr` ו־grid areas (אימוג'י כשמות אזורים) — לשימוש במסכים ספציפיים.
-- **טבלאות/רשימות מורכבות**: משתני CSS `--children-cols` ו־`--favorites-cols` עם המחלקות `.children-cols` ו־`.favorites-cols` לעמודות גריד דינמיות.
+- **טבלאות**: רק `DataTable` (ראו למטה) — לא רשת `grid-cols-[...]` ולא `<table>` ידני.
 
 ---
 
@@ -118,6 +118,35 @@ ESLint (`no-restricted-syntax` ב־`eslint.config.mjs`) אוכף את החוזה
 - **שדה בטופס:** `FormFieldShell` (`components/ui/form-field-shell.tsx`) בתוך `render` של `FormField` — תווית מודגשת עם `required`, הפקד, טקסט עזרה **תמיד מתחת לפקד**, ושגיאה. `FormControl` מסמן `aria-invalid` כשיש שגיאה.
 - **`FormField` גנרי:** מקבל `control={form.control}` של טופס מוקלד — אין צורך ב־`as any`.
 - **שדה עם תוספות:** `InputGroup` (`components/ui/input-group.tsx`) — `InputGroupInput` לפקד הראשי, `InputGroupAddon` לטקסט או אייקון, `InputGroupSelect` לרשימה קומפקטית (למשל תואר לפני ואחרי שם). המסגרת, הפוקוס והשגיאה שייכים לקבוצה.
+
+### טבלאות (`DataTable`)
+
+`components/data-table` — טבלה סמנטית (`components/ui/table.tsx`) מ־`md`, וכרטיסים במובייל. אינה רכיב לקוח, ולכן אפשר להציג אותה ישירות מעמוד שרת; רק שורה־קישור רצה בלקוח.
+
+```tsx
+const COLUMNS: DataTableColumn<User>[] = [
+  { key: "name", header: "שם", size: "grow", mobile: "title", cell: (u) => u.name },
+  { key: "email", header: "אימייל", size: "grow", className: "wrap-anywhere", cell: (u) => u.email },
+  { key: "status", header: "סטטוס", size: "min", mobile: "aside", cell: (u) => <Badge variant="success">פעיל</Badge> },
+  { key: "actions", header: <span className="sr-only">פעולות</span>, size: "min", mobile: "actions", cell: (u) => <Button size="sm">צפייה</Button> },
+];
+
+<DataTable caption="משתמשים" columns={COLUMNS} rows={users} getRowKey={(u) => u.id} emptyState={<Empty>…</Empty>} />
+```
+
+| תכונה | מה עושה |
+|------|--------|
+| `size` | `min` צמודה לתוכן בלי שבירה (מספרים, תגים, פעולות); `grow` מקבלת את המקום שנשאר; `auto` (ברירת מחדל) |
+| `align` | `start` / `center` / `end` — כיוון לוגי |
+| `mobile` | מקום בכרטיס: `title`, `aside` (לצד הכותרת), `field` (תווית/ערך, ברירת מחדל), `actions` (בתחתית), `hidden` |
+| `mobileLabel` | תווית בכרטיס כשכותרת העמודה לא מתאימה |
+| `getRowLink` | `{ href, label }` — השורה והכרטיס כולם קישור (לחיצה, Enter, Cmd/Ctrl ללשונית חדשה). פקדים בתוך השורה שומרים על הפעולה שלהם |
+| `rowClassName` | הדגשת שורה בטוקנים (למשל `bg-warning-muted`) |
+| `mobileTitle` | כותרת כרטיס מותאמת (למשל שם פרטי + משפחה משתי עמודות) |
+| `breakpoint` | `md` (ברירת מחדל); `lg` לטבלאות עם הרבה עמודות (טבלת המיועדים); `xl` לטבלאות ניהול רחבות שגולשות בטאבלט לצד סרגל הצד (משתמשים, שדכנים) |
+| `surface` | `false` כשהטבלה כבר בתוך `Box` — כרטיסי המובייל מקבלים מסגרת במקום רקע |
+
+**טבלת מיועדים:** `StudentsTable` (`features/students/components/students-table.tsx`) עם `preset="list" | "favorites" | "children"`. נוסח הסטטוס האישי — רק `personalStatusToHebrew` (`features/students/lib/profile-labels.ts`).
 
 ### כרטיסים (`Card`)
 
@@ -159,6 +188,7 @@ ESLint (`no-restricted-syntax` ב־`eslint.config.mjs`) אוכף את החוזה
 | כפתורים / כרטיסים | `components/ui/button.tsx`, `components/ui/card.tsx` |
 | סולם גבהים | `components/ui/control-size.ts` |
 | שדות בטופס | `components/ui/form-field-shell.tsx`, `components/ui/input-group.tsx` |
+| טבלאות | `components/data-table/data-table.tsx`, `components/ui/table.tsx` |
 | צילומי לפני/אחרי | `pnpm capture:ui <label>` (`scripts/capture-ui.mjs`) |
 
 ---

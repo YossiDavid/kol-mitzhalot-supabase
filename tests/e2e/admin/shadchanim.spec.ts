@@ -20,7 +20,11 @@ test.describe("ניהול שדכנים — בדיקות admin", () => {
     // Admin Test User שנוצר ב-auth.setup.admin.ts אמור להופיע
     // עם firstName="Admin" ולכן לא להציג "לא זמין"
     // אם הטבלה ריקה — הבדיקה עוברת (אין שגיאה)
-    const rows = page.locator("[data-slot='table-header'] ~ *");
+    // שורות הנתונים בלבד - לשורת הכותרת יש columnheader ולא cell
+    const rows = page
+      .getByRole("table")
+      .getByRole("row")
+      .filter({ has: page.getByRole("cell") });
     const count = await rows.count();
 
     if (count > 0) {

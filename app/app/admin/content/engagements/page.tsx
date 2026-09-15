@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Box, Page, PageHeader } from "@/components/layout";
+import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -90,6 +91,76 @@ export default function EngagementsAdminPage() {
     setSaving(false);
   }
 
+  const engagementColumns: DataTableColumn<Engagement>[] = [
+    {
+      key: "groom",
+      header: "חתן",
+      mobile: "title",
+      className: "font-medium",
+      cell: (e) => e.groom_name,
+    },
+    {
+      key: "bride",
+      header: "כלה",
+      className: "font-medium",
+      cell: (e) => e.bride_name,
+    },
+    {
+      key: "cities",
+      header: "ערים",
+      size: "grow",
+      className: "text-muted-foreground",
+      cell: (e) => [e.groom_city, e.bride_city].filter(Boolean).join(" / "),
+    },
+    {
+      key: "status",
+      header: "סטטוס",
+      size: "min",
+      mobile: "aside",
+      cell: (e) => (
+        <Badge variant={e.is_published ? "success" : "warning"}>
+          {e.is_published ? "מפורסם" : "ממתין"}
+        </Badge>
+      ),
+    },
+    {
+      key: "date",
+      header: "תאריך",
+      size: "min",
+      className: "text-muted-foreground",
+      cell: (e) => new Date(e.created_at).toLocaleDateString("he-IL"),
+    },
+    {
+      key: "actions",
+      header: <span className="sr-only">פעולות</span>,
+      size: "min",
+      mobile: "actions",
+      cell: (e) => (
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            title={e.is_published ? "הסר פרסום" : "פרסם"}
+            aria-label={e.is_published ? "הסר פרסום" : "פרסם"}
+            onClick={() => togglePublish(e)}
+          >
+            {e.is_published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-destructive hover:text-destructive"
+            title="מחיקה"
+            aria-label="מחיקה"
+            onClick={() => deleteEngagement(e.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   const F = (key: keyof typeof EMPTY_FORM, label: string, type = "text") => (
     <div>
       <Label htmlFor={key}>{label}</Label>
@@ -156,64 +227,20 @@ export default function EngagementsAdminPage() {
         <Box>
           {loading ? (
             <div className="py-10 text-center text-muted-foreground">טוען...</div>
-          ) : engagements.length === 0 ? (
-            <div className="py-16 text-center">
-              <p className="text-subtitle font-semibold text-muted-foreground">אין מודעות עדיין</p>
-              <p className="mt-2 text-body-sm text-muted-foreground">מודעות מהטופס באתר יופיעו כאן לאישור</p>
-            </div>
           ) : (
-            <table className="w-full text-body-sm">
-              <thead>
-                <tr className="border-b text-right text-muted-foreground">
-                  <th className="py-2 pe-3 font-medium">חתן</th>
-                  <th className="py-2 pe-3 font-medium">כלה</th>
-                  <th className="py-2 pe-3 font-medium">ערים</th>
-                  <th className="py-2 pe-3 font-medium">סטטוס</th>
-                  <th className="py-2 pe-3 font-medium">תאריך</th>
-                  <th className="py-2 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {engagements.map((e) => (
-                  <tr key={e.id} className="border-b last:border-0 hover:bg-muted/40">
-                    <td className="py-3 pe-3 font-medium">{e.groom_name}</td>
-                    <td className="py-3 pe-3 font-medium">{e.bride_name}</td>
-                    <td className="py-3 pe-3 text-muted-foreground">
-                      {[e.groom_city, e.bride_city].filter(Boolean).join(" / ")}
-                    </td>
-                    <td className="py-3 pe-3">
-                      <Badge variant={e.is_published ? "success" : "warning"}>
-                        {e.is_published ? "מפורסם" : "ממתין"}
-                      </Badge>
-                    </td>
-                    <td className="py-3 pe-3 text-muted-foreground">
-                      {new Date(e.created_at).toLocaleDateString("he-IL")}
-                    </td>
-                    <td className="py-3">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title={e.is_published ? "הסר פרסום" : "פרסם"}
-                          onClick={() => togglePublish(e)}
-                        >
-                          {e.is_published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive"
-                          title="מחיקה"
-                          onClick={() => deleteEngagement(e.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <DataTable
+              surface={false}
+              caption="מודעות מאורסים"
+              columns={engagementColumns}
+              rows={engagements}
+              getRowKey={(e) => e.id}
+              emptyState={
+                <div className="py-16 text-center">
+                  <p className="text-subtitle font-semibold text-muted-foreground">אין מודעות עדיין</p>
+                  <p className="mt-2 text-body-sm text-muted-foreground">מודעות מהטופס באתר יופיעו כאן לאישור</p>
+                </div>
+              }
+            />
           )}
         </Box>
     </Page>

@@ -1,7 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Box, Page, PageHeader } from "@/components/layout";
+import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
+import type { Route } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import calculateAge from "@/lib/calculateAge";
@@ -181,6 +183,59 @@ async function getUserDetails(userId: string): Promise<UserDetails | null> {
     })),
     shidduchimStats,
   };
+}
+
+type ChildRow = UserDetails["children"][number];
+
+function childColumns(
+  byChild: UserDetails["shidduchimStats"]["byChild"],
+): DataTableColumn<ChildRow>[] {
+  const statsFor = (childId: string) =>
+    byChild.find((s) => s.childId === childId) ?? { offered: 0, completed: 0 };
+
+  return [
+    {
+      key: "name",
+      header: "שם",
+      size: "grow",
+      mobile: "title",
+      cell: (child) => (
+        <Link
+          href={`/app/students/${child.id}` as Route}
+          className="text-primary hover:underline"
+        >
+          {child.firstName} {child.lastName}
+        </Link>
+      ),
+    },
+    {
+      key: "gender",
+      header: "מגדר",
+      size: "min",
+      cell: (child) => (child.gender === "male" ? "זכר" : "נקבה"),
+    },
+    {
+      key: "age",
+      header: "גיל",
+      size: "min",
+      cell: (child) => calculateAge(new Date(child.birthDate)),
+    },
+    { key: "city", header: "עיר", cell: (child) => child.city },
+    {
+      key: "offered",
+      header: "שידוכים הוצעו",
+      size: "min",
+      align: "center",
+      cell: (child) => statsFor(child.id).offered,
+    },
+    {
+      key: "completed",
+      header: "שידוכים נסגרו",
+      size: "min",
+      align: "center",
+      cell: (child) => statsFor(child.id).completed,
+    },
+  ];
 }
 
 function formatDate(dateString: string | null): string {
@@ -375,48 +430,16 @@ async function UserDetailsContent({ params }: UserDetailsPageProps) {
           <h3 className="mb-4 text-subtitle font-semibold">
             ילדים במערכת ({userDetails.children.length})
           </h3>
-          {userDetails.children.length === 0 ? (
-            <p className="text-muted-foreground">אין ילדים רשומים במערכת</p>
-          ) : (
-            <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 pt-4">
-              <div
-                data-slot="table-header"
-                className="col-span-full grid grid-cols-subgrid font-semibold"
-              >
-                <div>שם</div>
-                <div>מגדר</div>
-                <div>גיל</div>
-                <div>עיר</div>
-                <div>שידוכים הוצעו</div>
-                <div>שידוכים נסגרו</div>
-              </div>
-              {userDetails.children.map((child) => {
-                const stats = userDetails.shidduchimStats.byChild.find(
-                  (s) => s.childId === child.id,
-                ) || { offered: 0, completed: 0 };
-                return (
-                  <div
-                    key={child.id}
-                    className="col-span-full grid grid-cols-subgrid items-center border-b p-2"
-                  >
-                    <div>
-                      <Link
-                        href={`/app/students/${child.id}`}
-                        className="text-primary hover:underline"
-                      >
-                        {child.firstName} {child.lastName}
-                      </Link>
-                    </div>
-                    <div>{child.gender === "male" ? "זכר" : "נקבה"}</div>
-                    <div>{calculateAge(new Date(child.birthDate))}</div>
-                    <div>{child.city}</div>
-                    <div className="text-center">{stats.offered}</div>
-                    <div className="text-center">{stats.completed}</div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <DataTable
+            surface={false}
+            caption="ילדים במערכת"
+            columns={childColumns(userDetails.shidduchimStats.byChild)}
+            rows={userDetails.children}
+            getRowKey={(child) => child.id}
+            emptyState={
+              <p className="text-muted-foreground">אין ילדים רשומים במערכת</p>
+            }
+          />
         </Box>
       </div>
     </Page>

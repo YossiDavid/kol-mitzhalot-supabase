@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useStudentQuery } from "@/features/students/lib/student-query-context";
 import { createClient } from "@/lib/supabase/client";
 import { hasRole } from "@/lib/user-role";
-import DeleteStudentButton from "@/features/students/components/delete-student-button";
 import {
   Empty,
   EmptyDescription,
@@ -12,65 +11,15 @@ import {
 } from "@/components/ui/empty";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import Link from "next/link";
-import calculateAge from "@/lib/calculateAge";
-import { Star, Camera, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
-import { cn } from "@/lib/utils";
-import { useRowLink } from "@/features/students/lib/use-row-link";
+import {
+  StudentsTable,
+  type StudentTableRow,
+} from "@/features/students/components/students-table";
+import { isOutOfShidduchimStatus } from "@/features/students/lib/student-status";
 
-type Student = {
-  id: string;
-  gender: "male" | "female";
-  personal_status: "married" | "engaged" | "single";
-  last_name: string;
-  first_name: string;
-  parents_info: {
-    father: {
-      self: {
-        prefix: string;
-        name: string;
-        suffix: string;
-      };
-    };
-    mother: {
-      self: {
-        prefix: string;
-        name: string;
-        suffix: string;
-      };
-    };
-  };
-  city: string;
-  birth_date: Date;
-  height: number;
-  cv_url?: string;
-  /** מספר התמונות בגלריה - התמונות עצמן אינן נשלפות לרשימה */
-  photo_count?: number;
-  status_changed_at?: string | null;
-  permalink: string;
-};
-
-/**
- * כל השורה/הכרטיס הם קישור לכרטיס המלא. Box מעביר רק className ומשמיט
- * אירועים ו-props אחרים, ולכן משתמשים ב-div עם המחלקה box עצמה.
- */
-const CLICKABLE_ROW_CLASS =
-  "box cursor-pointer p-4 outline-none transition-colors hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50";
-
-const ENGAGED_ROW_CLASS = "border-warning bg-warning-muted hover:bg-warning/30";
-
-/**
- * סטטוסים שמוציאים את הכרטיס משידוכים (in_shidduchim=false). ברשימה
- * הרגילה הם מוסתרים, אבל סינון מפורש לפיהם מציג אותם - אחרת כרטיס שסומן
- * "נשוי" בטעות נעלם ואין דרך להגיע אליו כדי להחזיר את הסטטוס.
- */
-const OUT_OF_SHIDDUCHIM_STATUSES: readonly string[] = ["engaged", "married"];
-
-function isOutOfShidduchimStatus(status: string | undefined): boolean {
-  return !!status && OUT_OF_SHIDDUCHIM_STATUSES.includes(status);
-}
+type Student = StudentTableRow;
 
 /** מנקה תווים שיש להם משמעות בתחביר הסינון של PostgREST */
 function sanitizeTerm(value: string | undefined): string {
@@ -89,29 +38,6 @@ function yearsAgo(years: number): string {
   const date = new Date();
   date.setFullYear(date.getFullYear() - years);
   return date.toISOString().split("T")[0];
-}
-
-function studentCardHref(id: string) {
-  return `/app/students/${id}` as const;
-}
-
-function isRecentlyEngaged(student: Student): boolean {
-  if (student.personal_status !== "engaged") return false;
-  if (!student.status_changed_at) return true;
-  const changedAt = new Date(student.status_changed_at);
-  const oneMonthAgo = new Date();
-  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-  return changedAt >= oneMonthAgo;
-}
-
-function parseStatus(status: string, gender?: string): string {
-  const f = gender === "female";
-  if (status === "married") return f ? "נשואה" : "נשוי";
-  if (status === "engaged") return f ? "מאורסת" : "מאורס";
-  if (status === "single") return f ? "רווקה" : "רווק";
-  if (status === "divorced") return f ? "גרושה" : "גרוש";
-  if (status === "widowed") return f ? "אלמנה" : "אלמן";
-  return status;
 }
 
 export default function StudentsList() {
@@ -261,12 +187,6 @@ export default function StudentsList() {
   );
 
   const isAdmin = hasRole(user, "admin");
-  const getRowLinkProps = useRowLink();
-  const rowLinkPropsFor = (student: Student) =>
-    getRowLinkProps(
-      studentCardHref(student.id),
-      `כרטיס מלא: ${student.first_name} ${student.last_name}`,
-    );
 
   const handleStudentDeleted = (studentId: string) => {
     setStudents((prev) => prev.filter((s) => s.id !== studentId));
@@ -345,259 +265,25 @@ export default function StudentsList() {
           לאיתורם בחרו את הסטטוס בסינון.
         </p>
       )}
-      {students.length === 0 ? (
-        <Empty>
-          <EmptyHeader>
-            <EmptyTitle>מממ... לא מצאנו שמות שמתאימים לחיפוש שלך</EmptyTitle>
-            <EmptyDescription>כדאי לשנות חלק מהפרמטרים</EmptyDescription>
-          </EmptyHeader>
-        </Empty>
-      ) : (
-        <>
-          {/* כרטיסים — מובייל בלבד */}
-          <div className="flex flex-col gap-2 md:hidden">
-            {students.map((student) => (
-              <div
-                key={student.id}
-                {...rowLinkPropsFor(student)}
-                className={cn(
-                  CLICKABLE_ROW_CLASS,
-                  isRecentlyEngaged(student) && ENGAGED_ROW_CLASS,
-                )}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="flex items-center gap-1.5 font-semibold">
-                      {student.first_name} {student.last_name}
-                      {isRecentlyEngaged(student) && (
-                        <span className="text-caption font-medium text-warning-muted-foreground">
-                          🎉 מאורס/ת
-                        </span>
-                      )}
-                      {(student.photo_count ?? 0) > 0 && (
-                        <Camera
-                          className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                          aria-label="יש תמונה"
-                        />
-                      )}
-                      {student.cv_url && (
-                        <FileText
-                          className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                          aria-label="יש קובץ קו״ח"
-                        />
-                      )}
-                    </p>
-                    <p className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-body-sm text-muted-foreground">
-                      <span>
-                        {parseStatus(student.personal_status, student.gender)}
-                      </span>
-                      <span>·</span>
-                      <span>גיל {calculateAge(student.birth_date || "")}</span>
-                      {student.city && (
-                        <>
-                          <span>·</span>
-                          <span>{student.city}</span>
-                        </>
-                      )}
-                      {student.height && (
-                        <>
-                          <span>·</span>
-                          <span>{student.height} ס״מ</span>
-                        </>
-                      )}
-                    </p>
-                  </div>
-                  <div className="mt-0.5 flex shrink-0 items-center gap-1">
-                    <button
-                      onClick={() =>
-                        handleFavoriteChange(
-                          !favSet.has(student.id),
-                          student.id,
-                        )
-                      }
-                      className="p-1 disabled:cursor-not-allowed disabled:opacity-40"
-                      disabled={
-                        !favSet.has(student.id) &&
-                        isOutOfShidduchimStatus(student.personal_status)
-                      }
-                      aria-label={
-                        favSet.has(student.id)
-                          ? "הסר ממועדפים"
-                          : isOutOfShidduchimStatus(student.personal_status)
-                            ? "לא ניתן להוסיף מאורס או נשוי למועדפים"
-                            : "הוסף למועדפים"
-                      }
-                    >
-                      <Star
-                        className={cn(
-                          "h-5 w-5 transition-colors",
-                          favSet.has(student.id)
-                            ? "fill-favorite text-favorite"
-                            : "text-muted-foreground",
-                        )}
-                      />
-                    </button>
-                    {isAdmin && (
-                      <DeleteStudentButton
-                        variant="icon"
-                        studentId={student.id}
-                        studentName={`${student.first_name} ${student.last_name}`}
-                        onDeleted={() => handleStudentDeleted(student.id)}
-                      />
-                    )}
-                  </div>
-                </div>
-                <div className="mt-3 flex gap-2">
-                  {student.cv_url ? (
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                    >
-                      <a
-                        href={student.cv_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        קובץ קו״ח
-                      </a>
-                    </Button>
-                  ) : (
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                    >
-                      <Link href={"/" as any}>הוספת קו״ח</Link>
-                    </Button>
-                  )}
-                  <Button asChild size="sm" className="flex-1">
-                    <Link href={studentCardHref(student.id)}>כרטיס מלא</Link>
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* טבלה — דסקטופ בלבד */}
-          <div className="hidden md:grid md:grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_3fr] md:gap-4">
-            <div
-              data-slot="table-header"
-              className="col-span-full grid grid-cols-subgrid"
-            >
-              <div>מועדף</div>
-              <div>סטטוס</div>
-              <div>שם משפחה</div>
-              <div>שם פרטי</div>
-              <div>שם האב</div>
-              <div>שם האם</div>
-              <div>עיר</div>
-              <div>גיל</div>
-              <div>גובה</div>
-            </div>
-            {students.map((student) => (
-              <div
-                key={student.id}
-                {...rowLinkPropsFor(student)}
-                className={cn(
-                  CLICKABLE_ROW_CLASS,
-                  "col-span-full grid grid-cols-subgrid items-center",
-                  isRecentlyEngaged(student) && ENGAGED_ROW_CLASS,
-                )}
-              >
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() =>
-                      handleFavoriteChange(!favSet.has(student.id), student.id)
-                    }
-                    className="p-1 disabled:cursor-not-allowed disabled:opacity-40"
-                    disabled={
-                      !favSet.has(student.id) &&
-                      isOutOfShidduchimStatus(student.personal_status)
-                    }
-                    aria-label={
-                      favSet.has(student.id)
-                        ? "הסר ממועדפים"
-                        : isOutOfShidduchimStatus(student.personal_status)
-                          ? "לא ניתן להוסיף מאורס או נשוי למועדפים"
-                          : "הוסף למועדפים"
-                    }
-                  >
-                    <Star
-                      className={cn(
-                        "h-5 w-5 transition-colors",
-                        favSet.has(student.id)
-                          ? "fill-favorite text-favorite"
-                          : "text-muted-foreground",
-                      )}
-                    />
-                  </button>
-                  {isAdmin && (
-                    <DeleteStudentButton
-                      variant="icon"
-                      studentId={student.id}
-                      studentName={`${student.first_name} ${student.last_name}`}
-                      onDeleted={() => handleStudentDeleted(student.id)}
-                    />
-                  )}
-                </div>
-                <div className="flex items-center gap-1">
-                  {parseStatus(student.personal_status, student.gender)}
-                  {(student.photo_count ?? 0) > 0 && (
-                    <Camera
-                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                      aria-label="יש תמונה"
-                    />
-                  )}
-                  {student.cv_url && (
-                    <FileText
-                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                      aria-label="יש קובץ קו״ח"
-                    />
-                  )}
-                </div>
-                <div>{student.last_name}</div>
-                <div>{student.first_name}</div>
-                <div>
-                  {student.parents_info?.father?.self?.prefix}{" "}
-                  {student.parents_info?.father?.self?.name}
-                </div>
-                <div>
-                  {student.parents_info?.mother?.self?.prefix}{" "}
-                  {student.parents_info?.mother?.self?.name}
-                </div>
-                <div>{student.city}</div>
-                <div>{calculateAge(student.birth_date || "")}</div>
-                <div>{student.height}</div>
-                <div className="flex gap-1">
-                  {student.cv_url ? (
-                    <Button asChild className="flex-1" variant="outline">
-                      <a
-                        href={student.cv_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        קובץ קו״ח
-                      </a>
-                    </Button>
-                  ) : (
-                    <Button asChild className="flex-1" variant="outline">
-                      <Link href={"/" as any}>להוספת קו״ח</Link>
-                    </Button>
-                  )}
-                  <Button asChild className="flex-1">
-                    <Link href={studentCardHref(student.id)}>
-                      לצפיה בכרטיס המלא
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
+      <StudentsTable
+        preset="list"
+        caption="רשימת המיועדים"
+        students={students}
+        isFavorite={(id) => favSet.has(id)}
+        onToggleFavorite={(id, nextIsFavorite) =>
+          handleFavoriteChange(nextIsFavorite, id)
+        }
+        canDelete={isAdmin}
+        onDeleted={handleStudentDeleted}
+        emptyState={
+          <Empty>
+            <EmptyHeader>
+              <EmptyTitle>מממ... לא מצאנו שמות שמתאימים לחיפוש שלך</EmptyTitle>
+              <EmptyDescription>כדאי לשנות חלק מהפרמטרים</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        }
+      />
     </div>
   );
 }

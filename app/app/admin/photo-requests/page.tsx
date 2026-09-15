@@ -1,6 +1,8 @@
+import type { Route } from "next";
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { Box, Page, PageHeader } from "@/components/layout";
+import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -41,6 +43,62 @@ function formatDate(dateString: string | null): string {
     minute: "2-digit",
   }).format(new Date(dateString));
 }
+
+const PHOTO_REQUEST_COLUMNS: DataTableColumn<PendingPhotoRequest>[] = [
+  {
+    key: "requester",
+    header: "מבקש",
+    size: "grow",
+    mobile: "title",
+    cell: (request) => (
+      <>
+        <span className="font-medium">
+          {request.requester_name ?? "משתמש לא מזוהה"}
+        </span>
+        {request.requester_email && (
+          <span className="block text-caption font-normal wrap-anywhere text-muted-foreground">
+            {request.requester_email}
+          </span>
+        )}
+      </>
+    ),
+  },
+  {
+    key: "student",
+    header: "מיועדת",
+    cell: (request) =>
+      request.students ? (
+        <Link
+          href={`/app/students/${request.student_id}` as Route}
+          className="font-medium underline-offset-2 hover:underline"
+        >
+          {request.students.first_name} {request.students.last_name}
+        </Link>
+      ) : (
+        <span className="text-muted-foreground">כרטיס לא נמצא</span>
+      ),
+  },
+  {
+    key: "reason",
+    header: "נימוק",
+    size: "grow",
+    className: "text-muted-foreground",
+    cell: (request) => request.reason ?? "-",
+  },
+  {
+    key: "created",
+    header: "תאריך הבקשה",
+    className: "text-muted-foreground",
+    cell: (request) => formatDate(request.created_at),
+  },
+  {
+    key: "actions",
+    header: <span className="sr-only">פעולות</span>,
+    size: "min",
+    mobile: "actions",
+    cell: (request) => <PhotoRequestActions requestId={request.id} />,
+  },
+];
 
 async function getPendingRequests(): Promise<PendingPhotoRequest[]> {
   const supabase = await createClient();
@@ -147,71 +205,23 @@ async function PhotoRequestsContent() {
         }
       />
       <Box className="space-y-4">
-        {requests.length === 0 ? (
-          <div className="py-16 text-center">
-            <p className="text-subtitle font-semibold text-muted-foreground">
-              אין בקשות ממתינות
-            </p>
-            <p className="mt-2 text-body-sm text-muted-foreground">
-              בקשה חדשה תופיע כאן ותישלח אליכם גם כהתראה
-            </p>
-          </div>
-        ) : (
-          <table className="w-full text-body-sm">
-            <thead>
-              <tr className="border-b text-right text-muted-foreground">
-                <th className="py-2 pe-3 font-medium">מבקש</th>
-                <th className="py-2 pe-3 font-medium">מיועדת</th>
-                <th className="py-2 pe-3 font-medium">נימוק</th>
-                <th className="py-2 pe-3 font-medium">תאריך הבקשה</th>
-                <th className="py-2 font-medium"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map((request) => (
-                <tr
-                  key={request.id}
-                  className="border-b last:border-0 hover:bg-muted/40"
-                >
-                  <td className="py-3 pe-3">
-                    <span className="font-medium">
-                      {request.requester_name ?? "משתמש לא מזוהה"}
-                    </span>
-                    {request.requester_email && (
-                      <span className="block text-caption text-muted-foreground">
-                        {request.requester_email}
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3 pe-3">
-                    {request.students ? (
-                      <Link
-                        href={`/app/students/${request.student_id}`}
-                        className="font-medium underline-offset-2 hover:underline"
-                      >
-                        {request.students.first_name}{" "}
-                        {request.students.last_name}
-                      </Link>
-                    ) : (
-                      <span className="text-muted-foreground">
-                        כרטיס לא נמצא
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3 pe-3 text-muted-foreground">
-                    {request.reason ?? "-"}
-                  </td>
-                  <td className="py-3 pe-3 text-muted-foreground">
-                    {formatDate(request.created_at)}
-                  </td>
-                  <td className="py-3">
-                    <PhotoRequestActions requestId={request.id} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+        <DataTable
+          surface={false}
+          caption="בקשות צפייה ממתינות"
+          columns={PHOTO_REQUEST_COLUMNS}
+          rows={requests}
+          getRowKey={(request) => request.id}
+          emptyState={
+            <div className="py-16 text-center">
+              <p className="text-subtitle font-semibold text-muted-foreground">
+                אין בקשות ממתינות
+              </p>
+              <p className="mt-2 text-body-sm text-muted-foreground">
+                בקשה חדשה תופיע כאן ותישלח אליכם גם כהתראה
+              </p>
+            </div>
+          }
+        />
       </Box>
     </Page>
   );

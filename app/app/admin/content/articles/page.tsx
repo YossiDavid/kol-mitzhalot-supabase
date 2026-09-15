@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { Route } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Box, Page, PageHeader } from "@/components/layout";
+import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -61,6 +63,79 @@ export default function ArticlesAdminPage() {
     else { toast.success("המאמר נמחק"); load(); }
   }
 
+  const articleColumns: DataTableColumn<Article>[] = [
+    {
+      key: "title",
+      header: "כותרת",
+      size: "grow",
+      mobile: "title",
+      className: "font-medium",
+      cell: (a) => a.title,
+    },
+    {
+      key: "category",
+      header: "קטגוריה",
+      size: "min",
+      className: "text-muted-foreground",
+      cell: (a) => CATEGORY_LABELS[a.category] ?? a.category,
+    },
+    {
+      key: "status",
+      header: "סטטוס",
+      size: "min",
+      mobile: "aside",
+      cell: (a) => (
+        <Badge variant={a.is_published ? "success" : "neutral"}>
+          {a.is_published ? "מפורסם" : "טיוטה"}
+        </Badge>
+      ),
+    },
+    {
+      key: "date",
+      header: "תאריך",
+      size: "min",
+      className: "text-muted-foreground",
+      cell: (a) => new Date(a.created_at).toLocaleDateString("he-IL"),
+    },
+    {
+      key: "actions",
+      header: <span className="sr-only">פעולות</span>,
+      size: "min",
+      mobile: "actions",
+      cell: (a) => (
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            title={a.is_published ? "הסר פרסום" : "פרסם"}
+            aria-label={a.is_published ? "הסר פרסום" : "פרסם"}
+            onClick={() => togglePublish(a)}
+          >
+            {a.is_published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </Button>
+          <Button variant="ghost" size="icon" asChild title="עריכה">
+            <Link
+              href={`/app/admin/content/articles/${a.id}` as Route}
+              aria-label={`עריכה: ${a.title}`}
+            >
+              <Pencil className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-destructive hover:text-destructive"
+            title="מחיקה"
+            aria-label={`מחיקה: ${a.title}`}
+            onClick={() => deleteArticle(a.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <Page>
       <PageHeader
@@ -82,70 +157,25 @@ export default function ArticlesAdminPage() {
         <Box>
           {loading ? (
             <div className="py-10 text-center text-muted-foreground">טוען...</div>
-          ) : articles.length === 0 ? (
-            <div className="py-16 text-center">
-              <p className="text-subtitle font-semibold text-muted-foreground">אין מאמרים עדיין</p>
-              <p className="mt-2 text-body-sm text-muted-foreground">צור את המאמר הראשון</p>
-              <Button asChild className="mt-6">
-                <Link href={"/app/admin/content/articles/new" as any}>
-                  <Plus className="me-1 h-4 w-4" /> מאמר חדש
-                </Link>
-              </Button>
-            </div>
           ) : (
-            <table className="w-full text-body-sm">
-              <thead>
-                <tr className="border-b text-right text-muted-foreground">
-                  <th className="py-2 pe-3 font-medium">כותרת</th>
-                  <th className="py-2 pe-3 font-medium">קטגוריה</th>
-                  <th className="py-2 pe-3 font-medium">סטטוס</th>
-                  <th className="py-2 pe-3 font-medium">תאריך</th>
-                  <th className="py-2 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {articles.map((a) => (
-                  <tr key={a.id} className="border-b last:border-0 hover:bg-muted/40">
-                    <td className="py-3 pe-3 font-medium">{a.title}</td>
-                    <td className="py-3 pe-3 text-muted-foreground">{CATEGORY_LABELS[a.category] ?? a.category}</td>
-                    <td className="py-3 pe-3">
-                      <Badge variant={a.is_published ? "success" : "neutral"}>
-                        {a.is_published ? "מפורסם" : "טיוטה"}
-                      </Badge>
-                    </td>
-                    <td className="py-3 pe-3 text-muted-foreground">
-                      {new Date(a.created_at).toLocaleDateString("he-IL")}
-                    </td>
-                    <td className="py-3">
-                      <div className="flex items-center gap-2 justify-end">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title={a.is_published ? "הסר פרסום" : "פרסם"}
-                          onClick={() => togglePublish(a)}
-                        >
-                          {a.is_published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </Button>
-                        <Button variant="ghost" size="icon" asChild title="עריכה">
-                          <Link href={`/app/admin/content/articles/${a.id}` as any}>
-                            <Pencil className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive"
-                          title="מחיקה"
-                          onClick={() => deleteArticle(a.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <DataTable
+              surface={false}
+              caption="מאמרים"
+              columns={articleColumns}
+              rows={articles}
+              getRowKey={(a) => a.id}
+              emptyState={
+                <div className="py-16 text-center">
+                  <p className="text-subtitle font-semibold text-muted-foreground">אין מאמרים עדיין</p>
+                  <p className="mt-2 text-body-sm text-muted-foreground">צור את המאמר הראשון</p>
+                  <Button asChild className="mt-6">
+                    <Link href={"/app/admin/content/articles/new" as any}>
+                      <Plus className="me-1 h-4 w-4" /> מאמר חדש
+                    </Link>
+                  </Button>
+                </div>
+              }
+            />
           )}
         </Box>
     </Page>

@@ -1,4 +1,4 @@
-import { Box } from "@/components/layout";
+import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
 import { applicationStatusVariant } from "@/lib/application-status";
 import { Spinner } from "@/components/ui/spinner";
@@ -9,6 +9,10 @@ import {
 import type { AdminShadchanimQuery } from "@/features/admin/lib/shadchanim-query";
 import { getShadchanimList } from "@/features/admin/lib/shadchanim";
 import { Suspense } from "react";
+
+type ShadchanRow = Awaited<
+  ReturnType<typeof getShadchanimList>
+>["rows"][number];
 
 function formatDate(dateString: string | null): string {
   if (!dateString) return "לא זמין";
@@ -21,6 +25,73 @@ function formatDate(dateString: string | null): string {
     minute: "2-digit",
   }).format(date);
 }
+
+const SHADCHAN_COLUMNS: DataTableColumn<ShadchanRow>[] = [
+  {
+    key: "status",
+    header: "סטטוס",
+    size: "min",
+    mobile: "aside",
+    cell: (shadchan) => (
+      <Badge variant={applicationStatusVariant(shadchan.applicationStatus)}>
+        {shadchan.applicationStatusLabel}
+      </Badge>
+    ),
+  },
+  {
+    key: "first-name",
+    header: "שם פרטי",
+    mobile: "hidden",
+    cell: (shadchan) => shadchan.firstName || "לא זמין",
+  },
+  {
+    key: "last-name",
+    header: "שם משפחה",
+    mobile: "hidden",
+    cell: (shadchan) => shadchan.lastName || "לא זמין",
+  },
+  {
+    key: "email",
+    header: "אימייל",
+    size: "grow",
+    className: "wrap-anywhere",
+    cell: (shadchan) => shadchan.email || "לא זמין",
+  },
+  {
+    key: "joined",
+    header: "תאריך הצטרפות",
+    cell: (shadchan) => formatDate(shadchan.createdAt),
+  },
+  {
+    key: "total",
+    header: "שידוכים נוצרו",
+    size: "min",
+    align: "center",
+    cell: (shadchan) => shadchan.totalShidduchim,
+  },
+  {
+    key: "completed",
+    header: "שידוכים נסגרו",
+    size: "min",
+    align: "center",
+    cell: (shadchan) => shadchan.completedShidduchim,
+  },
+  {
+    key: "last-created",
+    header: "הצעה אחרונה",
+    cell: (shadchan) => formatDate(shadchan.lastShidduchCreatedAt),
+  },
+  {
+    key: "last-completed",
+    header: "שידוך אחרון נסגר",
+    cell: (shadchan) => formatDate(shadchan.lastShidduchCompletedAt),
+  },
+  {
+    key: "last-sign-in",
+    header: "התחברות אחרונה",
+    cell: (shadchan) => formatDate(shadchan.lastSignInAt),
+  },
+];
 
 export function ShadchanimListFallback() {
   return (
@@ -72,52 +143,17 @@ export async function ShadchanimList({
           </Suspense>
         </div>
       </div>
-      <div className="grid grid-cols-[2fr_2fr_2fr_2fr_1.5fr_1fr_1fr_1fr_2fr_2fr_2fr] gap-4 pt-2">
-        <div
-          data-slot="table-header"
-          className="col-span-full grid grid-cols-subgrid font-semibold"
-        >
-          <div>סטטוס</div>
-          <div>שם פרטי</div>
-          <div>שם משפחה</div>
-          <div>אימייל</div>
-          <div>תאריך הצטרפות</div>
-          <div>שידוכים נוצרו</div>
-          <div>שידוכים נסגרו</div>
-          <div>הצעה אחרונה</div>
-          <div>שידוך אחרון נסגר</div>
-          <div>התחברות אחרונה</div>
-        </div>
-        {stats.map((shadchan) => (
-          <Box
-            key={shadchan.id}
-            className="col-span-full grid grid-cols-subgrid items-center"
-          >
-            <div>
-              <Badge
-                variant={applicationStatusVariant(shadchan.applicationStatus)}
-              >
-                {shadchan.applicationStatusLabel}
-              </Badge>
-            </div>
-            <div>{shadchan.firstName || "לא זמין"}</div>
-            <div>{shadchan.lastName || "לא זמין"}</div>
-            <div className="text-body-sm">{shadchan.email || "לא זמין"}</div>
-            <div className="text-body-sm">{formatDate(shadchan.createdAt)}</div>
-            <div className="text-center">{shadchan.totalShidduchim}</div>
-            <div className="text-center">{shadchan.completedShidduchim}</div>
-            <div className="text-body-sm">
-              {formatDate(shadchan.lastShidduchCreatedAt)}
-            </div>
-            <div className="text-body-sm">
-              {formatDate(shadchan.lastShidduchCompletedAt)}
-            </div>
-            <div className="text-body-sm">
-              {formatDate(shadchan.lastSignInAt)}
-            </div>
-          </Box>
-        ))}
-      </div>
+      <DataTable
+        className="pt-2"
+        caption="רשימת השדכנים"
+        breakpoint="xl"
+        columns={SHADCHAN_COLUMNS}
+        rows={stats}
+        getRowKey={(shadchan) => shadchan.id}
+        mobileTitle={(shadchan) =>
+          `${shadchan.firstName || "לא זמין"} ${shadchan.lastName || "לא זמין"}`
+        }
+      />
 
       <ShadchanimPagination page={page} lastPage={lastPage} perPage={perPage} />
     </>

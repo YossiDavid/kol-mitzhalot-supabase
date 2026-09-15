@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Box, Page, PageHeader } from "@/components/layout";
+import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { Label } from "@/components/ui/label";
 import {
   NativeSelect,
@@ -211,6 +212,60 @@ export default function BulkInstitutionAssignmentPage() {
     patchInstitution(null);
   }
 
+  const studentColumns: DataTableColumn<StudentRow>[] = [
+    {
+      key: "select",
+      header: (
+        <Checkbox
+          checked={allFilteredSelected}
+          onCheckedChange={toggleSelectAll}
+          aria-label="בחר הכל"
+        />
+      ),
+      size: "min",
+      mobile: "aside",
+      cell: (student) => (
+        <Checkbox
+          checked={selectedIds.includes(student.id)}
+          onCheckedChange={() => toggleSelectOne(student.id)}
+          aria-label={`בחר את ${student.first_name} ${student.last_name}`}
+        />
+      ),
+    },
+    {
+      key: "name",
+      header: "שם",
+      mobile: "title",
+      className: "font-medium",
+      cell: (student) => `${student.first_name} ${student.last_name}`,
+    },
+    {
+      key: "gender",
+      header: "מגדר",
+      size: "min",
+      className: "text-muted-foreground",
+      cell: (student) => INSTITUTION_GENDER_LABELS[student.gender],
+    },
+    {
+      key: "city",
+      header: "עיר",
+      className: "text-muted-foreground",
+      cell: (student) => student.city ?? "-",
+    },
+    {
+      key: "institution",
+      header: "מוסד נוכחי",
+      size: "grow",
+      className: "text-muted-foreground",
+      cell: (student) =>
+        student.institutions
+          ? `${student.institutions.name}${
+              student.institutions.city ? ` (${student.institutions.city})` : ""
+            } - ${INSTITUTION_TYPE_LABELS[student.institutions.type]}`
+          : "—",
+    },
+  ];
+
   const assignDisabled =
     submitting ||
     selectedIds.length === 0 ||
@@ -337,71 +392,32 @@ export default function BulkInstitutionAssignmentPage() {
               <span>ללא מוסד: {unassignedCount}</span>
             </div>
 
-            {filteredStudents.length === 0 ? (
-              <div className="py-16 text-center">
-                <p className="text-subtitle font-semibold text-muted-foreground">
-                  אין כרטיסים להצגה לפי הסינון הנוכחי
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-body-sm">
-                  <thead>
-                    <tr className="border-b text-right text-muted-foreground">
-                      <th className="py-2 pe-3 font-medium">
-                        <Checkbox
-                          checked={allFilteredSelected}
-                          onCheckedChange={toggleSelectAll}
-                          aria-label="בחר הכל"
-                        />
-                      </th>
-                      <th className="py-2 pe-3 font-medium">שם</th>
-                      <th className="py-2 pe-3 font-medium">מגדר</th>
-                      <th className="py-2 pe-3 font-medium">עיר</th>
-                      <th className="py-2 font-medium">מוסד נוכחי</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredStudents.map((student) => (
-                      <tr
-                        key={student.id}
-                        className="border-b last:border-0 hover:bg-muted/40"
-                      >
-                        <td className="py-3 pe-3">
-                          <Checkbox
-                            checked={selectedIds.includes(student.id)}
-                            onCheckedChange={() => toggleSelectOne(student.id)}
-                            aria-label={`בחר את ${student.first_name} ${student.last_name}`}
-                          />
-                        </td>
-                        <td className="py-3 pe-3 font-medium">
-                          {student.first_name} {student.last_name}
-                        </td>
-                        <td className="py-3 pe-3 text-muted-foreground">
-                          {INSTITUTION_GENDER_LABELS[student.gender]}
-                        </td>
-                        <td className="py-3 pe-3 text-muted-foreground">
-                          {student.city ?? "-"}
-                        </td>
-                        <td className="py-3 text-muted-foreground">
-                          {student.institutions
-                            ? `${student.institutions.name}${
-                                student.institutions.city
-                                  ? ` (${student.institutions.city})`
-                                  : ""
-                              } - ${
-                                INSTITUTION_TYPE_LABELS[
-                                  student.institutions.type
-                                ]
-                              }`
-                            : "—"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {filteredStudents.length > 0 && (
+              // בכרטיסי המובייל אין שורת כותרת, ולכן "בחר הכל" מוצג כאן
+              <div className="flex items-center gap-2 md:hidden">
+                <Checkbox
+                  id="selectAllMobile"
+                  checked={allFilteredSelected}
+                  onCheckedChange={toggleSelectAll}
+                />
+                <Label htmlFor="selectAllMobile">בחר הכל</Label>
               </div>
             )}
+
+            <DataTable
+              surface={false}
+              caption="כרטיסים לשיוך מוסד"
+              columns={studentColumns}
+              rows={filteredStudents}
+              getRowKey={(student) => student.id}
+              emptyState={
+                <div className="py-16 text-center">
+                  <p className="text-subtitle font-semibold text-muted-foreground">
+                    אין כרטיסים להצגה לפי הסינון הנוכחי
+                  </p>
+                </div>
+              }
+            />
           </>
         )}
       </Box>

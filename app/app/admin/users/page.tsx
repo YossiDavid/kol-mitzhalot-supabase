@@ -1,4 +1,5 @@
-import { Box, Page, PageHeader } from "@/components/layout";
+import { Page, PageHeader } from "@/components/layout";
+import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import type { Route } from "next";
@@ -33,6 +34,69 @@ function formatDate(dateString: string | null): string {
     minute: "2-digit",
   }).format(date);
 }
+
+const USER_COLUMNS: DataTableColumn<UserStatsRow>[] = [
+  {
+    key: "name",
+    header: "שם מלא",
+    size: "grow",
+    mobile: "title",
+    cell: (user) => formatFullName(user.firstName, user.lastName) || "לא זמין",
+  },
+  {
+    key: "email",
+    header: "אימייל",
+    size: "grow",
+    className: "wrap-anywhere",
+    cell: (user) => user.email || "לא זמין",
+  },
+  {
+    key: "roles",
+    header: "תפקיד",
+    size: "min",
+    cell: (user) => user.roles.map(getRoleLabel).join(" · "),
+  },
+  {
+    key: "children",
+    header: "ילדים",
+    size: "min",
+    align: "center",
+    cell: (user) => user.childrenCount,
+  },
+  {
+    key: "offered",
+    header: "שידוכים הוצעו",
+    size: "min",
+    align: "center",
+    cell: (user) => user.shidduchimOfferedCount,
+  },
+  {
+    key: "completed",
+    header: "שידוכים נסגרו",
+    size: "min",
+    align: "center",
+    cell: (user) => user.shidduchimCompletedCount,
+  },
+  {
+    key: "joined",
+    header: "תאריך הצטרפות",
+    cell: (user) => formatDate(user.createdAt),
+  },
+  {
+    key: "actions",
+    header: <span className="sr-only">פעולות</span>,
+    size: "min",
+    mobile: "actions",
+    cell: (user) => (
+      <div className="flex items-center gap-2">
+        <Button asChild variant="outline" size="sm">
+          <Link href={`/app/admin/users/${user.id}`}>צפייה</Link>
+        </Button>
+        {user.email && <ImpersonateButton userId={user.id} />}
+      </div>
+    ),
+  },
+];
 
 function parseUsersQuery(
   raw: Record<string, string | string[] | undefined>,
@@ -222,45 +286,14 @@ async function UsersContent({ searchParams }: UsersPageProps) {
               עמוד {page} מתוך {lastPage}
             </span>
           </div>
-          <div className="grid grid-cols-[3fr_2fr_1fr_1fr_1fr_1fr_1fr_2fr] gap-4 pt-2">
-            <div
-              data-slot="table-header"
-              className="col-span-full grid grid-cols-subgrid font-semibold"
-            >
-              <div>שם מלא</div>
-              <div>אימייל</div>
-              <div>תפקיד</div>
-              <div>ילדים</div>
-              <div>שידוכים הוצעו</div>
-              <div>שידוכים נסגרו</div>
-              <div>תאריך הצטרפות</div>
-              <div>פעולות</div>
-            </div>
-            {stats.map((user) => (
-              <Box
-                key={user.id}
-                className="col-span-full grid grid-cols-subgrid items-center"
-              >
-                <div>
-                  {formatFullName(user.firstName, user.lastName) || "לא זמין"}
-                </div>
-                <div className="text-body-sm">{user.email || "לא זמין"}</div>
-                <div>{user.roles.map(getRoleLabel).join(" · ")}</div>
-                <div className="text-center">{user.childrenCount}</div>
-                <div className="text-center">{user.shidduchimOfferedCount}</div>
-                <div className="text-center">
-                  {user.shidduchimCompletedCount}
-                </div>
-                <div className="text-body-sm">{formatDate(user.createdAt)}</div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button asChild variant="outline" size="sm">
-                    <Link href={`/app/admin/users/${user.id}`}>צפייה</Link>
-                  </Button>
-                  {user.email && <ImpersonateButton userId={user.id} />}
-                </div>
-              </Box>
-            ))}
-          </div>
+          <DataTable
+            className="pt-2"
+            caption="רשימת המשתמשים"
+            breakpoint="xl"
+            columns={USER_COLUMNS}
+            rows={stats}
+            getRowKey={(user) => user.id}
+          />
 
           {lastPage > 1 && (
             <div className="flex flex-wrap items-center justify-center gap-2 pt-8">

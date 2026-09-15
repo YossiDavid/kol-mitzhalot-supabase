@@ -52,6 +52,7 @@ import {
   type AxisItem,
 } from "./variant-table";
 import { FormFoundationsDemo } from "./form-foundations-demo";
+import { DataTable, type DataTableColumn } from "@/components/data-table";
 import {
   colorGroupLabels,
   colorTokens,
@@ -72,6 +73,47 @@ type ToggleVariant = NonNullable<
 >;
 type ToggleSize = NonNullable<React.ComponentProps<typeof Toggle>["size"]>;
 type BadgeVariant = NonNullable<React.ComponentProps<typeof Badge>["variant"]>;
+
+type DemoTableRow = {
+  id: string;
+  name: string;
+  email: string;
+  city: string;
+  isActive: boolean;
+};
+
+const demoTableRows: DemoTableRow[] = [
+  { id: "1", name: "ישראל ישראלי", email: "israel.israeli.long-address@example.com", city: "בני ברק", isActive: true },
+  { id: "2", name: "שרה כהן", email: "sara@example.com", city: "ירושלים", isActive: false },
+];
+
+const demoTableColumns: DataTableColumn<DemoTableRow>[] = [
+  { key: "name", header: "שם", size: "grow", mobile: "title", cell: (row) => row.name },
+  { key: "email", header: "אימייל", size: "grow", className: "wrap-anywhere", cell: (row) => row.email },
+  { key: "city", header: "עיר", cell: (row) => row.city },
+  {
+    key: "status",
+    header: "סטטוס",
+    size: "min",
+    mobile: "aside",
+    cell: (row) => (
+      <Badge variant={row.isActive ? "success" : "neutral"}>
+        {row.isActive ? "פעיל" : "לא פעיל"}
+      </Badge>
+    ),
+  },
+  {
+    key: "actions",
+    header: <span className="sr-only">פעולות</span>,
+    size: "min",
+    mobile: "actions",
+    cell: () => (
+      <Button size="sm" variant="outline">
+        צפייה
+      </Button>
+    ),
+  },
+];
 
 const buttonVariants: AxisItem<ButtonVariant>[] = [
   { id: "default", label: "Default" },
@@ -551,6 +593,21 @@ export function DesignSystemShowcase() {
                   <Skeleton className="size-9 rounded-full" />
                 </div>
               </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 className="text-subtitle">DataTable</h3>
+                <p className="text-caption text-muted-foreground">
+                  טבלה מ-md, כרטיסים במובייל
+                </p>
+              </div>
+              <DataTable
+                caption="דוגמת טבלה"
+                columns={demoTableColumns}
+                rows={demoTableRows}
+                getRowKey={(row) => row.id}
+              />
             </div>
 
             <div className="space-y-3">
