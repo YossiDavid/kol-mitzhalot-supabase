@@ -54,14 +54,16 @@ interface BaseField {
   placeholder?: string;
   description?: string;
   beforeField?: string;
+  /**
+   * מציג כוכבית. לסמן רק כשהסכמה (schema.ts) באמת אוכפת את השדה - שדות בתוך
+   * רשומה חוזרת לא נאכפים (z.record), ולכן לא מסומנים
+   */
   required?: boolean;
   value?: string;
   onChange?: (e?: any) => void;
   className?: string;
-  /** רוחב סמנטי - ממופה לרשת ב-field-layout.ts. גובר על columns */
+  /** רוחב סמנטי - ממופה לרשת ב-field-layout.ts. בלי width: שורה מלאה */
   width?: FieldWidth;
-  /** @deprecated מספר עמודות מתוך 12; לשלבים שעוד לא עברו ל-width */
-  columns?: number;
   condition?: Condition[];
 }
 
@@ -198,6 +200,7 @@ export const studentFields: FormSteps[] = [
         fields: [
           {
             name: "gender",
+            width: "full",
             label: "אני ממלא/ת את טופס הקו״ח עבור:",
             type: "radio",
             options: [
@@ -222,125 +225,84 @@ export const studentFields: FormSteps[] = [
         fields: [
           {
             name: "firstName",
+            width: "sm",
             label: "שם פרטי",
             type: "text",
             required: true,
-            columns: 3,
           },
           {
             name: "lastName",
+            width: "sm",
             label: "שם משפחה",
             type: "text",
             required: true,
-            columns: 3,
           },
           {
             name: "identityNumber",
+            width: "sm",
             label: "תעודת זהות",
             type: "text",
             required: true,
-            columns: 3,
           },
           {
             name: "birthDate",
+            width: "sm",
             label: "תאריך לידה",
             type: "date",
             required: true,
-            columns: 3,
           },
           {
             name: "photos",
+            width: "full",
             label: "תמונות",
             type: "photos",
             description: `עד ${MAX_STUDENT_PHOTOS} תמונות (JPG, PNG או WebP). תמונות גדולות מוקטנות אוטומטית לעד ${MAX_STUDENT_PHOTO_MB}MB. התמונה הראשונה היא התמונה הראשית. התמונות יישלחו לצד השני רק לאחר הסכמתכם.`,
-            // מסומן כחובה לתצוגה בלבד, כמו שדה התמונה הקודם - הסכמה אינה אוכפת
-            required: true,
-            columns: -1,
+            // בלי כוכבית: הסכמה לא אוכפת תמונות (כרטיס קיים בלי תמונות חייב
+            // להמשיך להישמר), וכוכבית מסמנת רק שדה שבאמת חוסם מעבר
           },
           {
             name: "country",
+            width: "sm",
             label: "ארץ",
             type: "text",
             required: true,
-            columns: 3,
           },
           {
             name: "city",
+            width: "sm",
             label: "עיר",
             type: "text",
             required: true,
-            columns: 3,
           },
           {
             name: "street",
+            width: "sm",
             label: "רחוב",
             type: "text",
             required: true,
-            columns: 3,
           },
           {
             name: "house",
+            width: "sm",
             label: "מספר בית",
             type: "text",
             required: true,
-            columns: 3,
           },
           {
             name: "community",
+            width: "sm",
             label: "חסידות או קהילה",
             type: "text",
-            columns: 3,
           },
           {
             name: "shtible",
+            width: "sm",
             label: "שם השטיבל",
             type: "text",
-            columns: 3,
-          },
-          {
-            name: "institutionId",
-            label: "מוסד לימודים נוכחי",
-            type: "select2",
-            placeholder: "חיפוש מוסד לימודים...",
-            empty: "לא נמצאו מוסדות",
-            options: [],
-            table: "institutions",
-            valueColumn: "id",
-            labelColumn: "name",
-            searchColumn: "name",
-            filters: { gender: "male", is_active: true },
-            columns: 3,
-            condition: [
-              {
-                parameter: "gender",
-                operator: "===",
-                value: "male",
-              },
-            ],
-          },
-          {
-            name: "institutionId",
-            label: "מוסד לימודים נוכחי",
-            type: "select2",
-            placeholder: "חיפוש מוסד לימודים...",
-            empty: "לא נמצאו מוסדות",
-            options: [],
-            table: "institutions",
-            valueColumn: "id",
-            labelColumn: "name",
-            searchColumn: "name",
-            filters: { gender: "female", is_active: true },
-            columns: 3,
-            condition: [
-              {
-                parameter: "gender",
-                operator: "===",
-                value: "female",
-              },
-            ],
           },
           {
             name: "personalStatus",
+            width: "sm",
             label: "סטטוס אישי",
             type: "select",
             options: [
@@ -363,19 +325,19 @@ export const studentFields: FormSteps[] = [
                 labelFemale: "אלמנה",
               },
             ],
-            columns: 3,
             required: true,
           },
           {
             name: "height",
+            width: "sm",
             label: "גובה (בס״מ)",
             type: "number",
             min: 50,
             placeholder: "לדוגמה: 175",
-            columns: 3,
           },
           {
             name: "cellphoneType",
+            width: "sm",
             label: "סוג טלפון נייד",
             type: "select",
             vertical: true,
@@ -397,17 +359,59 @@ export const studentFields: FormSteps[] = [
                 label: "אחר",
               },
             ],
-            columns: 4,
             required: true,
           },
           {
             name: "phone",
+            width: "sm",
             label: "מספר טלפון של המיועד.ת",
             type: "text",
-            columns: 4,
+          },
+          {
+            name: "institutionId",
+            width: "sm",
+            label: "מוסד לימודים נוכחי",
+            type: "select2",
+            placeholder: "חיפוש מוסד לימודים...",
+            empty: "לא נמצאו מוסדות",
+            options: [],
+            table: "institutions",
+            valueColumn: "id",
+            labelColumn: "name",
+            searchColumn: "name",
+            filters: { gender: "male", is_active: true },
+            condition: [
+              {
+                parameter: "gender",
+                operator: "===",
+                value: "male",
+              },
+            ],
+          },
+          {
+            name: "institutionId",
+            width: "sm",
+            label: "מוסד לימודים נוכחי",
+            type: "select2",
+            placeholder: "חיפוש מוסד לימודים...",
+            empty: "לא נמצאו מוסדות",
+            options: [],
+            table: "institutions",
+            valueColumn: "id",
+            labelColumn: "name",
+            searchColumn: "name",
+            filters: { gender: "female", is_active: true },
+            condition: [
+              {
+                parameter: "gender",
+                operator: "===",
+                value: "female",
+              },
+            ],
           },
           {
             name: "planForLife",
+            width: "sm",
             label: "מתעתד בעז״ה:",
             type: "select",
             vertical: true,
@@ -429,8 +433,6 @@ export const studentFields: FormSteps[] = [
                 label: "לעבוד",
               },
             ],
-            columns: 4,
-            required: true,
             condition: [
               {
                 parameter: "gender",
@@ -441,6 +443,7 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "headCoverType",
+            width: "sm",
             label: "סוג כיסוי ראש נהוג",
             type: "select",
             vertical: true,
@@ -462,8 +465,6 @@ export const studentFields: FormSteps[] = [
                 label: "לא משנה",
               },
             ],
-            columns: 4,
-            required: true,
             condition: [
               {
                 parameter: "gender",
@@ -474,22 +475,21 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "about",
+            width: "full",
             label: "כמה מילים על אופי וסגנון המיועד.ת",
             type: "textarea",
-            columns: -1,
           },
           {
             name: "cv",
+            width: "full",
             label: "הוספת קובץ קורות חיים",
             type: "upload",
             multiple: false,
             description: "המסמך יישלח לצד השני רק לאחר הסכמתכם",
-            required: true,
             accept: {
               "application/pdf": [".pdf"],
               "image/*": [".png", ".jpg", ".jpeg"],
             },
-            columns: -1,
           },
         ],
       },
@@ -766,35 +766,35 @@ export const studentFields: FormSteps[] = [
           {
             type: "repeater",
             name: "education.yeshivaKtana",
+            addLabel: "הוספת ישיבה קטנה",
+            itemLabel: "ישיבה קטנה",
+            emptyText: "עדיין לא נוספו ישיבות קטנות.",
             fileds: [
               {
                 name: "education.yeshivaKtana.id",
+                width: "sm",
                 label: "לבחירה מתוך המאגר",
                 type: "select2",
                 options: [{ value: "", label: "" }],
                 endpoint: "/educational-institutions/yeshiva-ktana",
-                columns: 3,
               },
               {
                 name: "education.yeshivaKtana.name",
+                width: "sm",
                 label: "שם הישיבה",
                 type: "text",
-                required: true,
-                columns: 3,
               },
               {
                 name: "education.yeshivaKtana.community",
+                width: "sm",
                 label: "קהילה / חסידות",
                 type: "text",
-                required: true,
-                columns: 3,
               },
               {
                 name: "education.yeshivaKtana.city",
+                width: "sm",
                 label: "עיר",
                 type: "text",
-                required: true,
-                columns: 3,
               },
             ],
           },
@@ -814,35 +814,35 @@ export const studentFields: FormSteps[] = [
           {
             type: "repeater",
             name: "education.yeshivaGdola",
+            addLabel: "הוספת ישיבה גדולה",
+            itemLabel: "ישיבה גדולה",
+            emptyText: "עדיין לא נוספו ישיבות גדולות.",
             fileds: [
               {
                 name: "education.yeshivaGdola.id",
+                width: "sm",
                 label: "לבחירה מתוך המאגר",
                 type: "select2",
                 options: [{ value: "", label: "" }],
                 endpoint: "/educational-institutions/yeshiva-gdola",
-                columns: 3,
               },
               {
                 name: "education.yeshivaGdola.name",
+                width: "sm",
                 label: "שם הישיבה",
                 type: "text",
-                required: true,
-                columns: 3,
               },
               {
                 name: "education.yeshivaGdola.community",
+                width: "sm",
                 label: "קהילה / חסידות",
                 type: "text",
-                required: true,
-                columns: 3,
               },
               {
                 name: "education.yeshivaGdola.city",
+                width: "sm",
                 label: "עיר",
                 type: "text",
-                required: true,
-                columns: 3,
               },
             ],
           },
@@ -862,35 +862,35 @@ export const studentFields: FormSteps[] = [
           {
             type: "repeater",
             name: "education.kolel",
+            addLabel: "הוספת כולל",
+            itemLabel: "כולל",
+            emptyText: "עדיין לא נוספו כוללים.",
             fileds: [
               {
                 name: "education.kolel.id",
+                width: "sm",
                 label: "לבחירה מתוך המאגר",
                 type: "select2",
                 options: [{ value: "", label: "" }],
                 endpoint: "/educational-institutions/kolel",
-                columns: 3,
               },
               {
                 name: "education.kolel.name",
+                width: "sm",
                 label: "שם הישיבה",
                 type: "text",
-                required: true,
-                columns: 3,
               },
               {
                 name: "education.kolel.community",
+                width: "sm",
                 label: "קהילה / חסידות",
                 type: "text",
-                required: true,
-                columns: 3,
               },
               {
                 name: "education.kolel.city",
+                width: "sm",
                 label: "עיר",
                 type: "text",
-                required: true,
-                columns: 3,
               },
             ],
           },
@@ -915,35 +915,35 @@ export const studentFields: FormSteps[] = [
           {
             type: "repeater",
             name: "education.seminar",
+            addLabel: "הוספת סמינר",
+            itemLabel: "סמינר",
+            emptyText: "עדיין לא נוספו סמינרים.",
             fileds: [
               {
                 name: "education.seminar.id",
+                width: "sm",
                 label: "לבחירה מתוך המאגר",
                 type: "select2",
                 options: [{ value: "", label: "" }],
                 endpoint: "/educational-institutions/seminar",
-                columns: 3,
               },
               {
                 name: "education.seminar.name",
+                width: "sm",
                 label: "שם הסמינר",
                 type: "text",
-                required: true,
-                columns: 3,
               },
               {
                 name: "education.seminar.community",
+                width: "sm",
                 label: "קהילה / חסידות",
                 type: "text",
-                required: true,
-                columns: 3,
               },
               {
                 name: "education.seminar.city",
+                width: "sm",
                 label: "עיר",
                 type: "text",
-                required: true,
-                columns: 3,
               },
             ],
           },
@@ -962,6 +962,7 @@ export const studentFields: FormSteps[] = [
         fields: [
           {
             name: "employment.tags",
+            width: "full",
             label: "מה עושה כיום?",
             type: "chips",
             options: [
@@ -978,11 +979,11 @@ export const studentFields: FormSteps[] = [
                 value: "male",
               },
             ],
-            required: true,
           },
 
           {
             name: "employment.tags",
+            width: "full",
             label: "מה עושה כיום?",
             type: "chips",
             options: [
@@ -1001,10 +1002,10 @@ export const studentFields: FormSteps[] = [
                 value: "female",
               },
             ],
-            required: true,
           },
           {
             name: "employment.yeshiva",
+            width: "lg",
             label: "איפה?",
             type: "text",
             beforeField: "לומד בישיבה",
@@ -1018,6 +1019,7 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "employment.kolel",
+            width: "lg",
             label: "איפה?",
             type: "text",
             beforeField: "אברך כולל",
@@ -1031,6 +1033,7 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "employment.havruta.with",
+            width: "lg",
             label: "עם מי?",
             type: "text",
             beforeField: "לומד עם חברותא",
@@ -1044,6 +1047,7 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "employment.havruta.where",
+            width: "lg",
             label: "איפה?",
             type: "text",
             condition: [
@@ -1056,6 +1060,7 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "employment.seminar",
+            width: "lg",
             label: "איפה?",
             type: "text",
             beforeField: "תלמידת סמינר",
@@ -1069,6 +1074,7 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "employment.working.role",
+            width: "lg",
             label: "תפקיד?",
             type: "text",
             beforeField: "עבודה",
@@ -1082,6 +1088,7 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "employment.working.where",
+            width: "lg",
             label: "איפה?",
             type: "text",
             condition: [
@@ -1094,6 +1101,7 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "employment.profession.what",
+            width: "lg",
             label: "מה?",
             type: "text",
             beforeField: "לומד/ת מקצוע",
@@ -1107,6 +1115,7 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "employment.profession.where",
+            width: "lg",
             label: "איפה?",
             type: "text",
             condition: [
@@ -1133,9 +1142,13 @@ export const studentFields: FormSteps[] = [
           {
             type: "repeater",
             name: "previousPartners",
+            addLabel: "הוספת נישואים קודמים",
+            itemLabel: "נישואים קודמים",
+            emptyText: "עדיין לא נוספו פרטי נישואים קודמים.",
             fileds: [
               {
                 name: "previousPartners.separationType",
+                width: "full",
                 label: "אופן הפרידה",
                 type: "radio",
                 options: [
@@ -1145,49 +1158,42 @@ export const studentFields: FormSteps[] = [
                   },
                   { label: "פטירה", value: "death" },
                 ],
-                columns: -1,
-                required: true,
               },
               {
                 name: "previousPartners.fullName",
+                width: "lg",
                 label: "שם מלא של בן/בת הזוג הקודם/ה",
                 type: "text",
-                columns: 3,
-                required: true,
               },
               {
                 name: "previousPartners.parents.fathersName",
+                width: "sm",
                 label: "שם האב",
                 type: "text",
-                columns: 3,
-                required: true,
               },
               {
                 name: "previousPartners.parents.mothersName",
+                width: "sm",
                 label: "שם האם",
                 type: "text",
-                columns: 3,
-                required: true,
               },
               {
                 name: "previousPartners.parents.address",
+                width: "lg",
                 label: "כתובת ההורים",
                 type: "text",
-                columns: 3,
-                required: true,
               },
               {
                 name: "previousPartners.marriageDate",
+                width: "sm",
                 label: "תאריך נישואין",
                 type: "date",
-                columns: 3,
-                required: true,
               },
               {
                 name: "previousPartners.divorce.date",
+                width: "sm",
                 label: "תאריך גירושין",
                 type: "date",
-                columns: 3,
                 condition: [
                   {
                     parameter: "previousPartners.separationType",
@@ -1195,13 +1201,12 @@ export const studentFields: FormSteps[] = [
                     value: "divorce",
                   },
                 ],
-                required: true,
               },
               {
                 name: "previousPartners.deathDate",
+                width: "sm",
                 label: "תאריך פטירה",
                 type: "date",
-                columns: 3,
                 condition: [
                   {
                     parameter: "previousPartners.separationType",
@@ -1209,41 +1214,24 @@ export const studentFields: FormSteps[] = [
                     value: "death",
                   },
                 ],
-                required: true,
               },
               {
                 name: "previousPartners.childrenNumber",
+                width: "sm",
                 label: "מספר ילדים מנישואין אלו",
                 type: "number",
-                columns: 3,
-                required: true,
               },
               {
                 name: "previousPartners.marriedChildrenNumber",
+                width: "sm",
                 label: "מתוכם נשואים",
                 type: "number",
-                columns: 3,
-                required: true,
-              },
-              {
-                name: "previousPartners.divorce.reason",
-                label: "סיבת הגירושין",
-                type: "textarea",
-                columns: -1,
-                condition: [
-                  {
-                    parameter: "previousPartners.separationType",
-                    operator: "===",
-                    value: "divorce",
-                  },
-                ],
-                required: true,
               },
               {
                 name: "previousPartners.divorce.rabbiName",
+                width: "sm",
                 label: "שם הרב המלווה בגירושין",
                 type: "text",
-                columns: 3,
                 condition: [
                   {
                     parameter: "previousPartners.separationType",
@@ -1251,13 +1239,12 @@ export const studentFields: FormSteps[] = [
                     value: "divorce",
                   },
                 ],
-                required: true,
               },
               {
                 name: "previousPartners.divorce.rabbiPhone",
+                width: "sm",
                 label: "טלפון של הרב",
                 type: "text",
-                columns: 3,
                 condition: [
                   {
                     parameter: "previousPartners.separationType",
@@ -1265,7 +1252,19 @@ export const studentFields: FormSteps[] = [
                     value: "divorce",
                   },
                 ],
-                required: true,
+              },
+              {
+                name: "previousPartners.divorce.reason",
+                width: "full",
+                label: "סיבת הגירושין",
+                type: "textarea",
+                condition: [
+                  {
+                    parameter: "previousPartners.separationType",
+                    operator: "===",
+                    value: "divorce",
+                  },
+                ],
               },
             ],
           },
@@ -1278,26 +1277,27 @@ export const studentFields: FormSteps[] = [
           {
             type: "repeater",
             name: "knownRabbanim",
+            addLabel: "הוספת רב מכיר",
+            itemLabel: "רב מכיר",
+            emptyText: "עדיין לא נוספו רבנים מכירים.",
             fileds: [
               {
                 name: "knownRabbanim.name",
+                width: "lg",
                 type: "text",
                 label: "שם מלא",
-                required: true,
-                columns: 3,
               },
               {
                 name: "knownRabbanim.role",
+                width: "sm",
                 type: "text",
                 label: "תפקיד",
-                columns: 3,
               },
               {
                 name: "knownRabbanim.phone",
+                width: "sm",
                 type: "text",
                 label: "טלפון",
-                required: true,
-                columns: 3,
               },
               // {
               // 	name: "knownRabbanim.email",
@@ -1315,26 +1315,27 @@ export const studentFields: FormSteps[] = [
           {
             type: "repeater",
             name: "knownFriends",
+            addLabel: "הוספת חבר/ה",
+            itemLabel: "חבר/ה",
+            emptyText: "עדיין לא נוספו חברים מכירים.",
             fileds: [
               {
                 name: "knownFriends.name",
+                width: "lg",
                 type: "text",
                 label: "שם מלא",
-                required: true,
-                columns: 4,
               },
               {
                 name: "knownFriends.phone",
+                width: "sm",
                 type: "text",
                 label: "טלפון",
-                required: true,
-                columns: 4,
               },
               {
                 name: "knownFriends.email",
+                width: "sm",
                 type: "text",
                 label: "אימייל",
-                columns: 4,
               },
             ],
           },
@@ -1347,26 +1348,27 @@ export const studentFields: FormSteps[] = [
           {
             type: "repeater",
             name: "knownFamilyFriends",
+            addLabel: "הוספת מכר משפחתי",
+            itemLabel: "מכר משפחתי",
+            emptyText: "עדיין לא נוספו מכרים משפחתיים.",
             fileds: [
               {
                 name: "knownFamilyFriends.name",
+                width: "lg",
                 type: "text",
                 label: "שם מלא",
-                required: true,
-                columns: 4,
               },
               {
                 name: "knownFamilyFriends.phone",
+                width: "sm",
                 type: "text",
                 label: "טלפון",
-                required: true,
-                columns: 4,
               },
               {
                 name: "knownFamilyFriends.email",
+                width: "sm",
                 type: "text",
                 label: "אימייל",
-                columns: 4,
               },
             ],
           },
@@ -1384,6 +1386,7 @@ export const studentFields: FormSteps[] = [
         fields: [
           {
             name: "parents.status",
+            width: "lg",
             label: "סטטוס ההורים",
             type: "radio",
             options: [
@@ -1391,10 +1394,10 @@ export const studentFields: FormSteps[] = [
               { value: "divorced", label: "גרושים" },
               { value: "widowed", label: "אלמנ/ה" },
             ],
-            required: true,
           },
           {
             name: "parents.holding",
+            width: "lg",
             label: "מי ההורה שמגדל בפועל?",
             type: "radio",
             options: [
@@ -1409,10 +1412,10 @@ export const studentFields: FormSteps[] = [
                 value: "divorced",
               },
             ],
-            required: true,
           },
           {
             name: "parents.deadParent",
+            width: "lg",
             label: "מי נפטר?",
             type: "radio",
             options: [
@@ -1427,10 +1430,10 @@ export const studentFields: FormSteps[] = [
                 value: "widowed",
               },
             ],
-            required: true,
           },
           {
             name: "parents.fatherDeathDate",
+            width: "lg",
             label: "תאריך פטירת האב",
             type: "date",
             condition: [
@@ -1453,6 +1456,7 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "parents.motherDeathDate",
+            width: "lg",
             label: "תאריך פטירת האם",
             type: "date",
             condition: [
@@ -1475,6 +1479,7 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "parents.isMotherRemarried",
+            width: "lg",
             label: "האם האם נישאה מחדש?",
             type: "radio",
             options: [
@@ -1508,10 +1513,10 @@ export const studentFields: FormSteps[] = [
                 value: "both",
               },
             ],
-            required: true,
           },
           {
             name: "parents.newHusbandName",
+            width: "lg",
             label: "שם הבעל החדש",
             type: "text",
             condition: [
@@ -1545,10 +1550,10 @@ export const studentFields: FormSteps[] = [
                 value: "mother",
               },
             ],
-            required: true,
           },
           {
             name: "parents.isFatherRemarried",
+            width: "lg",
             label: "האם האב נישא מחדש?",
             type: "radio",
             options: [
@@ -1582,10 +1587,10 @@ export const studentFields: FormSteps[] = [
                 value: "both",
               },
             ],
-            required: true,
           },
           {
             name: "parents.newWifeName",
+            width: "lg",
             label: "שם האשה החדשה",
             type: "text",
             condition: [
@@ -1617,7 +1622,6 @@ export const studentFields: FormSteps[] = [
                 value: "father",
               },
             ],
-            required: true,
           },
         ],
       },
@@ -1633,6 +1637,7 @@ export const studentFields: FormSteps[] = [
         fields: [
           {
             name: "medical.status",
+            width: "full",
             label: "מצב בריאותי כללי",
             type: "radio",
             options: [
@@ -1640,10 +1645,10 @@ export const studentFields: FormSteps[] = [
               { value: "littleProblem", label: "בעיה קלה" },
               { value: "hugeProblem", label: "בעיה משמעותית" },
             ],
-            required: true,
           },
           {
             name: "medical.exposureLevel",
+            width: "full",
             label: "רמת חשיפה לבעיה",
             type: "radio",
             vertical: true,
@@ -1675,6 +1680,7 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "medical.details",
+            width: "full",
             label: "פירוט הבעיה הרפואית",
             type: "textarea",
             condition: [
@@ -1687,6 +1693,7 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "medical.documents",
+            width: "full",
             label: "העלאת מסמכים רפואיים",
             type: "upload",
             description:
@@ -1695,7 +1702,6 @@ export const studentFields: FormSteps[] = [
               "application/pdf": [".pdf"],
               "image/*": [".png", ".jpg", ".jpeg"],
             },
-            columns: -1,
             condition: [
               {
                 parameter: "medical.status",
@@ -1706,6 +1712,7 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "medical.contactForMoreInfo",
+            width: "full",
             label: "עם מי לדבר על פרטים נוספים",
             type: "radio",
             options: [
@@ -1723,6 +1730,9 @@ export const studentFields: FormSteps[] = [
           {
             type: "repeater",
             name: "medical.otherContact",
+            addLabel: "הוספת איש קשר",
+            itemLabel: "איש קשר",
+            emptyText: "עדיין לא נוסף איש קשר.",
             condition: [
               {
                 parameter: "medical.contactForMoreInfo",
@@ -1733,18 +1743,19 @@ export const studentFields: FormSteps[] = [
             fileds: [
               {
                 name: "medical.otherContact.name",
+                width: "lg",
                 label: "שם איש קשר",
                 type: "text",
-                required: true,
               },
               {
                 name: "medical.otherContact.phone",
+                width: "sm",
                 label: "טלפון",
                 type: "text",
-                required: true,
               },
               {
                 name: "medical.otherContact.email",
+                width: "sm",
                 label: "אימייל",
                 type: "text",
               },
@@ -1752,6 +1763,7 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "medical.relatedIssuePreference",
+            width: "full",
             label: "האם מעוניינים בשידוך עם בעיה רפואית?",
             type: "radio",
             vertical: true,
@@ -1791,23 +1803,26 @@ export const studentFields: FormSteps[] = [
         fields: [
           {
             name: "partner.ageRange",
+            width: "lg",
             label: "טווח גילאים",
             type: "rangeDouble",
-            required: true,
           },
           {
             name: "partner.preferredCountry",
+            width: "lg",
             label: "ארץ מועדפת",
             type: "radio",
             options: [
               { value: "all", label: "אין העדפה" },
               { value: "specific", label: "מדינות מסוימות" },
             ],
-            required: true,
           },
           {
             type: "repeater",
             name: "partner.specificCountries",
+            addLabel: "הוספת מדינה",
+            itemLabel: "מדינה",
+            emptyText: "עדיין לא נוספו מדינות.",
             condition: [
               {
                 parameter: "partner.preferredCountry",
@@ -1817,15 +1832,16 @@ export const studentFields: FormSteps[] = [
             ],
             fileds: [
               {
-                name: "partner.specificCountries.locale",
-                label: "קוד מדינה (אופציונלי)",
+                name: "partner.specificCountries.name",
+                width: "lg",
+                label: "שם המדינה",
                 type: "text",
               },
               {
-                name: "partner.specificCountries.name",
-                label: "שם המדינה",
+                name: "partner.specificCountries.locale",
+                width: "lg",
+                label: "קוד מדינה (אופציונלי)",
                 type: "text",
-                required: true,
               },
             ],
           },
@@ -1833,6 +1849,7 @@ export const studentFields: FormSteps[] = [
           // אוצר המילים זהה ל-employment.tags כדי לשמור על ניסוח אחיד.
           {
             name: "partner.workStatus",
+            width: "full",
             label: "סטטוס תעסוקתי מבוקש",
             type: "chips",
             options: [
@@ -1852,6 +1869,7 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "partner.workStatus",
+            width: "full",
             label: "סטטוס תעסוקתי מבוקש",
             type: "chips",
             options: [
@@ -1872,6 +1890,7 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "partner.headCoverType",
+            width: "full",
             label: "סוג כיסוי ראש רצוי",
             type: "radio",
             options: [
@@ -1893,6 +1912,7 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "partner.planForLife",
+            width: "full",
             label: 'מתעתד בעז"ה',
             type: "radio",
             options: [
@@ -1917,6 +1937,7 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "partner.cellphoneType",
+            width: "full",
             label: "סוג טלפון מקובל",
             type: "radio",
             options: [
@@ -1931,15 +1952,15 @@ export const studentFields: FormSteps[] = [
           },
           {
             name: "partner.aboutThePartner",
+            width: "full",
             label: "כמה מילים על אופי וסגנון המיועד/ת",
             type: "textarea",
-            columns: -1,
           },
           {
             name: "partner.additionalInformation",
+            width: "full",
             label: "לעיני השדכן בלבד – מידע שחשוב שידע",
             type: "textarea",
-            columns: -1,
             required: true,
           },
         ],
@@ -1950,25 +1971,25 @@ export const studentFields: FormSteps[] = [
         fields: [
           {
             name: "author.name",
+            width: "sm",
             label: 'שם ממלא/ת הקו"ח',
             type: "text",
-            columns: 3,
             description: "נא למלא את שם ממלא הקו״ח כדי שנדע לאן לפנות",
             required: true,
           },
           {
             name: "author.phone",
+            width: "sm",
             label: 'טלפון ממלא/ת הקו"ח',
             type: "text",
-            columns: 3,
             required: true,
           },
           {
             // הניסוח המגדרי נקבע ב-genderLabelOverrides (author.relation)
             name: "author.relation",
+            width: "lg",
             label: "קשר למועמד/ת",
             type: "text",
-            columns: 3,
             description: "לדוגמה: אב, אם, אח, קרוב משפחה, שדכן",
             required: true,
           },

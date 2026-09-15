@@ -141,31 +141,40 @@ const FormDescription = React.forwardRef<
 });
 FormDescription.displayName = "FormDescription";
 
-const FormMessage = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, children, ...props }, ref) => {
-  const { formMessageId, error } = useFormField();
-  // שדה מורכב (למשל שם עם תוארים) מקבל את השגיאה של החלק שבתוכו
-  const body = error
-    ? String(error.message ?? findNestedMessage(error) ?? "שדה לא תקין")
-    : children;
+type FormMessageProps = React.HTMLAttributes<HTMLParagraphElement> & {
+  /** מעבד את הודעת השגיאה לפני התצוגה, למשל לנוסח ספציפי לשדה */
+  formatMessage?: (message: string) => string;
+};
 
-  if (!body) {
-    return null;
-  }
+const FormMessage = React.forwardRef<HTMLParagraphElement, FormMessageProps>(
+  ({ className, children, formatMessage, ...props }, ref) => {
+    const { formMessageId, error } = useFormField();
+    // שדה מורכב (למשל שם עם תוארים) מקבל את השגיאה של החלק שבתוכו
+    const errorMessage = error
+      ? String(error.message || findNestedMessage(error) || "")
+      : "";
+    const body = error
+      ? formatMessage
+        ? formatMessage(errorMessage)
+        : errorMessage || "שדה לא תקין"
+      : children;
 
-  return (
-    <p
-      ref={ref}
-      id={formMessageId}
-      className={cn("text-body-sm font-medium text-destructive", className)}
-      {...props}
-    >
-      {body}
-    </p>
-  );
-});
+    if (!body) {
+      return null;
+    }
+
+    return (
+      <p
+        ref={ref}
+        id={formMessageId}
+        className={cn("text-body-sm font-medium text-destructive", className)}
+        {...props}
+      >
+        {body}
+      </p>
+    );
+  },
+);
 FormMessage.displayName = "FormMessage";
 
 const MAX_NESTED_ERROR_DEPTH = 3;

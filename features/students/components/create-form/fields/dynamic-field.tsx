@@ -32,9 +32,11 @@ import dynamic from "next/dynamic";
 import {
   FIELD_GRID_CLASS,
   FIELD_SCROLL_MARGIN_CLASS,
+  FULL_ROW_CLASS,
   fieldCellAttributes,
   getFieldWidthClass,
 } from "../field-layout";
+import { formatFieldErrorMessage } from "../field-messages";
 
 // bundle-dynamic-imports: lazy-load the heavy Jewish date picker so it's only
 // bundled when a date field is actually rendered in the multi-step form
@@ -84,22 +86,27 @@ export function DynamicField({
     );
   }
 
+  // טקסט לפני השדה (למשל "לומד עם חברותא") בשורה משלו, כדי שהשדה ושכנו
+  // בשורה יתיישרו לפי התוויות
   return (
-    <div
-      className={cn(
-        getFieldWidthClass(field.width, field.columns),
-        FIELD_SCROLL_MARGIN_CLASS,
-      )}
-      {...fieldCellAttributes(field.name)}
-    >
-      <AtomicFieldRenderer
-        field={field}
-        control={control}
-        values={values}
-        gender={gender}
-        getLabel={getLabel}
-      />
-    </div>
+    <Fragment>
+      {renderBeforeField(field.beforeField ?? field.before)}
+      <div
+        className={cn(
+          getFieldWidthClass(field.width),
+          FIELD_SCROLL_MARGIN_CLASS,
+        )}
+        {...fieldCellAttributes(field.name)}
+      >
+        <AtomicFieldRenderer
+          field={field}
+          control={control}
+          values={values}
+          gender={gender}
+          getLabel={getLabel}
+        />
+      </div>
+    </Fragment>
   );
 }
 
@@ -123,7 +130,6 @@ function AtomicFieldRenderer({
   const disableBecauseLinkedId = !isIdField && hasNonEmptyValue(linkedIdValue);
   const placeholder: string | undefined = rawField.placeholder;
   const description: string | undefined = rawField.description;
-  const beforeField: React.ReactNode = rawField.beforeField ?? rawField.before;
   // לייבל של אפשרות יכול להיות מגדרי (״רווק.ה״ → ״רווק״ / ״רווקה״).
   // getLabel מטפל רק בלייבל של השדה, ולכן האפשרויות נפתרות כאן.
   const options: Array<{ value: string; label: string }> = (
@@ -167,6 +173,9 @@ function AtomicFieldRenderer({
       : undefined;
   const label = getLabel(field, gender);
   const fieldId = toFieldId(name);
+  // הודעת שדה חובה כללית מהסכמה הופכת למשפט עם התווית שמוצגת (field-messages.ts)
+  const formatMessage = (message: string) =>
+    formatFieldErrorMessage(message, label, String(type));
 
   if (isTextAndSelectFieldType(type)) {
     const prefixOptions: Array<{ value: string; label: string }> =
@@ -178,7 +187,6 @@ function AtomicFieldRenderer({
     const suffixPlaceholder: string = placeholder ?? "תואר";
     return (
       <Fragment>
-        {renderBeforeField(beforeField)}
         <FormField
           control={control}
           name={name as any}
@@ -239,7 +247,7 @@ function AtomicFieldRenderer({
                 {description && (
                   <FormDescription>{description}</FormDescription>
                 )}
-                <FormMessage />
+                <FormMessage formatMessage={formatMessage} />
               </FormItem>
             );
           }}
@@ -251,7 +259,6 @@ function AtomicFieldRenderer({
   if (isTextFieldType(type)) {
     return (
       <Fragment>
-        {renderBeforeField(beforeField)}
         <FormField
           control={control}
           name={name as any}
@@ -342,7 +349,7 @@ function AtomicFieldRenderer({
                 )}
               </FormControl>
               {description && <FormDescription>{description}</FormDescription>}
-              <FormMessage />
+              <FormMessage formatMessage={formatMessage} />
             </FormItem>
           )}
         />
@@ -354,7 +361,6 @@ function AtomicFieldRenderer({
     if (type === "select2") {
       return (
         <Fragment>
-          {renderBeforeField(beforeField)}
           <FormField
             control={control}
             name={name as any}
@@ -378,7 +384,7 @@ function AtomicFieldRenderer({
                     disabled={disableBecauseLinkedId}
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage formatMessage={formatMessage} />
               </FormItem>
             )}
           />
@@ -389,7 +395,6 @@ function AtomicFieldRenderer({
     if (type === "checkbox") {
       return (
         <Fragment>
-          {renderBeforeField(beforeField)}
           <FormField
             control={control}
             name={name as any}
@@ -438,7 +443,7 @@ function AtomicFieldRenderer({
                       ))}
                     </div>
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage formatMessage={formatMessage} />
                 </FormItem>
               );
             }}
@@ -450,7 +455,6 @@ function AtomicFieldRenderer({
     if (type === "radio") {
       return (
         <Fragment>
-          {renderBeforeField(beforeField)}
           <FormField
             control={control}
             name={name as any}
@@ -491,7 +495,7 @@ function AtomicFieldRenderer({
                     ))}
                   </div>
                 </FormControl>
-                <FormMessage />
+                <FormMessage formatMessage={formatMessage} />
               </FormItem>
             )}
           />
@@ -502,7 +506,6 @@ function AtomicFieldRenderer({
     if (type === "chips" || type === "chip") {
       return (
         <Fragment>
-          {renderBeforeField(beforeField)}
           <FormField
             control={control}
             name={name as any}
@@ -545,7 +548,7 @@ function AtomicFieldRenderer({
                       })}
                     </div>
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage formatMessage={formatMessage} />
                 </FormItem>
               );
             }}
@@ -560,7 +563,6 @@ function AtomicFieldRenderer({
 
     return (
       <Fragment>
-        {renderBeforeField(beforeField)}
         <FormField
           control={control}
           name={name as any}
@@ -593,7 +595,7 @@ function AtomicFieldRenderer({
                     ))}
                   </NativeSelect>
                 </FormControl>
-                <FormMessage />
+                <FormMessage formatMessage={formatMessage} />
               </FormItem>
             );
           }}
@@ -605,7 +607,6 @@ function AtomicFieldRenderer({
   if (isRangeFieldType(type)) {
     return (
       <Fragment>
-        {renderBeforeField(beforeField)}
         <FormField
           control={control}
           name={name as any}
@@ -652,7 +653,7 @@ function AtomicFieldRenderer({
                     disabled={disableBecauseLinkedId}
                   />
                 </div>
-                <FormMessage />
+                <FormMessage formatMessage={formatMessage} />
               </FormItem>
             );
           }}
@@ -664,7 +665,6 @@ function AtomicFieldRenderer({
   if (isPhotoGalleryFieldType(type)) {
     return (
       <Fragment>
-        {renderBeforeField(beforeField)}
         <FormField
           control={control}
           name={name as any}
@@ -678,7 +678,7 @@ function AtomicFieldRenderer({
                 />
               </FormControl>
               {description && <FormDescription>{description}</FormDescription>}
-              <FormMessage />
+              <FormMessage formatMessage={formatMessage} />
             </FormItem>
           )}
         />
@@ -691,7 +691,6 @@ function AtomicFieldRenderer({
 
     return (
       <Fragment>
-        {renderBeforeField(beforeField)}
         <FormField
           control={control}
           name={name as any}
@@ -740,7 +739,7 @@ function AtomicFieldRenderer({
                 {description && (
                   <FormDescription>{description}</FormDescription>
                 )}
-                <FormMessage />
+                <FormMessage formatMessage={formatMessage} />
               </FormItem>
             );
           }}
@@ -829,7 +828,7 @@ function RepeaterFieldRenderer({
 
   return (
     <div className="space-y-4">
-      {renderBeforeField(beforeField)}
+      {renderBeforeField(beforeField, { inGrid: false })}
       {fields.length === 0 && (
         <p className="text-body-sm text-muted-foreground">{emptyText}</p>
       )}
@@ -906,25 +905,28 @@ function RepeaterFieldRenderer({
                   }
 
                   return (
-                    <div
+                    <Fragment
                       key={innerFieldAny.originalName ?? innerFieldAny.name}
-                      className={cn(
-                        getFieldWidthClass(
-                          innerFieldAny.width,
-                          innerFieldAny.columns,
-                        ),
-                        FIELD_SCROLL_MARGIN_CLASS,
-                      )}
-                      {...fieldCellAttributes(resolvedName)}
                     >
-                      <AtomicFieldRenderer
-                        field={innerFieldConfig}
-                        control={control}
-                        values={values}
-                        gender={gender}
-                        getLabel={getLabel}
-                      />
-                    </div>
+                      {renderBeforeField(
+                        innerFieldAny.beforeField ?? innerFieldAny.before,
+                      )}
+                      <div
+                        className={cn(
+                          getFieldWidthClass(innerFieldAny.width),
+                          FIELD_SCROLL_MARGIN_CLASS,
+                        )}
+                        {...fieldCellAttributes(resolvedName)}
+                      >
+                        <AtomicFieldRenderer
+                          field={innerFieldConfig}
+                          control={control}
+                          values={values}
+                          gender={gender}
+                          getLabel={getLabel}
+                        />
+                      </div>
+                    </Fragment>
                   );
                 })}
               </div>
@@ -945,21 +947,41 @@ function readText(value: unknown, fallback: string): string {
   return typeof value === "string" && value.trim() ? value : fallback;
 }
 
-function renderBeforeField(beforeField: React.ReactNode) {
+const HTML_TAG_PATTERN = /<[a-z][\s\S]*>/i;
+
+/**
+ * טקסט שמופיע לפני שדה. ברשת הוא שורה מלאה משלו: HTML (פתיח הטופס) כמו
+ * שהוא, וטקסט רגיל ככותרת קטנה של קבוצת השדות שאחריו.
+ */
+function renderBeforeField(
+  beforeField: React.ReactNode,
+  { inGrid = true }: { inGrid?: boolean } = {},
+) {
   if (!beforeField) {
     return null;
   }
 
-  if (typeof beforeField === "string") {
+  const rowClass = inGrid ? FULL_ROW_CLASS : undefined;
+
+  if (typeof beforeField === "string" && HTML_TAG_PATTERN.test(beforeField)) {
     return (
       <div
         dangerouslySetInnerHTML={{ __html: beforeField }}
-        className="mb-4 space-y-2 [&>hr]:my-7"
+        className={cn(rowClass, "space-y-2 [&>hr]:mt-7")}
       />
     );
   }
 
-  return <>{beforeField}</>;
+  if (typeof beforeField === "string") {
+    // קרוב לשדה שהוא מתאר: חצי מהמרווח בין שורות
+    return (
+      <p className={cn(rowClass, "-mb-3 text-label font-bold")}>
+        {beforeField}
+      </p>
+    );
+  }
+
+  return <div className={rowClass}>{beforeField}</div>;
 }
 
 function determineLinkedIdPath(fieldName: string, idFieldPaths: Set<string>) {

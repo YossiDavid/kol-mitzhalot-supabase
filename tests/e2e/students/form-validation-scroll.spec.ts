@@ -42,3 +42,49 @@ for (const viewport of VIEWPORTS) {
     await expect(stepHeading).toBeVisible();
   });
 }
+
+/**
+ * הודעת שדה חובה נבנית מהתווית שמוצגת ומסוג הפקד (create-form/field-messages.ts):
+ * "נא למלא" לשדה הקלדה, "נא לבחור" לרשימה - ולא "שדה חובה" כללי.
+ */
+test("הודעות שדה חובה ספציפיות לפי תווית וסוג פקד", async ({ page }) => {
+  // Arrange
+  await page.goto("/app/students/create");
+  await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
+  const nextButton = page.getByRole("button", { name: "המשך לשלב הבא" });
+  await nextButton.click();
+  await expect(
+    page.getByRole("heading", { name: "פרטים אישיים" }),
+  ).toBeVisible();
+
+  // Act
+  await nextButton.click();
+
+  // Assert
+  const houseCell = page.locator('[data-field-name="house"]');
+  await expect(houseCell.getByText("נא למלא מספר בית")).toBeVisible();
+  const cellphoneCell = page.locator('[data-field-name="cellphoneType"]');
+  await expect(
+    cellphoneCell.getByText("נא לבחור סוג טלפון נייד"),
+  ).toBeVisible();
+  await expect(page.getByText("שדה חובה", { exact: true })).toHaveCount(0);
+});
+
+test("שם עם תוארים מקבל הודעה עם התווית המגדרית", async ({ page }) => {
+  // Arrange
+  await page.goto("/app/students/create");
+  await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
+  await page
+    .getByRole("navigation", { name: "שלבי הטופס" })
+    .getByRole("button", { name: "על המשפחה", exact: true })
+    .click();
+  await expect(page.getByRole("heading", { name: "על המשפחה" })).toBeVisible();
+
+  // Act
+  await page.getByRole("button", { name: "המשך לשלב הבא" }).click();
+
+  // Assert
+  const fatherCell = page.locator('[data-field-name="father.self"]');
+  await expect(fatherCell.getByText("נא למלא שם אביה")).toBeVisible();
+  await expect(page.locator("#father-self")).toBeFocused();
+});

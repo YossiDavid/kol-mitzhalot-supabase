@@ -26,34 +26,16 @@ const FIELD_WIDTH_CLASS: Record<FieldWidth, string> = {
   full: "col-span-12",
 };
 
-// שלבים שעוד לא עברו ל-width: מספר עמודות מתוך 12 מ-md, כמו קודם
-const LEGACY_COLUMN_CLASS: Record<number, string> = {
-  1: "col-span-12 md:col-span-1",
-  2: "col-span-12 md:col-span-2",
-  3: "col-span-12 md:col-span-3",
-  4: "col-span-12 md:col-span-4",
-  5: "col-span-12 md:col-span-5",
-  6: "col-span-12 md:col-span-6",
-  7: "col-span-12 md:col-span-7",
-  8: "col-span-12 md:col-span-8",
-  9: "col-span-12 md:col-span-9",
-  10: "col-span-12 md:col-span-10",
-  11: "col-span-12 md:col-span-11",
-  12: "col-span-12",
-};
-
-const MAX_COLUMNS = 12;
-
-export function getFieldWidthClass(width?: unknown, columns?: unknown): string {
+/** שדה בלי width (או עם ערך לא מוכר) תופס את כל השורה */
+export function getFieldWidthClass(width?: unknown): string {
   if (typeof width === "string" && width in FIELD_WIDTH_CLASS) {
     return FIELD_WIDTH_CLASS[width as FieldWidth];
   }
-  if (typeof columns !== "number" || columns === -1) {
-    return FIELD_WIDTH_CLASS.full;
-  }
-  const span = Math.min(MAX_COLUMNS, Math.max(1, columns));
-  return LEGACY_COLUMN_CLASS[span] ?? FIELD_WIDTH_CLASS.full;
+  return FIELD_WIDTH_CLASS.full;
 }
+
+/** שורה מלאה ברשת, למשל טקסט שמופיע לפני קבוצת שדות */
+export const FULL_ROW_CLASS = FIELD_WIDTH_CLASS.full;
 
 /**
  * כל תא של שדה מסומן בשם השדה, כדי שאחרי ולידציה שנכשלה אפשר יהיה למצוא את

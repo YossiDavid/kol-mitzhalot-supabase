@@ -3,8 +3,12 @@
 import { z } from "zod";
 
 import type { StudentPhotoItem } from "@/features/students/lib/student-photo-rules";
+import { GENERIC_REQUIRED_MESSAGE } from "./field-messages";
 
-const req = (msg = "שדה חובה") => z.string().min(1, msg);
+// הודעה כללית בכוונה: המרנדר מחליף אותה בנוסח לפי התווית שמוצגת וסוג הפקד
+// ("נא למלא שם אביו", "נא לבחור סטטוס אישי") - field-messages.ts.
+// הודעה מפורשת נכתבת כאן רק כשהיא טובה מהנוסח הזה.
+const req = (msg = GENERIC_REQUIRED_MESSAGE) => z.string().min(1, msg);
 const opt = z.string().default("");
 
 const namePartsRequired = z.object({
@@ -21,30 +25,31 @@ const namePartsOptional = z.object({
 
 export const studentFormSchema = z.object({
   isOnShiduchim: z.boolean().default(true),
-  gender: req("יש לבחור מיועד/מיועדת"),
+  // התווית היא משפט שלם ("אני ממלא/ת את טופס הקו״ח עבור:"), ולכן הודעה מפורשת
+  gender: req("נא לבחור מיועד/מיועדת"),
 
-  firstName: req("נא למלא שם פרטי"),
-  lastName: req("נא למלא שם משפחה"),
-  identityNumber: req("נא למלא תעודת זהות"),
-  birthDate: req("נא לבחור תאריך לידה"),
+  firstName: req(),
+  lastName: req(),
+  identityNumber: req(),
+  birthDate: req(),
   // לא חובה בכוונה: גם השדה הקודם (תמונה בודדת) לא נאכף, וכרטיס קיים בלי
   // תמונות חייב להמשיך להישמר. המגבלות על כל קובץ נבדקות בהוספה לגלריה.
   photos: z.array(z.custom<StudentPhotoItem>()).default([]),
 
-  country: req("נא למלא ארץ"),
-  city: req("נא למלא עיר"),
-  street: req("נא למלא רחוב"),
-  house: req("נא למלא מספר בית"),
+  country: req(),
+  city: req(),
+  street: req(),
+  house: req(),
   community: opt,
   shtible: opt,
   institutionId: opt,
-  personalStatus: req("נא לבחור סטטוס אישי"),
+  personalStatus: req(),
   // גובה בס״מ. ריק מותר, אבל ערך שהוזן חייב להיות סביר —
   // מתחת ל-50 זה כמעט תמיד טעות הקלדה.
   height: opt.refine((v) => v === "" || Number(v) >= 50, {
     message: "גובה מינימלי הוא 50 ס״מ",
   }),
-  cellphoneType: req("נא לבחור סוג טלפון"),
+  cellphoneType: req(),
   phone: opt,
   planForLife: opt,
   headCoverType: opt,
@@ -53,8 +58,8 @@ export const studentFormSchema = z.object({
 
   father: z.object({
     self: namePartsRequired,
-    phone: req("נא למלא טלפון"),
-    job: req("נא למלא עיסוק"),
+    phone: req(),
+    job: req(),
     email: opt,
     grandFather: namePartsRequired,
     grandMother: namePartsRequired,
@@ -62,18 +67,18 @@ export const studentFormSchema = z.object({
 
   mother: z.object({
     self: namePartsRequired,
-    maidenName: req("נא למלא שם נעורים"),
-    phone: req("נא למלא טלפון"),
-    job: req("נא למלא עיסוק"),
+    maidenName: req(),
+    phone: req(),
+    job: req(),
     email: opt,
     grandFather: namePartsRequired,
     grandMother: namePartsRequired,
   }),
 
   family: z.object({
-    numberOfChildren: req("נא למלא מספר ילדים"),
-    currentChildPlace: req("נא למלא מיקום הילד"),
-    about: req("נא לכתוב כמה מילים"),
+    numberOfChildren: req(),
+    currentChildPlace: req(),
+    about: req(),
     mechutanim: z.array(z.record(z.string(), z.unknown())).default([]),
   }),
 
@@ -133,13 +138,13 @@ export const studentFormSchema = z.object({
     planForLife: opt,
     cellphoneType: opt,
     aboutThePartner: opt,
-    additionalInformation: req("נא למלא מידע לשדכן"),
+    additionalInformation: req(),
   }),
 
   author: z.object({
-    name: req("נא למלא שם ממלא הטופס"),
-    phone: req("נא למלא טלפון ממלא הטופס"),
-    relation: req("נא למלא את הקשר למועמד/ת"),
+    name: req(),
+    phone: req(),
+    relation: req(),
   }),
 });
 
