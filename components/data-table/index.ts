@@ -6,5 +6,8 @@ export {
   type DataTableMobileSlot,
   type DataTableProps,
   type DataTableRowLink,
+  type DataTableSort,
+  type DataTableSortDirection,
+  type DataTableSortValue,
 } from "./data-table";
 export { DataTableSkeleton } from "./data-table-skeleton";

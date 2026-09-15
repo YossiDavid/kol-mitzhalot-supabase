@@ -5,7 +5,11 @@ import Link from "next/link";
 import { useMemo, type ReactNode } from "react";
 import { Camera, FileText, Star } from "lucide-react";
 
-import { DataTable, type DataTableColumn } from "@/components/data-table";
+import {
+  DataTable,
+  type DataTableColumn,
+  type DataTableSort,
+} from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { AddCvDialog } from "@/features/students/components/add-cv-dialog";
@@ -78,6 +82,9 @@ type StudentsTableProps = {
   onCvAdded: (id: string, cvUrl: string) => void;
   emptyState?: ReactNode;
   className?: string;
+  /** מיון נשלט, כשהוא צריך לשרוד טעינה מחדש (הרשימה). אחרת - פנימי */
+  sort?: DataTableSort | null;
+  onSortChange?: (sort: DataTableSort | null) => void;
 } & (ListPreset | FavoritesPreset | ChildrenPreset);
 
 const ENGAGED_ROW_CLASS = "bg-warning-muted hover:bg-warning/30";
@@ -95,6 +102,16 @@ function studentCardHref(id: string) {
 
 function parentName(parent: ParentName | undefined) {
   return [parent?.prefix, parent?.name].filter(Boolean).join(" ");
+}
+
+/**
+ * ערך מיון לעמודת הגיל: ככל שתאריך הלידה מוקדם יותר הגיל גבוה יותר, ולכן
+ * "סדר עולה" (מהצעיר למבוגר) הוא תאריך לידה בסדר יורד.
+ */
+function ageSortValue(student: StudentTableRow): number | null {
+  if (!student.birth_date) return null;
+  const time = new Date(student.birth_date).getTime();
+  return Number.isNaN(time) ? null : -time;
 }
 
 function StarToggle({
@@ -298,47 +315,56 @@ function buildColumns(
       header: "סטטוס",
       size: "min",
       cell: (student) => <StatusCell student={student} />,
+      sortValue: (student) =>
+        personalStatusToHebrew(student.personal_status, student.gender),
     },
     {
       key: "last-name",
       header: "שם משפחה",
       mobile: "hidden",
       cell: (student) => student.last_name,
+      sortValue: (student) => student.last_name,
     },
     {
       key: "first-name",
       header: "שם פרטי",
       mobile: "hidden",
       cell: (student) => student.first_name,
+      sortValue: (student) => student.first_name,
     },
     {
       key: "father",
       header: "שם האב",
       mobile: "hidden",
       cell: (student) => parentName(student.parents_info?.father?.self),
+      sortValue: (student) => student.parents_info?.father?.self?.name,
     },
     {
       key: "mother",
       header: "שם האם",
       mobile: "hidden",
       cell: (student) => parentName(student.parents_info?.mother?.self),
+      sortValue: (student) => student.parents_info?.mother?.self?.name,
     },
     {
       key: "city",
       header: "עיר",
       cell: (student) => student.city,
+      sortValue: (student) => student.city,
     },
     {
       key: "age",
       header: "גיל",
       size: "min",
       cell: (student) => calculateAge(student.birth_date || ""),
+      sortValue: ageSortValue,
     },
     {
       key: "height",
       header: "גובה",
       size: "min",
       cell: (student) => student.height,
+      sortValue: (student) => student.height,
     },
     {
       key: "actions",
@@ -361,7 +387,8 @@ function buildColumns(
  * המלא; העמודה הראשונה ורמת ההדגשה משתנות לפי ההקשר (preset).
  */
 export function StudentsTable(props: StudentsTableProps) {
-  const { students, caption, emptyState, className } = props;
+  const { students, caption, emptyState, className, sort, onSortChange } =
+    props;
   // רק לכרטיסים שיש להם תמונות - שאר השורות מוצגות מיד בלי בקשה
   const idsWithPhotos = useMemo(
     () =>
@@ -387,6 +414,8 @@ export function StudentsTable(props: StudentsTableProps) {
       breakpoint="lg"
       columns={buildColumns(props, renderPhoto)}
       rows={students}
+      sort={sort}
+      onSortChange={onSortChange}
       getRowKey={(student) => student.id}
       getRowLink={(student) => ({
         href: studentCardHref(student.id),
