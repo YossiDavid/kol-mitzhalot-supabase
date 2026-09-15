@@ -71,11 +71,11 @@ export function ChatView({ roomId }: { roomId: string }) {
         });
         if (!isMounted) return;
         const metadata = userData as UserMetadata;
-        setRoomTitle(getDisplayName(metadata, otherId));
+        setRoomTitle(getDisplayName(metadata));
         setOtherAvatarUrl(getAvatarUrl(metadata));
       } catch {
         if (!isMounted) return;
-        setRoomTitle(getDisplayName(null, otherId));
+        setRoomTitle(getDisplayName(null));
       }
     }
 

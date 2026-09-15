@@ -13,6 +13,7 @@ import {
   Chat as UserChat,
 } from "@/features/dashboard/components/user";
 import { createClient } from "@/lib/supabase/server";
+import { getDisplayName } from "@/features/chats/lib/user-display";
 import { getMyProposals } from "@/features/shidduchim/lib/proposals-data";
 import { hasRole } from "@/lib/user";
 import DashboardSkeleton from "@/features/dashboard/components/dashboard-skeleton";
@@ -241,13 +242,8 @@ async function DashboardSections() {
               avatar_url?: string;
             } | null;
 
-            let otherUserName = otherUserId.substring(0, 8);
-            if (userData?.firstName || userData?.lastName) {
-              otherUserName =
-                `${userData.firstName || ""} ${userData.lastName || ""}`.trim();
-            } else if (userData?.email) {
-              otherUserName = userData.email.split("@")[0];
-            }
+            // שם תצוגה משותף לצ'אטים - לעולם לא uid
+            const otherUserName = getDisplayName(userData);
 
             const lastMsg = lastMsgResult.data;
             return {

@@ -7,14 +7,15 @@ export type UserMetadata = {
   avatar_url?: string | null;
 } | null;
 
-const FALLBACK_ID_LENGTH = 8;
+/** כשאין שם ואין אימייל - לעולם לא מזהה (uid), שאינו אומר כלום למשתמש */
+export const UNKNOWN_USER_NAME = "משתמש/ת";
 
-export function getDisplayName(userData: UserMetadata, userId: string): string {
+export function getDisplayName(userData: UserMetadata): string {
   if (userData?.firstName || userData?.lastName) {
     return `${userData.firstName || ""} ${userData.lastName || ""}`.trim();
   }
   if (userData?.email) return userData.email.split("@")[0];
-  return userId.substring(0, FALLBACK_ID_LENGTH);
+  return UNKNOWN_USER_NAME;
 }
 
 /** הפונקציה לא תמיד מחזירה avatar_url — כשאין, מוצגים ראשי תיבות. */

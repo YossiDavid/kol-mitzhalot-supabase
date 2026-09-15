@@ -101,7 +101,7 @@ export function RoomList() {
             ]);
 
             const userData = userMetaResult.data as UserMetadata;
-            const otherUserName = getDisplayName(userData, otherUserId);
+            const otherUserName = getDisplayName(userData);
             const lastMsg = lastMsgResult.data;
 
             return {
