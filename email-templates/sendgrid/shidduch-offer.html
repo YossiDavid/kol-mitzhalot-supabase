@@ -4,13 +4,13 @@
   <!--
     ספק: SendGrid (לא Supabase Auth)
     סוג: Dynamic Transactional Template — יש להעלות ב-SendGrid → Dynamic Templates → Create Template
-    נושא מוצע (ב-UI של SendGrid או ב-dynamic_template_data): הצעת שידוך חדשה — {{groom_name}} ו{{bride_name}}
+    נושא מוצע (ב-UI של SendGrid או ב-dynamic_template_data): {{subject}}  (כרגע: "התקבלה הצעת שידוך חדשה")
 
-    משתנים חובה ב-dynamic_template_data:
-      groom_name, bride_name, shadchan_name, offer_url, subject (לשורת הנושא אם ב-UI מוגדר {{subject}})
-      is_both, is_groom_only, is_bride_only  (בוליאנים — רק אחד true בכל שליחה)
-    משתנים אופציונליים:
-      note_for_groom, note_for_bride  (מחרוזות; אם ריק — הבלוקים מוסתרים)
+    משתנים ב-dynamic_template_data:
+      shadchan_name, offer_url, subject
+
+    בכוונה בלי שמות המיועדים ובלי הערות השדכן: המייל רק מודיע שהתקבלה הצעה
+    ומזמין להיכנס למערכת, לראות אותה ולהגיב. מי שרואה את השם כבר במייל נוטה להתעלם.
 
     לוגו: URL קבוע בתבנית (Storage ציבורי) — אין להעביר logo_url ב-dynamic_template_data.
 
@@ -18,7 +18,7 @@
   -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>הצעת שידוך חדשה</title>
+  <title>התקבלה הצעת שידוך חדשה</title>
 </head>
 <body style="margin:0;padding:0;background-color:#ecf0f2;font-family:Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#ecf0f2;">
@@ -39,106 +39,31 @@
           <tr>
             <td style="padding:0 32px 8px;text-align:center;">
               <h1 style="margin:0;font-size:22px;font-weight:700;color:#254c49;">
-                הצעת שידוך חדשה
+                התקבלה הצעת שידוך חדשה
               </h1>
             </td>
           </tr>
 
-          {{#if is_both}}
           <tr>
             <td style="padding:8px 32px 16px;text-align:right;">
               <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7;">
                 שלום,
               </p>
               <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7;">
-                קיבלת הצעת שידוך בין <strong>{{groom_name}}</strong> לבין <strong>{{bride_name}}</strong>.
+                התקבלה הצעת שידוך חדשה מהשדכן <strong>{{shadchan_name}}</strong>.
               </p>
               <p style="margin:0;color:#4b5563;font-size:15px;line-height:1.7;">
-                השדכן: <strong>{{shadchan_name}}</strong>
+                פרטי ההצעה מחכים לך במערכת. נשמח שתיכנסו לצפות בה ולהגיב.
               </p>
             </td>
           </tr>
-          {{/if}}
-
-          {{#if is_groom_only}}
-          <tr>
-            <td style="padding:8px 32px 16px;text-align:right;">
-              <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7;">
-                שלום,
-              </p>
-              <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7;">
-                קיבלת הצעת שידוך בנוגע למיועד <strong>{{groom_name}}</strong> (מול <strong>{{bride_name}}</strong>).
-              </p>
-              <p style="margin:0;color:#4b5563;font-size:15px;line-height:1.7;">
-                השדכן: <strong>{{shadchan_name}}</strong>
-              </p>
-            </td>
-          </tr>
-          {{/if}}
-
-          {{#if is_bride_only}}
-          <tr>
-            <td style="padding:8px 32px 16px;text-align:right;">
-              <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7;">
-                שלום,
-              </p>
-              <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7;">
-                קיבלת הצעת שידוך בנוגע למיועדת <strong>{{bride_name}}</strong> (מול <strong>{{groom_name}}</strong>).
-              </p>
-              <p style="margin:0;color:#4b5563;font-size:15px;line-height:1.7;">
-                השדכן: <strong>{{shadchan_name}}</strong>
-              </p>
-            </td>
-          </tr>
-          {{/if}}
-
-          {{#if is_both}}
-            {{#if note_for_groom}}
-            <tr>
-              <td style="padding:8px 32px;text-align:right;">
-                <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#254c49;">הערות לצד המיועד</p>
-                <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px;font-size:14px;line-height:1.6;color:#111827;white-space:pre-wrap;">{{note_for_groom}}</div>
-              </td>
-            </tr>
-            {{/if}}
-            {{#if note_for_bride}}
-            <tr>
-              <td style="padding:8px 32px;text-align:right;">
-                <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#254c49;">הערות לצד המיועדת</p>
-                <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px;font-size:14px;line-height:1.6;color:#111827;white-space:pre-wrap;">{{note_for_bride}}</div>
-              </td>
-            </tr>
-            {{/if}}
-          {{/if}}
-
-          {{#if is_groom_only}}
-            {{#if note_for_groom}}
-            <tr>
-              <td style="padding:8px 32px;text-align:right;">
-                <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#254c49;">הערות מהשדכן</p>
-                <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px;font-size:14px;line-height:1.6;color:#111827;white-space:pre-wrap;">{{note_for_groom}}</div>
-              </td>
-            </tr>
-            {{/if}}
-          {{/if}}
-
-          {{#if is_bride_only}}
-            {{#if note_for_bride}}
-            <tr>
-              <td style="padding:8px 32px;text-align:right;">
-                <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#254c49;">הערות מהשדכן</p>
-                <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px;font-size:14px;line-height:1.6;color:#111827;white-space:pre-wrap;">{{note_for_bride}}</div>
-              </td>
-            </tr>
-            {{/if}}
-          {{/if}}
 
           {{#if offer_url}}
           <tr>
             <td style="padding:8px 32px 8px;text-align:center;">
               <a href="{{offer_url}}"
                  style="display:inline-block;background-color:#254c49;color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 28px;border-radius:10px;">
-                פתיחת כרטיס השידוך במערכת
+                לצפייה בהצעה ולתגובה
               </a>
             </td>
           </tr>
@@ -148,7 +73,7 @@
             <td style="padding:24px 32px 28px;text-align:right;">
               <p style="margin:0;font-size:15px;color:#4b5563;line-height:1.7;">
                 בברכה,<br />
-                <strong>{{shadchan_name}}</strong>
+                <strong>קול מצהלות</strong>
               </p>
               <p style="margin:12px 0 0;font-size:14px;color:#6b7280;">
                 קול מצהלות – המערכת לניהול שידוכים
