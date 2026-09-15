@@ -43,6 +43,12 @@ import {
 import StatusUpdateButton from "./status-update-button";
 import { jewishDateHebrew } from "@/lib/jewishDatte";
 import {
+  describeChild,
+  formatChildrenCount,
+  getChildrenCount,
+  parseStoredChildren,
+} from "@/features/students/lib/previous-partner-children";
+import {
   eduToHebrew,
   employmentCategoryToHebrew,
   cellphoneTypeToHebrew,
@@ -1473,6 +1479,7 @@ async function StudentPageContent({
                         divorce_date?: string;
                         death_date?: string;
                         children_number?: number;
+                        children?: unknown;
                         divorce_details?: {
                           reason?: string;
                           rabbiName?: string;
@@ -1480,69 +1487,86 @@ async function StudentPageContent({
                         };
                       },
                       idx: number,
-                    ) => (
-                      <div
-                        key={idx}
-                        className="rounded-lg border border-border bg-muted/30 p-4"
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <p className="font-bold">{p.full_name}</p>
-                            {p.marriage_date && (
-                              <p className="text-caption text-muted-foreground">
-                                נישאו: {p.marriage_date}
-                              </p>
-                            )}
-                            {p.separation_type === "divorce" &&
-                              p.divorce_date && (
+                    ) => {
+                      const children = parseStoredChildren(p.children);
+                      const childrenCount = getChildrenCount(
+                        children,
+                        p.children_number,
+                      );
+                      return (
+                        <div
+                          key={idx}
+                          className="rounded-lg border border-border bg-muted/30 p-4"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <p className="font-bold">{p.full_name}</p>
+                              {p.marriage_date && (
                                 <p className="text-caption text-muted-foreground">
-                                  גירושין: {p.divorce_date}
+                                  נישאו: {p.marriage_date}
                                 </p>
                               )}
-                            {p.separation_type === "death" && p.death_date && (
-                              <p className="text-caption text-muted-foreground">
-                                נפטר/ה ב: {jewishDateHebrew(p.death_date)}
-                              </p>
-                            )}
-                            {p.divorce_details?.reason && (
-                              <p className="mt-2 text-body-sm">
-                                סיבת הגירושין: {p.divorce_details.reason}
-                              </p>
-                            )}
-                            {p.divorce_details?.rabbiName && (
-                              <p className="text-caption text-muted-foreground">
-                                רב מלווה: {p.divorce_details.rabbiName}
-                                {p.divorce_details.rabbiPhone && (
-                                  <span>
-                                    {" "}
-                                    -{" "}
-                                    <a
-                                      href={`tel:${p.divorce_details.rabbiPhone}`}
-                                      className="hover:text-primary"
-                                    >
-                                      {p.divorce_details.rabbiPhone}
-                                    </a>
-                                  </span>
+                              {p.separation_type === "divorce" &&
+                                p.divorce_date && (
+                                  <p className="text-caption text-muted-foreground">
+                                    גירושין: {p.divorce_date}
+                                  </p>
                                 )}
-                              </p>
-                            )}
-                          </div>
-                          {p.children_number ? (
-                            <div className="text-left">
-                              <span className="rounded-lg border border-border bg-card px-2 py-1 text-caption font-bold">
-                                {p.children_number} ילדים
+                              {p.separation_type === "death" &&
+                                p.death_date && (
+                                  <p className="text-caption text-muted-foreground">
+                                    נפטר/ה ב: {jewishDateHebrew(p.death_date)}
+                                  </p>
+                                )}
+                              {p.divorce_details?.reason && (
+                                <p className="mt-2 text-body-sm">
+                                  סיבת הגירושין: {p.divorce_details.reason}
+                                </p>
+                              )}
+                              {p.divorce_details?.rabbiName && (
+                                <p className="text-caption text-muted-foreground">
+                                  רב מלווה: {p.divorce_details.rabbiName}
+                                  {p.divorce_details.rabbiPhone && (
+                                    <span>
+                                      {" "}
+                                      -{" "}
+                                      <a
+                                        href={`tel:${p.divorce_details.rabbiPhone}`}
+                                        className="hover:text-primary"
+                                      >
+                                        {p.divorce_details.rabbiPhone}
+                                      </a>
+                                    </span>
+                                  )}
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-end">
+                              <span className="rounded-lg border border-border bg-card px-2 py-1 text-caption font-bold whitespace-nowrap">
+                                {formatChildrenCount(childrenCount)}
                               </span>
                             </div>
-                          ) : (
-                            <div className="text-left">
-                              <span className="rounded-lg border border-border bg-card px-2 py-1 text-caption font-bold">
-                                אין ילדים
-                              </span>
+                          </div>
+                          {children.length > 0 && (
+                            <div className="mt-3 border-t border-border pt-3">
+                              <p className="text-caption font-bold text-muted-foreground">
+                                ילדים מנישואין אלו
+                              </p>
+                              <ul className="mt-1 space-y-1">
+                                {children.map((child, childIdx) => (
+                                  <li
+                                    key={childIdx}
+                                    className="text-body-sm text-foreground"
+                                  >
+                                    {describeChild(child, student.gender)}
+                                  </li>
+                                ))}
+                              </ul>
                             </div>
                           )}
                         </div>
-                      </div>
-                    ),
+                      );
+                    },
                   )}
                 </div>
               </Section>

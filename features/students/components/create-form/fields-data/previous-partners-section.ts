@@ -1,5 +1,66 @@
 import type { FieldCondition } from "../field-visibility";
-import type { FormSection } from "./types";
+import type { ChildrenListField, FormSection } from "./types";
+
+/**
+ * הילדים מנישואים אלו, פריט לכל ילד/ה. מספר הילדים נגזר מהרשימה, והגיל
+ * מחושב מתאריך הלידה (children-list-field.tsx). נשמר ב-previous_partners.children
+ */
+const previousPartnerChildrenField: ChildrenListField = {
+  type: "childrenList",
+  name: "previousPartners.children",
+  label: "ילדים מנישואין אלו",
+  addLabel: "הוספת ילד/ה",
+  itemLabel: "ילד/ה",
+  emptyText: "לא נוספו ילדים מנישואין אלו.",
+  fields: [
+    {
+      name: "previousPartners.children.gender",
+      width: "md",
+      label: "בן/בת",
+      type: "radio",
+      required: true,
+      options: [
+        { label: "בן", value: "male" },
+        { label: "בת", value: "female" },
+      ],
+    },
+    {
+      name: "previousPartners.children.birthDate",
+      width: "md",
+      label: "תאריך לידה",
+      type: "date",
+      required: true,
+    },
+    {
+      name: "previousPartners.children.livesWith",
+      width: "md",
+      label: "אצל מי גר/ה",
+      type: "select",
+      options: [
+        {
+          value: "student",
+          label: "אצל המיועד/ת",
+          labelMale: "אצל המיועד",
+          labelFemale: "אצל המיועדת",
+        },
+        {
+          value: "other_parent",
+          label: "אצל ההורה השני",
+          labelMale: "אצל האם",
+          labelFemale: "אצל האב",
+        },
+        { value: "shared", label: "משותף" },
+        { value: "independent", label: "עצמאי/ת" },
+      ],
+    },
+    {
+      name: "previousPartners.children.isMarried",
+      width: "sm",
+      label: "נשוי/אה",
+      type: "switch",
+    },
+  ],
+};
 
 function separationIs(type: "divorce" | "death"): FieldCondition[] {
   return [
@@ -80,18 +141,6 @@ export const previousPartnersSection: FormSection = {
           condition: separationIs("death"),
         },
         {
-          name: "previousPartners.childrenNumber",
-          width: "sm",
-          label: "מספר ילדים מנישואין אלו",
-          type: "number",
-        },
-        {
-          name: "previousPartners.marriedChildrenNumber",
-          width: "sm",
-          label: "מתוכם נשואים",
-          type: "number",
-        },
-        {
           name: "previousPartners.divorce.rabbiName",
           width: "sm",
           label: "שם הרב המלווה בגירושין",
@@ -112,6 +161,7 @@ export const previousPartnersSection: FormSection = {
           type: "textarea",
           condition: separationIs("divorce"),
         },
+        previousPartnerChildrenField,
       ],
     },
   ],

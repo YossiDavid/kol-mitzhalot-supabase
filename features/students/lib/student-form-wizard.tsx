@@ -187,14 +187,6 @@ const genderLabelOverrides: Record<string, { male: string; female: string }> = {
     male: "שם האם של האשה",
     female: "שם האם של הבעל",
   },
-  "previousPartners.childrenNumber": {
-    male: "מספר ילדים מנישואין אלו",
-    female: "מספר ילדים מנישואין אלו",
-  },
-  "previousPartners.marriedChildrenNumber": {
-    male: "מתוכם נשואים",
-    female: "מתוכם נשואות",
-  },
   // Father section — labels differ for male vs female student
   "father.self": {
     male: "שם אביו",

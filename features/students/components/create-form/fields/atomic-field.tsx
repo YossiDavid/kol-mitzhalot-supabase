@@ -4,6 +4,7 @@ import type { ComponentType } from "react";
 
 import { formatFieldErrorMessage } from "../field-messages";
 import { useHasValueAt } from "../use-form-conditions";
+import { BooleanField } from "./boolean-field";
 import { CheckboxField } from "./checkbox-field";
 import { ChipsField } from "./chips-field";
 import type {
@@ -32,7 +33,7 @@ const FIELD_COMPONENTS: Readonly<
 > = {
   text: TextInputField,
   number: TextInputField,
-  switch: TextInputField,
+  switch: BooleanField,
   textarea: TextareaField,
   date: DateField,
   textAndSelect: NameWithTitlesField,

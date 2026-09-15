@@ -1,4 +1,10 @@
 import type { StudentFormValues } from "@/features/students/components/create-form/schema";
+import {
+  LEGACY_CHILDREN_COUNT_KEY,
+  getChildrenCount,
+  parseStoredChildren,
+  type PartnerChildFormValue,
+} from "@/features/students/lib/previous-partner-children";
 
 // המיפוי ההפוך ל-build-student-payload: שורת students + טבלאות הבת שלה חזרה
 // לערכי הטופס. כל שינוי שם שדה שם חייב להשתקף כאן, אחרת העריכה תאבד מידע.
@@ -186,19 +192,33 @@ function toPartner(row: Row | null): StudentFormValues["partner"] {
   };
 }
 
+function toPartnerChildren(value: unknown): PartnerChildFormValue[] {
+  return parseStoredChildren(value).map((child) => ({
+    gender: child.gender ?? "",
+    birthDate: toDisplayDate(child.birth_date),
+    livesWith: child.lives_with ?? "",
+    isMarried: child.is_married,
+  }));
+}
+
 function toPreviousPartners(rows: Row[]) {
   return rows.map((row) => {
     const divorceDetails = record(row.divorce_details);
+    const children = toPartnerChildren(row.children);
     return {
       separationType: text(row.separation_type),
       fullName: text(row.full_name),
-      // previous_partners לא שומרת את פרטי ההורים של בן/בת הזוג הקודמים ולא
-      // את מספר הילדים הנשואים — הם נמסרים בטופס אך אינם נכתבים ל-DB.
+      // previous_partners לא שומרת את פרטי ההורים של בן/בת הזוג הקודמים —
+      // הם נמסרים בטופס אך אינם נכתבים ל-DB.
       parents: { fathersName: "", mothersName: "", address: "" },
       marriageDate: toDisplayDate(row.marriage_date),
       deathDate: toDisplayDate(row.death_date),
-      childrenNumber: text(row.children_number),
-      marriedChildrenNumber: "",
+      children,
+      // שורה ישנה: מספר ילדים בלי פרטים. נשמר עד שיתווספו הפרטים
+      [LEGACY_CHILDREN_COUNT_KEY]:
+        children.length === 0 && getChildrenCount([], row.children_number) > 0
+          ? text(row.children_number)
+          : "",
       divorce: {
         date: toDisplayDate(row.divorce_date),
         reason: text(divorceDetails.reason),

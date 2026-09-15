@@ -5,7 +5,7 @@ import type { FieldControlProps } from "./field-control-types";
 import { FieldFrame } from "./field-frame";
 import { ensureStringValue } from "./field-values";
 
-/** שדה טקסט או מספר. "switch" מוצג כשדה טקסט, כמו שהיה */
+/** שדה טקסט או מספר. "switch" (כן/לא) הוא boolean-field.tsx */
 export function TextInputField(props: FieldControlProps) {
   const { field, fieldId, placeholder, isDisabled } = props;
   const isNumber = field.type === "number";

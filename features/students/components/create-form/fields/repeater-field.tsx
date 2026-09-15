@@ -10,7 +10,8 @@ import { getRepeaterRequiredMessage } from "../field-messages";
 import { getValueByPath } from "../field-visibility";
 import { useConditionsMet } from "../use-form-conditions";
 import { AtomicField } from "./atomic-field";
-import { FieldCell, renderBeforeField } from "./field-cell";
+import { ChildrenListField } from "./children-list-field";
+import { FieldCell, FullRowCell, renderBeforeField } from "./field-cell";
 import type {
   AnyFormControl,
   DynamicFieldProps,
@@ -151,6 +152,14 @@ function RepeaterRow({
 function RepeaterRowField(props: DynamicFieldProps) {
   const isVisible = useConditionsMet(props.control, props.field.condition);
   if (!isVisible) return null;
+
+  if (props.field.type === "childrenList") {
+    return (
+      <FullRowCell name={props.field.name}>
+        <ChildrenListField {...props} />
+      </FullRowCell>
+    );
+  }
 
   return (
     <FieldCell field={props.field}>

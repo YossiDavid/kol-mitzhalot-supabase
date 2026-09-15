@@ -65,6 +65,27 @@ function isLockedBySelection(
   return Object.keys(fillOnSelect).includes(getLastPathSegment(fieldName));
 }
 
+/** שם, תנאים ושדות מקוננים (רשימה בתוך השורה) לפי השורה */
+function resolveForRow(
+  field: FieldMetadata,
+  arrayName: string,
+  index: number,
+): FieldMetadata {
+  return {
+    ...field,
+    name: resolveRepeaterPath(field.name, arrayName, index),
+    condition: resolveRowConditions(field.condition, arrayName, index),
+    originalName: field.originalName ?? field.name,
+    ...(Array.isArray(field.fields)
+      ? {
+          fields: field.fields.map((nested: FieldMetadata) =>
+            resolveForRow(nested, arrayName, index),
+          ),
+        }
+      : {}),
+  };
+}
+
 /** הגדרת שדה בשורה מסוימת: השם והתנאים לפי השורה, והקישור לבורר המאגר */
 export function toRowFieldConfig(
   innerField: FieldMetadata,
@@ -72,17 +93,11 @@ export function toRowFieldConfig(
   index: number,
   idFieldPaths: ReadonlySet<string>,
 ): FieldMetadata {
-  const resolvedName = resolveRepeaterPath(
-    innerField.name,
-    repeater.name,
-    index,
-  );
+  const rowField = resolveForRow(innerField, repeater.name, index);
+  const resolvedName: string = rowField.name;
   const linkedIdPath = determineLinkedIdPath(resolvedName, idFieldPaths);
   return {
-    ...innerField,
-    name: resolvedName,
-    condition: resolveRowConditions(innerField.condition, repeater.name, index),
-    originalName: innerField.originalName ?? innerField.name,
+    ...rowField,
     isIdField: idFieldPaths.has(resolvedName),
     linkedIdPath:
       linkedIdPath &&
@@ -97,6 +112,7 @@ function getDefaultValueForField(field: FieldMetadata): unknown {
     case "chip":
     case "chips":
     case "checkbox":
+    case "childrenList":
       return [];
     case "range":
     case "rangeDouble":
@@ -131,15 +147,19 @@ function withNestedValue(
   return { ...target, [head]: withNestedValue(child, rest, value) };
 }
 
-/** הערך של שורה חדשה: כל שדה בשורה עם ערך ריק לפי הסוג שלו */
+/**
+ * הערך של שורה חדשה: כל שדה בשורה עם ערך ריק לפי הסוג שלו. גם לרשימה שכבר
+ * הותאמה לשורה ("previousPartners.0.children") - לפי השמות המקוריים
+ */
 export function createRepeaterTemplate(
   repeater: FieldMetadata,
 ): Record<string, unknown> {
+  const arrayName: string = repeater.originalName ?? repeater.name;
   return childFields(repeater).reduce<Record<string, unknown>>(
     (template, innerField) => {
       const relativePath = getRelativePath(
         innerField.originalName ?? innerField.name,
-        repeater.name,
+        arrayName,
       );
       if (!relativePath) return template;
       return withNestedValue(

@@ -1,4 +1,11 @@
 import type { StudentFormValues } from "@/features/students/components/create-form/schema";
+import {
+  LEGACY_CHILDREN_COUNT_KEY,
+  getChildrenCount,
+  toChildGender,
+  toChildLivesWith,
+  type StoredPartnerChild,
+} from "@/features/students/lib/previous-partner-children";
 
 // בניית ה-payload ל-create_full_student_profile ול-update_full_student_profile.
 // שתי הפונקציות ב-DB מקבלות בדיוק את אותה מבנה, ולכן הלוגיקה חיה כאן ולא
@@ -237,18 +244,39 @@ function buildReferences(values: StudentFormValues) {
   );
 }
 
+// previous_partners.children: תאריך הלידה ב-ISO, ערך לא מוכר נשמר כ-null
+function buildPartnerChildren(partner: RepeaterItem): StoredPartnerChild[] {
+  const children = Array.isArray(partner.children) ? partner.children : [];
+  return children
+    .filter((child): child is RepeaterItem =>
+      Boolean(child && typeof child === "object"),
+    )
+    .map((child) => ({
+      gender: toChildGender(child.gender),
+      birth_date: formatDateToISO(toText(child.birthDate)),
+      lives_with: toChildLivesWith(child.livesWith),
+      is_married: child.isMarried === true,
+    }));
+}
+
 function buildPreviousPartners(values: StudentFormValues) {
   return (values.previousPartners ?? []).map((partner) => {
     const divorce = toNested(partner, "divorce");
+    const children = buildPartnerChildren(partner);
+    // בלי פרטי ילדים נשמר המספר מהשורה הישנה, כדי שהעריכה לא תמחק אותו.
+    // ה-RPC גוזר את המספר מהרשימה בעצמו; כאן זה אותו כלל, כדי שה-payload יהיה עקבי
+    const childrenCount = getChildrenCount(
+      children,
+      partner[LEGACY_CHILDREN_COUNT_KEY],
+    );
     return {
       separation_type: toText(partner.separationType) || null,
       full_name: toText(partner.fullName) || null,
       marriage_date: formatDateToISO(toText(partner.marriageDate)),
       divorce_date: formatDateToISO(toText(divorce.date)),
       death_date: formatDateToISO(toText(partner.deathDate)),
-      children_number: partner.childrenNumber
-        ? parseInt(toText(partner.childrenNumber))
-        : null,
+      children_number: childrenCount > 0 ? childrenCount : null,
+      children,
       divorce_details:
         partner.separationType === "divorce"
           ? {

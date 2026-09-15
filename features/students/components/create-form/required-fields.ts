@@ -7,8 +7,14 @@
  * - נאכף רק שדה שמוצג כרגע (אותם תנאים כמו במרנדר, field-visibility.ts).
  * - רשומה חוזרת: שדות החובה נאכפים בכל שורה קיימת. רשומה ריקה תקינה, אלא אם
  *   הרשומה עצמה סומנה required ("לפחות שורה אחת").
+ * - רשימה בתוך שורה (childrenList): אותו כלל בכל פריט של כל שורה.
  */
-import type { Field, FormSteps, RepeaterField } from "./fields-data";
+import {
+  isListField,
+  type Field,
+  type FormSteps,
+  type ListField,
+} from "./fields-data";
 import { GENERIC_REQUIRED_MESSAGE } from "./field-messages";
 import {
   getValueByPath,
@@ -61,7 +67,7 @@ export function collectRequiredIssues(
 
 function getFieldIssues(field: Field, values: unknown): RequiredIssue[] {
   if (!matchesConditions(field.condition, values)) return [];
-  if (field.type === "repeater") return getRepeaterIssues(field, values);
+  if (isListField(field)) return getListIssues(field, values);
   if (!field.required) return [];
   if (!isEmptyFieldValue(getValueByPath(values, field.name), field.type)) {
     return [];
@@ -69,10 +75,7 @@ function getFieldIssues(field: Field, values: unknown): RequiredIssue[] {
   return [{ path: field.name, message: getIssueMessage(field) }];
 }
 
-function getRepeaterIssues(
-  field: RepeaterField,
-  values: unknown,
-): RequiredIssue[] {
+function getListIssues(field: ListField, values: unknown): RequiredIssue[] {
   const rows = getValueByPath(values, field.name);
   const rowCount = Array.isArray(rows) ? rows.length : 0;
 
@@ -90,12 +93,21 @@ function getRepeaterIssues(
   );
 }
 
-/** שדה בשורה מסוימת: השם והתנאים מתייחסים לאותה שורה */
+/**
+ * שדה בשורה מסוימת: השם והתנאים מתייחסים לאותה שורה. ברשימה בתוך השורה
+ * (ילדים מנישואים קודמים) גם השדות שלה, כדי שבשלב הבא יותאמו לפריט:
+ * "previousPartners.children.birthDate" → "previousPartners.0.children.1.birthDate"
+ */
 function toRowField(child: Field, arrayName: string, index: number): Field {
-  return {
+  const rowField = {
     ...child,
     name: resolveRepeaterPath(child.name, arrayName, index),
     condition: resolveRowConditions(child.condition, arrayName, index),
+  } as Field;
+  if (!isListField(child)) return rowField;
+  return {
+    ...rowField,
+    fields: child.fields.map((nested) => toRowField(nested, arrayName, index)),
   } as Field;
 }
 

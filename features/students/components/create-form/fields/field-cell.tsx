@@ -7,11 +7,18 @@ import {
   FIELD_SCROLL_MARGIN_CLASS,
   FULL_ROW_CLASS,
   fieldCellAttributes,
+  getCompactFieldWidthClass,
   getFieldWidthClass,
 } from "../field-layout";
 import type { FieldMetadata } from "./field-control-types";
 
 const HTML_TAG_PATTERN = /<[a-z][\s\S]*>/i;
+
+/**
+ * "grid" - הרשת של מקטע ושל שורה ברשומה חוזרת. "compact" - שורה צפופה של
+ * פריט ברשימה שבתוך כרטיס (field-layout.ts)
+ */
+export type FieldCellLayout = "grid" | "compact";
 
 /**
  * תא של שדה ברשת, לפי הרוחב הסמנטי ומסומן בשם השדה (לגלילה לשגיאה).
@@ -20,24 +27,49 @@ const HTML_TAG_PATTERN = /<[a-z][\s\S]*>/i;
  */
 export function FieldCell({
   field,
+  layout = "grid",
   children,
 }: {
   field: FieldMetadata;
+  layout?: FieldCellLayout;
   children: ReactNode;
 }) {
+  const widthClass =
+    layout === "compact"
+      ? getCompactFieldWidthClass(field.width)
+      : getFieldWidthClass(field.width);
+
   return (
     <Fragment>
       {renderBeforeField(field.beforeField ?? field.before)}
       <div
-        className={cn(
-          getFieldWidthClass(field.width),
-          FIELD_SCROLL_MARGIN_CLASS,
-        )}
+        className={cn(widthClass, FIELD_SCROLL_MARGIN_CLASS)}
         {...fieldCellAttributes(field.name)}
       >
         {children}
       </div>
     </Fragment>
+  );
+}
+
+/**
+ * תא בשורה מלאה לשדה שמכיל שורות (רשומה חוזרת, רשימת ילדים). מסומן בשם
+ * השדה, כדי שהגלילה לשגיאה תרד ממנו אל השדה השגוי שבתוכו.
+ */
+export function FullRowCell({
+  name,
+  children,
+}: {
+  name: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={cn(FULL_ROW_CLASS, FIELD_SCROLL_MARGIN_CLASS)}
+      {...fieldCellAttributes(name)}
+    >
+      {children}
+    </div>
   );
 }
 

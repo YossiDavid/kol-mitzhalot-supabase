@@ -185,6 +185,114 @@ test.describe("כללי שדה חובה נגזרים ממערך השדות", () 
     expect(filledRow).toEqual([]);
   });
 
+  test("רשימה בתוך שורה: נאכף בכל פריט של כל שורה, גם לפי תנאי מהשורה", () => {
+    // Arrange - כמו ילדים בתוך נישואים קודמים: repeater → childrenList
+    const steps: FormSteps[] = [
+      {
+        name: "step",
+        title: "",
+        sections: [
+          {
+            name: "section",
+            title: "",
+            fields: [
+              {
+                type: "repeater",
+                name: "items",
+                fields: [
+                  {
+                    name: "items.kind",
+                    label: "סוג",
+                    type: "radio",
+                    options: [],
+                  },
+                  {
+                    type: "childrenList",
+                    name: "items.children",
+                    label: "ילדים",
+                    fields: [
+                      {
+                        name: "items.children.birthDate",
+                        label: "תאריך לידה",
+                        type: "date",
+                        required: true,
+                      },
+                      {
+                        name: "items.children.note",
+                        label: "הערה",
+                        type: "text",
+                        required: true,
+                        condition: [
+                          {
+                            parameter: "items.kind",
+                            operator: "===",
+                            value: "other",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    // Act
+    const noChildren = issuePaths(steps, { items: [{ children: [] }] });
+    const withChildren = issuePaths(steps, {
+      items: [
+        { kind: "other", children: [{ birthDate: "01/01/2020" }, {}] },
+        { children: [{}] },
+      ],
+    });
+
+    // Assert
+    expect(noChildren).toEqual([]);
+    expect(withChildren).toEqual([
+      "items.0.children.0.note",
+      "items.0.children.1.birthDate",
+      "items.0.children.1.note",
+      "items.1.children.0.birthDate",
+    ]);
+  });
+
+  test("ילדים מנישואים קודמים: בן/בת ותאריך לידה חובה בכל ילד/ה", () => {
+    // Arrange
+    const values = {
+      gender: "male",
+      personalStatus: "divorced",
+      previousPartners: [
+        {
+          separationType: "divorce",
+          children: [
+            {
+              gender: "female",
+              birthDate: "01/02/2015",
+              livesWith: "",
+              isMarried: false,
+            },
+            { gender: "", birthDate: "", livesWith: "", isMarried: false },
+          ],
+        },
+      ],
+    };
+
+    // Act
+    const childIssues = collectRequiredIssues(studentFields, values)
+      .map((issue) => issue.path)
+      .filter((path) => path.startsWith("previousPartners."))
+      .sort();
+
+    // Assert
+    expect(childIssues).toEqual([
+      "previousPartners.0.children.1.birthDate",
+      "previousPartners.0.children.1.gender",
+    ]);
+  });
+
   test("מה נחשב ריק", () => {
     // Arrange
     const newFile = new Blob(["x"]);

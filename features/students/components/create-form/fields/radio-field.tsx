@@ -24,7 +24,11 @@ export function RadioField(props: FieldControlProps) {
                 onChange={() => {
                   if (isDisabled) return;
                   rhfField.onChange(option.value);
+                  // בחירה שלמה: נבדק מיד (mode: onTouched בודק רק שדה שנגעו
+                  // בו), כדי ששגיאת חובה תיעלם עם הבחירה
+                  rhfField.onBlur();
                 }}
+                onBlur={rhfField.onBlur}
                 className="size-4 accent-primary"
                 disabled={isDisabled}
               />

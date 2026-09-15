@@ -54,6 +54,11 @@ export function DateField(props: FieldControlProps) {
           className="group"
           onClickCapture={preventButtonDefault}
           onMouseDownCapture={preventButtonDefault}
+          onBlur={(event) => {
+            // מעבר בתוך הלוח (בחירת שנה/חודש) אינו יציאה מהשדה
+            if (event.currentTarget.contains(event.relatedTarget)) return;
+            rhfField.onBlur();
+          }}
         >
           <ReactJewishDatePicker
             id={fieldId}
@@ -75,8 +80,12 @@ export function DateField(props: FieldControlProps) {
                 rhfField.onChange("");
                 return;
               }
-              const updateValue = () =>
+              // בחירת יום היא בחירה שלמה: נבדק מיד, כדי ששגיאת חובה תיעלם
+              // עכשיו ולא ביציאה מהשדה (שם היא מזיזה את מה שמתחת בזמן לחיצה)
+              const updateValue = () => {
                 rhfField.onChange(readGregorianDate(fieldId));
+                rhfField.onBlur();
+              };
 
               if (typeof window.requestAnimationFrame === "function") {
                 window.requestAnimationFrame(updateValue);

@@ -31,6 +31,8 @@ const PHOTO_GALLERY_FIELD_TYPES = ["photos"] as const;
 
 const REPEATER_FIELD_TYPES = ["repeater"] as const;
 
+const CHILDREN_LIST_FIELD_TYPES = ["childrenList"] as const;
+
 type Condition = FieldCondition;
 
 export interface FieldOptionDefinition {
@@ -149,6 +151,30 @@ export interface RepeaterField {
   emptyText?: string;
 }
 
+/**
+ * רשימה בתוך שורה של רשומה חוזרת, בשורה צפופה לכל פריט (ילדים מנישואים
+ * קודמים, children-list-field.tsx). השמות מתחת לשם הרשימה:
+ * "previousPartners.children.birthDate". שדות חובה נאכפים בכל פריט קיים.
+ */
+export interface ChildrenListField {
+  type: (typeof CHILDREN_LIST_FIELD_TYPES)[number];
+  name: string;
+  /** כותרת הרשימה. המספר שנגזר מהרשימה נוסף אחריה: "ילדים מנישואין אלו (2)" */
+  label: string;
+  fields: Field[];
+  condition?: Condition[];
+  /** לפחות פריט אחד (כמו ברשומה חוזרת) */
+  required?: boolean;
+  requiredMessage?: string;
+  addLabel?: string;
+  /** שם של פריט, עם מספר: "ילד/ה 1" (תווית הפריט וכפתור המחיקה) */
+  itemLabel?: string;
+  emptyText?: string;
+}
+
+/** שדה שמכיל שורות של שדות: רשומה חוזרת או רשימה בתוך שורה */
+export type ListField = RepeaterField | ChildrenListField;
+
 export type Field =
   | TextField
   | SelectField
@@ -156,7 +182,12 @@ export type Field =
   | RangeField
   | UploadField
   | PhotoGalleryField
-  | RepeaterField;
+  | RepeaterField
+  | ChildrenListField;
+
+export function isListField(field: Field): field is ListField {
+  return field.type === "repeater" || field.type === "childrenList";
+}
 
 export type FormSection = {
   name: string;

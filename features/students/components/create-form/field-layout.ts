@@ -26,13 +26,47 @@ const FIELD_WIDTH_CLASS: Record<FieldWidth, string> = {
   full: "col-span-12",
 };
 
+function isFieldWidth(width: unknown): width is FieldWidth {
+  return typeof width === "string" && width in FIELD_WIDTH_CLASS;
+}
+
 /** שדה בלי width (או עם ערך לא מוכר) תופס את כל השורה */
 export function getFieldWidthClass(width?: unknown): string {
-  if (typeof width === "string" && width in FIELD_WIDTH_CLASS) {
-    return FIELD_WIDTH_CLASS[width as FieldWidth];
-  }
-  return FIELD_WIDTH_CLASS.full;
+  return isFieldWidth(width)
+    ? FIELD_WIDTH_CLASS[width]
+    : FIELD_WIDTH_CLASS.full;
 }
+
+/**
+ * שורה צפופה של פריט ברשימה שבתוך כרטיס (ילדים מנישואים קודמים): כל הפריט
+ * בשורה אחת כשיש מקום, ובערימה כשאין. אותם רוחבות סמנטיים, בסולם משלה:
+ *
+ * | רוחב השורה   | sm   | md   | lg   | full | כפתור פעולה |
+ * |--------------|------|------|------|------|-------------|
+ * | מתחת ל-704px | חצי  | מלא  | מלא  | מלא  | חצי         |
+ * | 704px ומעלה  | 2/12 | 3/12 | 6/12 | מלא  | 1/12        |
+ *
+ * 704px: שלושה שדות md, שדה sm וכפתור מחיקה נכנסים בשורה, והתאריך לא יורד
+ * מ-160px.
+ */
+export const COMPACT_ROW_GRID_CLASS =
+  "@container grid grid-cols-12 items-start gap-x-4 gap-y-4";
+
+const COMPACT_FIELD_WIDTH_CLASS: Record<FieldWidth, string> = {
+  sm: "col-span-6 @min-[44rem]:col-span-2",
+  md: "col-span-12 @min-[44rem]:col-span-3",
+  lg: "col-span-12 @min-[44rem]:col-span-6",
+  full: "col-span-12",
+};
+
+export function getCompactFieldWidthClass(width?: unknown): string {
+  return isFieldWidth(width)
+    ? COMPACT_FIELD_WIDTH_CLASS[width]
+    : COMPACT_FIELD_WIDTH_CLASS.full;
+}
+
+/** תא הכפתור בסוף שורה צפופה (למשל מחיקת הפריט) */
+export const COMPACT_ROW_ACTION_CLASS = "col-span-6 @min-[44rem]:col-span-1";
 
 /** שורה מלאה ברשת, למשל טקסט שמופיע לפני קבוצת שדות */
 export const FULL_ROW_CLASS = FIELD_WIDTH_CLASS.full;
