@@ -7,7 +7,9 @@ import { test, expect } from "@playwright/test";
 test.describe("ניהול שדכנים — בדיקות admin", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/app/admin/shadchanim");
-    await expect(page.locator("h1, h2, h3").first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("h1, h2, h3").first()).toBeVisible({
+      timeout: 10_000,
+    });
   });
 
   test("עמוד השדכנים נטען בצורה תקינה", async ({ page }) => {
@@ -45,7 +47,9 @@ test.describe("ניהול שדכנים — בדיקות admin", () => {
 test.describe("ניהול — בקשות ממתינות", () => {
   test("עמוד בקשות ממתינות נטען", async ({ page }) => {
     await page.goto("/app/admin/shadchanim/requests");
-    await expect(page.locator("h1, h2, h3").first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("h1, h2, h3").first()).toBeVisible({
+      timeout: 10_000,
+    });
     await expect(page).toHaveURL(/\/app\/admin\/shadchanim\/requests/);
   });
 });
