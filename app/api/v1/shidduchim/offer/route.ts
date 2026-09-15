@@ -154,8 +154,6 @@ export async function POST(req: NextRequest) {
   /** השורה שאפשר לעדכן במקום להכניס חדשה */
   const rowToReuse = myDraft ?? reusableRejected ?? null;
 
-  const groomName = `${groom.first_name || ""} ${groom.last_name || ""}`.trim();
-  const brideName = `${bride.first_name || ""} ${bride.last_name || ""}`.trim();
   const shadchanName =
     `${user.user_metadata?.firstName || ""} ${user.user_metadata?.lastName || ""}`.trim() ||
     user.email ||
@@ -294,10 +292,7 @@ export async function POST(req: NextRequest) {
       recipientScope: recipientScope!,
       groomParentEmail,
       brideParentEmail,
-      groomName,
-      brideName,
-      noteForGroom: noteForGroom || "",
-      noteForBride: noteForBride || "",
+      // בכוונה בלי שמות המיועדים והערות: המייל רק מזמין להיכנס להצעה
       shadchanName,
       shidduchId,
     });

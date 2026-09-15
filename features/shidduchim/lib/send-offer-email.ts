@@ -6,97 +6,57 @@ type SendOfferParams = {
   recipientScope: RecipientScope;
   groomParentEmail: string | null;
   brideParentEmail: string | null;
-  groomName: string;
-  brideName: string;
-  noteForGroom: string;
-  noteForBride: string;
   shadchanName: string;
   /** מזהה רשומת השידוך לאחר שמירה — לקישור במייל */
   shidduchId: string;
 };
 
-type TemplateVariant = "both" | "groom_only" | "bride_only";
+export type OfferEmailContent = {
+  subject: string;
+  /** גוף טקסט גולמי (כשאין תבנית Dynamic) */
+  text: string;
+  /** נתונים ל-Handlebars בתבנית SendGrid — תואם ל-email-templates/sendgrid/shidduch-offer.html */
+  templateData: Record<string, unknown>;
+};
+
+const OFFER_EMAIL_SUBJECT = "התקבלה הצעת שידוך חדשה";
 
 function offerPageUrl(shidduchId: string): string {
-  const origin = getAppOrigin();
-  return `${origin}/app/shidduchim/${shidduchId}`;
+  return `${getAppOrigin()}/app/shidduchim/${shidduchId}`;
 }
 
-function buildEmailSubject(params: SendOfferParams): string {
-  return `הצעת שידוך חדשה — ${params.groomName} ו${params.brideName}`;
-}
+/**
+ * תוכן המייל על הצעה חדשה: הודעה שהתקבלה הצעה, שם השדכן וקישור בלבד.
+ * בכוונה בלי שמות המיועדים ובלי הערות השדכן - מי שרואה את השם כבר במייל
+ * נוטה להתעלם, ומי שנכנס למערכת רואה את ההצעה המלאה ומגיב עליה.
+ * זהה לכל הנמענים, בלי קשר לצד.
+ */
+export function buildOfferEmailContent(
+  shadchanName: string,
+  shidduchId: string,
+): OfferEmailContent {
+  const offerUrl = offerPageUrl(shidduchId);
+  const text = [
+    "שלום,",
+    "",
+    `התקבלה הצעת שידוך חדשה מהשדכן ${shadchanName}.`,
+    "",
+    `לצפייה בהצעה ולתגובה: ${offerUrl}`,
+    "",
+    "בברכה,",
+    "קול מצהלות",
+  ].join("\n");
 
-/** נתונים ל-Handlebars בתבנית SendGrid — תואם ל-email-templates/sendgrid/shidduch-offer.html */
-function buildDynamicTemplateData(
-  params: SendOfferParams,
-  variant: TemplateVariant,
-): Record<string, unknown> {
-  const offer_url = offerPageUrl(params.shidduchId);
-  const subject = buildEmailSubject(params);
   return {
-    groom_name: params.groomName,
-    bride_name: params.brideName,
-    shadchan_name: params.shadchanName,
-    note_for_groom: params.noteForGroom.trim(),
-    note_for_bride: params.noteForBride.trim(),
-    offer_url,
-    /** לשורת הנושא אם ב-SendGrid הוגדר Subject כ־{{subject}} */
-    subject,
-    is_both: variant === "both",
-    is_groom_only: variant === "groom_only",
-    is_bride_only: variant === "bride_only",
+    subject: OFFER_EMAIL_SUBJECT,
+    text,
+    templateData: {
+      shadchan_name: shadchanName,
+      offer_url: offerUrl,
+      /** לשורת הנושא אם ב-SendGrid הוגדר Subject כ־{{subject}} */
+      subject: OFFER_EMAIL_SUBJECT,
+    },
   };
-}
-
-function buildGroomBody(params: SendOfferParams): string {
-  const url = offerPageUrl(params.shidduchId);
-  const lines = [
-    "שלום,",
-    "",
-    `קיבלת הצעת שידוך בנוגע למיועד ${params.groomName} (מול ${params.brideName}).`,
-    "",
-  ];
-  if (params.noteForGroom.trim()) {
-    lines.push("הערות מהשדכן:", params.noteForGroom.trim(), "");
-  }
-  lines.push(`לצפייה בכרטיס השידוך במערכת: ${url}`, "");
-  lines.push(`בברכה, ${params.shadchanName}`, "", "קול מצהלות");
-  return lines.join("\n");
-}
-
-function buildBrideBody(params: SendOfferParams): string {
-  const url = offerPageUrl(params.shidduchId);
-  const lines = [
-    "שלום,",
-    "",
-    `קיבלת הצעת שידוך בנוגע למיועדת ${params.brideName} (מול ${params.groomName}).`,
-    "",
-  ];
-  if (params.noteForBride.trim()) {
-    lines.push("הערות מהשדכן:", params.noteForBride.trim(), "");
-  }
-  lines.push(`לצפייה בכרטיס השידוך במערכת: ${url}`, "");
-  lines.push(`בברכה, ${params.shadchanName}`, "", "קול מצהלות");
-  return lines.join("\n");
-}
-
-function buildCombinedBody(params: SendOfferParams): string {
-  const url = offerPageUrl(params.shidduchId);
-  const lines = [
-    "שלום,",
-    "",
-    `קיבלת הצעת שידוך בין ${params.groomName} לבין ${params.brideName}.`,
-    "",
-  ];
-  if (params.noteForGroom.trim()) {
-    lines.push("הערות לצד המיועד:", params.noteForGroom.trim(), "");
-  }
-  if (params.noteForBride.trim()) {
-    lines.push("הערות לצד המיועדת:", params.noteForBride.trim(), "");
-  }
-  lines.push(`לצפייה בכרטיס השידוך במערכת: ${url}`, "");
-  lines.push(`בברכה, ${params.shadchanName}`, "", "קול מצהלות");
-  return lines.join("\n");
 }
 
 type Personalization = { to?: { email?: string }[]; subject?: string };
@@ -160,47 +120,41 @@ async function sendSendGridRequest(
   return { messageId: messageId?.trim() || null };
 }
 
-/** טקסט גולמי (גיבוי כשאין תבנית Dynamic) */
-async function sendSendGridPlainEmail(
-  to: string,
-  subject: string,
-  text: string,
-): Promise<{ messageId: string | null }> {
-  return sendSendGridRequest({
-    personalizations: [{ to: [{ email: to }] }],
-    subject,
-    content: [{ type: "text/plain", value: text }],
-  });
-}
-
-async function sendSendGridTemplateEmail(
-  to: string,
-  templateId: string,
-  dynamicTemplateData: Record<string, unknown>,
-  subject: string,
-): Promise<{ messageId: string | null }> {
-  return sendSendGridRequest({
-    personalizations: [
-      {
-        to: [{ email: to }],
-        subject,
-        dynamic_template_data: dynamicTemplateData,
-      },
-    ],
-    template_id: templateId,
-  });
-}
-
 function getShidduchTemplateId(): string | null {
   const id = process.env.SENDGRID_TEMPLATE_ID_SHIDDUCH_OFFER?.trim();
   return id || null;
 }
 
+async function sendOfferEmail(
+  to: string,
+  content: OfferEmailContent,
+): Promise<{ messageId: string | null }> {
+  const templateId = getShidduchTemplateId();
+  if (templateId) {
+    return sendSendGridRequest({
+      personalizations: [
+        {
+          to: [{ email: to }],
+          subject: content.subject,
+          dynamic_template_data: content.templateData,
+        },
+      ],
+      template_id: templateId,
+    });
+  }
+  return sendSendGridRequest({
+    personalizations: [{ to: [{ email: to }] }],
+    subject: content.subject,
+    content: [{ type: "text/plain", value: content.text }],
+  });
+}
+
 /**
  * שולח מיילים לפי scope. אם אין כתובת — מדלגת על צד זה (ללא שגיאה).
+ * מנהל כרטיס ששני הצדדים שלו מקבל מייל אחד.
  *
  * אם מוגדר `SENDGRID_TEMPLATE_ID_SHIDDUCH_OFFER` — נעשה שימוש בתבנית Dynamic (HTML).
- * אחרת — נשלח טקסט גולמי (תאימות לאחור).
+ * אחרת — נשלח טקסט גולמי.
  */
 export async function sendShidduchOfferEmails(
   params: SendOfferParams,
@@ -209,62 +163,32 @@ export async function sendShidduchOfferEmails(
   /** מזהי SendGrid (תגובת X-Message-Id) — לחיפוש ב-Email Activity */
   sendGridMessageIds: string[];
 }> {
-  const subject = buildEmailSubject(params);
+  const content = buildOfferEmailContent(
+    params.shadchanName,
+    params.shidduchId,
+  );
   const sentTo: string[] = [];
   const sendGridMessageIds: string[] = [];
-  const templateId = getShidduchTemplateId();
 
   const sendGroom =
     params.recipientScope === "both" || params.recipientScope === "groom_only";
   const sendBride =
     params.recipientScope === "both" || params.recipientScope === "bride_only";
 
-  const g = params.groomParentEmail?.trim().toLowerCase() || null;
-  const b = params.brideParentEmail?.trim().toLowerCase() || null;
+  const recipients = [
+    sendGroom ? params.groomParentEmail : null,
+    sendBride ? params.brideParentEmail : null,
+  ].filter((email): email is string => Boolean(email?.trim()));
 
-  const sendOne = async (
-    to: string,
-    variant: TemplateVariant,
-    plainBody: string,
-  ) => {
-    let out: { messageId: string | null };
-    if (templateId) {
-      out = await sendSendGridTemplateEmail(
-        to,
-        templateId,
-        buildDynamicTemplateData(params, variant),
-        subject,
-      );
-    } else {
-      out = await sendSendGridPlainEmail(to, subject, plainBody);
-    }
-    if (out.messageId) {
-      sendGridMessageIds.push(out.messageId);
-    }
-  };
+  const seen = new Set<string>();
+  for (const email of recipients) {
+    const normalized = email.trim().toLowerCase();
+    if (seen.has(normalized)) continue;
+    seen.add(normalized);
 
-  if (g && b && g === b && sendGroom && sendBride) {
-    await sendOne(params.groomParentEmail!, "both", buildCombinedBody(params));
-    sentTo.push(params.groomParentEmail!);
-    return { sentTo, sendGridMessageIds };
-  }
-
-  if (sendGroom && params.groomParentEmail) {
-    await sendOne(
-      params.groomParentEmail,
-      "groom_only",
-      buildGroomBody(params),
-    );
-    sentTo.push(params.groomParentEmail);
-  }
-
-  if (sendBride && params.brideParentEmail) {
-    await sendOne(
-      params.brideParentEmail,
-      "bride_only",
-      buildBrideBody(params),
-    );
-    sentTo.push(params.brideParentEmail);
+    const { messageId } = await sendOfferEmail(email, content);
+    if (messageId) sendGridMessageIds.push(messageId);
+    sentTo.push(email);
   }
 
   if (sentTo.length === 0) {

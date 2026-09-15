@@ -33,24 +33,19 @@
 | קובץ | תיאור |
 |------|--------|
 | [`sendgrid/shidduch-offer.html`](./sendgrid/shidduch-offer.html) | מייל HTML למנהלי כרטיס (הורים) בעת שליחת הצעת שידוך מהלוח |
-| [`sendgrid/shidduch-offer.test-data.json`](./sendgrid/shidduch-offer.test-data.json) | נתוני בדיקה (שלוש סצנאות) — ראו [`shidduch-offer.test-data.README.md`](./sendgrid/shidduch-offer.test-data.README.md) |
+| [`sendgrid/shidduch-offer.test-data.json`](./sendgrid/shidduch-offer.test-data.json) | נתוני בדיקה — ראו [`shidduch-offer.test-data.README.md`](./sendgrid/shidduch-offer.test-data.README.md) |
+
+### מה המייל כולל
+
+רק הודעה ש**התקבלה הצעת שידוך חדשה**, שם השדכן וקישור להצעה. **בכוונה בלי שמות המיועדים ובלי הערות השדכן** — מי שרואה את השם כבר במייל נוטה להתעלם, והמטרה היא שמנהל הכרטיס ייכנס למערכת, יראה את ההצעה המלאה ויגיב. אותו תוכן לכל הנמענים, בלי קשר לצד.
 
 ### משתנים ל-Dynamic Template (Handlebars)
 
-יש להעביר ב־`dynamic_template_data` (או מיפוי שדות בתבנית ב-SendGrid):
-
 | משתנה | חובה | משמעות |
 |--------|------|--------|
-| `groom_name` | כן | שם מלא/תצוגה של המיועד |
-| `bride_name` | כן | שם מלא/תצוגה של המיועדת |
-| `shadchan_name` | כן | שם השדכן החותם |
-| `note_for_groom` | לא | טקסט הערה לצד המיועד (ריק אם אין) |
-| `note_for_bride` | לא | טקסט הערה לצד המיועדת (ריק אם אין) |
-| `is_both` | כן | `true` כשהמייל משלב את שני הצדדים (אותו מייל לשני ההורים) |
-| `is_groom_only` | כן | `true` כשהמייל מיועד רק למי שמקבל עדכון על המיועד |
-| `is_bride_only` | כן | `true` כשהמייל מיועד רק למי שמקבל עדכון על המיועדת |
-
-רק **אחד** מ־`is_both` / `is_groom_only` / `is_bride_only` צריך להיות `true` בכל שליחה.
+| `shadchan_name` | כן | שם השדכן ששלח את ההצעה |
+| `offer_url` | כן | קישור לכרטיס השידוך במערכת |
+| `subject` | כן | שורת הנושא ("התקבלה הצעת שידוך חדשה"), אם ב-SendGrid הוגדר Subject כ־`{{subject}}` |
 
 **לוגו:** בתבנית HTML מוטמעת כתובת קבועה ללוגו (Supabase Storage ציבורי). לשינוי לוגו — עורכים את הקובץ `sendgrid/shidduch-offer.html` או מעלים קובץ חדש ל-Storage ומעדכנים את ה-`src`.
 
@@ -58,33 +53,15 @@
 
 ```json
 {
-  "groom_name": "ישראל ישראלי",
-  "bride_name": "לאה לוי",
   "shadchan_name": "משה כהן",
-  "note_for_groom": "שלום, נראה התאמה טובה בתחום הלימודים.",
-  "note_for_bride": "",
-  "is_both": true,
-  "is_groom_only": false,
-  "is_bride_only": false
+  "subject": "התקבלה הצעת שידוך חדשה",
+  "offer_url": "https://example.com/app/shidduchim/00000000-0000-4000-8000-000000000001"
 }
 ```
 
-בשליחה לצד מיועד בלבד — למשל רק למיועד:
+**חיבור בקוד:** ב־[`features/shidduchim/lib/send-offer-email.ts`](../features/shidduchim/lib/send-offer-email.ts) (`buildOfferEmailContent`) — אם מוגדר `SENDGRID_TEMPLATE_ID_SHIDDUCH_OFFER`, נשלחת תבנית Dynamic עם `dynamic_template_data` שלמעלה. בלי המשתנה — נשלח טקסט גולמי עם אותו תוכן.
 
-```json
-{
-  "groom_name": "ישראל ישראלי",
-  "bride_name": "לאה לוי",
-  "shadchan_name": "משה כהן",
-  "note_for_groom": "הערה רלוונטית לצד המיועד בלבד",
-  "note_for_bride": "",
-  "is_both": false,
-  "is_groom_only": true,
-  "is_bride_only": false
-}
-```
-
-**חיבור בקוד:** ב־[`lib/send-offer-email.ts`](../lib/send-offer-email.ts) — אם מוגדר `SENDGRID_TEMPLATE_ID_SHIDDUCH_OFFER` ב־`.env`, נשלחת תבנית Dynamic עם `dynamic_template_data` (שמות, הערות, דגלי `is_both` וכו'). בלי המשתנה — נשלח טקסט גולמי (גיבוי).
+**עדכון תבנית קיימת ב-SendGrid:** התבנית שב-SendGrid היא עותק של הקובץ. אחרי השינוי יש להדביק מחדש את [`sendgrid/shidduch-offer.html`](./sendgrid/shidduch-offer.html) בתבנית הקיימת. גם לפני ההדבקה לא יוצגו שמות, כי הקוד כבר לא שולח אותם — אבל בתבנית הישנה ייראו משפטים חסרים.
 
 ### צ׳קליסט לפני פרודקשן
 

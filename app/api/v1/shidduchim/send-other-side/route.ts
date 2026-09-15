@@ -88,13 +88,13 @@ export async function POST(req: NextRequest) {
   const [{ data: groom }, { data: bride }] = await Promise.all([
     admin
       .from("students")
-      .select("id, user_id, first_name, last_name")
+      .select("id, user_id")
       .eq("id", shidduch.groom_id)
       .is("deleted_at", null)
       .single(),
     admin
       .from("students")
-      .select("id, user_id, first_name, last_name")
+      .select("id, user_id")
       .eq("id", shidduch.bride_id)
       .is("deleted_at", null)
       .single(),
@@ -112,8 +112,6 @@ export async function POST(req: NextRequest) {
   const groomParentEmail = groomAuth.user?.email ?? null;
   const brideParentEmail = brideAuth.user?.email ?? null;
 
-  const groomName = `${groom.first_name || ""} ${groom.last_name || ""}`.trim();
-  const brideName = `${bride.first_name || ""} ${bride.last_name || ""}`.trim();
   const shadchanName =
     `${user.user_metadata?.firstName || ""} ${user.user_metadata?.lastName || ""}`.trim() ||
     user.email ||
@@ -124,10 +122,7 @@ export async function POST(req: NextRequest) {
       recipientScope: missingScope,
       groomParentEmail,
       brideParentEmail,
-      groomName,
-      brideName,
-      noteForGroom: shidduch.note_for_groom || "",
-      noteForBride: shidduch.note_for_bride || "",
+      // בכוונה בלי שמות המיועדים והערות: המייל רק מזמין להיכנס להצעה
       shadchanName,
       shidduchId: shidduch.id,
     });
