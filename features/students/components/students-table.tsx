@@ -8,6 +8,7 @@ import { Camera, FileText, Star } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { AddCvDialog } from "@/features/students/components/add-cv-dialog";
 import DeleteStudentButton from "@/features/students/components/delete-student-button";
 import { personalStatusToHebrew } from "@/features/students/lib/profile-labels";
 import {
@@ -71,6 +72,8 @@ type StudentsTableProps = {
   students: readonly StudentTableRow[];
   /** תיאור הטבלה לקוראי מסך */
   caption: string;
+  /** אחרי הוספת קו״ח מהדיאלוג - לעדכון השורה בלי לטעון מחדש */
+  onCvAdded: (id: string, cvUrl: string) => void;
   emptyState?: ReactNode;
   className?: string;
 } & (ListPreset | FavoritesPreset | ChildrenPreset);
@@ -79,9 +82,6 @@ const ENGAGED_ROW_CLASS = "bg-warning-muted hover:bg-warning/30";
 
 const MISSING_CV_CLASS =
   "border-warning bg-warning-muted text-warning-muted-foreground hover:bg-warning/30";
-
-/** אין עדיין מסך להוספת קו״ח מהרשימה - הקישור נשמר כפי שהיה */
-const ADD_CV_HREF = "/" as Route;
 
 function fullName(student: StudentTableRow) {
   return `${student.first_name} ${student.last_name}`;
@@ -160,9 +160,11 @@ function MobileTitle({ student }: { student: StudentTableRow }) {
 function ActionsCell({
   student,
   highlightMissingCv,
+  onCvAdded,
 }: {
   student: StudentTableRow;
   highlightMissingCv: boolean;
+  onCvAdded: (id: string, cvUrl: string) => void;
 }) {
   return (
     <div className="flex w-full gap-2">
@@ -173,14 +175,15 @@ function ActionsCell({
           </a>
         </Button>
       ) : (
-        <Button
-          asChild
-          variant="outline"
-          size="sm"
-          className={cn("flex-1", highlightMissingCv && MISSING_CV_CLASS)}
-        >
-          <Link href={ADD_CV_HREF}>הוספת קו״ח</Link>
-        </Button>
+        <AddCvDialog
+          studentId={student.id}
+          studentName={fullName(student)}
+          onCvAdded={(cvUrl) => onCvAdded(student.id, cvUrl)}
+          triggerClassName={cn(
+            "flex-1",
+            highlightMissingCv && MISSING_CV_CLASS,
+          )}
+        />
       )}
       <Button asChild size="sm" className="flex-1">
         <Link href={studentCardHref(student.id)}>כרטיס מלא</Link>
@@ -324,6 +327,7 @@ function buildColumns(
         <ActionsCell
           student={student}
           highlightMissingCv={props.preset === "children"}
+          onCvAdded={props.onCvAdded}
         />
       ),
     },

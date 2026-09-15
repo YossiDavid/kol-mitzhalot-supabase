@@ -48,6 +48,13 @@ export default function Children({ childs }: { childs: StudentTableRow[] }) {
       caption="הילדים שלך"
       students={localChilds}
       onInShidduchimChange={handleIsInShidduchimChange}
+      onCvAdded={(id, cvUrl) =>
+        setLocalChilds((prev) =>
+          prev.map((child) =>
+            child.id === id ? { ...child, cv_url: cvUrl } : child,
+          ),
+        )
+      }
       emptyState={
         <Empty size="compact">
           <EmptyHeader>
