@@ -3,10 +3,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useForm, useWatch, type FieldPath } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
 
 import { Form } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import { Box, PageTitle } from "@/components/layout";
 import { studentFields } from "@/features/students/components/create-form/fields-data";
 import { DynamicField } from "@/features/students/components/create-form/fields/dynamic-field";
@@ -21,7 +20,9 @@ import {
   useDevSkipStepValidation,
 } from "@/features/students/lib/dev-skip-step-validation";
 import { focusFirstInvalidField } from "@/features/students/lib/focus-first-invalid-field";
+import { StudentFormActionsBar } from "@/features/students/lib/student-form-actions-bar";
 import { StudentFormStepsNav } from "@/features/students/lib/student-form-steps-nav";
+import { useUnsavedChangesWarning } from "@/features/students/lib/use-unsaved-changes-warning";
 
 // אשף הקו״ח משרת גם יצירה וגם עריכה: אותם שלבים, אותה ולידציה, אותה תצוגה.
 // ההבדל היחיד בין המצבים הוא ערכי ההתחלה ומה שקורה בשליחה, ולכן שניהם
@@ -253,11 +254,8 @@ const genderedStepTitles: Record<string, { male: string; female: string }> = {
   },
 };
 
-// מתחת ל-md הניווט התחתון של האפליקציה קבוע בתחתית המסך
-// (components/layout/bottom-nav.tsx, h-16 + safe area), ולכן הפס יושב מעליו.
-// הפס דביק ולא fixed: בסוף השלב הוא חוזר למקומו ולא מסתיר את השדה האחרון.
-const STICKY_ACTIONS_CLASS =
-  "sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 -mx-4 mt-2 flex items-center justify-between gap-3 border-t border-border bg-card px-4 py-3 md:bottom-0 md:mx-0 md:px-0 md:py-4";
+const INVALID_SAVE_MESSAGE =
+  "השינויים לא נשמרו: יש שדות שצריך להשלים או לתקן. עברנו לשדה הראשון.";
 
 export type StudentFormWizardProps = {
   heading: string;
@@ -266,6 +264,14 @@ export type StudentFormWizardProps = {
   /** ערכי התחלה לעריכה. ביצירה נשאר undefined ומתקבל טופס ריק. */
   initialValues?: StudentFormValues;
   onSubmit: (values: StudentFormValues) => Promise<void>;
+  /**
+   * עריכה בלבד: "שמירת שינויים" מכל שלב, בלי לעזוב אותו. מחזיר האם נשמר.
+   * אחרי שמירה מוצלחת ההורה טוען מחדש מהשרת, וה-initialValues החדשים
+   * הופכים לנקודת הייחוס (ראה isAwaitingSavedValuesRef).
+   */
+  onSaveProgress?: (values: StudentFormValues) => Promise<boolean>;
+  /** עריכה: הנתונים השמורים נטענים מחדש מהשרת אחרי שמירה */
+  isRefreshingSavedValues?: boolean;
 };
 
 export function StudentFormWizard({
@@ -274,12 +280,20 @@ export function StudentFormWizard({
   submittingLabel,
   initialValues,
   onSubmit,
+  onSaveProgress,
+  isRefreshingSavedValues = false,
 }: StudentFormWizardProps) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<ReadonlySet<number>>(
     () => new Set(),
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingProgress, setIsSavingProgress] = useState(false);
+  // נעילה סינכרונית: הוולידציה אסינכרונית, ולחיצה כפולה הייתה עוברת לפני
+  // שה-state התעדכן
+  const isSaveLockedRef = useRef(false);
+  // שמירה הצליחה וממתינים ל-initialValues המעודכנים מהשרת
+  const isAwaitingSavedValuesRef = useRef(false);
   const shellRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const afterStepChangeRef = useRef<AfterStepChange>(null);
@@ -305,6 +319,28 @@ export function StudentFormWizard({
   const steps = studentFields;
   const currentStep = steps[currentStepIndex];
   const isLastStep = currentStepIndex === steps.length - 1;
+
+  const isEditMode = Boolean(onSaveProgress);
+  const { isDirty } = form.formState;
+  const isSavingOrRefreshing = isSavingProgress || isRefreshingSavedValues;
+  const isBusy = isSubmitting || isSavingOrRefreshing;
+
+  useUnsavedChangesWarning(isEditMode && isDirty && !isBusy);
+
+  // הנתונים השמורים הגיעו מהשרת: הם נקודת הייחוס החדשה. השדות נעולים מאז
+  // הלחיצה על שמירה, ולכן האיפוס לא דורס עריכה. השלב הנוכחי נשמר - הוא
+  // state של האשף ולא ערך בטופס. קובץ שהועלה חוזר כ-existingUrl / תמונה
+  // שמורה, ולכן לא יועלה שוב בשמירה הבאה.
+  useEffect(() => {
+    if (!isAwaitingSavedValuesRef.current || !initialValues) return;
+    isAwaitingSavedValuesRef.current = false;
+    form.reset(initialValues);
+  }, [form, initialValues]);
+
+  // הטעינה מחדש הסתיימה בלי נתונים חדשים (למשל נכשלה): לא לאפס בהמשך
+  useEffect(() => {
+    if (!isRefreshingSavedValues) isAwaitingSavedValuesRef.current = false;
+  }, [isRefreshingSavedValues]);
 
   const focusFirstError = useCallback(() => {
     void focusFirstInvalidField(
@@ -392,12 +428,49 @@ export function StudentFormWizard({
   };
 
   const handleSubmit = async (values: FormValues) => {
-    if (isSubmitting) return;
+    if (isBusy) return;
     setIsSubmitting(true);
     try {
       await onSubmit(values);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // ה-RPC מחליף את כל הכרטיס, ולכן שמירה מאמצע האשף מאמתת את כל הטופס -
+  // גם כשבורר הפיתוח מדלג על ולידציית השלבים
+  const saveProgress = async (values: FormValues) => {
+    if (!onSaveProgress) return;
+    setIsSavingProgress(true);
+    isAwaitingSavedValuesRef.current = true;
+    try {
+      const isSaved = await onSaveProgress(values);
+      if (!isSaved) isAwaitingSavedValuesRef.current = false;
+    } catch (error) {
+      isAwaitingSavedValuesRef.current = false;
+      console.error("Saving student form progress failed:", error);
+      toast.error("אירעה שגיאה לא צפויה בשמירה");
+    } finally {
+      setIsSavingProgress(false);
+    }
+  };
+
+  const handleInvalidSaveProgress = () => {
+    toast.error(INVALID_SAVE_MESSAGE);
+    handleInvalidSubmit();
+  };
+
+  const handleSaveProgressClick = async (
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isSaveLockedRef.current || isBusy || !isDirty) return;
+    isSaveLockedRef.current = true;
+    try {
+      await form.handleSubmit(saveProgress, handleInvalidSaveProgress)();
+    } finally {
+      isSaveLockedRef.current = false;
     }
   };
 
@@ -444,7 +517,13 @@ export function StudentFormWizard({
                 </h2>
               </div>
 
-              <div className="mt-6 divide-y divide-border">
+              {/* בזמן שמירה השדות נעולים (inert, בלי לשנות את מראם), כדי
+                  שעריכה באמצע לא תידרס באיפוס לנתונים השמורים */}
+              <div
+                className="mt-6 divide-y divide-border"
+                inert={isSavingOrRefreshing}
+                aria-busy={isSavingOrRefreshing}
+              >
                 {currentStep.sections.map((section) => (
                   <SectionRenderer
                     key={section.name}
@@ -455,37 +534,25 @@ export function StudentFormWizard({
                 ))}
               </div>
 
-              <div className={STICKY_ACTIONS_CLASS}>
-                <Button
-                  variant="outline"
-                  type="button"
-                  onClick={handlePreviousStep}
-                  disabled={currentStepIndex === 0}
-                >
-                  <ArrowLeft aria-hidden className="size-4 rtl:rotate-180" />
-                  <span>חזרה</span>
-                </Button>
-
-                {isLastStep ? (
-                  <Button type="submit" disabled={isSubmitting}>
-                    <span>{isSubmitting ? submittingLabel : submitLabel}</span>
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    onClick={handleNextStep}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        e.stopPropagation();
+              <StudentFormActionsBar
+                isFirstStep={currentStepIndex === 0}
+                isLastStep={isLastStep}
+                isSubmitting={isSubmitting}
+                submitLabel={submitLabel}
+                submittingLabel={submittingLabel}
+                onPrevious={handlePreviousStep}
+                onNext={handleNextStep}
+                saveProgress={
+                  isEditMode
+                    ? {
+                        isDirty,
+                        isSaving: isSavingOrRefreshing,
+                        savingLabel: submittingLabel,
+                        onSave: (e) => void handleSaveProgressClick(e),
                       }
-                    }}
-                  >
-                    <span>המשך לשלב הבא</span>
-                    <ArrowRight aria-hidden className="size-4 rtl:rotate-180" />
-                  </Button>
-                )}
-              </div>
+                    : undefined
+                }
+              />
             </form>
           </Form>
         </div>

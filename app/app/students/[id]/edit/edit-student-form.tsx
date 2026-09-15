@@ -1,5 +1,6 @@
 "use client";
 
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -83,20 +84,25 @@ export default function EditStudentForm({
   isCardOwner,
 }: EditStudentFormProps) {
   const router = useRouter();
+  const [isRefreshingSavedValues, startRefreshSavedValues] = useTransition();
 
-  const handleSubmit: StudentFormWizardProps["onSubmit"] = async (values) => {
+  /**
+   * שומר את כל הכרטיס ומחזיר האם העדכון עצמו נשמר. משותף לשמירה מהשלב
+   * האחרון (שעוברת לכרטיס) ולשמירה מאמצע האשף (שנשארת בשלב).
+   */
+  const saveStudent = async (values: StudentFormValues): Promise<boolean> => {
     try {
       const missingFields = missingRequiredStudentFields(values);
       if (missingFields.length > 0) {
         toast.error(
           `שגיאה: יש למלא את השדות החובה הבאים:\n${missingFields.join(", ")}`,
         );
-        return;
+        return false;
       }
 
       if (!mapCellphoneType(values.cellphoneType)) {
         toast.error("שגיאה: יש לבחור סוג טלפון תקין עבור המיועד.ת");
-        return;
+        return false;
       }
 
       // בשונה מהיצירה, ה-student_id כבר קיים — ולכן הקבצים מועלים לפני
@@ -134,7 +140,7 @@ export default function EditStudentForm({
       if (updateError) {
         console.error("Failed updating student:", updateError);
         toast.error(`שגיאה בעדכון הקו״ח: ${updateError.message}`);
-        return;
+        return false;
       }
 
       const photoResult = hasGalleryChanged(initialValues.photos, values.photos)
@@ -151,13 +157,30 @@ export default function EditStudentForm({
       } else {
         toast.success("השינויים נשמרו בהצלחה!");
       }
-
-      router.push(`/app/students/${studentId}`);
-      router.refresh();
+      return true;
     } catch (error) {
       console.error("Unexpected error:", error);
       toast.error("אירעה שגיאה לא צפויה");
+      return false;
     }
+  };
+
+  // השלב האחרון: שמירה ומעבר לכרטיס, כמו קודם
+  const handleSubmit: StudentFormWizardProps["onSubmit"] = async (values) => {
+    if (!(await saveStudent(values))) return;
+    router.push(`/app/students/${studentId}`);
+    router.refresh();
+  };
+
+  // אמצע האשף: נשארים בשלב. הדף נטען מחדש מהשרת, ו-initialValues /
+  // existingCvUrl / existingMedicalDocuments מתעדכנים למה שנשמר בפועל - כך
+  // הקבצים שהועלו הופכים ל"קיימים" ולא יועלו שוב בשמירה הבאה
+  const handleSaveProgress: NonNullable<
+    StudentFormWizardProps["onSaveProgress"]
+  > = async (values) => {
+    const isSaved = await saveStudent(values);
+    if (isSaved) startRefreshSavedValues(() => router.refresh());
+    return isSaved;
   };
 
   return (
@@ -167,6 +190,8 @@ export default function EditStudentForm({
       submittingLabel="שומר..."
       initialValues={initialValues}
       onSubmit={handleSubmit}
+      onSaveProgress={handleSaveProgress}
+      isRefreshingSavedValues={isRefreshingSavedValues}
     />
   );
 }
