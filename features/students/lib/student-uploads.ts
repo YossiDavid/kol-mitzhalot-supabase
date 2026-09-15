@@ -12,7 +12,7 @@ type BrowserSupabaseClient = ReturnType<typeof createClient>;
 export type StudentFileKind = "cv" | "medical";
 
 /** תוקף ה-signed URL של קו״ח ומסמכים: שנה. Public URL אינו אפשרי כי ה-bucket פרטי. */
-const SIGNED_URL_TTL_SECONDS = 31536000;
+export const SIGNED_URL_TTL_SECONDS = 31536000;
 const MAX_FILE_NAME_LENGTH = 100;
 const DEFAULT_CV_EXTENSION = "pdf";
 const DEFAULT_PHOTO_EXTENSION = "jpg";
@@ -48,7 +48,8 @@ function fileExtension(file: File, fallback: string): string {
   return lastDot > 0 ? sanitized.substring(lastDot + 1) : fallback;
 }
 
-function buildStoragePath(
+/** נתיב הקובץ ב-bucket, בתוך התיקייה של הכרטיס. משותף גם להעלאה מהשרת */
+export function buildStoragePath(
   studentId: string,
   file: File,
   kind: StudentFileKind,

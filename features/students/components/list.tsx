@@ -193,6 +193,12 @@ export default function StudentsList() {
     setStudents((prev) => prev.filter((s) => s.id !== studentId));
   };
 
+  const handleCvAdded = (studentId: string, cvUrl: string) => {
+    setStudents((prev) =>
+      prev.map((s) => (s.id === studentId ? { ...s, cv_url: cvUrl } : s)),
+    );
+  };
+
   /** מאורס או נשוי אינם רלוונטיים לשידוך, ולכן לא ניתן להוסיפם למועדפים. */
   const isOutOfShidduchim = (id: string) =>
     isOutOfShidduchimStatus(students.find((s) => s.id === id)?.personal_status);
@@ -272,6 +278,7 @@ export default function StudentsList() {
         }
         canDelete={isAdmin}
         onDeleted={handleStudentDeleted}
+        onCvAdded={handleCvAdded}
         emptyState={
           <Empty>
             <EmptyHeader>

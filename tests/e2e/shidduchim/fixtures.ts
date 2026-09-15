@@ -149,6 +149,13 @@ async function ensureUser(
   return created.user.id;
 }
 
+/** מזהה משתמש "מנהל הכרטיסים" - בעלים של כרטיסים שאינם של משתמש הבדיקה */
+export async function ensureCardManagerId(
+  admin: SupabaseClient,
+): Promise<string> {
+  return ensureUser(admin, CARD_MANAGER);
+}
+
 async function createStudent(
   admin: SupabaseClient,
   params: CreateStudentParams,

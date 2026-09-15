@@ -73,6 +73,11 @@ export default function Favorites({
       caption="המועדפים שלך"
       students={localFavorites}
       onRemoveFavorite={handleFavoriteRemove}
+      onCvAdded={(id, cvUrl) =>
+        setLocalFavorites((prev) =>
+          prev.map((fav) => (fav.id === id ? { ...fav, cv_url: cvUrl } : fav)),
+        )
+      }
       emptyState={
         <Empty size="compact">
           <EmptyHeader>
