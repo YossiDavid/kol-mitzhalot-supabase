@@ -71,7 +71,11 @@ export function PhotoGalleryField({
       for (const file of selected) {
         try {
           const compressed = await compressStudentPhoto(file);
-          added.push({ kind: "new", id: crypto.randomUUID(), file: compressed });
+          added.push({
+            kind: "new",
+            id: crypto.randomUUID(),
+            file: compressed,
+          });
         } catch (error) {
           toast.error(
             error instanceof Error
