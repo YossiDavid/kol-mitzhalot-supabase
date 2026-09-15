@@ -1,9 +1,46 @@
 import { test, expect, Page } from "@playwright/test";
 
+import { createServiceClient } from "../shidduchim/fixtures";
+
 const fill = (page: Page, fieldName: string, value: string) =>
   page.locator(`#${fieldName.replace(/[^a-zA-Z0-9]+/g, "-")}`).fill(value);
 
+const STUDENTS_BUCKET = "students";
+const STUDENT_URL_ID = /\/app\/students\/([a-f0-9-]{36})/;
+
+/**
+ * מוחק את הכרטיס שהבדיקה יצרה, יחד עם הקבצים שלו. בלי זה כל הרצה השאירה
+ * עוד "ישראל ישראלי" ברשימה. הטבלאות הקשורות נמחקות ב-CASCADE.
+ */
+async function deleteCreatedStudent(studentId: string) {
+  const admin = createServiceClient();
+  const storage = admin.storage.from(STUDENTS_BUCKET);
+  const folders = [studentId, `${studentId}/photos`, `${studentId}/medical`];
+  const listings = await Promise.all(
+    folders.map((folder) => storage.list(folder)),
+  );
+  const paths = listings.flatMap(({ data }, index) =>
+    (data ?? [])
+      .filter((entry) => entry.id !== null)
+      .map((entry) => `${folders[index]}/${entry.name}`),
+  );
+  if (paths.length > 0) await storage.remove(paths);
+
+  const { error } = await admin.from("students").delete().eq("id", studentId);
+  if (error) {
+    throw new Error(`מחיקת כרטיס הבדיקה נכשלה: ${error.message}`);
+  }
+}
+
 test.describe("יצירת תלמיד חדש", () => {
+  let createdStudentId: string | null = null;
+
+  test.afterEach(async () => {
+    if (!createdStudentId) return;
+    await deleteCreatedStudent(createdStudentId);
+    createdStudentId = null;
+  });
+
   test.beforeEach(async ({ page }) => {
     await page.goto("/app/students/create");
     await expect(page.locator("h1, h2, h3").first()).toBeVisible({
@@ -148,8 +185,10 @@ test.describe("יצירת תלמיד חדש", () => {
         consoleErrors.join("\n"),
       );
     }
-    await expect(page).toHaveURL(/\/app\/students\/[a-f0-9-]{36}/, {
+    await expect(page).toHaveURL(STUDENT_URL_ID, {
       timeout: 20_000,
     });
+    createdStudentId = page.url().match(STUDENT_URL_ID)?.[1] ?? null;
+    expect(createdStudentId).not.toBeNull();
   });
 });
