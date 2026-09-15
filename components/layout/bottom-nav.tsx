@@ -13,6 +13,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/lib/user-role";
+import { UnreadChatsBadge } from "@/features/chats/components/unread-chats-badge";
+import { useUnreadChats } from "@/features/chats/lib/unread-chats-context";
+import { unreadChatsLabel } from "@/features/chats/lib/unread-rooms";
+
+const CHATS_URL = "/app/chats";
 
 const allItems = [
   { title: "ראשי", url: "/app", icon: Home },
@@ -35,6 +40,7 @@ const parentOnlyUrls = ["/app/proposals"];
 
 export function BottomNav({ roles }: { roles: Role[] }) {
   const pathname = usePathname();
+  const { count: unreadChatsCount } = useUnreadChats();
   const effectiveRoles: Role[] = roles;
   // ניווט חייב להציג את איחוד כל ההרשאות של המשתמש - מי שהוא גם שדכן וגם
   // איש צוות עדיין רואה את פריטי השדכן, ולא רק לפי תפקיד "ראשי" יחיד.
@@ -75,22 +81,33 @@ export function BottomNav({ roles }: { roles: Role[] }) {
             );
           }
 
+          const unreadCount = item.url === CHATS_URL ? unreadChatsCount : 0;
+
           return (
             <Link
               key={item.url}
               href={item.url}
               prefetch={false}
+              // התג עצמו aria-hidden; המספר נמסר כאן בשם הנגיש
+              aria-label={
+                unreadCount > 0
+                  ? unreadChatsLabel(item.title, unreadCount)
+                  : undefined
+              }
               className={cn(
                 "flex flex-1 flex-col items-center justify-center gap-1.5 py-2 text-caption transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <Icon
-                className={cn(
-                  "h-5 w-5",
-                  isActive ? "stroke-[2.5]" : "stroke-[1.5]",
-                )}
-              />
+              <span className="relative">
+                <Icon
+                  className={cn(
+                    "h-5 w-5",
+                    isActive ? "stroke-[2.5]" : "stroke-[1.5]",
+                  )}
+                />
+                <UnreadChatsBadge count={unreadCount} placement="bottom-nav" />
+              </span>
               <span className="leading-none">{item.title}</span>
             </Link>
           );

@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { createClient } from "@/lib/supabase/client";
 import type { Message } from "@/app/app/chats/types";
 import { buildMessageStream, canEditMessage } from "../lib/message-stream";
+import { useMarkRoomRead } from "../lib/use-mark-room-read";
 import {
   getAvatarUrl,
   getDisplayName,
@@ -173,6 +174,14 @@ export function ChatView({ roomId }: { roomId: string }) {
   }, [roomId, currentUserId, supabase]);
 
   const isLoadingMessages = loadedRoomId !== roomId;
+
+  // עד עכשיו last_read_at לא נכתב בשום מקום, ולכן כל שיחה נחשבה לא נקראה
+  useMarkRoomRead({
+    roomId,
+    userId: currentUserId,
+    messages,
+    isReady: !isLoadingMessages,
+  });
 
   // Auto scroll to bottom on new messages (and once the room finished loading)
   React.useEffect(() => {
