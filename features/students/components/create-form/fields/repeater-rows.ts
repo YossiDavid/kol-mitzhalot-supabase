@@ -46,6 +46,28 @@ function determineLinkedIdPath(
   return idFieldPaths.has(candidate) ? candidate : undefined;
 }
 
+/**
+ * האם בחירה בבורר המאגר נועלת את השדה. בורר עם fillOnSelect נועל רק את
+ * השדות שהוא ממלא - שדה שהטבלה לא מספקת לו ערך (למשל קהילה במוסדות) חייב
+ * להישאר פתוח, אחרת אי אפשר למלא אותו. בורר בלי fillOnSelect נועל את כל השורה.
+ */
+function isLockedBySelection(
+  fieldName: string,
+  linkedIdPath: string,
+  repeater: FieldMetadata,
+  index: number,
+): boolean {
+  if (fieldName === linkedIdPath) return true;
+  const idField = childFields(repeater).find(
+    (candidate) =>
+      resolveRepeaterPath(candidate.name, repeater.name, index) ===
+      linkedIdPath,
+  );
+  const fillOnSelect = idField?.fillOnSelect;
+  if (!isRecord(fillOnSelect)) return true;
+  return Object.keys(fillOnSelect).includes(getLastPathSegment(fieldName));
+}
+
 /** הגדרת שדה בשורה מסוימת: השם והתנאים לפי השורה, והקישור לבורר המאגר */
 export function toRowFieldConfig(
   innerField: FieldMetadata,
@@ -58,13 +80,18 @@ export function toRowFieldConfig(
     repeater.name,
     index,
   );
+  const linkedIdPath = determineLinkedIdPath(resolvedName, idFieldPaths);
   return {
     ...innerField,
     name: resolvedName,
     condition: resolveRowConditions(innerField.condition, repeater.name, index),
     originalName: innerField.originalName ?? innerField.name,
     isIdField: idFieldPaths.has(resolvedName),
-    linkedIdPath: determineLinkedIdPath(resolvedName, idFieldPaths),
+    linkedIdPath:
+      linkedIdPath &&
+      isLockedBySelection(resolvedName, linkedIdPath, repeater, index)
+        ? linkedIdPath
+        : undefined,
   };
 }
 

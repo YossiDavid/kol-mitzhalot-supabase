@@ -90,6 +90,11 @@ test.describe("חיפוש מוסד ברשומות ההשכלה", () => {
     await expect(page.locator("#education-yeshivaKtana-0-city")).toHaveValue(
       KETANA.city,
     );
+    // שם ועיר מגיעים מהטבלה ולכן ננעלים; קהילה לא - חייבת להישאר פתוחה
+    await expect(page.locator("#education-yeshivaKtana-0-name")).toBeDisabled();
+    await expect(
+      page.locator("#education-yeshivaKtana-0-community"),
+    ).toBeEnabled();
     expect(notFoundUrls).toEqual([]);
   });
 });
