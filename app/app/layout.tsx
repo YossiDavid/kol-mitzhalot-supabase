@@ -11,6 +11,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { redirect } from "next/navigation";
 import { getRoles, getUser } from "@/lib/user";
 import { getPhoneVerificationEnabled } from "@/lib/system-settings";
+import { UnreadChatsProvider } from "@/features/chats/lib/unread-chats-context";
 
 // כרטיס מיועד ציבורי: נתיב של בדיוק /app/students/<מזהה> ללא סגמנטים נוספים.
 // ה-lookahead השלילי מוציא במפורש את /app/students/create, כדי שדף יצירת
@@ -74,30 +75,33 @@ export default async function AppLayout({
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebar roles={roles} />
-      <SidebarInset>
-        <ImpersonationBanner />
-        <div className="flex flex-1 flex-col">
-          <Header variant="app" />
-          <main className="container flex-1 px-3 py-4 pb-24 md:px-4 md:py-5 md:pb-5">
-            {children}
-          </main>
-          <Footer className="hidden md:flex" />
-        </div>
-        <BottomNav roles={roles} />
-        <Toaster
-          richColors
-          dir="rtl"
-          position="top-center"
-          style={{
-            fontFamily: "ploni",
-          }}
-          className={cn(
-            "**:data-title:text-subtitle **:data-title:font-black!",
-            "**:data-description:text-body-sm",
-          )}
-        />
-      </SidebarInset>
+      {/* ספירת הצ'אטים שלא נקראו משותפת לסיידבר ולסרגל התחתון — ערוץ אחד */}
+      <UnreadChatsProvider userId={user?.id ?? null}>
+        <AppSidebar roles={roles} />
+        <SidebarInset>
+          <ImpersonationBanner />
+          <div className="flex flex-1 flex-col">
+            <Header variant="app" />
+            <main className="container flex-1 px-3 py-4 pb-24 md:px-4 md:py-5 md:pb-5">
+              {children}
+            </main>
+            <Footer className="hidden md:flex" />
+          </div>
+          <BottomNav roles={roles} />
+          <Toaster
+            richColors
+            dir="rtl"
+            position="top-center"
+            style={{
+              fontFamily: "ploni",
+            }}
+            className={cn(
+              "**:data-title:text-subtitle **:data-title:font-black!",
+              "**:data-description:text-body-sm",
+            )}
+          />
+        </SidebarInset>
+      </UnreadChatsProvider>
     </SidebarProvider>
   );
 }

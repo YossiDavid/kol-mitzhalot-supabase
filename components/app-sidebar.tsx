@@ -37,6 +37,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Role } from "@/lib/user-role";
+import { UnreadChatsBadge } from "@/features/chats/components/unread-chats-badge";
+import { useUnreadChats } from "@/features/chats/lib/unread-chats-context";
+import { unreadChatsLabel } from "@/features/chats/lib/unread-rooms";
+
+const CHATS_URL = "/app/chats";
 
 const allItems = [
   { title: "ראשי", url: "/app", icon: Home },
@@ -71,6 +76,7 @@ export function AppSidebar({ roles }: { roles: Role[] }) {
   const isCollapsed = state === "collapsed";
   const pathname = usePathname();
   const router = useRouter();
+  const { count: unreadChatsCount } = useUnreadChats();
 
   const effectiveRoles: Role[] = roles;
   // ניווט חייב להציג את איחוד כל ההרשאות של המשתמש - מי שהוא גם שדכן וגם
@@ -125,12 +131,30 @@ export function AppSidebar({ roles }: { roles: Role[] }) {
             <SidebarMenu>
               {items.map((item) => {
                 const Icon = item.icon;
+                const isChats = item.url === CHATS_URL;
+                const unreadCount = isChats ? unreadChatsCount : 0;
+                // התג עצמו aria-hidden; המספר נמסר בשם הנגיש ובטולטיפ
+                const label = unreadChatsLabel(item.title, unreadCount);
 
                 const button = (
-                  <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link href={item.url} prefetch={false}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === item.url}
+                    className={isChats ? "relative" : undefined}
+                  >
+                    <Link
+                      href={item.url}
+                      prefetch={false}
+                      aria-label={unreadCount > 0 ? label : undefined}
+                    >
                       <Icon />
                       <span>{item.title}</span>
+                      {isChats && (
+                        <UnreadChatsBadge
+                          count={unreadCount}
+                          placement="sidebar"
+                        />
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 );
@@ -140,9 +164,7 @@ export function AppSidebar({ roles }: { roles: Role[] }) {
                     {isCollapsed ? (
                       <Tooltip>
                         <TooltipTrigger asChild>{button}</TooltipTrigger>
-                        <TooltipContent side="right">
-                          {item.title}
-                        </TooltipContent>
+                        <TooltipContent side="right">{label}</TooltipContent>
                       </Tooltip>
                     ) : (
                       button
