@@ -4,6 +4,7 @@ import {
   MAX_STUDENT_PHOTOS,
   MAX_STUDENT_PHOTO_MB,
 } from "@/features/students/lib/student-photo-rules";
+import type { FieldWidth } from "./field-layout";
 
 // Variables
 export const TEXT_FIELD_TYPES = [
@@ -57,6 +58,9 @@ interface BaseField {
   value?: string;
   onChange?: (e?: any) => void;
   className?: string;
+  /** רוחב סמנטי - ממופה לרשת ב-field-layout.ts. גובר על columns */
+  width?: FieldWidth;
+  /** @deprecated מספר עמודות מתוך 12; לשלבים שעוד לא עברו ל-width */
   columns?: number;
   condition?: Condition[];
 }
@@ -123,6 +127,12 @@ export interface RepeaterField {
   name: string;
   fileds: Field[];
   condition?: Condition[];
+  /** טקסט כפתור ההוספה, למשל "הוספת מחותן". ברירת מחדל: "הוספת רשומה" */
+  addLabel?: string;
+  /** כותרת של כל רשומה, עם מספר: "מחותן 1". ברירת מחדל: "רשומה" */
+  itemLabel?: string;
+  /** שורה כשאין רשומות. ברירת מחדל: "אין רשומות עדיין." */
+  emptyText?: string;
 }
 
 export type Field =
@@ -514,28 +524,21 @@ export const studentFields: FormSteps[] = [
               { value: "זצוק״ל", label: "זצוק״ל" },
             ],
             required: true,
-            columns: 4,
+            width: "lg",
           },
           {
             name: "father.phone",
             label: "טלפון",
             type: "text",
-            columns: 4,
+            width: "sm",
             required: true,
           },
           {
             name: "father.job",
             label: "עיסוק",
             type: "text",
-            columns: 4,
+            width: "sm",
             required: true,
-          },
-          {
-            // 4 מתוך 12 ולא 2: כתובת מייל לא נכנסה בשדה הצר
-            name: "father.email",
-            label: "אימייל",
-            type: "text",
-            columns: 4,
           },
           {
             name: "father.grandFather",
@@ -558,7 +561,7 @@ export const studentFields: FormSteps[] = [
               { value: "זצוק״ל", label: "זצוק״ל" },
             ],
             required: true,
-            columns: 4,
+            width: "lg",
           },
           {
             name: "father.grandMother",
@@ -576,7 +579,15 @@ export const studentFields: FormSteps[] = [
               { value: "ע״ה", label: "ע״ה" },
             ],
             required: true,
-            columns: 4,
+            width: "lg",
+          },
+          {
+            // בסוף המקטע ולא ליד השם: שדה רגיל, ובשורה של השם עם התוארים
+            // לא נשאר לו מקום
+            name: "father.email",
+            label: "אימייל",
+            type: "text",
+            width: "lg",
           },
         ],
       },
@@ -600,28 +611,21 @@ export const studentFields: FormSteps[] = [
               { value: "ע״ה", label: "ע״ה" },
             ],
             required: true,
-            columns: 4,
+            width: "lg",
           },
           {
             name: "mother.phone",
             label: "טלפון",
             type: "text",
-            columns: 4,
+            width: "sm",
             required: true,
           },
           {
             name: "mother.job",
             label: "עיסוק",
             type: "text",
-            columns: 4,
+            width: "sm",
             required: true,
-          },
-          {
-            // 4 מתוך 12 ולא 2: כתובת מייל לא נכנסה בשדה הצר
-            name: "mother.email",
-            label: "אימייל",
-            type: "text",
-            columns: 4,
           },
           {
             name: "mother.grandFather",
@@ -644,7 +648,7 @@ export const studentFields: FormSteps[] = [
               { value: "זצוק״ל", label: "זצוק״ל" },
             ],
             required: true,
-            columns: 4,
+            width: "lg",
           },
           {
             name: "mother.grandMother",
@@ -662,14 +666,21 @@ export const studentFields: FormSteps[] = [
               { value: "ע״ה", label: "ע״ה" },
             ],
             required: true,
-            columns: 4,
+            width: "lg",
           },
           {
+            // ליד אימייל ולא ב-2 עמודות: התווית נשברה והשדה נמעך
             name: "mother.maidenName",
             label: "שם נעורים",
             type: "text",
-            columns: 2,
+            width: "lg",
             required: true,
+          },
+          {
+            name: "mother.email",
+            label: "אימייל",
+            type: "text",
+            width: "lg",
           },
         ],
       },
@@ -682,20 +693,21 @@ export const studentFields: FormSteps[] = [
             type: "number",
             label: "מספר ילדים במשפחה",
             required: true,
-            columns: 3,
+            width: "sm",
           },
           {
             name: "family.currentChildPlace",
             type: "number",
             label: "מיקום הילד בין האחים",
             required: true,
-            columns: 3,
+            width: "sm",
           },
           {
             name: "family.about",
             type: "textarea",
             label: "כמה מילים על סגנון המשפחה",
             required: true,
+            width: "full",
           },
         ],
       },
@@ -706,6 +718,9 @@ export const studentFields: FormSteps[] = [
           {
             name: "family.mechutanim",
             type: "repeater",
+            addLabel: "הוספת מחותן",
+            itemLabel: "מחותן",
+            emptyText: "עדיין לא נוספו מחותנים.",
             fileds: [
               {
                 name: "family.mechutanim.id",
@@ -714,25 +729,25 @@ export const studentFields: FormSteps[] = [
                 label: "לבחירה מתוך המאגר",
                 options: [],
                 endpoint: "/users/mechutanim",
-                columns: 3,
+                width: "sm",
               },
               {
                 name: "family.mechutanim.firstName",
                 type: "text",
                 label: "שם פרטי",
-                columns: 3,
+                width: "sm",
               },
               {
                 name: "family.mechutanim.lastName",
                 type: "text",
                 label: "שם משפחה",
-                columns: 3,
+                width: "sm",
               },
               {
                 name: "family.mechutanim.city",
                 type: "text",
                 label: "עיר",
-                columns: 3,
+                width: "sm",
               },
             ],
           },

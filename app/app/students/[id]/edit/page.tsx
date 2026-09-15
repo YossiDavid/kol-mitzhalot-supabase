@@ -2,7 +2,7 @@ import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { Suspense } from "react";
 
-import { Box, Section } from "@/components/layout";
+import { Box } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/server";
@@ -35,51 +35,51 @@ function EditNotice({ title, body }: { title: string; body: string }) {
 
 // --- שלד טעינה -----------------------------------------------------------
 // מחקה את מבנה אשף הקו״ח (features/students/lib/student-form-wizard.tsx):
-// אותה מעטפת Section/Box, אותה רשת [220px|1fr], סרגל שלבים, שדות וכפתורי
-// ניווט - כדי שהמעבר מהשלד לטופס האמיתי לא יזיז כלום. הכותרת זהה לזו של
-// EditStudentForm ולכן נשארת סטטית גם בשלד. כל המידות קבועות.
-const SKELETON_STEP_COUNT = 8;
+// אותה מעטפת Box, אותה רשת [200px|1fr] מ-lg, ניווט שלבים (פס עליון מתחת
+// ל-lg), שדות וכפתורי ניווט - כדי שהמעבר מהשלד לטופס האמיתי לא יזיז כלום.
+// הכותרת זהה לזו של EditStudentForm ולכן נשארת סטטית גם בשלד.
+const SKELETON_STEP_COUNT = 7;
 const SKELETON_FIELD_COUNT = 6;
 
 function EditStudentFormSkeleton() {
   return (
-    <Section asChild className="my-4 space-y-4 md:my-10">
-      <div role="status" aria-label="טוען">
-        <h1 className="mb-4 text-heading font-bold md:text-heading">
-          עריכת קו״ח
-        </h1>
-        <Box className="p-4 md:p-8">
-          <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)] md:gap-8">
-            <nav className="flex gap-1 overflow-x-auto pb-2 md:block md:space-y-2 md:overflow-x-visible md:pb-0">
-              {Array.from({ length: SKELETON_STEP_COUNT }, (_, index) => (
-                <Skeleton
-                  key={index}
-                  className="h-10 w-28 shrink-0 rounded-lg md:w-full"
-                />
-              ))}
-            </nav>
-            <div className="space-y-8">
-              <div className="space-y-6">
-                <Skeleton className="h-7 w-48" />
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
-                  {Array.from({ length: SKELETON_FIELD_COUNT }, (_, index) => (
-                    <div key={index} className="space-y-2 md:col-span-6">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-10 w-full" />
-                    </div>
-                  ))}
+    <div
+      role="status"
+      aria-label="טוען"
+      className="my-2 space-y-4 md:my-6 md:space-y-6"
+    >
+      <h1 className="text-title font-bold md:text-heading">עריכת קו״ח</h1>
+      <Box className="px-4 pt-5 pb-0 max-md:-mx-3 max-md:rounded-none md:px-6 md:pt-6">
+        <div className="grid gap-5 lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-6">
+          <div className="flex items-center justify-between gap-2 lg:hidden">
+            {Array.from({ length: SKELETON_STEP_COUNT }, (_, index) => (
+              <Skeleton key={index} className="size-9 rounded-full" />
+            ))}
+          </div>
+          <div className="hidden space-y-1 lg:block">
+            {Array.from({ length: SKELETON_STEP_COUNT }, (_, index) => (
+              <Skeleton key={index} className="h-11 w-full rounded-lg" />
+            ))}
+          </div>
+          <div className="min-w-0">
+            <Skeleton className="h-8 w-48" />
+            <div className="mt-6 grid grid-cols-1 gap-x-5 gap-y-6 sm:grid-cols-2">
+              {Array.from({ length: SKELETON_FIELD_COUNT }, (_, index) => (
+                <div key={index} className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-10 w-full" />
                 </div>
-              </div>
-              <div className="flex items-center justify-between gap-4 border-t pt-6">
-                <Skeleton className="h-9 w-24" />
-                <Skeleton className="h-9 w-36" />
-              </div>
+              ))}
+            </div>
+            <div className="mt-8 flex items-center justify-between gap-3 border-t py-4">
+              <Skeleton className="h-10 w-24" />
+              <Skeleton className="h-10 w-36" />
             </div>
           </div>
-        </Box>
-        <span className="sr-only">טוען את טופס עריכת הקו״ח…</span>
-      </div>
-    </Section>
+        </div>
+      </Box>
+      <span className="sr-only">טוען את טופס עריכת הקו״ח…</span>
+    </div>
   );
 }
 

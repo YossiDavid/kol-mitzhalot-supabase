@@ -1,20 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useForm, type FieldPath } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Box, Section } from "@/components/layout";
-import { cn } from "@/lib/utils";
+import { Box } from "@/components/layout";
 import { studentFields } from "@/features/students/components/create-form/fileds-data";
 import { DynamicField } from "@/features/students/components/create-form/fields/dynamic-field";
+import { FIELD_GRID_CLASS } from "@/features/students/components/create-form/field-layout";
 import {
   studentFormSchema,
   type StudentFormValues,
 } from "@/features/students/components/create-form/schema";
+import { focusFirstInvalidField } from "@/features/students/lib/focus-first-invalid-field";
+import { StudentFormStepsNav } from "@/features/students/lib/student-form-steps-nav";
 
 // אשף הקו״ח משרת גם יצירה וגם עריכה: אותם שלבים, אותה ולידציה, אותה תצוגה.
 // ההבדל היחיד בין המצבים הוא ערכי ההתחלה ומה שקורה בשליחה, ולכן שניהם
@@ -23,6 +25,9 @@ import {
 type Step = (typeof studentFields)[number];
 
 type FormValues = StudentFormValues;
+
+/** מה קורה אחרי שהשלב הבא רונדר */
+type AfterStepChange = "scrollToTop" | "focusFirstError" | null;
 
 export const emptyStudentFormValues: StudentFormValues = {
   isOnShiduchim: true,
@@ -251,6 +256,12 @@ const genderedStepTitles: Record<string, { male: string; female: string }> = {
   },
 };
 
+// מתחת ל-md הניווט התחתון של האפליקציה קבוע בתחתית המסך
+// (components/layout/bottom-nav.tsx, h-16 + safe area), ולכן הפס יושב מעליו.
+// הפס דביק ולא fixed: בסוף השלב הוא חוזר למקומו ולא מסתיר את השדה האחרון.
+const STICKY_ACTIONS_CLASS =
+  "sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 -mx-4 mt-2 flex items-center justify-between gap-3 border-t border-border bg-card px-4 py-3 md:bottom-0 md:mx-0 md:px-0 md:py-4";
+
 export type StudentFormWizardProps = {
   heading: string;
   submitLabel: string;
@@ -268,13 +279,21 @@ export function StudentFormWizard({
   onSubmit,
 }: StudentFormWizardProps) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState<ReadonlySet<number>>(
+    () => new Set(),
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const shellRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const afterStepChangeRef = useRef<AfterStepChange>(null);
 
   const form = useForm<FormValues>({
     mode: "onTouched",
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(studentFormSchema) as any,
     defaultValues: initialValues ?? emptyStudentFormValues,
+    // הפוקוס לשגיאה מנוהל כאן, לפי סדר התצוגה ועם גלילה מתחת לכותרת הדביקה
+    shouldFocusError: false,
   });
 
   const formValues = form.watch();
@@ -284,47 +303,87 @@ export function StudentFormWizard({
   const gender = formValues.gender as "male" | "female" | "";
   const isLastStep = currentStepIndex === steps.length - 1;
 
-  const getStepFieldNames = (step: Step) => {
-    const names: string[] = [];
-    for (const section of step.sections) {
-      for (const field of section.fields) {
-        if (field.type === "repeater") continue;
-        names.push(field.name as string);
+  const focusFirstError = useCallback(() => {
+    void focusFirstInvalidField(
+      formRef.current,
+      (name) => form.getFieldState(name as FieldPath<FormValues>).invalid,
+    );
+  }, [form]);
+
+  useEffect(() => {
+    const action = afterStepChangeRef.current;
+    afterStepChangeRef.current = null;
+    if (action === "focusFirstError") {
+      focusFirstError();
+      return;
+    }
+    // שלב חדש נפתח מלמעלה, גם כשלחצו "הבא" מתחתית שלב ארוך
+    if (action === "scrollToTop" && shellRef.current) {
+      if (shellRef.current.getBoundingClientRect().top < 0) {
+        shellRef.current.scrollIntoView({ block: "start" });
       }
     }
-    return names;
+  }, [currentStepIndex, focusFirstError]);
+
+  const goToStep = (index: number, after: AfterStepChange) => {
+    afterStepChangeRef.current = after;
+    setCurrentStepIndex(index);
   };
 
-  const canProceedFromCurrentStep = async () => {
+  const markStepCompleted = (index: number) => {
+    setCompletedSteps((previous) =>
+      previous.has(index) ? previous : new Set([...previous, index]),
+    );
+  };
+
+  const validateCurrentStep = async () => {
     const fieldNames = getStepFieldNames(currentStep);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return form.trigger(fieldNames as any);
+    const isValid = await form.trigger(
+      fieldNames as Array<FieldPath<FormValues>>,
+    );
+    if (isValid) {
+      markStepCompleted(currentStepIndex);
+    } else {
+      focusFirstError();
+    }
+    return isValid;
   };
 
   const handleNextStep = async (e?: React.MouseEvent<HTMLButtonElement>) => {
     e?.preventDefault();
     e?.stopPropagation();
-    const valid = await canProceedFromCurrentStep();
-    if (!valid) return;
-    if (currentStepIndex === steps.length - 1) return;
-    setCurrentStepIndex((prev) => prev + 1);
+    const isValid = await validateCurrentStep();
+    if (!isValid || isLastStep) return;
+    goToStep(currentStepIndex + 1, "scrollToTop");
   };
 
   const handlePreviousStep = (e?: React.MouseEvent<HTMLButtonElement>) => {
     e?.preventDefault();
     e?.stopPropagation();
     if (currentStepIndex === 0) return;
-    setCurrentStepIndex((prev) => prev - 1);
+    goToStep(currentStepIndex - 1, "scrollToTop");
   };
 
   const handleStepClick = async (targetIndex: number) => {
     if (targetIndex === currentStepIndex) return;
-    const movingForward = targetIndex > currentStepIndex;
-    if (movingForward) {
-      const valid = await canProceedFromCurrentStep();
-      if (!valid) return;
+    const isMovingForward = targetIndex > currentStepIndex;
+    if (isMovingForward && !(await validateCurrentStep())) return;
+    goToStep(targetIndex, "scrollToTop");
+  };
+
+  // השליחה מאמתת את כל הטופס. שגיאה בשלב אחר (למשל בעריכה) פותחת את השלב
+  // הזה ומעבירה פוקוס לשדה, במקום שהכפתור ייראה כאילו לא עשה כלום.
+  const handleInvalidSubmit = () => {
+    const errorStepIndex = steps.findIndex((step) =>
+      getStepFieldNames(step, { includeRepeaters: true }).some(
+        (name) => form.getFieldState(name as FieldPath<FormValues>).invalid,
+      ),
+    );
+    if (errorStepIndex === -1 || errorStepIndex === currentStepIndex) {
+      focusFirstError();
+      return;
     }
-    setCurrentStepIndex(targetIndex);
+    goToStep(errorStepIndex, "focusFirstError");
   };
 
   const handleSubmit = async (values: FormValues) => {
@@ -342,88 +401,84 @@ export function StudentFormWizard({
   }
 
   return (
-    <Section asChild className="my-4 space-y-4 md:my-10">
-      <div>
-        <h1 className="mb-4 text-heading font-bold md:text-heading">
-          {heading}
-        </h1>
-        <Box className="p-4 md:p-8">
-          <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)] md:gap-8">
-            <StepSidebar
-              steps={steps}
-              currentStepIndex={currentStepIndex}
-              onStepClick={handleStepClick}
-              gender={gender}
-            />
-            <div>
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(handleSubmit)}
-                  className="space-y-8"
+    <div className="my-2 space-y-4 md:my-6 md:space-y-6">
+      <h1 className="text-title font-bold md:text-heading">{heading}</h1>
+      {/* במובייל הכרטיס נפרש עד קצוות המסך, כדי שהשדות יקבלו את כל הרוחב */}
+      <Box
+        ref={shellRef}
+        className="scroll-mt-20 px-4 pt-5 pb-0 max-md:-mx-3 max-md:rounded-none md:px-6 md:pt-6"
+      >
+        <div className="grid gap-5 lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-6">
+          <StudentFormStepsNav
+            titles={steps.map((step) => getStepTitle(step, gender))}
+            currentStepIndex={currentStepIndex}
+            completedSteps={completedSteps}
+            isForwardDisabled={currentStep.name === "intro" && !gender}
+            onStepClick={handleStepClick}
+          />
+          <Form {...form}>
+            <form
+              ref={formRef}
+              onSubmit={form.handleSubmit(handleSubmit, handleInvalidSubmit)}
+              className="min-w-0"
+            >
+              <div className="space-y-1">
+                <p className="text-caption text-muted-foreground lg:hidden">
+                  שלב {currentStepIndex + 1} מתוך {steps.length}
+                </p>
+                <h2 className="text-subtitle font-bold md:text-title">
+                  {getStepTitle(currentStep, gender)}
+                </h2>
+              </div>
+
+              <div className="mt-6 divide-y divide-border">
+                {currentStep.sections.map((section) => (
+                  <SectionRenderer
+                    key={section.name}
+                    section={section}
+                    form={form}
+                    values={formValues}
+                    gender={gender}
+                  />
+                ))}
+              </div>
+
+              <div className={STICKY_ACTIONS_CLASS}>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={handlePreviousStep}
+                  disabled={currentStepIndex === 0}
                 >
-                  <div className="space-y-6">
-                    <h2 className="text-title font-semibold md:text-heading">
-                      {getStepTitle(currentStep, gender)}
-                    </h2>
-                    {currentStep.sections.map((section) => (
-                      <SectionRenderer
-                        key={section.name}
-                        section={section}
-                        form={form}
-                        values={formValues}
-                        gender={gender}
-                      />
-                    ))}
-                  </div>
+                  <ArrowLeft aria-hidden className="size-4 rtl:rotate-180" />
+                  <span>חזרה</span>
+                </Button>
 
-                  <div className="flex items-center justify-between gap-4 border-t pt-6">
-                    <Button
-                      variant="outline"
-                      type="button"
-                      onClick={handlePreviousStep}
-                      disabled={currentStepIndex === 0}
-                      className="flex items-center gap-2"
-                    >
-                      <ArrowLeft className="size-4 rtl:rotate-180" />
-                      <span>חזרה</span>
-                    </Button>
-
-                    {isLastStep ? (
-                      <Button
-                        type="submit"
-                        className="flex items-center gap-2"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? (
-                          <span>{submittingLabel}</span>
-                        ) : (
-                          <span>{submitLabel}</span>
-                        )}
-                      </Button>
-                    ) : (
-                      <Button
-                        type="button"
-                        onClick={handleNextStep}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }
-                        }}
-                        className="flex items-center gap-2"
-                      >
-                        <span>המשך לשלב הבא</span>
-                        <ArrowRight className="size-4 rtl:rotate-180" />
-                      </Button>
-                    )}
-                  </div>
-                </form>
-              </Form>
-            </div>
-          </div>
-        </Box>
-      </div>
-    </Section>
+                {isLastStep ? (
+                  <Button type="submit" disabled={isSubmitting}>
+                    <span>{isSubmitting ? submittingLabel : submitLabel}</span>
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={handleNextStep}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                    }}
+                  >
+                    <span>המשך לשלב הבא</span>
+                    <ArrowRight aria-hidden className="size-4 rtl:rotate-180" />
+                  </Button>
+                )}
+              </div>
+            </form>
+          </Form>
+        </div>
+      </Box>
+    </div>
   );
 }
 
@@ -434,6 +489,7 @@ type SectionRendererProps = {
   gender: "male" | "female" | "";
 };
 
+// מרווח בין מקטעים (קו מפריד + 32px מכל צד) גדול בבירור מהמרווח בין שדות (24px)
 function SectionRenderer({
   section,
   form,
@@ -447,15 +503,19 @@ function SectionRenderer({
   }
 
   return (
-    <div className="space-y-4">
+    <section className="space-y-5 py-8 first:pt-0">
       {section.title && (
-        <h3 className="text-subtitle font-semibold">{section.title}</h3>
+        <h3 className="text-body font-bold text-foreground md:text-subtitle">
+          {section.title}
+        </h3>
       )}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+      <div className={FIELD_GRID_CLASS}>
         {section.fields.map((field, index) => (
           <DynamicField
             key={`${field.name}-${index}`}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             field={field as any}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             control={control as any}
             values={values}
             gender={gender}
@@ -463,16 +523,20 @@ function SectionRenderer({
           />
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
-type StepSidebarProps = {
-  steps: typeof studentFields;
-  currentStepIndex: number;
-  onStepClick: (index: number) => void;
-  gender: "male" | "female" | "";
-};
+function getStepFieldNames(
+  step: Step,
+  { includeRepeaters = false }: { includeRepeaters?: boolean } = {},
+): string[] {
+  return step.sections.flatMap((section) =>
+    section.fields
+      .filter((field) => includeRepeaters || field.type !== "repeater")
+      .map((field) => field.name),
+  );
+}
 
 function shouldDisplaySection(
   section: Step["sections"][number],
@@ -505,43 +569,8 @@ function shouldDisplaySection(
   });
 }
 
-function StepSidebar({
-  steps,
-  currentStepIndex,
-  onStepClick,
-  gender,
-}: StepSidebarProps) {
-  const disableForwardNavigation =
-    steps[currentStepIndex]?.name === "intro" && !gender;
-
-  return (
-    <nav className="flex gap-1 overflow-x-auto pb-2 md:block md:space-y-2 md:overflow-x-visible md:pb-0">
-      {steps.map((step, index) => {
-        const isActive = index === currentStepIndex;
-        const isDisabled = disableForwardNavigation && index > currentStepIndex;
-        return (
-          <button
-            key={step.name}
-            type="button"
-            onClick={() => onStepClick(index)}
-            className={cn(
-              "relative shrink-0 rounded-lg px-3 py-2 text-right transition md:w-full",
-              isActive
-                ? "bg-primary/10 text-primary md:before:absolute md:before:top-1/2 md:before:right-0 md:before:h-1/2 md:before:w-1 md:before:-translate-y-1/2 md:before:rounded-l-2xl md:before:bg-primary"
-                : "bg-transparent hover:bg-muted/70",
-              isDisabled && "cursor-not-allowed opacity-60",
-            )}
-            disabled={isDisabled}
-          >
-            {getStepTitle(step, gender)}
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
-
 function getFieldLabel(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   field: Record<string, any>,
   gender: "male" | "female" | "",
 ) {
@@ -567,6 +596,7 @@ function normalizePath(path: string) {
   return path.replace(/\[\d+\]/g, "");
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getValueByPath(source: Record<string, any>, path: unknown) {
   if (typeof path !== "string") return undefined;
   if (!path) return undefined;
@@ -575,6 +605,7 @@ function getValueByPath(source: Record<string, any>, path: unknown) {
     .split(".")
     .filter(Boolean);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return segments.reduce<any>((acc, segment) => {
     if (acc == null) return undefined;
     return acc[segment];

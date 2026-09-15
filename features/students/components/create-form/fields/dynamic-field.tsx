@@ -3,12 +3,18 @@
 import React, { Fragment } from "react";
 import {
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupInput,
+  InputGroupSelect,
+} from "@/components/ui/input-group";
 import { Textarea } from "@/components/ui/textarea";
 import {
   NativeSelect,
@@ -21,8 +27,14 @@ import Upload from "./upload";
 import { PhotoGalleryField } from "./photo-gallery-field";
 import { Control, useFieldArray } from "react-hook-form";
 import { cn } from "@/lib/utils";
-import { PlusCircle, Trash, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import dynamic from "next/dynamic";
+import {
+  FIELD_GRID_CLASS,
+  FIELD_SCROLL_MARGIN_CLASS,
+  fieldCellAttributes,
+  getFieldWidthClass,
+} from "../field-layout";
 
 // bundle-dynamic-imports: lazy-load the heavy Jewish date picker so it's only
 // bundled when a date field is actually rendered in the multi-step form
@@ -57,7 +69,10 @@ export function DynamicField({
 
   if (isRepeaterField(field)) {
     return (
-      <div className="col-span-12">
+      <div
+        className={cn("col-span-12", FIELD_SCROLL_MARGIN_CLASS)}
+        {...fieldCellAttributes(field.name)}
+      >
         <RepeaterFieldRenderer
           field={field}
           control={control}
@@ -70,7 +85,13 @@ export function DynamicField({
   }
 
   return (
-    <div className={getColumnClass(field.columns)}>
+    <div
+      className={cn(
+        getFieldWidthClass(field.width, field.columns),
+        FIELD_SCROLL_MARGIN_CLASS,
+      )}
+      {...fieldCellAttributes(field.name)}
+    >
       <AtomicFieldRenderer
         field={field}
         control={control}
@@ -153,8 +174,8 @@ function AtomicFieldRenderer({
         value: string;
         label: string;
       }>) ?? [];
-    const prefixPlaceholder: string | undefined =
-      rawField.prefixPlaceholder ?? "תואר";
+    const prefixPlaceholder: string = rawField.prefixPlaceholder ?? "תואר";
+    const suffixPlaceholder: string = placeholder ?? "תואר";
     return (
       <Fragment>
         {renderBeforeField(beforeField)}
@@ -174,79 +195,50 @@ function AtomicFieldRenderer({
               });
             };
 
+            // הערך נשמר בדיוק כמו קודם: { prefix, name, suffix } תחת שם השדה.
+            // התוארים בתוך מסגרת השדה, והשם תופס את כל הרוחב שנשאר.
             return (
               <FormItem>
-                <FormLabel htmlFor={fieldId}>
+                <FormLabel htmlFor={fieldId} required={isRequired}>
                   {label}
-                  {isRequired && <span className="text-destructive">*</span>}
                 </FormLabel>
-                <FormControl>
-                  <div className="group/text-and-select flex flex-row rounded-md border border-input bg-transparent shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50">
-                    {prefixOptions.length > 0 && (
-                      <div className="relative shrink-0">
-                        <NativeSelect
-                          value={value.prefix}
-                          onChange={(e) =>
-                            updateFieldValue("prefix", e.target.value)
-                          }
-                          disabled={disableBecauseLinkedId}
-                          className="w-[100px] shrink-0 rounded-none rounded-r-md border-0 text-caption shadow-none focus-visible:border-0 focus-visible:ring-0 [&_select]:rounded-r-md"
-                        >
-                          {!value.prefix && (
-                            <NativeSelectOption value="" disabled>
-                              {prefixPlaceholder}
-                            </NativeSelectOption>
-                          )}
-                          {prefixOptions.map((option) => (
-                            <NativeSelectOption
-                              key={option.value}
-                              value={option.value}
-                            >
-                              {option.label}
-                            </NativeSelectOption>
-                          ))}
-                        </NativeSelect>
-                      </div>
-                    )}
-                    <div className="relative flex-1">
-                      <Input
-                        id={fieldId}
-                        value={value.name}
-                        onChange={(event) =>
-                          updateFieldValue("name", event.target.value)
-                        }
-                        onBlur={rhfField.onBlur}
-                        ref={rhfField.ref}
-                        disabled={disableBecauseLinkedId}
-                        className="rounded-none border-0 shadow-none focus-visible:border-0 focus-visible:ring-0"
-                      />
-                    </div>
-                    <div className="relative shrink-0">
-                      <NativeSelect
-                        value={value.suffix}
-                        onChange={(e) =>
-                          updateFieldValue("suffix", e.target.value)
-                        }
-                        disabled={disableBecauseLinkedId}
-                        className="w-[100px] shrink-0 rounded-none rounded-l-md border-0 text-caption shadow-none focus-visible:border-0 focus-visible:ring-0 [&_select]:rounded-l-md"
-                      >
-                        {!value.suffix && (
-                          <NativeSelectOption value="" disabled>
-                            {placeholder ?? "תואר"}
-                          </NativeSelectOption>
-                        )}
-                        {options.map((option) => (
-                          <NativeSelectOption
-                            key={option.value}
-                            value={option.value}
-                          >
-                            {option.label}
-                          </NativeSelectOption>
-                        ))}
-                      </NativeSelect>
-                    </div>
-                  </div>
-                </FormControl>
+                <InputGroup>
+                  {prefixOptions.length > 0 && (
+                    <TitleSelect
+                      align="start"
+                      placeholder={prefixPlaceholder}
+                      ariaLabel={`${prefixPlaceholder}, ${label}`}
+                      value={value.prefix}
+                      options={prefixOptions}
+                      disabled={disableBecauseLinkedId}
+                      onChange={(next) => updateFieldValue("prefix", next)}
+                    />
+                  )}
+                  <FormControl>
+                    <InputGroupInput
+                      id={fieldId}
+                      value={value.name}
+                      onChange={(event) =>
+                        updateFieldValue("name", event.target.value)
+                      }
+                      onBlur={rhfField.onBlur}
+                      ref={rhfField.ref}
+                      disabled={disableBecauseLinkedId}
+                    />
+                  </FormControl>
+                  <TitleSelect
+                    align="end"
+                    placeholder={suffixPlaceholder}
+                    ariaLabel={`${suffixPlaceholder}, ${label}`}
+                    value={value.suffix}
+                    options={options}
+                    disabled={disableBecauseLinkedId}
+                    onChange={(next) => updateFieldValue("suffix", next)}
+                  />
+                </InputGroup>
+                {description && (
+                  <FormDescription>{description}</FormDescription>
+                )}
                 <FormMessage />
               </FormItem>
             );
@@ -265,9 +257,8 @@ function AtomicFieldRenderer({
           name={name as any}
           render={({ field: rhfField }) => (
             <FormItem>
-              <FormLabel htmlFor={fieldId}>
+              <FormLabel htmlFor={fieldId} required={isRequired}>
                 {label}
-                {isRequired && <span className="text-destructive">*</span>}
               </FormLabel>
               <FormControl>
                 {type === "textarea" ? (
@@ -350,11 +341,7 @@ function AtomicFieldRenderer({
                   />
                 )}
               </FormControl>
-              {description && (
-                <p className="text-body-sm text-muted-foreground">
-                  {description}
-                </p>
-              )}
+              {description && <FormDescription>{description}</FormDescription>}
               <FormMessage />
             </FormItem>
           )}
@@ -373,10 +360,7 @@ function AtomicFieldRenderer({
             name={name as any}
             render={({ field: rhfField }) => (
               <FormItem>
-                <FormLabel>
-                  {label}
-                  {isRequired && <span className="text-destructive">*</span>}
-                </FormLabel>
+                <FormLabel required={isRequired}>{label}</FormLabel>
                 <FormControl>
                   <SearchSelectField
                     placeholder={placeholder ?? "חיפוש במאגר..."}
@@ -424,10 +408,7 @@ function AtomicFieldRenderer({
 
               return (
                 <FormItem className="space-y-3">
-                  <FormLabel>
-                    {label}
-                    {isRequired && <span className="text-destructive">*</span>}
-                  </FormLabel>
+                  <FormLabel required={isRequired}>{label}</FormLabel>
                   <FormControl>
                     <div
                       className={cn(
@@ -475,10 +456,7 @@ function AtomicFieldRenderer({
             name={name as any}
             render={({ field: rhfField }) => (
               <FormItem className="space-y-3">
-                <FormLabel>
-                  {label}
-                  {isRequired && <span className="text-destructive">*</span>}
-                </FormLabel>
+                <FormLabel required={isRequired}>{label}</FormLabel>
                 <FormControl>
                   <div
                     className={cn(
@@ -547,10 +525,7 @@ function AtomicFieldRenderer({
 
               return (
                 <FormItem className="space-y-3">
-                  <FormLabel>
-                    {label}
-                    {isRequired && <span className="text-destructive">*</span>}
-                  </FormLabel>
+                  <FormLabel required={isRequired}>{label}</FormLabel>
                   <FormControl>
                     <div className="flex flex-wrap gap-2">
                       {options.map((option) => {
@@ -595,10 +570,7 @@ function AtomicFieldRenderer({
 
             return (
               <FormItem>
-                <FormLabel>
-                  {label}
-                  {isRequired && <span className="text-destructive">*</span>}
-                </FormLabel>
+                <FormLabel required={isRequired}>{label}</FormLabel>
                 <FormControl>
                   <NativeSelect
                     value={currentValue}
@@ -658,10 +630,7 @@ function AtomicFieldRenderer({
 
             return (
               <FormItem>
-                <FormLabel>
-                  {label}
-                  {isRequired && <span className="text-destructive">*</span>}
-                </FormLabel>
+                <FormLabel required={isRequired}>{label}</FormLabel>
                 <div className="flex items-center gap-3">
                   <Input
                     type="number"
@@ -701,21 +670,14 @@ function AtomicFieldRenderer({
           name={name as any}
           render={({ field: rhfField }) => (
             <FormItem>
-              <FormLabel>
-                {label}
-                {isRequired && <span className="text-destructive">*</span>}
-              </FormLabel>
-              {description && (
-                <p className="text-body-sm text-muted-foreground">
-                  {description}
-                </p>
-              )}
+              <FormLabel required={isRequired}>{label}</FormLabel>
               <FormControl>
                 <PhotoGalleryField
                   value={Array.isArray(rhfField.value) ? rhfField.value : []}
                   onChange={rhfField.onChange}
                 />
               </FormControl>
+              {description && <FormDescription>{description}</FormDescription>}
               <FormMessage />
             </FormItem>
           )}
@@ -766,10 +728,7 @@ function AtomicFieldRenderer({
 
             return (
               <FormItem>
-                <FormLabel>
-                  {label}
-                  {isRequired && <span className="text-destructive">*</span>}
-                </FormLabel>
+                <FormLabel required={isRequired}>{label}</FormLabel>
                 <FormControl>
                   <Upload
                     accept={rawField.accept}
@@ -779,9 +738,7 @@ function AtomicFieldRenderer({
                   />
                 </FormControl>
                 {description && (
-                  <p className="text-body-sm text-muted-foreground">
-                    {description}
-                  </p>
+                  <FormDescription>{description}</FormDescription>
                 )}
                 <FormMessage />
               </FormItem>
@@ -793,6 +750,50 @@ function AtomicFieldRenderer({
   }
 
   return null;
+}
+
+type TitleSelectProps = {
+  align: "start" | "end";
+  placeholder: string;
+  ariaLabel: string;
+  value: string;
+  options: Array<{ value: string; label: string }>;
+  disabled: boolean;
+  onChange: (value: string) => void;
+};
+
+/** תואר לפני או אחרי השם, כתוספת קומפקטית בתוך מסגרת השדה */
+function TitleSelect({
+  align,
+  placeholder,
+  ariaLabel,
+  value,
+  options,
+  disabled,
+  onChange,
+}: TitleSelectProps) {
+  return (
+    <InputGroupSelect
+      align={align}
+      // ריפוד מצומצם (החץ עדיין פנוי): במובייל כל פיקסל הולך לשם עצמו
+      className="ps-2.5 pe-7"
+      aria-label={ariaLabel}
+      value={value}
+      disabled={disabled}
+      onChange={(event) => onChange(event.target.value)}
+    >
+      {!value && (
+        <option value="" disabled>
+          {placeholder}
+        </option>
+      )}
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </InputGroupSelect>
+  );
 }
 
 type RepeaterFieldRendererProps = {
@@ -822,17 +823,18 @@ function RepeaterFieldRenderer({
   };
 
   const beforeField = field.beforeField ?? field.before;
+  const itemLabel = readText(field.itemLabel, "רשומה");
+  const addLabel = readText(field.addLabel, "הוספת רשומה");
+  const emptyText = readText(field.emptyText, "אין רשומות עדיין.");
 
   return (
-    <div className="space-y-4 rounded-lg border border-dashed border-slate-300 p-4">
+    <div className="space-y-4">
       {renderBeforeField(beforeField)}
-      <div className="space-y-4">
-        {fields.length === 0 && (
-          <p className="text-body-sm text-muted-foreground">
-            אין רשומות עדיין. ניתן להוסיף באמצעות הכפתור למטה.
-          </p>
-        )}
+      {fields.length === 0 && (
+        <p className="text-body-sm text-muted-foreground">{emptyText}</p>
+      )}
 
+      <ol className="space-y-4 empty:hidden">
         {fields.map((item, index) => {
           const idFieldPaths = new Set(
             field.fileds
@@ -848,15 +850,24 @@ function RepeaterFieldRenderer({
               ),
           );
 
+          const itemTitle = `${itemLabel} ${index + 1}`;
+
           return (
-            <div
-              key={item.id}
-              className={cn(
-                "space-y-4 rounded-lg border border-slate-200 p-4",
-                field.fileds.length <= 4 ? "items-center md:flex" : "",
-              )}
-            >
-              <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-12">
+            <li key={item.id} className="rounded-lg border border-border p-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <p className="text-label font-bold">{itemTitle}</p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`מחיקת ${itemTitle}`}
+                  onClick={() => remove(index)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 aria-hidden />
+                </Button>
+              </div>
+              <div className={FIELD_GRID_CLASS}>
                 {field.fileds.map((innerField: FieldMetadata) => {
                   const resolvedName = resolveFieldName(
                     innerField.name,
@@ -897,7 +908,14 @@ function RepeaterFieldRenderer({
                   return (
                     <div
                       key={innerFieldAny.originalName ?? innerFieldAny.name}
-                      className={getColumnClass(innerFieldAny.columns)}
+                      className={cn(
+                        getFieldWidthClass(
+                          innerFieldAny.width,
+                          innerFieldAny.columns,
+                        ),
+                        FIELD_SCROLL_MARGIN_CLASS,
+                      )}
+                      {...fieldCellAttributes(resolvedName)}
                     >
                       <AtomicFieldRenderer
                         field={innerFieldConfig}
@@ -910,33 +928,21 @@ function RepeaterFieldRenderer({
                   );
                 })}
               </div>
-              <Button
-                type="button"
-                variant={field.fileds.length <= 4 ? "ghost" : "secondary"}
-                size={field.fileds.length <= 4 ? "icon" : undefined}
-                aria-label="מחיקת רשומה"
-                onClick={() => remove(index)}
-                className="flex items-center gap-2 text-destructive"
-              >
-                <Trash2 />
-                {field.fileds.length > 4 && "מחיקת רשומה"}
-              </Button>
-            </div>
+            </li>
           );
         })}
-      </div>
+      </ol>
 
-      <Button
-        type="button"
-        variant="ghost"
-        onClick={handleAdd}
-        className="flex items-center gap-2"
-      >
-        <PlusCircle />
-        <span>הוספת רשומה</span>
+      <Button type="button" variant="outline" onClick={handleAdd}>
+        <Plus aria-hidden />
+        <span>{addLabel}</span>
       </Button>
     </div>
   );
+}
+
+function readText(value: unknown, fallback: string): string {
+  return typeof value === "string" && value.trim() ? value : fallback;
 }
 
 function renderBeforeField(beforeField: React.ReactNode) {
@@ -1013,37 +1019,6 @@ function getLastPathSegment(path: string) {
   const normalized = path.replace(/\[(\d+)\]/g, ".$1");
   const segments = normalized.split(".").filter(Boolean);
   return segments[segments.length - 1] ?? "";
-}
-
-function getColumnClass(columns?: number) {
-  if (columns === undefined || columns === null) {
-    return "col-span-12";
-  }
-
-  if (columns === -1) {
-    return "col-span-12";
-  }
-
-  const base = Math.max(1, columns);
-  const span = Math.min(12, base <= 6 ? base * 1 : base);
-
-  const COLUMN_CLASSES: Record<number, string> = {
-    1: "col-span-12 md:col-span-1",
-    2: "col-span-12 md:col-span-2",
-    3: "col-span-12 md:col-span-3",
-    4: "col-span-12 md:col-span-4",
-    5: "col-span-12 md:col-span-5",
-    6: "col-span-12 md:col-span-6",
-    7: "col-span-12 md:col-span-7",
-    8: "col-span-12 md:col-span-8",
-    9: "col-span-12 md:col-span-9",
-    10: "col-span-12 md:col-span-10",
-    11: "col-span-12 md:col-span-11",
-    12: "col-span-12 md:col-span-12",
-    "-1": "col-span-12 md:col-span-12",
-  };
-
-  return COLUMN_CLASSES[span] ?? "col-span-12 md:col-span-12";
 }
 
 function isRepeaterField(field: FieldMetadata) {

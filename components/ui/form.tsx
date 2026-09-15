@@ -146,7 +146,10 @@ const FormMessage = React.forwardRef<
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, children, ...props }, ref) => {
   const { formMessageId, error } = useFormField();
-  const body = error ? String(error.message ?? "שדה לא תקין") : children;
+  // שדה מורכב (למשל שם עם תוארים) מקבל את השגיאה של החלק שבתוכו
+  const body = error
+    ? String(error.message ?? findNestedMessage(error) ?? "שדה לא תקין")
+    : children;
 
   if (!body) {
     return null;
@@ -164,6 +167,21 @@ const FormMessage = React.forwardRef<
   );
 });
 FormMessage.displayName = "FormMessage";
+
+const MAX_NESTED_ERROR_DEPTH = 3;
+
+function findNestedMessage(error: unknown, depth = 0): string | undefined {
+  if (typeof error !== "object" || error === null) return undefined;
+  if (depth > MAX_NESTED_ERROR_DEPTH) return undefined;
+  const { message } = error as { message?: unknown };
+  if (typeof message === "string" && message) return message;
+  for (const [key, value] of Object.entries(error)) {
+    if (key === "ref") continue;
+    const nested = findNestedMessage(value, depth + 1);
+    if (nested) return nested;
+  }
+  return undefined;
+}
 
 export {
   Form,

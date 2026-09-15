@@ -25,7 +25,8 @@ function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
         "flex w-full min-w-0 items-stretch overflow-hidden rounded-md border border-input bg-transparent shadow-xs transition-[color,box-shadow] dark:bg-input/30",
         "focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50",
         "has-[[aria-invalid=true]]:border-destructive has-[[aria-invalid=true]]:ring-destructive/20",
-        "has-[:disabled]:opacity-50",
+        // רק פקד מושבת - לא <option disabled> של placeholder בתוך רשימה
+        "has-[input:disabled]:opacity-50 has-[select:disabled]:opacity-50",
         className,
       )}
       {...props}
