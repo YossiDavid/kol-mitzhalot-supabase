@@ -36,6 +36,7 @@ import DeleteStudentButton from "@/features/students/components/delete-student-b
 import LockedStudentPhoto from "@/features/students/components/student-photo";
 import StudentPhotoGallery from "@/features/students/components/student-photo-gallery";
 import { loadStudentPhotos } from "@/features/students/lib/student-photos";
+import { canViewStudentPhoto } from "@/features/students/lib/student-photo-access";
 import {
   ShadchanNotes,
   StaffFeedbackList,
@@ -926,11 +927,12 @@ async function StudentPageContent({
   // תמונה של בת נחשפת למנהל, לבעל הכרטיס, ולשדכן שקיבל אישור צפייה
   // מפורש. ההכרעה נעשית ב-can_view_student_photo ולא כאן, כדי שאותו
   // כלל יחול גם על כל קורא אחר של הטבלה.
-  const { data: canViewFemalePhoto } = await supabase.rpc(
-    "can_view_student_photo",
-    { uid: user?.id ?? null, sid: student.id },
-  );
-  const photoPrivate = student.gender === "female" && !canViewFemalePhoto;
+  // (אותה בדיקה משמשת את התמונות הממוזערות בטבלת המיועדים)
+  const photoPrivate = !(await canViewStudentPhoto(
+    supabase,
+    user?.id ?? null,
+    student,
+  ));
   // בלי הרשאה נטען רק מספר התמונות (למנעול) - אף קישור חתום לא נוצר
   const studentPhotos = await loadStudentPhotos(student.id, {
     canView: !photoPrivate,

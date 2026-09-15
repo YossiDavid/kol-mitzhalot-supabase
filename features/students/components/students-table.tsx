@@ -2,7 +2,7 @@
 
 import type { Route } from "next";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { Camera, FileText, Star } from "lucide-react";
 
 import { DataTable, type DataTableColumn } from "@/components/data-table";
@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { AddCvDialog } from "@/features/students/components/add-cv-dialog";
 import DeleteStudentButton from "@/features/students/components/delete-student-button";
+import { StudentRowPhoto } from "@/features/students/components/student-row-photo";
+import { useStudentThumbnails } from "@/features/students/lib/use-student-thumbnails";
 import { personalStatusToHebrew } from "@/features/students/lib/profile-labels";
 import {
   isOutOfShidduchimStatus,
@@ -144,18 +146,29 @@ function StatusCell({ student }: { student: StudentTableRow }) {
   );
 }
 
-function MobileTitle({ student }: { student: StudentTableRow }) {
+function MobileTitle({
+  student,
+  photo,
+}: {
+  student: StudentTableRow;
+  photo: ReactNode;
+}) {
   return (
-    <span className="flex flex-wrap items-center gap-x-1.5">
-      {fullName(student)}
-      {isRecentlyEngaged(student) && (
-        <span className="text-caption font-medium text-warning-muted-foreground">
-          🎉 מאורס/ת
-        </span>
-      )}
+    <span className="flex items-center gap-3">
+      {photo}
+      <span className="flex min-w-0 flex-wrap items-center gap-x-1.5">
+        {fullName(student)}
+        {isRecentlyEngaged(student) && (
+          <span className="text-caption font-medium text-warning-muted-foreground">
+            🎉 מאורס/ת
+          </span>
+        )}
+      </span>
     </span>
   );
 }
+
+type RenderPhoto = (student: StudentTableRow) => ReactNode;
 
 function ActionsCell({
   student,
@@ -268,9 +281,18 @@ function leadingColumn(
 
 function buildColumns(
   props: StudentsTableProps,
+  renderPhoto: RenderPhoto,
 ): DataTableColumn<StudentTableRow>[] {
   return [
     leadingColumn(props),
+    {
+      key: "photo",
+      header: "תמונה",
+      size: "min",
+      // במובייל התמונה מוצגת לצד השם בכותרת הכרטיס
+      mobile: "hidden",
+      cell: renderPhoto,
+    },
     {
       key: "status",
       header: "סטטוס",
@@ -340,12 +362,30 @@ function buildColumns(
  */
 export function StudentsTable(props: StudentsTableProps) {
   const { students, caption, emptyState, className } = props;
+  // רק לכרטיסים שיש להם תמונות - שאר השורות מוצגות מיד בלי בקשה
+  const idsWithPhotos = useMemo(
+    () =>
+      students
+        .filter((student) => (student.photo_count ?? 0) > 0)
+        .map((student) => student.id),
+    [students],
+  );
+  const getPhotoState = useStudentThumbnails(idsWithPhotos);
+  const renderPhoto: RenderPhoto = (student) => (
+    <StudentRowPhoto
+      studentId={student.id}
+      studentName={fullName(student)}
+      photoCount={student.photo_count ?? 0}
+      state={getPhotoState(student.id)}
+    />
+  );
+
   return (
     <DataTable
       className={className}
       caption={caption}
       breakpoint="lg"
-      columns={buildColumns(props)}
+      columns={buildColumns(props, renderPhoto)}
       rows={students}
       getRowKey={(student) => student.id}
       getRowLink={(student) => ({
@@ -355,7 +395,9 @@ export function StudentsTable(props: StudentsTableProps) {
       rowClassName={(student) =>
         isRecentlyEngaged(student) && ENGAGED_ROW_CLASS
       }
-      mobileTitle={(student) => <MobileTitle student={student} />}
+      mobileTitle={(student) => (
+        <MobileTitle student={student} photo={renderPhoto(student)} />
+      )}
       emptyState={emptyState}
     />
   );

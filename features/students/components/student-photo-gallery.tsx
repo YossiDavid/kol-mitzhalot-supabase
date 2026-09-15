@@ -16,6 +16,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Spinner } from "@/components/ui/spinner";
 
 type GalleryPhoto = { url: string };
 
@@ -107,16 +108,23 @@ export default function StudentPhotoGallery({
   );
 }
 
-function PhotoLightbox({
+/**
+ * דפדוף בתמונות במסך מלא. משמש גם את הגלריה בכרטיס וגם את התמונה הממוזערת
+ * בטבלת המיועדים, שטוענת את הגלריה רק כשה-lightbox נפתח (isLoading).
+ */
+export function PhotoLightbox({
   photos,
   alt,
   startIndex,
+  isLoading = false,
   onClose,
 }: {
   photos: readonly GalleryPhoto[];
   alt: string;
   /** null = סגור */
   startIndex: number | null;
+  /** הגלריה עוד נטענת - מוצג מחוון במקום התמונות */
+  isLoading?: boolean;
   onClose: () => void;
 }) {
   const [api, setApi] = useState<CarouselApi>();
@@ -165,7 +173,13 @@ function PhotoLightbox({
           <X className="h-5 w-5" />
         </DialogClose>
 
-        {isOpen && (
+        {isOpen && isLoading && (
+          <div className="flex h-[80vh] items-center justify-center">
+            <Spinner className="size-10 text-background" aria-label="טוען תמונות" />
+          </div>
+        )}
+
+        {isOpen && !isLoading && (
           <div className="relative">
             <Carousel
               setApi={setApi}
