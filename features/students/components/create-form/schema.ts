@@ -3,82 +3,85 @@
 import { z } from "zod";
 
 import type { StudentPhotoItem } from "@/features/students/lib/student-photo-rules";
-import { GENERIC_REQUIRED_MESSAGE } from "./field-messages";
+import { studentFields } from "./fileds-data";
+import { collectRequiredIssues } from "./required-fields";
 
-// הודעה כללית בכוונה: המרנדר מחליף אותה בנוסח לפי התווית שמוצגת וסוג הפקד
-// ("נא למלא שם אביו", "נא לבחור סטטוס אישי") - field-messages.ts.
-// הודעה מפורשת נכתבת כאן רק כשהיא טובה מהנוסח הזה.
-const req = (msg = GENERIC_REQUIRED_MESSAGE) => z.string().min(1, msg);
+// שדות חובה לא נכתבים כאן: הם נגזרים מ-`required: true` במערך השדות
+// (fileds-data.ts, required-fields.ts), כדי שהכוכבית והאכיפה יבואו ממקור אחד.
+// כאן נשארים רק מבנה הערכים ובדיקות תוכן (למשל גובה מינימלי).
 const opt = z.string().default("");
 
-const namePartsRequired = z.object({
-  prefix: opt,
-  name: req(),
-  suffix: opt,
-});
-
-const namePartsOptional = z.object({
+const nameParts = z.object({
   prefix: opt,
   name: opt,
   suffix: opt,
 });
 
-export const studentFormSchema = z.object({
-  isOnShiduchim: z.boolean().default(true),
-  // התווית היא משפט שלם ("אני ממלא/ת את טופס הקו״ח עבור:"), ולכן הודעה מפורשת
-  gender: req("נא לבחור מיועד/מיועדת"),
+const MIN_HEIGHT_CM = 50;
 
-  firstName: req(),
-  lastName: req(),
-  identityNumber: req(),
-  birthDate: req(),
-  // לא חובה בכוונה: גם השדה הקודם (תמונה בודדת) לא נאכף, וכרטיס קיים בלי
-  // תמונות חייב להמשיך להישמר. המגבלות על כל קובץ נבדקות בהוספה לגלריה.
+const NUMERIC_SEGMENT_PATTERN = /^\d+$/;
+
+const studentFormBaseSchema = z.object({
+  isOnShiduchim: z.boolean().default(true),
+  gender: opt,
+
+  firstName: opt,
+  lastName: opt,
+  identityNumber: opt,
+  birthDate: opt,
+  // תמונות שמורות מגיעות כפריטים ברשימה, ולכן בעריכה הן נחשבות מולאו.
+  // המגבלות על כל קובץ נבדקות בהוספה לגלריה.
   photos: z.array(z.custom<StudentPhotoItem>()).default([]),
 
-  country: req(),
-  city: req(),
-  street: req(),
-  house: req(),
+  country: opt,
+  city: opt,
+  street: opt,
+  house: opt,
   community: opt,
   shtible: opt,
   institutionId: opt,
-  personalStatus: req(),
+  personalStatus: opt,
   // גובה בס״מ. ריק מותר, אבל ערך שהוזן חייב להיות סביר —
   // מתחת ל-50 זה כמעט תמיד טעות הקלדה.
-  height: opt.refine((v) => v === "" || Number(v) >= 50, {
-    message: "גובה מינימלי הוא 50 ס״מ",
+  height: opt.refine((v) => v === "" || Number(v) >= MIN_HEIGHT_CM, {
+    message: `גובה מינימלי הוא ${MIN_HEIGHT_CM} ס״מ`,
   }),
-  cellphoneType: req(),
+  cellphoneType: opt,
   phone: opt,
   planForLife: opt,
   headCoverType: opt,
   about: opt,
-  cv: z.object({ file: z.any().nullable() }).default({ file: null }),
+  cv: z
+    .object({
+      file: z.any().nullable(),
+      // בעריכה: הקו״ח שכבר שמור. נחשב "מולא", כדי שלא יידרש להעלות מחדש
+      existingUrl: z.string().nullable().optional(),
+    })
+    .default({ file: null }),
 
   father: z.object({
-    self: namePartsRequired,
-    phone: req(),
-    job: req(),
+    self: nameParts,
+    phone: opt,
+    job: opt,
     email: opt,
-    grandFather: namePartsRequired,
-    grandMother: namePartsRequired,
+    grandFather: nameParts,
+    grandMother: nameParts,
   }),
 
   mother: z.object({
-    self: namePartsRequired,
-    maidenName: req(),
-    phone: req(),
-    job: req(),
+    self: nameParts,
+    maidenName: opt,
+    phone: opt,
+    job: opt,
     email: opt,
-    grandFather: namePartsRequired,
-    grandMother: namePartsRequired,
+    grandFather: nameParts,
+    grandMother: nameParts,
   }),
 
   family: z.object({
-    numberOfChildren: req(),
-    currentChildPlace: req(),
-    about: req(),
+    numberOfChildren: opt,
+    currentChildPlace: opt,
+    about: opt,
     mechutanim: z.array(z.record(z.string(), z.unknown())).default([]),
   }),
 
@@ -138,14 +141,34 @@ export const studentFormSchema = z.object({
     planForLife: opt,
     cellphoneType: opt,
     aboutThePartner: opt,
-    additionalInformation: req(),
+    additionalInformation: opt,
   }),
 
   author: z.object({
-    name: req(),
-    phone: req(),
-    relation: req(),
+    name: opt,
+    phone: opt,
+    relation: opt,
   }),
 });
+
+function toIssuePath(path: string): Array<string | number> {
+  return path
+    .split(".")
+    .map((segment) =>
+      NUMERIC_SEGMENT_PATTERN.test(segment) ? Number(segment) : segment,
+    );
+}
+
+export const studentFormSchema = studentFormBaseSchema.superRefine(
+  (values, ctx) => {
+    for (const issue of collectRequiredIssues(studentFields, values)) {
+      ctx.addIssue({
+        code: "custom",
+        path: toIssuePath(issue.path),
+        message: issue.message,
+      });
+    }
+  },
+);
 
 export type StudentFormValues = z.infer<typeof studentFormSchema>;

@@ -11,6 +11,7 @@ import { Box } from "@/components/layout";
 import { studentFields } from "@/features/students/components/create-form/fileds-data";
 import { DynamicField } from "@/features/students/components/create-form/fields/dynamic-field";
 import { FIELD_GRID_CLASS } from "@/features/students/components/create-form/field-layout";
+import { matchesConditions } from "@/features/students/components/create-form/field-visibility";
 import {
   studentFormSchema,
   type StudentFormValues,
@@ -375,7 +376,7 @@ export function StudentFormWizard({
   // הזה ומעבירה פוקוס לשדה, במקום שהכפתור ייראה כאילו לא עשה כלום.
   const handleInvalidSubmit = () => {
     const errorStepIndex = steps.findIndex((step) =>
-      getStepFieldNames(step, { includeRepeaters: true }).some(
+      getStepFieldNames(step).some(
         (name) => form.getFieldState(name as FieldPath<FormValues>).invalid,
       ),
     );
@@ -527,14 +528,14 @@ function SectionRenderer({
   );
 }
 
-function getStepFieldNames(
-  step: Step,
-  { includeRepeaters = false }: { includeRepeaters?: boolean } = {},
-): string[] {
+/**
+ * כל השדות של השלב, כולל רשומות חוזרות: שגיאה בשדה בתוך שורה נמצאת מתחת
+ * לשם הרשומה, ולכן trigger על השם הזה בודק את כל השורות. שדות מוסתרים לא
+ * מחזירים שגיאה (required-fields.ts), כך שאין צורך לסנן אותם כאן.
+ */
+function getStepFieldNames(step: Step): string[] {
   return step.sections.flatMap((section) =>
-    section.fields
-      .filter((field) => includeRepeaters || field.type !== "repeater")
-      .map((field) => field.name),
+    section.fields.map((field) => field.name),
   );
 }
 
@@ -542,31 +543,7 @@ function shouldDisplaySection(
   section: Step["sections"][number],
   values: FormValues,
 ) {
-  if (!section.condition || section.condition.length === 0) {
-    return true;
-  }
-
-  return section.condition.every((condition) => {
-    const compareValue = getValueByPath(values, condition.parameter);
-    switch (condition.operator) {
-      case "===":
-        return compareValue === condition.value;
-      case "!==":
-        return compareValue !== condition.value;
-      case "includes":
-        return Array.isArray(compareValue)
-          ? compareValue.includes(condition.value as never)
-          : typeof compareValue === "string" &&
-              compareValue.includes(String(condition.value));
-      case "in":
-        return (
-          Array.isArray(condition.value) &&
-          condition.value.includes(String(compareValue ?? ""))
-        );
-      default:
-        return true;
-    }
-  });
+  return matchesConditions(section.condition, values);
 }
 
 function getFieldLabel(
@@ -594,20 +571,4 @@ function getStepTitle(step: Step, gender: "male" | "female" | "") {
 
 function normalizePath(path: string) {
   return path.replace(/\[\d+\]/g, "");
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getValueByPath(source: Record<string, any>, path: unknown) {
-  if (typeof path !== "string") return undefined;
-  if (!path) return undefined;
-  const segments = path
-    .replace(/\[(\d+)\]/g, ".$1")
-    .split(".")
-    .filter(Boolean);
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return segments.reduce<any>((acc, segment) => {
-    if (acc == null) return undefined;
-    return acc[segment];
-  }, source);
 }

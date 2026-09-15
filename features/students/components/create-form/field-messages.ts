@@ -55,6 +55,14 @@ export function getRequiredFieldMessage(
   return `נא למלא ${subject}`;
 }
 
+/** רשומה חוזרת שסומנה חובה ואין בה שורות: "נא להוסיף מחותן" */
+export function getRepeaterRequiredMessage(
+  message: string,
+  itemLabel: string,
+): string {
+  return isGenericErrorMessage(message) ? `נא להוסיף ${itemLabel}` : message;
+}
+
 /**
  * ההודעה שמוצגת מתחת לשדה: הודעה כללית מוחלפת בנוסח הספציפי, והודעה
  * ספציפית מהסכמה נשארת כמו שהיא.

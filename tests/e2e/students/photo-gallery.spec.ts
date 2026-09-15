@@ -16,6 +16,9 @@ const TINY_PNG = Buffer.from(
 
 const NAME = { prefix: "", name: "בדיקה", suffix: "" };
 
+/** נתיב קו״ח שכבר שמור בכרטיס. הקובץ עצמו לא נדרש לבדיקה */
+const EXISTING_CV_URL = "playwright/cv/existing.pdf";
+
 /** זהה ל-MAX_STUDENT_PHOTO_BYTES */
 const MAX_STORED_BYTES = 1024 * 1024;
 /** PNG של רעש בגודל הזה שוקל כמה MB */
@@ -45,6 +48,8 @@ test.describe("גלריית תמונות בעריכת כרטיס", () => {
         house: "5",
         cellphone_type: "kosher",
         in_shidduchim: true,
+        // קו״ח שמור: השמירה חייבת לעבור בלי להעלות אותו מחדש, ולא למחוק אותו
+        cv_url: EXISTING_CV_URL,
         parents_info: {
           father: {
             self: NAME,
@@ -187,9 +192,10 @@ test.describe("גלריית תמונות בעריכת כרטיס", () => {
 
     const { data: student } = await admin
       .from("students")
-      .select("photo_count")
+      .select("photo_count, cv_url")
       .eq("id", studentId)
       .single();
     expect(student?.photo_count).toBe(2);
+    expect(student?.cv_url).toBe(EXISTING_CV_URL);
   });
 });

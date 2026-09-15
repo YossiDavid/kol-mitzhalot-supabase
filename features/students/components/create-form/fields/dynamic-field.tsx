@@ -25,8 +25,9 @@ import { Button } from "@/components/ui/button";
 import { SearchSelectField } from "./search-select-field";
 import Upload from "./upload";
 import { PhotoGalleryField } from "./photo-gallery-field";
-import { Control, useFieldArray } from "react-hook-form";
+import { Control, useFieldArray, useFormState } from "react-hook-form";
 import { cn } from "@/lib/utils";
+import { CONTROL_HEIGHT } from "@/components/ui/control-size";
 import { Plus, Trash2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import {
@@ -36,7 +37,25 @@ import {
   fieldCellAttributes,
   getFieldWidthClass,
 } from "../field-layout";
-import { formatFieldErrorMessage } from "../field-messages";
+import {
+  formatFieldErrorMessage,
+  getRepeaterRequiredMessage,
+} from "../field-messages";
+import {
+  getValueByPath,
+  matchesConditions,
+  resolveRepeaterPath,
+  resolveRowConditions,
+} from "../field-visibility";
+
+// אותו מראה כמו Input (גובה מסולם הגבהים, פוקוס, מסגרת אדומה בשגיאה). הספרייה
+// מקבלת רק מחרוזת מחלקות לשדה עצמו, ו-aria-invalid יושב על העוטף - ולכן group.
+const DATE_INPUT_CLASS = cn(
+  CONTROL_HEIGHT.default,
+  "w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-body shadow-xs transition-[color,box-shadow] outline-none selection:bg-primary selection:text-primary-foreground placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-body-sm dark:bg-input/30",
+  "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
+  "group-aria-invalid:border-destructive group-aria-invalid:ring-destructive/20 dark:group-aria-invalid:ring-destructive/40",
+);
 
 // bundle-dynamic-imports: lazy-load the heavy Jewish date picker so it's only
 // bundled when a date field is actually rendered in the multi-step form
@@ -65,7 +84,7 @@ export function DynamicField({
   gender,
   getLabel,
 }: DynamicFieldProps) {
-  if (!shouldDisplayField(field, values)) {
+  if (!matchesConditions(field.condition, values)) {
     return null;
   }
 
@@ -281,6 +300,7 @@ function AtomicFieldRenderer({
                   />
                 ) : type === "date" ? (
                   <div
+                    className="group"
                     onClickCapture={(event) => {
                       const target = event.target as HTMLElement;
                       if (target.closest("button")) {
@@ -297,7 +317,7 @@ function AtomicFieldRenderer({
                     <ReactJewishDatePicker
                       id={fieldId}
                       value={ensureStringValue(rhfField.value)}
-                      input="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-body shadow-xs transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-body-sm"
+                      input={DATE_INPUT_CLASS}
                       wrapperClassName="font-[ploni]"
                       calendarWrapper="absolute z-10 mt-1 w-full rounded-lg border bg-white p-2 shadow-lg scale-y-0 origin-top transition"
                       calendarWrapperOpen="scale-y-100"
@@ -825,6 +845,7 @@ function RepeaterFieldRenderer({
   const itemLabel = readText(field.itemLabel, "רשומה");
   const addLabel = readText(field.addLabel, "הוספת רשומה");
   const emptyText = readText(field.emptyText, "אין רשומות עדיין.");
+  const rootErrorMessage = useRepeaterRootError(control, field.name);
 
   return (
     <div className="space-y-4">
@@ -845,7 +866,7 @@ function RepeaterFieldRenderer({
                   ) === "id",
               )
               .map((candidate: FieldMetadata) =>
-                resolveFieldName(candidate.name as string, field.name, index),
+                resolveRepeaterPath(candidate.name as string, field.name, index),
               ),
           );
 
@@ -868,21 +889,16 @@ function RepeaterFieldRenderer({
               </div>
               <div className={FIELD_GRID_CLASS}>
                 {field.fileds.map((innerField: FieldMetadata) => {
-                  const resolvedName = resolveFieldName(
+                  const resolvedName = resolveRepeaterPath(
                     innerField.name,
                     field.name,
                     index,
                   );
                   const innerFieldAny = innerField as FieldMetadata;
-                  const adjustedConditions = innerFieldAny.condition?.map(
-                    (condition: any) => ({
-                      ...condition,
-                      parameter: resolveFieldName(
-                        condition.parameter,
-                        field.name,
-                        index,
-                      ),
-                    }),
+                  const adjustedConditions = resolveRowConditions(
+                    innerFieldAny.condition,
+                    field.name,
+                    index,
                   );
 
                   const linkedIdPath = determineLinkedIdPath(
@@ -900,7 +916,7 @@ function RepeaterFieldRenderer({
                     linkedIdPath,
                   };
 
-                  if (!shouldDisplayField(innerFieldConfig, values)) {
+                  if (!matchesConditions(innerFieldConfig.condition, values)) {
                     return null;
                   }
 
@@ -934,6 +950,12 @@ function RepeaterFieldRenderer({
           );
         })}
       </ol>
+
+      {rootErrorMessage && (
+        <p className="text-body-sm font-medium text-destructive">
+          {getRepeaterRequiredMessage(rootErrorMessage, itemLabel)}
+        </p>
+      )}
 
       <Button type="button" variant="outline" onClick={handleAdd}>
         <Plus aria-hidden />
@@ -1002,32 +1024,17 @@ function determineLinkedIdPath(fieldName: string, idFieldPaths: Set<string>) {
   return idFieldPaths.has(candidate) ? candidate : undefined;
 }
 
-function shouldDisplayField(field: FieldMetadata, values: Record<string, any>) {
-  if (!field.condition || field.condition.length === 0) {
-    return true;
-  }
-
-  return field.condition.every((condition: any) => {
-    const compareValue = getValueByPath(values, condition.parameter);
-    switch (condition.operator) {
-      case "===":
-        return compareValue === condition.value;
-      case "!==":
-        return compareValue !== condition.value;
-      case "includes":
-        return Array.isArray(compareValue)
-          ? compareValue.includes(condition.value)
-          : typeof compareValue === "string" &&
-              compareValue.includes(condition.value);
-      case "in":
-        return (
-          Array.isArray(condition.value) &&
-          condition.value.includes(String(compareValue ?? ""))
-        );
-      default:
-        return true;
-    }
-  });
+/**
+ * שגיאה על הרשומה עצמה ("לפחות שורה אחת"), לא על שדה בשורה. בשדה בתוך
+ * רשומה, resolvers שם אותה תחת root.
+ */
+function useRepeaterRootError(control: Control<any>, name: string) {
+  const { errors } = useFormState({ control, name });
+  const error = getValueByPath(errors, name) as
+    | { message?: unknown; root?: { message?: unknown } }
+    | undefined;
+  const message = error?.message ?? error?.root?.message;
+  return typeof message === "string" && message ? message : undefined;
 }
 
 function getParentPath(path: string) {
@@ -1136,36 +1143,6 @@ function ensureRangeTuple(
     return [value[0], value[1]] as [number, number];
   }
   return fallback;
-}
-
-function resolveFieldName(baseName: string, arrayName: string, index: number) {
-  if (baseName === arrayName) {
-    return `${arrayName}.${index}`;
-  }
-
-  if (baseName.startsWith(`${arrayName}.`)) {
-    const suffix = baseName.slice(arrayName.length + 1);
-    return `${arrayName}.${index}.${suffix}`;
-  }
-
-  return baseName;
-}
-
-function normalizePath(path: string) {
-  return path.replace(/\[\d+\]/g, "");
-}
-
-function getValueByPath(source: Record<string, any>, path: string) {
-  if (!path) return undefined;
-  const segments = path
-    .replace(/\[(\d+)\]/g, ".$1")
-    .split(".")
-    .filter(Boolean);
-
-  return segments.reduce<any>((acc, segment) => {
-    if (acc == null) return undefined;
-    return acc[segment];
-  }, source);
 }
 
 function hasNonEmptyValue(value: unknown) {

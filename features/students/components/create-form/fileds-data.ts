@@ -5,6 +5,7 @@ import {
   MAX_STUDENT_PHOTO_MB,
 } from "@/features/students/lib/student-photo-rules";
 import type { FieldWidth } from "./field-layout";
+import type { FieldCondition } from "./field-visibility";
 
 // Variables
 export const TEXT_FIELD_TYPES = [
@@ -35,12 +36,7 @@ const PHOTO_GALLERY_FIELD_TYPES = ["photos"] as const;
 
 const REPEATER_FIELD_TYPES = ["repeater"] as const;
 
-interface Condition {
-  parameter: string;
-  operator: "===" | "!==" | "includes" | "in";
-  /** For `in`, use an array of allowed values (e.g. problem types only — not empty / not yet chosen). */
-  value: string | string[];
-}
+type Condition = FieldCondition;
 
 // Types
 interface BaseField {
@@ -55,10 +51,13 @@ interface BaseField {
   description?: string;
   beforeField?: string;
   /**
-   * מציג כוכבית. לסמן רק כשהסכמה (schema.ts) באמת אוכפת את השדה - שדות בתוך
-   * רשומה חוזרת לא נאכפים (z.record), ולכן לא מסומנים
+   * שדה חובה: מציג כוכבית אדומה ונאכף במעבר שלב ובשליחה (required-fields.ts).
+   * נאכף רק כשהשדה מוצג, וגם בתוך שורות של רשומה חוזרת.
+   * שם עם תוארים: חובה = השם עצמו. קובץ / תמונות: קובץ שכבר שמור נחשב מולא.
    */
   required?: boolean;
+  /** הודעה משלו לשדה חובה ריק. בלי זה: "נא למלא/לבחור <תווית>" (field-messages.ts) */
+  requiredMessage?: string;
   value?: string;
   onChange?: (e?: any) => void;
   className?: string;
@@ -129,6 +128,12 @@ export interface RepeaterField {
   name: string;
   fileds: Field[];
   condition?: Condition[];
+  /**
+   * לפחות שורה אחת. בלי זה רשומה ריקה תקינה, ושדות חובה בתוך השורות נאכפים
+   * רק בשורות שנוספו
+   */
+  required?: boolean;
+  requiredMessage?: string;
   /** טקסט כפתור ההוספה, למשל "הוספת מחותן". ברירת מחדל: "הוספת רשומה" */
   addLabel?: string;
   /** כותרת של כל רשומה, עם מספר: "מחותן 1". ברירת מחדל: "רשומה" */
@@ -208,6 +213,8 @@ export const studentFields: FormSteps[] = [
               { value: "female", label: "מיועדת" },
             ],
             required: true,
+            // התווית היא משפט שלם, ולכן הודעה מפורשת
+            requiredMessage: "נא לבחור מיועד/מיועדת",
             beforeField:
               "<h3>ברוכים הבאים למערכת השידוכים שלנו</h3><p>תודה על הצטרפותכם.</p><p>על מנת שנוכל להכיר אתכם לעומק ולהציע הצעות שידוך מותאמות ומדויקות – יש למלא את הטופס שלפניכם במלואו ובאופן מדויק.</p><p><b>המידע שתמלאו ישמר בפרטיות מוחלטת וישמש אך ורק לצורכי תהליך ההתאמה.</b></p><p>נודה על שיתוף פעולה מלא ומוקפד – זהו שלב חיוני להצלחת התהליך.</p><hr/>",
           },
@@ -257,8 +264,8 @@ export const studentFields: FormSteps[] = [
             label: "תמונות",
             type: "photos",
             description: `עד ${MAX_STUDENT_PHOTOS} תמונות (JPG, PNG או WebP). תמונות גדולות מוקטנות אוטומטית לעד ${MAX_STUDENT_PHOTO_MB}MB. התמונה הראשונה היא התמונה הראשית. התמונות יישלחו לצד השני רק לאחר הסכמתכם.`,
-            // בלי כוכבית: הסכמה לא אוכפת תמונות (כרטיס קיים בלי תמונות חייב
-            // להמשיך להישמר), וכוכבית מסמנת רק שדה שבאמת חוסם מעבר
+            // לא חובה בכוונה: כרטיס קיים בלי תמונות חייב להמשיך להישמר.
+            // עם required: true - לפחות תמונה אחת; תמונה שמורה נחשבת
           },
           {
             name: "country",
@@ -877,7 +884,7 @@ export const studentFields: FormSteps[] = [
               {
                 name: "education.kolel.name",
                 width: "sm",
-                label: "שם הישיבה",
+                label: "שם הכולל",
                 type: "text",
               },
               {

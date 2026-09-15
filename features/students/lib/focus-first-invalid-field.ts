@@ -1,7 +1,9 @@
 import { FIELD_NAME_ATTRIBUTE } from "@/features/students/components/create-form/field-layout";
 
+// שדה קובץ מוסתר (גלריה, קו״ח) לא מקבל פוקוס: המשתמש לא רואה אותו, ו-Enter
+// היה פותח את חלון בחירת הקבצים. הפוקוס עובר לכפתור ההוספה שלידו.
 const TEXT_ENTRY_SELECTOR =
-  'input:not([type="hidden"]):not([disabled]), textarea:not([disabled])';
+  'input:not([type="hidden"]):not([type="file"]):not([disabled]), textarea:not([disabled])';
 const FOCUSABLE_SELECTOR = [
   TEXT_ENTRY_SELECTOR,
   "select:not([disabled])",
@@ -33,10 +35,7 @@ function focusNow(
 ): boolean {
   if (!root) return false;
 
-  const cells = root.querySelectorAll<HTMLElement>(`[${FIELD_NAME_ATTRIBUTE}]`);
-  const cell = Array.from(cells).find((candidate) =>
-    isInvalid(candidate.getAttribute(FIELD_NAME_ATTRIBUTE) ?? ""),
-  );
+  const cell = findFirstInvalidCell(root, isInvalid);
   if (!cell) return false;
 
   const prefersReducedMotion = window.matchMedia(
@@ -52,9 +51,38 @@ function focusNow(
 }
 
 /**
+ * התא השגוי הראשון לפי סדר התצוגה. רשומה חוזרת נחשבת שגויה כשאחד השדות
+ * בשורות שלה שגוי - ואז התא של השדה עצמו עדיף על התא של כל הרשומה.
+ */
+function findFirstInvalidCell(
+  root: HTMLElement,
+  isInvalid: (fieldName: string) => boolean,
+): HTMLElement | undefined {
+  const cells = Array.from(
+    root.querySelectorAll<HTMLElement>(`[${FIELD_NAME_ATTRIBUTE}]`),
+  );
+  const isCellInvalid = (candidate: HTMLElement) =>
+    isInvalid(candidate.getAttribute(FIELD_NAME_ATTRIBUTE) ?? "");
+
+  let cell = cells.find(isCellInvalid);
+  while (cell) {
+    const container: HTMLElement = cell;
+    const nested = cells.find(
+      (candidate) =>
+        candidate !== container &&
+        container.contains(candidate) &&
+        isCellInvalid(candidate),
+    );
+    if (!nested) break;
+    cell = nested;
+  }
+  return cell;
+}
+
+/**
  * הפקד הנכון בתוך התא: קודם הפקד שסומן כשגוי (או פקד בתוכו), ואם אין -
  * שדה ההקלדה הראשון (בשם עם תוארים זה השם ולא רשימת התואר), ואחריו כל פקד
- * שאפשר למקד (רשימה נפתחת, כפתור חיפוש, רדיו).
+ * שאפשר למקד (רשימה נפתחת, כפתור חיפוש, רדיו, צ'יפ, כפתור הוספה).
  */
 function findFocusTarget(cell: HTMLElement): HTMLElement | null {
   const invalid = cell.querySelector<HTMLElement>('[aria-invalid="true"]');

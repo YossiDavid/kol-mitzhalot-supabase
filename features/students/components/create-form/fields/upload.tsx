@@ -27,6 +27,8 @@ type UploadProps = {
 	onChange?: (files: File[]) => void
 	multiple?: boolean
 	maxFiles?: number
+	/** מ-FormControl: שדה חובה בלי קובץ. מסגרת אדומה על אזור ההעלאה */
+	"aria-invalid"?: boolean | "true" | "false"
 } & Pick<UploadField, "accept">
 
 export default function Upload({
@@ -35,7 +37,9 @@ export default function Upload({
 	onChange,
 	multiple = true,
 	maxFiles = DEFAULT_MAX_FILES,
+	"aria-invalid": ariaInvalid,
 }: UploadProps) {
+	const isInvalid = ariaInvalid === true || ariaInvalid === "true"
 	const [internalFiles, setInternalFiles] = useState<File[]>([])
 	const files = value ?? internalFiles
 	const [previews, setPreviews] = useState<PreviewFile[]>([])
@@ -106,6 +110,7 @@ export default function Upload({
 				onDropRejected={(rej) => console.error("Rejected:", rej)}
 				onError={console.error}
 				src={dropzoneFiles}
+				className={isInvalid ? "border-destructive" : undefined}
 			>
 				<DropzoneEmptyState />
 

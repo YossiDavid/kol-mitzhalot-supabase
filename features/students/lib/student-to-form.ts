@@ -249,7 +249,8 @@ export function studentToFormValues(
     planForLife: text(student.plan_for_life),
     headCoverType: text(student.head_cover_type),
     about: text(student.about),
-    cv: { file: null },
+    // הקובץ עצמו לא חוזר כ-File; הכתובת השמורה מסמנת שהשדה כבר מולא
+    cv: { file: null, existingUrl: text(student.cv_url) || null },
 
     father: {
       self: nameParts(father.self),

@@ -24,6 +24,9 @@ type PhotoGalleryFieldProps = {
   id?: string;
   value: readonly StudentPhotoItem[] | undefined;
   onChange: (items: StudentPhotoItem[]) => void;
+  /** מ-FormControl: שדה חובה בלי תמונות. מסומן על כפתור ההוספה */
+  "aria-invalid"?: boolean | "true" | "false";
+  "aria-describedby"?: string;
 };
 
 const ACCEPT_ATTRIBUTE = ACCEPTED_PHOTO_TYPES.join(",");
@@ -40,7 +43,10 @@ export function PhotoGalleryField({
   id,
   value,
   onChange,
+  "aria-invalid": ariaInvalid,
+  "aria-describedby": ariaDescribedBy,
 }: PhotoGalleryFieldProps) {
+  const isInvalid = ariaInvalid === true || ariaInvalid === "true";
   const items = value ?? [];
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -161,6 +167,8 @@ export function PhotoGalleryField({
             onClick={() => inputRef.current?.click()}
             disabled={isProcessing}
             aria-busy={isProcessing}
+            aria-invalid={isInvalid || undefined}
+            aria-describedby={ariaDescribedBy}
             onDragOver={(event) => {
               event.preventDefault();
               setIsDragOver(true);
@@ -169,6 +177,7 @@ export function PhotoGalleryField({
             onDrop={handleDrop}
             className={cn(
               "flex size-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border p-2 text-center text-muted-foreground transition-colors hover:border-primary hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-wait disabled:hover:border-border disabled:hover:text-muted-foreground",
+              isInvalid && "border-destructive",
               isDragOver && "border-primary bg-primary-muted text-primary",
             )}
           >
