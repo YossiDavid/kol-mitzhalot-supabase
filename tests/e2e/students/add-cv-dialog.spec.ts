@@ -64,10 +64,14 @@ test("הוספת קו״ח פותחת דיאלוג, מעלה קובץ ומעדכ�
   // Arrange
   await page.goto("/app/students");
   await page.locator("#search").fill(lastName);
-  const row = page
-    .getByRole("table", { name: "רשימת המיועדים" })
-    .getByRole("row", { name: `כרטיס מלא: ${studentLabel}` });
-  await expect(row).toBeVisible({ timeout: 10_000 });
+  const table = page.getByRole("table", { name: "רשימת המיועדים" });
+  const row = table.getByRole("row", { name: `כרטיס מלא: ${studentLabel}` });
+  // החיפוש מתעדכן אחרי debounce וטוען את הטבלה מחדש. הכרטיס החדש מופיע כבר
+  // ברשימה המלאה, ולחיצה לפני הסינון נבלעת כשהטבלה מתחלפת בשלד הטעינה
+  await expect(table.getByRole("row", { name: /^כרטיס מלא:/ })).toHaveCount(1, {
+    timeout: 10_000,
+  });
+  await expect(row).toBeVisible();
 
   // Act
   await row.getByRole("button", { name: "הוספת קו״ח" }).click();
