@@ -11,7 +11,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Button } from "@/components/ui/button";
-import { DataTableSkeleton } from "@/components/data-table";
+import { DataTableSkeleton, type DataTableSort } from "@/components/data-table";
 import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
 import {
@@ -49,6 +49,9 @@ export default function StudentsList() {
   // שגיאת טעינה אמיתית — נבדלת מ"אין תוצאות", כדי שכשל שאילתה לא ייראה כמו חיפוש ריק
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  // המיון נשמר כאן ולא בטבלה: כל שינוי סינון מציג שלד וטוען מחדש, ובלי
+  // זה הטבלה הייתה נבנית מחדש והמיון שבחרו היה מתאפס
+  const [sort, setSort] = useState<DataTableSort | null>(null);
 
   const supabaseRef = useRef(createClient());
   const supabase = supabaseRef.current;
@@ -272,6 +275,8 @@ export default function StudentsList() {
         preset="list"
         caption="רשימת המיועדים"
         students={students}
+        sort={sort}
+        onSortChange={setSort}
         isFavorite={(id) => favSet.has(id)}
         onToggleFavorite={(id, nextIsFavorite) =>
           handleFavoriteChange(nextIsFavorite, id)

@@ -112,6 +112,13 @@ const demoTableRows: DemoTableRow[] = [
     city: "ירושלים",
     isActive: false,
   },
+  {
+    id: "3",
+    name: "אברהם לוי",
+    email: "avraham@example.com",
+    city: "אשדוד",
+    isActive: true,
+  },
 ];
 
 const demoTableColumns: DataTableColumn<DemoTableRow>[] = [
@@ -121,6 +128,7 @@ const demoTableColumns: DataTableColumn<DemoTableRow>[] = [
     size: "grow",
     mobile: "title",
     cell: (row) => row.name,
+    sortValue: (row) => row.name,
   },
   {
     key: "email",
@@ -129,7 +137,12 @@ const demoTableColumns: DataTableColumn<DemoTableRow>[] = [
     className: "wrap-anywhere",
     cell: (row) => row.email,
   },
-  { key: "city", header: "עיר", cell: (row) => row.city },
+  {
+    key: "city",
+    header: "עיר",
+    cell: (row) => row.city,
+    sortValue: (row) => row.city,
+  },
   {
     key: "status",
     header: "סטטוס",
@@ -638,7 +651,7 @@ export function DesignSystemShowcase() {
               <div className="flex items-baseline justify-between gap-3">
                 <h3 className="text-subtitle">DataTable</h3>
                 <p className="text-caption text-muted-foreground">
-                  טבלה מ-md, כרטיסים במובייל
+                  טבלה מ-md, כרטיסים במובייל; שם ועיר ממוינים
                 </p>
               </div>
               <DataTable

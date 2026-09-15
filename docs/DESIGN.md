@@ -145,8 +145,16 @@ const COLUMNS: DataTableColumn<User>[] = [
 | `mobileTitle` | כותרת כרטיס מותאמת (למשל שם פרטי + משפחה משתי עמודות) |
 | `breakpoint` | `md` (ברירת מחדל); `lg` לטבלאות עם הרבה עמודות (טבלת המיועדים); `xl` לטבלאות ניהול רחבות שגולשות בטאבלט לצד סרגל הצד (משתמשים, שדכנים) |
 | `surface` | `false` כשהטבלה כבר בתוך `Box` — כרטיסי המובייל מקבלים מסגרת במקום רקע |
+| `sortValue` (בעמודה) | הופך את העמודה לממוינת. מחזיר `string` (לפי סדר עברי, `Intl.Collator("he", { numeric: true })`), `number` או `Date`; ערך ריק (`null`, `undefined`, מחרוזת ריקה) תמיד בסוף, בשני הכיוונים. המיון יציב. הערך צריך לעלות יחד עם מה שמוצג: בעמודת גיל — מינוס תאריך הלידה, כך ש"עולה" הוא מהצעיר למבוגר |
+| `sortLabel` (בעמודה) | שם העמודה בפקדי המיון כשה־`header` אינו טקסט |
+| `initialSort` | `{ key, direction: "asc" \| "desc" }` — מיון התחלתי כשהמיון פנימי. ברירת מחדל: סדר השורות כפי שהגיעו |
+| `sort` + `onSortChange` | מיון נשלט — כשהמצב צריך לשרוד טעינה מחדש של השורות (רשימת המיועדים). `null` = בלי מיון |
 
-**טבלת מיועדים:** `StudentsTable` (`features/students/components/students-table.tsx`) עם `preset="list" | "favorites" | "children"`. נוסח הסטטוס האישי — רק `personalStatusToHebrew` (`features/students/lib/profile-labels.ts`).
+**מיון.** בדסקטופ כותרת ממוינת היא כפתור בתוך ה־`th` (`aria-sort` על ה־`th`, שם נגיש "מיון לפי …", אייקון `ArrowUpDown` / `ArrowUp` / `ArrowDown`): לחיצה ראשונה — עולה, שנייה — יורד, שלישית — חזרה לסדר המקורי. מתחת ל־`breakpoint` מופיע מעל הכרטיסים פקד "מיון לפי" (רשימה + כפתור כיוון) על אותו מצב. המיון בצד הלקוח, על השורות שכבר נטענו.
+
+**רכיב שרת או לקוח.** בלי עמודה עם `sortValue` הטבלה נשארת רכיב שרת. עמודה ממוינת מעבירה אותה ל־`SortableDataTable` (רכיב לקוח), ולכן טבלה ממוינת מוצגת מתוך רכיב לקוח — פונקציות (`cell`, `sortValue`) אינן עוברות מעמוד שרת לרכיב לקוח.
+
+**טבלת מיועדים:** `StudentsTable` (`features/students/components/students-table.tsx`) עם `preset="list" | "favorites" | "children"`. נוסח הסטטוס האישי — רק `personalStatusToHebrew` (`features/students/lib/profile-labels.ts`). ממוינות: סטטוס (לפי הנוסח העברי), שם משפחה, שם פרטי, שם האב, שם האם (לפי השם, בלי התואר), עיר, גיל וגובה. ברשימה המיון נשמר ב־`StudentsList` כדי שישרוד שינוי סינון; במועדפים ובילדים — פנימי.
 
 ### כרטיסים (`Card`)
 
