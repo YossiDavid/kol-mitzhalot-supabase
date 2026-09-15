@@ -96,14 +96,28 @@ test.afterAll(async () => {
     .in("id", [maleId, femaleId].filter(Boolean));
 });
 
+/** מספר הכרטיסים שהבדיקה יוצרת (בן ובת) - אחרי הסינון רק הם נשארים */
+const TEST_STUDENTS_COUNT = 2;
+
 async function searchForTestStudents(page: Page, isMobile = false) {
   await page.goto("/app/students");
-  if (!isMobile) {
+  if (isMobile) {
+    await page.getByRole("button", { name: "חיפוש וסינון" }).click();
+    await page.locator("#m-search").fill(lastName);
+  } else {
     await page.locator("#search").fill(lastName);
-    return;
   }
-  await page.getByRole("button", { name: "חיפוש וסינון" }).click();
-  await page.locator("#m-search").fill(lastName);
+  // החיפוש מתעדכן אחרי debounce וטוען את הרשימה מחדש. הכרטיסים החדשים מופיעים
+  // כבר ברשימה המלאה, ולחיצה לפני הסינון נבלעת: הרשימה מתחלפת בשלד הטעינה
+  // והגלריה שנפתחה נסגרת. ממתינים עד שנשארים רק כרטיסי הבדיקה.
+  const results = isMobile
+    ? page
+        .getByRole("list", { name: TABLE_CAPTION })
+        .getByRole("group", { name: /^כרטיס מלא:/ })
+    : page
+        .getByRole("table", { name: TABLE_CAPTION })
+        .getByRole("row", { name: /^כרטיס מלא:/ });
+  await expect(results).toHaveCount(TEST_STUDENTS_COUNT, { timeout: 15_000 });
 }
 
 test.describe("תמונה בשורת הטבלה - דסקטופ", () => {
