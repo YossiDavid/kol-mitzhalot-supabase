@@ -33,7 +33,12 @@ test.describe("ניהול שדכנים — בדיקות admin", () => {
       // Each shadchan row can have up to 3 null date fields (last shidduch created,
       // last shidduch completed, last sign-in) which render as "לא זמין".
       // Real name/email fields should not show "לא זמין", so total must be < count*4.
-      const notAvailableCount = await page.locator("text=לא זמין").count();
+      // רק בטבלה: DataTable מרנדר גם כרטיסי מובייל מוסתרים עם אותם ערכים,
+      // וספירה על כל הדף הכפילה כל "לא זמין"
+      const notAvailableCount = await page
+        .getByRole("table")
+        .getByText("לא זמין")
+        .count();
       expect(notAvailableCount).toBeLessThan(count * 4);
     }
   });
