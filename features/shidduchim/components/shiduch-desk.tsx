@@ -310,7 +310,8 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
 
   return (
     <>
-      <div className="mx-auto mt-4 grid max-w-full grid-cols-1 gap-4 md:mt-10 md:max-w-[800px] md:grid-cols-2">
+      {/* w-full: בתוך Page (flex-col) mx-auto לבדו מכווץ את הגריד לרוחב התוכן */}
+      <div className="mx-auto mt-4 grid w-full max-w-full grid-cols-1 gap-4 md:mt-10 md:max-w-[800px] md:grid-cols-2">
         {/* Male drop zone */}
         <div
           className="relative min-h-50 rounded-xl border border-dashed border-primary bg-sky-50 p-2"
