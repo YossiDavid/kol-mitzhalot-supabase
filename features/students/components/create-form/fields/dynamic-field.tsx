@@ -16,7 +16,8 @@ export function DynamicField(props: DynamicFieldProps) {
   const { field, control } = props;
   const isVisible = useConditionsMet(control, field.condition);
 
-  if (!isVisible) {
+  // hidden: שדה מושבת שנשמר בנתונים (types.ts)
+  if (!isVisible || field.hidden) {
     return null;
   }
 

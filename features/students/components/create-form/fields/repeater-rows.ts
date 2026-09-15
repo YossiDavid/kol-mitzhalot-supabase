@@ -10,13 +10,20 @@ function childFields(repeater: FieldMetadata): FieldMetadata[] {
   return Array.isArray(repeater.fields) ? repeater.fields : [];
 }
 
+/** השדות שמוצגים בכל שורה - בלי שדות מושבתים (hidden) */
+export function getRenderedChildFields(
+  repeater: FieldMetadata,
+): FieldMetadata[] {
+  return childFields(repeater).filter((candidate) => !candidate.hidden);
+}
+
 /** שדות "id" בשורה - בורר "לבחירה מתוך המאגר". כשנבחר, שאר השורה נעולה */
 export function getRowIdFieldPaths(
   repeater: FieldMetadata,
   index: number,
 ): Set<string> {
   return new Set(
-    childFields(repeater)
+    getRenderedChildFields(repeater)
       .filter(
         (candidate) =>
           typeof candidate.name === "string" &&
