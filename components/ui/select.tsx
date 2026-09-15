@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { CONTROL_HEIGHT } from "@/components/ui/control-size";
 import { cn } from "@/lib/utils";
 
 function getNodeText(node: React.ReactNode): string {
@@ -131,7 +132,8 @@ const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
         ref={ref}
         data-slot="select-trigger"
         className={cn(
-          "flex w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-1.5 text-body-sm shadow-xs transition-colors outline-none dark:bg-input/30",
+          CONTROL_HEIGHT.default,
+          "flex w-full items-center justify-between rounded-md border border-input bg-transparent px-3 text-body-sm shadow-xs transition-colors outline-none dark:bg-input/30",
           "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
           "disabled:cursor-not-allowed disabled:opacity-50",
           className,

@@ -2,6 +2,7 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 
+import { CONTROL_HEIGHT, CONTROL_SQUARE } from "@/components/ui/control-size";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
@@ -23,13 +24,14 @@ const buttonVariants = cva(
         destructiveOutline:
           "border border-destructive/40 bg-transparent text-destructive shadow-xs hover:bg-destructive-muted focus-visible:ring-destructive/20 active:bg-destructive-muted dark:border-destructive dark:bg-transparent dark:hover:bg-destructive-muted dark:focus-visible:ring-destructive/40 dark:active:bg-destructive-muted",
       },
+      // הגבהים מסולם הרכיבים המשותף, כדי שכפתור ושדה באותה שורה יתיישרו
       size: {
-        sm: "h-7 px-3 text-caption [&>svg]:size-4",
-        default: "h-9 px-4 text-body-sm [&>svg]:size-5",
-        lg: "h-12 px-6 text-body [&>svg]:size-6",
-        "icon-sm": "size-7 [&>svg]:size-4",
-        icon: "size-9 [&>svg]:size-5",
-        "icon-lg": "size-12 [&>svg]:size-6",
+        sm: `${CONTROL_HEIGHT.sm} px-3 text-caption [&>svg]:size-4`,
+        default: `${CONTROL_HEIGHT.default} px-4 text-body-sm [&>svg]:size-5`,
+        lg: `${CONTROL_HEIGHT.lg} px-6 text-body [&>svg]:size-6`,
+        "icon-sm": `${CONTROL_SQUARE.sm} [&>svg]:size-4`,
+        icon: `${CONTROL_SQUARE.default} [&>svg]:size-5`,
+        "icon-lg": `${CONTROL_SQUARE.lg} [&>svg]:size-6`,
       },
     },
     defaultVariants: {

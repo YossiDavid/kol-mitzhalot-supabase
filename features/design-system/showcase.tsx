@@ -51,6 +51,7 @@ import {
   VariantSwatchRow,
   type AxisItem,
 } from "./variant-table";
+import { FormFoundationsDemo } from "./form-foundations-demo";
 import {
   colorGroupLabels,
   colorTokens,
@@ -107,6 +108,11 @@ const badgeVariantItems: AxisItem<BadgeVariant>[] = [
   { id: "secondary", label: "Secondary" },
   { id: "outline", label: "Outline" },
   { id: "destructive", label: "Destructive" },
+  { id: "neutral", label: "Neutral" },
+  { id: "info", label: "Info" },
+  { id: "success", label: "Success" },
+  { id: "warning", label: "Warning" },
+  { id: "danger", label: "Danger" },
 ];
 
 function ButtonSample({
@@ -474,6 +480,18 @@ export function DesignSystemShowcase() {
                   </div>
                 </StateBlock>
               </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 className="text-subtitle">
+                  גבהים / FormFieldShell / InputGroup
+                </h3>
+                <p className="text-caption text-muted-foreground">
+                  תשתית הטפסים
+                </p>
+              </div>
+              <FormFoundationsDemo />
             </div>
 
             <div className="space-y-3">

@@ -165,6 +165,20 @@
   --color-destructive-muted: var(--destructive-muted);
   --color-favorite: var(--favorite);
 
+  /* Status — solid (+foreground) and soft (muted + muted-foreground) */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-muted: var(--success-muted);
+  --color-success-muted-foreground: var(--success-muted-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-muted: var(--warning-muted);
+  --color-warning-muted-foreground: var(--warning-muted-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-muted: var(--info-muted);
+  --color-info-muted-foreground: var(--info-muted-foreground);
+
   /* Marketing / brand accents */
   --color-brand-gold: var(--brand-gold);
   --color-brand-gold-foreground: var(--brand-gold-foreground);
@@ -248,6 +262,21 @@
   --destructive-muted: color-mix(in oklab, var(--destructive) 14%, white);
   --favorite: oklch(77.753% 0.17192 66.883);
 
+  /* Status — במקום צבעי Tailwind ישירים. muted-foreground הוא הטקסט על
+     הרקע הרך, כהה מספיק כדי לעמוד ב-AA */
+  --success: oklch(0.6 0.13 155);
+  --success-foreground: #ffffff;
+  --success-muted: color-mix(in oklab, var(--success) 14%, white);
+  --success-muted-foreground: oklch(0.4 0.1 155);
+  --warning: oklch(0.8 0.15 80);
+  --warning-foreground: oklch(0.25 0.05 70);
+  --warning-muted: color-mix(in oklab, var(--warning) 22%, white);
+  --warning-muted-foreground: oklch(0.45 0.11 65);
+  --info: oklch(0.58 0.12 245);
+  --info-foreground: #ffffff;
+  --info-muted: color-mix(in oklab, var(--info) 14%, white);
+  --info-muted-foreground: oklch(0.42 0.11 250);
+
   /* Charts */
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
@@ -307,6 +336,20 @@
   --destructive-hover: oklch(0.72 0.22 27.3);
   --destructive-active: oklch(0.82 0.18 27.3);
   --destructive-muted: color-mix(in oklab, var(--destructive) 28%, black);
+
+  /* Status */
+  --success: oklch(0.62 0.13 155);
+  --success-foreground: oklch(0.15 0.02 155);
+  --success-muted: color-mix(in oklab, var(--success) 26%, black);
+  --success-muted-foreground: oklch(0.86 0.1 155);
+  --warning: oklch(0.8 0.15 80);
+  --warning-foreground: oklch(0.2 0.04 70);
+  --warning-muted: color-mix(in oklab, var(--warning) 24%, black);
+  --warning-muted-foreground: oklch(0.88 0.12 85);
+  --info: oklch(0.66 0.12 245);
+  --info-foreground: oklch(0.15 0.02 245);
+  --info-muted: color-mix(in oklab, var(--info) 26%, black);
+  --info-muted-foreground: oklch(0.86 0.08 245);
 
   /* Charts */
   --chart-1: oklch(0.606 0.222 41.116);

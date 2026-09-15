@@ -10,7 +10,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
     "test:cn": "node scripts/verify-cn-merge.mjs",
-    "seed:photos": "node --env-file=.env.local scripts/seed-sample-photos.mjs"
+    "seed:photos": "node --env-file=.env.local scripts/seed-sample-photos.mjs",
+    "capture:ui": "node --env-file=.env.local scripts/capture-ui.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

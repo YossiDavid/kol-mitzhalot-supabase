@@ -69,6 +69,7 @@ ESLint (`no-restricted-syntax` ב־`eslint.config.mjs`) אוכף את החוזה
 | `--muted` / `--muted-foreground` | רקע/טקסט משני |
 | `--border`, `--input`, `--ring` | גבולות, שדות, פוקוס |
 | `--destructive` / `--destructive-hover` / `--destructive-active` | מחיקות ושגיאות + מצבי hover/active |
+| `--success` / `--warning` / `--info` (+ `-foreground`, `-muted`, `-muted-foreground`) | סטטוסים: גוון מלא עם טקסט עליו, וגוון רך (רקע) עם טקסט כהה. במקום צבעי Tailwind ישירים (`bg-amber-100`, `text-green-600`) |
 | `--sidebar-*` | סרגל צד (תואם ל־primary במצב בהיר) |
 | `--favorite` | צבע ייעודי למועדפים (כתום־זהוב ב־oklch) |
 | `--brand-gold` / `--brand-gold-foreground` / soft / muted | זהב שיווקי ל־CTA והדגשות |
@@ -96,13 +97,35 @@ ESLint (`no-restricted-syntax` ב־`eslint.config.mjs`) אוכף את החוזה
 
 וריאנטים מוגדרים ב־`components/ui/button.tsx`: `default`, `destructive`, `outline`, `secondary`, `ghost`, `link`, ו־`destructiveOutline` (מותאם לפרויקט). גדלים: `default`, `sm`, `lg`, `icon`, `icon-sm`, `icon-lg`. Hover/active של `default` ו־`destructive` נשענים על `--primary-hover` / `--primary-active` ו־`--destructive-hover` / `--destructive-active`. פוקוס: טבעת `ring` סביב `ring`, גבול פוקוס על `border-ring`.
 
+### סולם גבהים (`components/ui/control-size.ts`)
+
+שדה טקסט, רשימה נפתחת (`NativeSelect`, `Select`), שדה חיפוש (`Combobox`), `InputGroup` וכפתור לוקחים את הגובה ממקור אחד, כדי שיתיישרו באותה שורה. במובייל גבוה יותר, למגע.
+
+| גודל | מובייל | מ־`md` |
+|------|--------|--------|
+| `sm` | 36px (`h-9`) | 32px (`h-8`) |
+| `default` | 44px (`h-11`) | 40px (`h-10`) |
+| `lg` | 48px (`h-12`) | 48px |
+
+כפתורי אייקון (`icon-sm` / `icon` / `icon-lg`) — אותו סולם, מרובע. אין לתת לפקדים גובה ידני (`h-8` וכו'); כשצריך גודל אחר — `size="sm"`.
+
+### תגים (`Badge`)
+
+וריאנטים מלאים: `default`, `secondary`, `destructive`, `outline`. לסטטוסים — גוונים רכים: `neutral`, `info`, `success`, `warning`, `danger`. התג מרונדר כ־`span`, ולכן אפשר להציב אותו בתוך טקסט.
+
+### טפסים
+
+- **שדה בטופס:** `FormFieldShell` (`components/ui/form-field-shell.tsx`) בתוך `render` של `FormField` — תווית מודגשת עם `required`, הפקד, טקסט עזרה **תמיד מתחת לפקד**, ושגיאה. `FormControl` מסמן `aria-invalid` כשיש שגיאה.
+- **`FormField` גנרי:** מקבל `control={form.control}` של טופס מוקלד — אין צורך ב־`as any`.
+- **שדה עם תוספות:** `InputGroup` (`components/ui/input-group.tsx`) — `InputGroupInput` לפקד הראשי, `InputGroupAddon` לטקסט או אייקון, `InputGroupSelect` לרשימה קומפקטית (למשל תואר לפני ואחרי שם). המסגרת, הפוקוס והשגיאה שייכים לקבוצה.
+
 ### כרטיסים (`Card`)
 
-`rounded-xl border bg-card shadow`, כותרת עם `font-semibold`, תיאור ב־`text-muted-foreground text-body-sm` — `components/ui/card.tsx`.
+`rounded-xl border bg-card shadow`, כותרת `text-subtitle font-bold`, תיאור ב־`text-muted-foreground text-body-sm` — `components/ui/card.tsx`.
 
 ### תיבת תוכן (`Box`)
 
-רכיב `components/layout/box.tsx`: משלב את המחלקה הגלובלית `.box` — `bg-card rounded-xl` + `p-4` (מ־`globals.css`).
+רכיב `components/layout/box.tsx`: המחלקה `.box` (`bg-card rounded-xl`, מוגדרת ב־`app/design-system.css`) + `p-4`. כל ה־props (id, onClick, aria, data) מועברים לאלמנט.
 
 ### סרגל צד
 
@@ -134,6 +157,9 @@ ESLint (`no-restricted-syntax` ב־`eslint.config.mjs`) אוכף את החוזה
 | מבנה אפליקציה, Toaster | `app/app/layout.tsx` |
 | הגדרת shadcn | `components.json` |
 | כפתורים / כרטיסים | `components/ui/button.tsx`, `components/ui/card.tsx` |
+| סולם גבהים | `components/ui/control-size.ts` |
+| שדות בטופס | `components/ui/form-field-shell.tsx`, `components/ui/input-group.tsx` |
+| צילומי לפני/אחרי | `pnpm capture:ui <label>` (`scripts/capture-ui.mjs`) |
 
 ---
 

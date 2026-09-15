@@ -11,7 +11,7 @@ import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
-import { TextField } from "@/features/students/components/create-form/fields/text";
+import { Input } from "@/components/ui/input";
 import {
   useStudentQuery,
   type StudentQuery,
@@ -80,7 +80,7 @@ function TextFilter({
   return (
     <div className={className}>
       <Label htmlFor={id}>{label}</Label>
-      <TextField
+      <Input
         id={id}
         type={type}
         inputMode={type === "number" ? "numeric" : undefined}
@@ -130,7 +130,7 @@ function BasicFields(props: FieldGroupProps) {
         <Label htmlFor={searchId}>חיפוש חופשי</Label>
         <div className="relative">
           <Search className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <TextField
+          <Input
             id={searchId}
             type="text"
             placeholder="שם, עיר, קהילה…"
