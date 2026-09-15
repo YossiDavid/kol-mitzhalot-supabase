@@ -16,6 +16,10 @@ import {
   studentFormSchema,
   type StudentFormValues,
 } from "@/features/students/components/create-form/schema";
+import {
+  DevSkipStepValidationToggle,
+  useDevSkipStepValidation,
+} from "@/features/students/lib/dev-skip-step-validation";
 import { focusFirstInvalidField } from "@/features/students/lib/focus-first-invalid-field";
 import { StudentFormStepsNav } from "@/features/students/lib/student-form-steps-nav";
 
@@ -287,6 +291,8 @@ export function StudentFormWizard({
   const shellRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const afterStepChangeRef = useRef<AfterStepChange>(null);
+  const [shouldSkipStepValidation, setShouldSkipStepValidation] =
+    useDevSkipStepValidation();
 
   const form = useForm<FormValues>({
     mode: "onTouched",
@@ -342,6 +348,8 @@ export function StudentFormWizard({
   };
 
   const validateCurrentStep = async () => {
+    // development בלבד: מעבר חופשי בין שלבים. השליחה עדיין מאמתת את כל הטופס
+    if (shouldSkipStepValidation) return true;
     const fieldNames = getStepFieldNames(currentStep);
     const isValid = await form.trigger(
       fieldNames as Array<FieldPath<FormValues>>,
@@ -408,6 +416,10 @@ export function StudentFormWizard({
   return (
     <div className="my-2 space-y-4 md:my-6 md:space-y-6">
       <PageTitle>{heading}</PageTitle>
+      <DevSkipStepValidationToggle
+        isEnabled={shouldSkipStepValidation}
+        onChange={setShouldSkipStepValidation}
+      />
       {/* במובייל הכרטיס נפרש עד קצוות המסך, כדי שהשדות יקבלו את כל הרוחב */}
       <Box
         ref={shellRef}
@@ -418,7 +430,11 @@ export function StudentFormWizard({
             titles={steps.map((step) => getStepTitle(step, gender))}
             currentStepIndex={currentStepIndex}
             completedSteps={completedSteps}
-            isForwardDisabled={currentStep.name === "intro" && !gender}
+            isForwardDisabled={
+              !shouldSkipStepValidation &&
+              currentStep.name === "intro" &&
+              !gender
+            }
             onStepClick={handleStepClick}
           />
           <Form {...form}>
