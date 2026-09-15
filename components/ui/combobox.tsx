@@ -46,9 +46,17 @@ export type ComboboxProps = {
 
   allowClearOnReselect?: boolean;
   resetQueryOnClose?: boolean;
+
+  /** מ-FormControl: הכפתור שפותח את החיפוש הוא הפקד שמקבל תווית ושגיאה */
+  id?: string;
+  "aria-invalid"?: boolean | "true" | "false";
+  "aria-describedby"?: string;
 };
 
 export function Combobox({
+  id,
+  "aria-invalid": ariaInvalid,
+  "aria-describedby": ariaDescribedBy,
   placeholder = "בחרו...",
   searchPlaceholder = "חיפוש...",
   options,
@@ -90,13 +98,17 @@ export function Combobox({
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
+          id={id}
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-invalid={ariaInvalid}
+          aria-describedby={ariaDescribedBy}
           disabled={disabled || isLoading}
-          // נראה כמו שדה ולא ככפתור ראשי: מסגרת, צבע ומשקל של שדה טקסט
+          // נראה כמו שדה ולא ככפתור ראשי: מסגרת, צבע ומשקל של שדה טקסט.
+          // בשגיאה - מסגרת אדומה כמו Input (גם במצב כהה, שבו dark:border-input גובר)
           className={cn(
-            "w-full justify-between border-input px-3 font-normal text-foreground shadow-xs hover:bg-transparent hover:text-foreground active:scale-100 active:bg-transparent dark:border-input dark:bg-input/30 dark:hover:bg-input/50 dark:hover:text-foreground dark:active:bg-input/50",
+            "w-full justify-between border-input px-3 font-normal text-foreground shadow-xs hover:bg-transparent hover:text-foreground active:scale-100 active:bg-transparent dark:border-input dark:bg-input/30 dark:hover:bg-input/50 dark:hover:text-foreground dark:active:bg-input/50 dark:aria-invalid:border-destructive",
             className,
           )}
         >

@@ -16,6 +16,15 @@ export interface FormFieldShellProps {
   /** טקסט עזרה - תמיד מתחת לפקד */
   description?: React.ReactNode;
   className?: string;
+  /** כשהפקד מגדיר id משלו. בלי זה התווית מקושרת ל-id של FormControl */
+  htmlFor?: string;
+  /** מעבד את הודעת השגיאה לפני התצוגה, למשל לנוסח ספציפי לשדה */
+  formatMessage?: (message: string) => string;
+  /**
+   * פקד מורכב (למשל שם עם תוארים): children עוטפים בעצמם ב-FormControl את
+   * החלק שמקבל id ושגיאה, ולכן לא נעטפים כאן
+   */
+  isComposite?: boolean;
   /** פקד יחיד: מקבל id ו-aria-describedby דרך FormControl */
   children: React.ReactElement;
 }
@@ -35,14 +44,22 @@ export function FormFieldShell({
   required,
   description,
   className,
+  htmlFor,
+  formatMessage,
+  isComposite = false,
   children,
 }: FormFieldShellProps) {
   return (
     <FormItem className={className}>
-      {label && <FormLabel required={required}>{label}</FormLabel>}
-      <FormControl>{children}</FormControl>
+      {label && (
+        // htmlFor רק כשהועבר: undefined היה דורס את הקישור ל-FormControl
+        <FormLabel required={required} {...(htmlFor ? { htmlFor } : {})}>
+          {label}
+        </FormLabel>
+      )}
+      {isComposite ? children : <FormControl>{children}</FormControl>}
       {description && <FormDescription>{description}</FormDescription>}
-      <FormMessage />
+      <FormMessage formatMessage={formatMessage} />
     </FormItem>
   );
 }

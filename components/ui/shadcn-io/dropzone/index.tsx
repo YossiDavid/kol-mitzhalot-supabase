@@ -83,8 +83,9 @@ export const Dropzone = ({
 			value={{ src, accept, maxSize, minSize, maxFiles }}
 		>
 			<Button
+				// md:h-auto: הכפתור מקבל md:h-10 מסולם הגבהים, ו-h-auto לבד לא דורס אותו
 				className={cn(
-					"relative h-auto w-full flex-col overflow-hidden border-input bg-transparent p-8 shadow-xs hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent",
+					"relative h-auto w-full flex-col overflow-hidden border-input bg-transparent p-8 shadow-xs hover:bg-transparent md:h-auto dark:bg-transparent dark:hover:bg-transparent",
 					isDragActive && "outline-none ring-1 ring-ring",
 					className
 				)}

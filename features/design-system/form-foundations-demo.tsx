@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
+import { Combobox, type Option } from "@/components/ui/combobox";
 import { Form, FormField } from "@/components/ui/form";
 import { FormFieldShell } from "@/components/ui/form-field-shell";
 import { Input } from "@/components/ui/input";
@@ -17,24 +18,30 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select";
 
-type DemoValues = { firstName: string; email: string };
+type DemoValues = { firstName: string; email: string; institution: string };
 
 const PREFIX_TITLES = ["הרב", "הר״ר", "הרה״ח"];
 const SUFFIX_TITLES = ["הי״ו", "שליט״א", "ז״ל"];
 
+const DEMO_INSTITUTIONS: Option[] = [
+  { value: "a", label: "ישיבת אור החיים" },
+  { value: "b", label: "ישיבת חברון" },
+];
+
 /**
  * דוגמאות לרכיבי התשתית של שלב 0 (docs/design-refactor/PLAN.md): גובה אחיד
- * לשדה, רשימה נפתחת וכפתור; FormFieldShell במצב רגיל ובמצב שגיאה; ו-InputGroup
- * לשם עם תוארים.
+ * לשדה, רשימה נפתחת וכפתור; FormFieldShell במצב רגיל ובמצב שגיאה (כולל שדה
+ * חיפוש); ו-InputGroup לשם עם תוארים.
  */
 export function FormFoundationsDemo() {
   const form = useForm<DemoValues>({
-    defaultValues: { firstName: "", email: "not-an-email" },
+    defaultValues: { firstName: "", email: "not-an-email", institution: "" },
   });
 
   // מציג את מצב השגיאה של המעטפת בלי לחכות לשליחה
   useEffect(() => {
     form.setError("email", { message: "כתובת האימייל אינה תקינה" });
+    form.setError("institution", { message: "נא לבחור מוסד לימודים" });
   }, [form]);
 
   return (
@@ -88,6 +95,20 @@ export function FormFoundationsDemo() {
             render={({ field }) => (
               <FormFieldShell label="אימייל" description="לעדכונים על הצעות">
                 <Input type="email" dir="ltr" {...field} />
+              </FormFieldShell>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="institution"
+            render={({ field }) => (
+              <FormFieldShell label="מוסד לימודים" required>
+                <Combobox
+                  options={DEMO_INSTITUTIONS}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="חיפוש מוסד לימודים..."
+                />
               </FormFieldShell>
             )}
           />

@@ -1,6 +1,6 @@
 /**
  * שדה חובה בטופס המיועדים נקבע במקום אחד: `required: true` במערך השדות
- * (fileds-data.ts). אותו סימון מציג כוכבית בתווית (dynamic-field.tsx) וכאן
+ * (fields-data/). אותו סימון מציג כוכבית בתווית (dynamic-field.tsx) וכאן
  * נגזרים ממנו כללי האכיפה, שהסכמה (schema.ts) מריצה ב-superRefine - גם במעבר
  * שלב וגם בשליחה, ביצירה ובעריכה.
  *
@@ -8,7 +8,7 @@
  * - רשומה חוזרת: שדות החובה נאכפים בכל שורה קיימת. רשומה ריקה תקינה, אלא אם
  *   הרשומה עצמה סומנה required ("לפחות שורה אחת").
  */
-import type { Field, FormSteps, RepeaterField } from "./fileds-data";
+import type { Field, FormSteps, RepeaterField } from "./fields-data";
 import { GENERIC_REQUIRED_MESSAGE } from "./field-messages";
 import {
   getValueByPath,
@@ -84,7 +84,7 @@ function getRepeaterIssues(
 
   return Array.from({ length: rowCount }, (_, index) => index).flatMap(
     (index) =>
-      field.fileds.flatMap((child) =>
+      field.fields.flatMap((child) =>
         getFieldIssues(toRowField(child, field.name, index), values),
       ),
   );

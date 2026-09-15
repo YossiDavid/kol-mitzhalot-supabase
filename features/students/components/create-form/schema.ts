@@ -3,11 +3,11 @@
 import { z } from "zod";
 
 import type { StudentPhotoItem } from "@/features/students/lib/student-photo-rules";
-import { studentFields } from "./fileds-data";
+import { studentFields } from "./fields-data";
 import { collectRequiredIssues } from "./required-fields";
 
 // שדות חובה לא נכתבים כאן: הם נגזרים מ-`required: true` במערך השדות
-// (fileds-data.ts, required-fields.ts), כדי שהכוכבית והאכיפה יבואו ממקור אחד.
+// (fields-data/, required-fields.ts), כדי שהכוכבית והאכיפה יבואו ממקור אחד.
 // כאן נשארים רק מבנה הערכים ובדיקות תוכן (למשל גובה מינימלי).
 const opt = z.string().default("");
 

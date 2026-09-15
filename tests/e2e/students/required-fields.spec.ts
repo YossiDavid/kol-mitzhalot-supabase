@@ -3,14 +3,14 @@ import { test, expect, type Page } from "@playwright/test";
 import {
   studentFields,
   type FormSteps,
-} from "../../../features/students/components/create-form/fileds-data";
+} from "../../../features/students/components/create-form/fields-data";
 import {
   collectRequiredIssues,
   isEmptyFieldValue,
 } from "../../../features/students/components/create-form/required-fields";
 
 /**
- * `required: true` במערך השדות (fileds-data.ts) הוא מקור האמת היחיד: הוא מציג
+ * `required: true` במערך השדות (fields-data/) הוא מקור האמת היחיד: הוא מציג
  * כוכבית אדומה, והוא מה שנאכף במעבר שלב ובשליחה (required-fields.ts).
  */
 
@@ -92,7 +92,7 @@ const repeaterSteps = (isRepeaterRequired = false): FormSteps[] => [
             type: "repeater",
             name: "items",
             required: isRepeaterRequired,
-            fileds: [
+            fields: [
               { name: "items.name", label: "שם", type: "text", required: true },
               {
                 name: "items.kind",
@@ -196,12 +196,18 @@ test.describe("כללי שדה חובה נגזרים ממערך השדות", () 
     expect(isEmptyFieldValue([])).toBe(true);
     expect(isEmptyFieldValue({ file: null })).toBe(true);
     expect(
-      isEmptyFieldValue({ prefix: "הרב", name: "", suffix: "" }, "textAndSelect"),
+      isEmptyFieldValue(
+        { prefix: "הרב", name: "", suffix: "" },
+        "textAndSelect",
+      ),
     ).toBe(true);
 
     expect(isEmptyFieldValue("א")).toBe(false);
     expect(
-      isEmptyFieldValue({ prefix: "", name: "משה", suffix: "" }, "textAndSelect"),
+      isEmptyFieldValue(
+        { prefix: "", name: "משה", suffix: "" },
+        "textAndSelect",
+      ),
     ).toBe(false);
     expect(isEmptyFieldValue({ file: newFile })).toBe(false);
     // עריכה: קו״ח שמור ותמונה שמורה נחשבים מולאו
@@ -209,7 +215,9 @@ test.describe("כללי שדה חובה נגזרים ממערך השדות", () 
       isEmptyFieldValue({ file: null, existingUrl: "id/cv/file.pdf" }),
     ).toBe(false);
     expect(
-      isEmptyFieldValue([{ kind: "existing", path: "id/photos/a.jpg", url: null }]),
+      isEmptyFieldValue([
+        { kind: "existing", path: "id/photos/a.jpg", url: null },
+      ]),
     ).toBe(false);
   });
 });
@@ -271,7 +279,9 @@ test.describe("כוכבית ואכיפה בטופס", () => {
       .getByRole("navigation", { name: "שלבי הטופס" })
       .getByRole("button", { name: "על המשפחה", exact: true })
       .click();
-    await expect(page.getByRole("heading", { name: "על המשפחה" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "על המשפחה" }),
+    ).toBeVisible();
     // שורה ריקה לא חוסמת: אין בה שדה חובה, ולכן גם אין בה כוכבית
     await page.getByRole("button", { name: "הוספת מחותן" }).click();
     await expect(
@@ -295,7 +305,9 @@ test.describe("כוכבית ואכיפה בטופס", () => {
     // Arrange
     await page.goto("/app/students/create");
     const genderCell = page.locator('[data-field-name="gender"]');
-    await expect(genderCell.locator("label span.text-destructive")).toBeVisible();
+    await expect(
+      genderCell.locator("label span.text-destructive"),
+    ).toBeVisible();
 
     // Act
     await page.getByRole("button", { name: "המשך לשלב הבא" }).click();
@@ -331,7 +343,9 @@ test.describe("כוכבית ואכיפה בטופס", () => {
     const textBox = await readBox("#firstName");
     expect(dateBox).toEqual(textBox);
     await expect(
-      page.locator('[data-field-name="birthDate"]').getByText("נא לבחור תאריך לידה"),
+      page
+        .locator('[data-field-name="birthDate"]')
+        .getByText("נא לבחור תאריך לידה"),
     ).toBeVisible();
   });
 });

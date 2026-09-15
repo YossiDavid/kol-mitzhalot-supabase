@@ -48,6 +48,16 @@ export type SearchSelectFieldProps = {
    * ברירת מחדל: true
    */
   resolveSelectedLabel?: boolean
+
+  /** עמודות נוספות שנשלפות מהטבלה ומועברות ל-onSelectRow (Supabase בלבד) */
+  extraColumns?: string[]
+  /** השורה המלאה של האפשרות שנבחרה, או null כשהבחירה נוקתה */
+  onSelectRow?: (row: Record<string, unknown> | null) => void
+
+  /** מ-FormControl, מועברים לכפתור הפותח */
+  id?: string
+  "aria-invalid"?: boolean | "true" | "false"
+  "aria-describedby"?: string
 }
 
 /** מפתח יציב ל-deps */
@@ -98,10 +108,18 @@ export function SearchSelectField({
   limit,
   selectedLabel: selectedLabelProp,
   resolveSelectedLabel = true,
+  extraColumns,
+  onSelectRow,
+  id,
+  "aria-invalid": ariaInvalid,
+  "aria-describedby": ariaDescribedBy,
 }: SearchSelectFieldProps) {
   const [query, setQuery] = React.useState("")
   const [options, setOptions] = React.useState<Option[]>(initialOptions)
   const [isLoading, setIsLoading] = React.useState(false)
+  // השורות המלאות של התוצאות האחרונות, לפי value - עבור onSelectRow
+  const rowsByValueRef = React.useRef(new Map<string, Record<string, unknown>>())
+  const extraColumnsKey = React.useMemo(() => stableKey(extraColumns), [extraColumns])
 
   // label שמוצג עבור value גם אם לא נמצא ב-options
   const [resolvedSelectedLabel, setResolvedSelectedLabel] = React.useState<string>(
@@ -246,7 +264,9 @@ export function SearchSelectField({
           const labelCols = labCol.split(",").map((c) => c.trim()).filter(Boolean)
           const searchCols = searchCol.split(",").map((c) => c.trim()).filter(Boolean)
 
-          const selectCols = [valCol, ...labelCols].join(",")
+          const selectCols = Array.from(
+            new Set([valCol, ...labelCols, ...(extraColumns ?? [])])
+          ).join(",")
 
           let qb = supabase.from(table).select(selectCols)
 
@@ -276,6 +296,10 @@ export function SearchSelectField({
           if (error) throw error
 
           if (currentReqId !== reqIdRef.current) return
+
+          rowsByValueRef.current = new Map(
+            (data ?? []).map((row: any) => [String(row?.[valCol] ?? ""), row])
+          )
 
           const transformed: Option[] =
             data?.map((row: any) => {
@@ -324,16 +348,27 @@ export function SearchSelectField({
     minQueryLength,
     limit,
     initialOptions,
+    extraColumnsKey,
   ])
+
+  const handleChange = (nextValue: string) => {
+    onChange?.(nextValue)
+    onSelectRow?.(
+      nextValue ? rowsByValueRef.current.get(nextValue) ?? null : null
+    )
+  }
 
   return (
     <Combobox
+      id={id}
+      aria-invalid={ariaInvalid}
+      aria-describedby={ariaDescribedBy}
       placeholder={placeholder}
       searchPlaceholder={searchPlaceholder}
       empty={empty}
       value={value}
       selectedLabel={resolvedSelectedLabel}
-      onChange={onChange}
+      onChange={handleChange}
       options={options}
       onQueryChange={setQuery}
       className={className}

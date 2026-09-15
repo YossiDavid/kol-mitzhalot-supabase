@@ -1,17 +1,17 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useForm, type FieldPath } from "react-hook-form";
+import { useForm, useWatch, type FieldPath } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Box } from "@/components/layout";
-import { studentFields } from "@/features/students/components/create-form/fileds-data";
+import { studentFields } from "@/features/students/components/create-form/fields-data";
 import { DynamicField } from "@/features/students/components/create-form/fields/dynamic-field";
 import { FIELD_GRID_CLASS } from "@/features/students/components/create-form/field-layout";
-import { matchesConditions } from "@/features/students/components/create-form/field-visibility";
+import { useConditionsMet } from "@/features/students/components/create-form/use-form-conditions";
 import {
   studentFormSchema,
   type StudentFormValues,
@@ -297,11 +297,13 @@ export function StudentFormWizard({
     shouldFocusError: false,
   });
 
-  const formValues = form.watch();
+  // האשף צופה רק במגדר (תוויות ושמות שלבים). תנאי תצוגה נצפים בכל שדה ומקטע
+  // לחוד (use-form-conditions.ts), כדי שהקלדה לא תרנדר את כל הטופס
+  const gender = (useWatch({ control: form.control, name: "gender" }) ??
+    "") as "male" | "female" | "";
 
   const steps = studentFields;
   const currentStep = steps[currentStepIndex];
-  const gender = formValues.gender as "male" | "female" | "";
   const isLastStep = currentStepIndex === steps.length - 1;
 
   const focusFirstError = useCallback(() => {
@@ -438,7 +440,6 @@ export function StudentFormWizard({
                     key={section.name}
                     section={section}
                     form={form}
-                    values={formValues}
                     gender={gender}
                   />
                 ))}
@@ -486,20 +487,16 @@ export function StudentFormWizard({
 type SectionRendererProps = {
   section: Step["sections"][number];
   form: ReturnType<typeof useForm<FormValues>>;
-  values: FormValues;
   gender: "male" | "female" | "";
 };
 
 // מרווח בין מקטעים (קו מפריד + 32px מכל צד) גדול בבירור מהמרווח בין שדות (24px)
-function SectionRenderer({
-  section,
-  form,
-  values,
-  gender,
-}: SectionRendererProps) {
+function SectionRenderer({ section, form, gender }: SectionRendererProps) {
   const { control } = form;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const isVisible = useConditionsMet(control as any, section.condition);
 
-  if (!section.fields.length || !shouldDisplaySection(section, values)) {
+  if (!section.fields.length || !isVisible) {
     return null;
   }
 
@@ -518,7 +515,6 @@ function SectionRenderer({
             field={field as any}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             control={control as any}
-            values={values}
             gender={gender}
             getLabel={getFieldLabel}
           />
@@ -537,13 +533,6 @@ function getStepFieldNames(step: Step): string[] {
   return step.sections.flatMap((section) =>
     section.fields.map((field) => field.name),
   );
-}
-
-function shouldDisplaySection(
-  section: Step["sections"][number],
-  values: FormValues,
-) {
-  return matchesConditions(section.condition, values);
 }
 
 function getFieldLabel(

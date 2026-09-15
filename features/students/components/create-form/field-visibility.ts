@@ -27,8 +27,14 @@ export function getValueByPath(source: unknown, path: unknown): unknown {
   }, source);
 }
 
-function matchesCondition(condition: FieldCondition, values: unknown): boolean {
-  const compareValue = getValueByPath(values, condition.parameter);
+/** קורא ערך לפי נתיב. בטופס עצמו - מתוך הערכים שנצפו (use-conditions-met.ts) */
+export type ReadFieldValue = (path: string) => unknown;
+
+function matchesCondition(
+  condition: FieldCondition,
+  readValue: ReadFieldValue,
+): boolean {
+  const compareValue = readValue(condition.parameter);
   switch (condition.operator) {
     case "===":
       return compareValue === condition.value;
@@ -54,8 +60,27 @@ export function matchesConditions(
   conditions: readonly FieldCondition[] | undefined,
   values: unknown,
 ): boolean {
+  return matchesConditionsWith(conditions, (path) =>
+    getValueByPath(values, path),
+  );
+}
+
+/** כמו matchesConditions, כשהערכים לא נמצאים באובייקט אחד */
+export function matchesConditionsWith(
+  conditions: readonly FieldCondition[] | undefined,
+  readValue: ReadFieldValue,
+): boolean {
   if (!conditions || conditions.length === 0) return true;
-  return conditions.every((condition) => matchesCondition(condition, values));
+  return conditions.every((condition) => matchesCondition(condition, readValue));
+}
+
+/** הנתיבים שהתנאים קוראים, בלי כפילויות - אלה הערכים שצריך לצפות בהם */
+export function getConditionParameters(
+  conditions: readonly FieldCondition[] | undefined,
+): string[] {
+  return Array.from(
+    new Set((conditions ?? []).map((condition) => condition.parameter)),
+  );
 }
 
 /**
