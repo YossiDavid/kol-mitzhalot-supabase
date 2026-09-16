@@ -34,10 +34,7 @@ function SkeletonSection({ rows }: { rows: number }) {
 export function StudentCardSkeleton() {
   return (
     <SkeletonRegion className="min-h-screen space-y-6 text-right">
-      {/* מרקאפ סטטי זהה לזה שבתוכן האמיתי */}
-      <StudentCardBackLinkPlaceholder />
-
-      {/* Hero */}
+      {/* Hero - מרקאפ סטטי זהה לזה שבתוכן האמיתי */}
       <div
         aria-hidden
         className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
@@ -47,10 +44,11 @@ export function StudentCardSkeleton() {
           <Skeleton className="h-8 w-56" />
           <Skeleton className="h-4 w-72 max-w-full" />
         </div>
-        <div className="flex shrink-0 flex-wrap gap-2">
+        {/* חזרה לרשימה, פעולה ראשית ותפריט "עוד פעולות" - אותה שורה */}
+        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+          <StudentCardBackLinkPlaceholder />
           <Skeleton className="h-8 w-20" />
-          <Skeleton className="h-8 w-20" />
-          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-8 w-8" />
         </div>
       </div>
 

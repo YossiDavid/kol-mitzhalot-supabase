@@ -63,8 +63,6 @@ export function StudentCard({
 
   return (
     <div className="min-h-screen space-y-6 text-right">
-      <StudentCardBackLink />
-
       <StudentCardHero
         firstName={student.first_name}
         lastName={student.last_name}
@@ -83,6 +81,7 @@ export function StudentCard({
             photos={photos}
           />
         }
+        backLink={<StudentCardBackLink />}
         actions={actions}
       />
 

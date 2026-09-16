@@ -2,12 +2,16 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 import { PageTitle } from "@/components/layout";
+import { CONTROL_HEIGHT } from "@/components/ui/control-size";
 import { personalStatusToHebrew } from "@/features/students/lib/profile-labels";
 
-const BACK_LINK_CLASS =
-  "inline-flex items-center gap-1 text-body-sm text-muted-foreground";
+/**
+ * "חזרה לרשימה" יושב בשורת הפעולות של ההדר ולא בשורה נפרדת מעליה, ולכן הוא
+ * לוקח את הגובה מסולם הרכיבים - כדי שיתיישר עם הכפתורים שלצדו.
+ */
+const BACK_LINK_CLASS = `inline-flex ${CONTROL_HEIGHT.sm} shrink-0 items-center gap-1 rounded-md px-2 text-body-sm text-muted-foreground`;
 
-/** "חזרה לרשימה" בראש הכרטיס */
+/** "חזרה לרשימה" - הפריט הראשון בשורת הפעולות של ההדר */
 export function StudentCardBackLink() {
   return (
     <Link
@@ -42,7 +46,10 @@ function MetaItem({ children }: { children: React.ReactNode }) {
 
 /**
  * ראש הכרטיס: תמונה, שם ושורת מטא (מגדר · גיל · סטטוס · עיר · גובה).
- * `actions` נשלח רק בתצוגה של משתמש מחובר; בתצוגה הציבורית אין שורת פעולות.
+ *
+ * שורת הפעולות מחזיקה את "חזרה לרשימה" (`backLink`) ואת הפעולות (`actions`)
+ * באותה שורה, כדי שההדר יישאר שורה אחת. `actions` נשלח רק בתצוגה של משתמש
+ * מחובר; בתצוגה הציבורית יש קישור חזרה בלבד.
  */
 export function StudentCardHero({
   firstName,
@@ -54,6 +61,7 @@ export function StudentCardHero({
   city,
   height,
   photo,
+  backLink,
   actions,
 }: {
   firstName: string;
@@ -65,6 +73,7 @@ export function StudentCardHero({
   city: string | null | undefined;
   height: number | null | undefined;
   photo: React.ReactNode;
+  backLink?: React.ReactNode;
   actions?: React.ReactNode;
 }) {
   return (
@@ -88,8 +97,14 @@ export function StudentCardHero({
         </p>
       </div>
 
-      {actions ? (
-        <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>
+      {backLink || actions ? (
+        <div
+          data-slot="student-card-actions"
+          className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end"
+        >
+          {backLink}
+          {actions}
+        </div>
       ) : null}
     </div>
   );

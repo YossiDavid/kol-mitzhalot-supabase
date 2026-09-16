@@ -1,16 +1,11 @@
 import { Suspense } from "react";
-import Link from "next/link";
-import { FileText, Pencil } from "lucide-react";
 import { unstable_noStore as noStore } from "next/cache";
 import { after } from "next/server";
 
-import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hasRole } from "@/lib/user";
-import ShareButton from "@/features/students/components/share-button";
-import MessageButton from "@/features/students/components/message-button";
-import DeleteStudentButton from "@/features/students/components/delete-student-button";
+import { StudentCardActions } from "@/features/students/components/card/student-card-actions";
 import { PublicStudentCard } from "@/features/students/components/card/public-student-card";
 import { StudentCard } from "@/features/students/components/card/student-card";
 import { StudentCardSkeleton } from "@/features/students/components/card/student-card-skeleton";
@@ -27,7 +22,6 @@ import {
 import { loadStudentPhotos } from "@/features/students/lib/student-photos";
 import { canViewStudentPhoto } from "@/features/students/lib/student-photo-access";
 import { recordStudentCardView } from "@/features/students/lib/record-card-view";
-import StatusUpdateButton from "./status-update-button";
 
 // הערה: אין כאן export const dynamic — הוא אסור תחת Cache Components
 // (next.config: cacheComponents) והבנייה נכשלת עליו. גם אין בו צורך:
@@ -207,48 +201,20 @@ async function StudentPageContent({
       isShadchan={isShadchan}
       shadchanNotes={shadchanNotes}
       actions={
-        <>
-          {student.cv_url && (
-            <Button asChild variant="outline" size="sm">
-              <Link
-                href={student.cv_url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <FileText className="h-4 w-4" />
-                קובץ קו״ח
-              </Link>
-            </Button>
-          )}
-          {canEdit && (
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/app/students/${student.id}/edit`}>
-                <Pencil className="h-4 w-4" />
-                עריכה
-              </Link>
-            </Button>
-          )}
-          <ShareButton
-            studentId={student.id}
-            studentName={`${student.first_name} ${student.last_name}`}
-          />
-          {isShadchan && <MessageButton authorId={student.user_id} />}
-          {isShadchan && (
-            <StatusUpdateButton
-              studentId={student.id}
-              currentStatus={student.personal_status}
-              gender={student.gender}
-            />
-          )}
-          {isAdmin && (
-            <DeleteStudentButton
-              variant="button"
-              studentId={student.id}
-              studentName={`${student.first_name} ${student.last_name}`}
-              redirectTo="/app/students"
-            />
-          )}
-        </>
+        // ההרשאות נקבעות כאן, בשרת, ונמסרות כדגלים: קו״ח רק כשקיים, עריכה
+        // לבעלים/שדכן/מנהל, שיתוף לכל מי שרואה את הכרטיס, פנייה ועדכון
+        // סטטוס לשדכן/מנהל, ומחיקה למנהל בלבד.
+        <StudentCardActions
+          studentId={student.id}
+          studentName={`${student.first_name} ${student.last_name}`}
+          authorId={student.user_id}
+          cvUrl={student.cv_url ?? null}
+          personalStatus={student.personal_status}
+          gender={student.gender}
+          canEdit={canEdit}
+          canManage={isShadchan}
+          canDelete={isAdmin}
+        />
       }
     />
   );

@@ -1,22 +1,21 @@
 "use client";
 
+import { useId, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { MessageSquare } from "lucide-react";
-
+import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 
 export async function getOrCreateDmRoom(otherUserId: string) {
   const supabase = createClient();
@@ -61,46 +60,76 @@ export async function messageCardAuthor(params: {
   return roomId;
 }
 
-export default function MessageButton({ authorId }: { authorId: string }) {
+/**
+ * דיאלוג "פניה למנהל הכרטיס". נשלט מבחוץ (`open`/`onOpenChange`) כי מי שפותח
+ * אותו הוא פריט בתפריט הפעולות של הכרטיס - פריט תפריט נסגר עם הבחירה, ולכן
+ * אינו יכול להחזיק את הדיאלוג בעצמו.
+ */
+export function StudentMessageDialog({
+  authorId,
+  open,
+  onOpenChange,
+}: {
+  authorId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const router = useRouter();
+  const messageId = useId();
+  const [message, setMessage] = useState("");
+  const [isPending, startTransition] = useTransition();
 
-  const handleMessageSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const message = formData.get("message") as string;
-    const roomId = await messageCardAuthor({
-      authorId: authorId,
-      content: message,
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const content = message.trim();
+    if (!content) {
+      toast.error("יש לכתוב הודעה");
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        const roomId = await messageCardAuthor({ authorId, content });
+        setMessage("");
+        onOpenChange(false);
+        router.push(`/app/chats/${roomId}`);
+      } catch (error) {
+        console.error(error);
+        toast.error("שליחת הפנייה נכשלה, נסו שוב");
+      }
     });
-    router.push(`/app/chats/${roomId}`);
   };
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button
-          onClick={() => {}}
-        >
-          פניה למנהל הכרטיס
-          <MessageSquare />
-        </Button>
-        {/* <Button variant="outline">Open Dialog</Button> */}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <form onSubmit={handleMessageSubmit} className="grid gap-4">
+        <form onSubmit={handleSubmit} className="grid gap-4">
           <DialogHeader>
             <DialogTitle>שליחת פנייה</DialogTitle>
             <DialogDescription>שליחת פנייה למנהל הכרטיס.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-2">
-            <Label htmlFor="message-1">הודעה</Label>
-            <Textarea id="message-1" name="message" placeholder="הודעה" />
+            <Label htmlFor={messageId}>הודעה</Label>
+            <Textarea
+              id={messageId}
+              name="message"
+              placeholder="הודעה"
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
+            />
           </div>
           <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">ביטול</Button>
-            </DialogClose>
-            <Button type="submit">שליחה</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+            >
+              ביטול
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? "שולח..." : "שליחה"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

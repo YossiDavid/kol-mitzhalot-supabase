@@ -13,24 +13,29 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 
-export default function DeleteStudentButton({
+/**
+ * דיאלוג האישור למחיקת כרטיס, נשלט מבחוץ. הופרד מהכפתור כדי שגם פריט
+ * בתפריט הפעולות של הכרטיס יוכל לפתוח אותו - פריט תפריט נסגר עם הבחירה
+ * ואינו יכול להחזיק דיאלוג בעצמו.
+ */
+export function StudentDeleteDialog({
   studentId,
   studentName,
-  variant = "button",
+  open,
+  onOpenChange,
   onDeleted,
   redirectTo,
 }: {
   studentId: string;
   studentName: string;
-  variant?: "icon" | "button";
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onDeleted?: () => void;
   /** יעד ניווט אחרי מחיקה. נדרש בעמוד הכרטיס עצמו, שכבר לא יהיה נגיש למנהל. */
   redirectTo?: string;
 }) {
-  const [open, setOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const router = useRouter();
 
@@ -46,7 +51,7 @@ export default function DeleteStudentButton({
         return;
       }
       toast.success("הכרטיס נמחק");
-      setOpen(false);
+      onOpenChange(false);
       onDeleted?.();
       // מהכרטיס עצמו חייבים לנווט החוצה — הוא כבר לא נגיש אחרי המחיקה
       if (redirectTo) {
@@ -54,29 +59,16 @@ export default function DeleteStudentButton({
         return;
       }
       router.refresh();
+    } catch (error) {
+      console.error(error);
+      toast.error("שגיאה במחיקת הכרטיס");
     } finally {
       setDeleting(false);
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {variant === "icon" ? (
-          <button
-            type="button"
-            className="shrink-0 p-1 text-muted-foreground transition-colors hover:text-destructive"
-            aria-label="מחיקת כרטיס"
-          >
-            <Trash2 className="h-5 w-5" />
-          </button>
-        ) : (
-          <Button variant="destructive" size="sm">
-            <Trash2 className="h-4 w-4" />
-            מחיקת כרטיס
-          </Button>
-        )}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>מחיקת כרטיס</DialogTitle>
@@ -89,7 +81,7 @@ export default function DeleteStudentButton({
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={() => setOpen(false)}
+            onClick={() => onOpenChange(false)}
             disabled={deleting}
           >
             ביטול
@@ -104,5 +96,50 @@ export default function DeleteStudentButton({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** כפתור מחיקה עצמאי (שורה בטבלת המיועדים) - פותח את אותו דיאלוג */
+export default function DeleteStudentButton({
+  studentId,
+  studentName,
+  variant = "button",
+  onDeleted,
+  redirectTo,
+}: {
+  studentId: string;
+  studentName: string;
+  variant?: "icon" | "button";
+  onDeleted?: () => void;
+  redirectTo?: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      {variant === "icon" ? (
+        <button
+          type="button"
+          className="shrink-0 p-1 text-muted-foreground transition-colors hover:text-destructive"
+          aria-label="מחיקת כרטיס"
+          onClick={() => setOpen(true)}
+        >
+          <Trash2 className="h-5 w-5" />
+        </button>
+      ) : (
+        <Button variant="destructive" size="sm" onClick={() => setOpen(true)}>
+          <Trash2 className="h-4 w-4" />
+          מחיקת כרטיס
+        </Button>
+      )}
+      <StudentDeleteDialog
+        studentId={studentId}
+        studentName={studentName}
+        open={open}
+        onOpenChange={setOpen}
+        onDeleted={onDeleted}
+        redirectTo={redirectTo}
+      />
+    </>
   );
 }
