@@ -40,6 +40,7 @@ export const emptyStudentFormValues: StudentFormValues = {
   gender: "",
   firstName: "",
   lastName: "",
+  nickname: "",
   identityNumber: "",
   birthDate: "",
   photos: [],

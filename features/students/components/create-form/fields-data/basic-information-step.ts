@@ -53,6 +53,12 @@ export const basicInformationStep: FormSteps = {
           required: true,
         },
         {
+          name: "nickname",
+          width: "sm",
+          label: "כינוי",
+          type: "text",
+        },
+        {
           name: "identityNumber",
           width: "sm",
           label: "תעודת זהות",

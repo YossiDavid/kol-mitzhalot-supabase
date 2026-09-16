@@ -27,6 +27,7 @@ const studentFormBaseSchema = z.object({
 
   firstName: opt,
   lastName: opt,
+  nickname: opt,
   identityNumber: opt,
   birthDate: opt,
   // תמונות שמורות מגיעות כפריטים ברשימה, ולכן בעריכה הן נחשבות מולאו.

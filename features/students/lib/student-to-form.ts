@@ -246,6 +246,7 @@ export function studentToFormValues(
 
     firstName: text(student.first_name),
     lastName: text(student.last_name),
+    nickname: text(student.nickname),
     identityNumber: text(student.identity_number),
     birthDate: toDisplayDate(student.birth_date),
     // הגלריה אינה חלק משורת students (student_photos סגורה ללקוחות); דף

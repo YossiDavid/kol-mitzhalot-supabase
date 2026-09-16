@@ -18,6 +18,7 @@ const SUCCESS_MESSAGE = "השינויים נשמרו בהצלחה!";
 const INVALID_SAVE_MESSAGE = /השינויים לא נשמרו: יש שדות שצריך להשלים/;
 const FATHER_NAME = "אברהם";
 const BACK_STREET = "רחוב האזהרה";
+const NICKNAME = "בערל";
 const CV_FILE_PATTERN = /-cv\.pdf$/;
 // קומפילציית dev של דף העריכה, העלאות ושמירות חוזרות - מעבר ל-30s
 const SLOW_TEST_TIMEOUT_MS = 90_000;
@@ -93,7 +94,7 @@ async function createCompleteStudent(): Promise<string> {
 async function readStudent() {
   const { data, error } = await admin
     .from("students")
-    .select("street, cv_url, parents_info")
+    .select("street, nickname, cv_url, parents_info")
     .eq("id", studentId)
     .single();
   if (error || !data) {
@@ -101,6 +102,7 @@ async function readStudent() {
   }
   return data as {
     street: string | null;
+    nickname: string | null;
     cv_url: string | null;
     parents_info: { father?: { self?: { name?: string } } } | null;
   };
@@ -191,6 +193,25 @@ test.describe.serial("שמירת שינויים מכל שלב בעריכת כר�
     ).toBeVisible();
     await expect(page.locator("#street")).toHaveValue("חזון איש");
     expect((await readStudent()).street).toBe("חזון איש");
+  });
+
+  // הכינוי נשמר רק אם שתי פונקציות השמירה מכירות את העמודה: הן מונות
+  // עמודות במפורש, וערך שלא נמנה בהן נשלח מהטופס ונזרק בשקט.
+  test("כינוי: נשמר במסד ונשאר בשדה אחרי שמירה", async ({ page }) => {
+    test.setTimeout(SLOW_TEST_TIMEOUT_MS);
+
+    // Arrange
+    await page.goto(`/app/students/${studentId}/edit`);
+    await openStep(page, PERSONAL_STEP);
+    await expect(page.locator("#nickname")).toBeVisible();
+
+    // Act
+    await page.locator("#nickname").fill(NICKNAME);
+    await saveAndWaitForBaseline(page);
+
+    // Assert
+    await expect(page.locator("#nickname")).toHaveValue(NICKNAME);
+    expect((await readStudent()).nickname).toBe(NICKNAME);
   });
 
   test("שגיאה בשלב אחר: השמירה עוברת לשדה השגוי ולא נשמרת", async ({

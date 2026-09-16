@@ -416,6 +416,7 @@ export function buildStudentPayload(
     in_shidduchim: values.isOnShiduchim ?? true,
     first_name: values.firstName,
     last_name: values.lastName,
+    nickname: toText(values.nickname) || null,
     identity_number: values.identityNumber,
     birth_date: formatDateToISO(values.birthDate),
     gender: values.gender,
