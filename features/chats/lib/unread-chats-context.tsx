@@ -19,7 +19,7 @@ const EMPTY_ROOM_IDS: ReadonlySet<string> = new Set<string>();
  * chat_rooms ל-chat_messages יש שני קשרים (room_id ו-last_message_id).
  */
 const UNREAD_ROOMS_SELECT =
-  "room_id, last_read_at, room:chat_rooms!inner(last_message:chat_messages!chat_rooms_last_message_fk(sender_id, created_at))";
+  "room_id, last_read_at, marked_unread_at, room:chat_rooms!inner(last_message:chat_messages!chat_rooms_last_message_fk(sender_id, created_at))";
 
 type UnreadChatsValue = {
   /** מספר השיחות שיש בהן הודעה שלא נקראה */

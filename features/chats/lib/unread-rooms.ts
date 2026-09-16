@@ -9,6 +9,8 @@ export const UNREAD_DISPLAY_CAP = 9;
 export type UnreadRoomRow = {
   room_id: string;
   last_read_at: string | null;
+  /** סימון עצמי "לטיפול בהמשך". גובר על החישוב הנגזר. */
+  marked_unread_at: string | null;
   last_message: { sender_id: string; created_at: string } | null;
 };
 
@@ -43,14 +45,20 @@ export function parseUnreadRoomRows(data: unknown): UnreadRoomRow[] {
       {
         room_id: roomId,
         last_read_at: asString(row.last_read_at),
+        marked_unread_at: asString(row.marked_unread_at),
         last_message: parseLastMessage(row.room),
       },
     ];
   });
 }
 
-/** יש הודעה אחרונה, היא לא שלי, והיא חדשה מהרגע שבו קראתי את השיחה. */
+/**
+ * סימון עצמי ("לטיפול בהמשך") גובר על הכול: הוא נכון גם בשיחה שאני שלחתי
+ * בה אחרון, ולכן אינו ניתן לגזירה. אחרת: יש הודעה אחרונה, היא לא שלי, והיא
+ * חדשה מהרגע שבו קראתי את השיחה.
+ */
 export function isRoomUnread(row: UnreadRoomRow, userId: string): boolean {
+  if (row.marked_unread_at) return true;
   const message = row.last_message;
   if (!message || message.sender_id === userId) return false;
   if (!row.last_read_at) return true;

@@ -55,7 +55,8 @@ export function useMarkRoomRead({
     async function markRead(readUpTo: string, currentUserId: string) {
       const { error } = await supabase
         .from("chat_room_participants")
-        .update({ last_read_at: readUpTo })
+        // הסימון העצמי "לטיפול בהמשך" נמחק כאן: פתיחת השיחה היא הטיפול
+        .update({ last_read_at: readUpTo, marked_unread_at: null })
         .eq("room_id", roomId)
         .eq("user_id", currentUserId)
         .or(`last_read_at.is.null,last_read_at.lt."${readUpTo}"`);
