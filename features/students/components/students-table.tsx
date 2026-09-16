@@ -33,6 +33,8 @@ export type StudentTableRow = {
   personal_status: string;
   first_name: string;
   last_name: string;
+  /** כינוי, מוצג בסוגריים אחרי השם הפרטי. שדה לא חובה בטופס */
+  nickname?: string | null;
   parents_info?: {
     father?: { self?: ParentName };
     mother?: { self?: ParentName };
@@ -94,6 +96,12 @@ const MISSING_CV_CLASS =
 
 function fullName(student: StudentTableRow) {
   return `${student.first_name} ${student.last_name}`;
+}
+
+/** השם הפרטי, ואחריו הכינוי בסוגריים כשיש. המיון נשאר לפי השם בלבד */
+function firstNameWithNickname(student: StudentTableRow) {
+  const nickname = student.nickname?.trim();
+  return nickname ? `${student.first_name} (${nickname})` : student.first_name;
 }
 
 function studentCardHref(id: string) {
@@ -174,7 +182,8 @@ function MobileTitle({
     <span className="flex items-center gap-3">
       {photo}
       <span className="flex min-w-0 flex-wrap items-center gap-x-1.5">
-        {fullName(student)}
+        {/* בנייד אין עמודות, ולכן הכינוי מופיע כאן - כמו בעמודת השם בדסקטופ */}
+        {`${firstNameWithNickname(student)} ${student.last_name}`}
         {isRecentlyEngaged(student) && (
           <span className="text-caption font-medium text-warning-muted-foreground">
             🎉 מאורס/ת
@@ -329,7 +338,8 @@ function buildColumns(
       key: "first-name",
       header: "שם פרטי",
       mobile: "hidden",
-      cell: (student) => student.first_name,
+      cell: (student) => firstNameWithNickname(student),
+      // המיון לפי השם עצמו: כינוי לא אמור לפזר שמות זהים ברשימה
       sortValue: (student) => student.first_name,
     },
     {
