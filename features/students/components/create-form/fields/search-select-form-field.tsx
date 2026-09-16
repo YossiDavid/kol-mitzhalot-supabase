@@ -17,7 +17,7 @@ const DEFAULT_EMPTY_TEXT = "לא נמצאו תוצאות";
 
 /** "select2": חיפוש במאגר (טבלה ב-Supabase או endpoint) */
 export function SearchSelectFormField(props: FieldControlProps) {
-  const { field, name, placeholder, options, isDisabled } = props;
+  const { field, name, fieldId, placeholder, options, isDisabled } = props;
   const { setValue } = useFormContext();
   const fillOnSelect = readRecord<string>(field.fillOnSelect);
 
@@ -39,9 +39,10 @@ export function SearchSelectFormField(props: FieldControlProps) {
     : undefined;
 
   return (
-    <FieldFrame {...props}>
+    <FieldFrame {...props} htmlFor={fieldId}>
       {(rhfField) => (
         <SearchSelectField
+          id={fieldId}
           placeholder={placeholder ?? DEFAULT_PLACEHOLDER}
           options={options}
           empty={readOptionalString(field.empty) ?? DEFAULT_EMPTY_TEXT}
@@ -56,6 +57,7 @@ export function SearchSelectFormField(props: FieldControlProps) {
           params={readRecord(field.params)}
           extraColumns={fillOnSelect && Object.values(fillOnSelect)}
           onSelectRow={handleSelectRow}
+          creatable={Boolean(field.creatable)}
           disabled={isDisabled}
         />
       )}

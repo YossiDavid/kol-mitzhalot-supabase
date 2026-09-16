@@ -48,6 +48,22 @@ export const PLAN_FOR_LIFE_OPTIONS: FieldOptionDefinition[] = [
   { value: "work", label: "לעבוד" },
 ];
 
+/**
+ * בורר "חסידות או קהילה" מתוך מאגר הקהילות (public.communities).
+ * הערך הנשמר הוא השם עצמו ולא מזהה, ולכן כרטיסים שהוזנו כטקסט חופשי
+ * נשארים תקפים. ערך שאינו במאגר מוצע להוספה (creatable).
+ */
+export const COMMUNITY_SEARCH = {
+  table: "communities",
+  valueColumn: "name",
+  labelColumn: "name",
+  searchColumn: "name",
+  filters: { is_active: true },
+  creatable: true,
+  placeholder: "חיפוש או הוספה למאגר",
+  empty: "לא נמצאה קהילה בשם הזה",
+} as const;
+
 /** קבצים שמתקבלים בקו״ח ובמסמכים רפואיים */
 export const DOCUMENT_ACCEPT: UploadField["accept"] = {
   "application/pdf": [".pdf"],

@@ -54,6 +54,12 @@ export type SearchSelectFieldProps = {
   /** השורה המלאה של האפשרות שנבחרה, או null כשהבחירה נוקתה */
   onSelectRow?: (row: Record<string, unknown> | null) => void;
 
+  /**
+   * ערך שאינו במאגר: מציג "הוספה למאגר", מוסיף שורה לטבלה ובוחר אותה.
+   * נתמך במצב Supabase (table) בלבד, ורק כשהערך הוא עמודת הטקסט עצמה.
+   */
+  creatable?: boolean;
+
   /** מ-FormControl, מועברים לכפתור הפותח */
   id?: string;
   "aria-invalid"?: boolean | "true" | "false";
@@ -110,6 +116,7 @@ export function SearchSelectField({
   resolveSelectedLabel = true,
   extraColumns,
   onSelectRow,
+  creatable = false,
   id,
   "aria-invalid": ariaInvalid,
   "aria-describedby": ariaDescribedBy,
@@ -384,6 +391,43 @@ export function SearchSelectField({
     );
   };
 
+  /**
+   * הוספת ערך חדש למאגר ובחירתו. ערך שכבר קיים (מרוץ בין שני משתמשים,
+   * או הבדל ברווחים) אינו שגיאה - פשוט בוחרים אותו.
+   */
+  const handleCreate = async (label: string) => {
+    const name = label.trim();
+    if (!table || !name) return;
+
+    const valCol = valueColumn || "id";
+    const labCol = labelColumn || "name";
+
+    try {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      const { error } = await supabase
+        .from(table)
+        .insert({ [labCol]: name, created_by: user?.id ?? null });
+
+      // 23505 = כבר קיים במאגר
+      if (error && error.code !== "23505") throw error;
+
+      setOptions((previous) =>
+        previous.some((option) => option.value === name)
+          ? previous
+          : [{ value: name, label: name }, ...previous],
+      );
+      setResolvedSelectedLabel(name);
+      // valueColumn של מאגר טקסטואלי הוא השם עצמו
+      handleChange(valCol === labCol ? name : name);
+    } catch (e) {
+      console.error("SearchSelectField create error:", e);
+    }
+  };
+
   return (
     <Combobox
       id={id}
@@ -402,6 +446,7 @@ export function SearchSelectField({
       isLoading={isLoading}
       allowClearOnReselect
       resetQueryOnClose
+      onCreate={creatable && table ? handleCreate : undefined}
     />
   );
 }

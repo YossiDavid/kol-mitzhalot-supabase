@@ -101,6 +101,11 @@ export interface SelectField extends BaseField {
    * מעמודות הטבלה. { <שם השדה בשורה>: <עמודה> }, למשל { name: "name" }
    */
   fillOnSelect?: Record<string, string>;
+  /**
+   * select2 מול מאגר טקסטואלי: ערך שאינו ברשימה מוצע להוספה למאגר
+   * ("הוספה למאגר"), ואז נבחר. דורש table שבו הערך הוא עמודת השם.
+   */
+  creatable?: boolean;
 }
 
 export interface TextAndSelectField extends BaseField {

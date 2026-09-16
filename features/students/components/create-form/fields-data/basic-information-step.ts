@@ -4,6 +4,7 @@ import {
 } from "@/features/students/lib/student-photo-rules";
 import {
   CELLPHONE_TYPE_OPTIONS,
+  COMMUNITY_SEARCH,
   DOCUMENT_ACCEPT,
   PLAN_FOR_LIFE_OPTIONS,
   genderIs,
@@ -106,7 +107,11 @@ export const basicInformationStep: FormSteps = {
           name: "community",
           width: "sm",
           label: "חסידות או קהילה",
-          type: "text",
+          // בורר מתוך מאגר הקהילות; ערך שאינו במאגר מוצע להוספה. הערך שנשמר
+          // בכרטיס הוא השם עצמו (טקסט), ולכן כרטיסים ישנים נשארים תקפים
+          type: "select2",
+          options: [],
+          ...COMMUNITY_SEARCH,
         },
         {
           name: "shtible",

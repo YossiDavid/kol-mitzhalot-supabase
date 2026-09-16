@@ -1,5 +1,5 @@
 import type { FieldCondition } from "../field-visibility";
-import { genderIs } from "./shared-options";
+import { COMMUNITY_SEARCH, genderIs } from "./shared-options";
 import type { FormSection, SelectField } from "./types";
 
 /** סוגי המוסדות בטבלת institutions (supabase/migrations/20260830140000_institutions.sql) */
@@ -96,7 +96,9 @@ function institutionSection({
             name: `${repeaterName}.community`,
             width: "sm",
             label: "קהילה / חסידות",
-            type: "text",
+            type: "select2",
+            options: [],
+            ...COMMUNITY_SEARCH,
           },
           {
             name: `${repeaterName}.city`,

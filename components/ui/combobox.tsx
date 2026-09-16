@@ -4,7 +4,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,14 @@ export type ComboboxProps = {
   allowClearOnReselect?: boolean;
   resetQueryOnClose?: boolean;
 
+  /**
+   * הוספת ערך שאינו במאגר: כשהוקלד טקסט שאין לו התאמה מדויקת, מוצגת שורה
+   * "הוספה למאגר". בלי onCreate השורה אינה מוצגת כלל.
+   */
+  onCreate?: (label: string) => void | Promise<void>;
+  /** נוסח שורת ההוספה. ברירת מחדל: הוספה למאגר: "<מה שהוקלד>" */
+  createLabel?: (query: string) => string;
+
   /** מ-FormControl: הכפתור שפותח את החיפוש הוא הפקד שמקבל תווית ושגיאה */
   id?: string;
   "aria-invalid"?: boolean | "true" | "false";
@@ -70,9 +78,33 @@ export function Combobox({
   isLoading = false,
   allowClearOnReselect = true,
   resetQueryOnClose = true,
+  onCreate,
+  createLabel = (query) => `הוספה למאגר: "${query}"`,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [inputKey, setInputKey] = React.useState(0); // remount CommandInput כדי לאפס query
+  const [query, setQuery] = React.useState("");
+  const [isCreating, setIsCreating] = React.useState(false);
+
+  const trimmedQuery = query.trim();
+  // שורת ההוספה מוצגת רק כשאין התאמה מדויקת (בלי תלות באותיות ורווחים)
+  const hasExactMatch = options.some(
+    (option) =>
+      option.label.trim().toLowerCase() === trimmedQuery.toLowerCase(),
+  );
+  const canCreate =
+    Boolean(onCreate) && trimmedQuery.length > 0 && !hasExactMatch;
+
+  const handleCreate = async () => {
+    if (!onCreate || isCreating) return;
+    setIsCreating(true);
+    try {
+      await onCreate(trimmedQuery);
+      setOpen(false);
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   const selectedOptionLabel = React.useMemo(() => {
     if (!value) return "";
@@ -88,6 +120,7 @@ export function Combobox({
       if (!nextOpen && resetQueryOnClose) {
         // מאפס את input (גם אם cmdk לא תומך ב-value controlled)
         setInputKey((k) => k + 1);
+        setQuery("");
         onQueryChange?.("");
       }
     },
@@ -104,7 +137,9 @@ export function Combobox({
           aria-expanded={open}
           aria-invalid={ariaInvalid}
           aria-describedby={ariaDescribedBy}
-          disabled={disabled || isLoading}
+          // טעינת אפשרויות ברקע לא משביתה את הפקד: מצב הטעינה מוצג בתוך
+          // הרשימה, והשבתה זמנית הייתה הופכת את השדה ללא לחיץ לרגעים
+          disabled={disabled}
           // נראה כמו שדה ולא ככפתור ראשי: מסגרת, צבע ומשקל של שדה טקסט.
           // בשגיאה - מסגרת אדומה כמו Input (גם במצב כהה, שבו dark:border-input גובר)
           className={cn(
@@ -126,7 +161,10 @@ export function Combobox({
             key={inputKey}
             placeholder={searchPlaceholder}
             className="h-9"
-            onValueChange={(q) => onQueryChange?.(q)}
+            onValueChange={(q) => {
+              setQuery(q);
+              onQueryChange?.(q);
+            }}
           />
 
           <CommandList>
@@ -134,7 +172,7 @@ export function Combobox({
               <div className="px-2 py-2 text-center text-body-sm text-muted-foreground">
                 טוען...
               </div>
-            ) : options.length === 0 ? (
+            ) : options.length === 0 && !canCreate ? (
               <CommandEmpty>{empty}</CommandEmpty>
             ) : (
               <CommandGroup>
@@ -169,6 +207,20 @@ export function Combobox({
                       </CommandItem>
                     );
                   })}
+              </CommandGroup>
+            )}
+
+            {!isLoading && canCreate && (
+              <CommandGroup>
+                <CommandItem
+                  value={`__create__${trimmedQuery}`}
+                  onSelect={handleCreate}
+                >
+                  <Plus className="h-4 w-4 shrink-0" aria-hidden />
+                  <span className="truncate">
+                    {isCreating ? "מוסיף..." : createLabel(trimmedQuery)}
+                  </span>
+                </CommandItem>
               </CommandGroup>
             )}
           </CommandList>
