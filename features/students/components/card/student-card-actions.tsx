@@ -46,6 +46,7 @@ export function StudentCardActions({
   canEdit,
   canManage,
   canDelete,
+  inShidduchim,
 }: {
   studentId: string;
   studentName: string;
@@ -57,6 +58,8 @@ export function StudentCardActions({
   canEdit: boolean;
   canManage: boolean;
   canDelete: boolean;
+  /** false - הכרטיס הוצא משידוכים. null/undefined בשורה ישנה נחשב פעיל */
+  inShidduchim?: boolean | null;
 }) {
   const [openDialog, setOpenDialog] = useState<OpenDialog>(null);
 
@@ -67,6 +70,9 @@ export function StudentCardActions({
     }
   };
 
+  // כרטיס שהוצא משידוכים: הפעולות שמפנות אליו החוצה חסומות. העריכה, עדכון
+  // הסטטוס, קובץ קו״ח והמחיקה נשארות - בלעדיהן אין דרך להחזיר אותו לשידוכים
+  const isInShidduchim = inShidduchim !== false;
   const canMessage = canManage && Boolean(authorId);
 
   return (
@@ -101,6 +107,7 @@ export function StudentCardActions({
           )}
 
           <DropdownMenuItem
+            disabled={!isInShidduchim}
             onSelect={() => {
               void handleShare();
             }}
@@ -110,7 +117,10 @@ export function StudentCardActions({
           </DropdownMenuItem>
 
           {canMessage && (
-            <DropdownMenuItem onSelect={() => setOpenDialog("message")}>
+            <DropdownMenuItem
+              disabled={!isInShidduchim}
+              onSelect={() => setOpenDialog("message")}
+            >
               <MessageSquare />
               פניה למנהל הכרטיס
             </DropdownMenuItem>

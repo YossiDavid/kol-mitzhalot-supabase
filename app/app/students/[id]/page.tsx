@@ -211,6 +211,7 @@ async function StudentPageContent({
           cvUrl={student.cv_url ?? null}
           personalStatus={student.personal_status}
           gender={student.gender}
+          inShidduchim={student.in_shidduchim}
           canEdit={canEdit}
           canManage={isShadchan}
           canDelete={isAdmin}

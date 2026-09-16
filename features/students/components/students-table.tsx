@@ -43,6 +43,8 @@ export type StudentTableRow = {
     mother?: { self?: ParentName };
   } | null;
   city?: string | null;
+  /** חסידות או קהילה, מתוך מאגר הקהילות */
+  community?: string | null;
   birth_date?: string | Date | null;
   height?: number | null;
   cv_url?: string | null;
@@ -363,6 +365,12 @@ function buildColumns(
       header: "עיר",
       cell: (student) => student.city,
       sortValue: (student) => student.city,
+    },
+    {
+      key: "community",
+      header: "חסידות",
+      cell: (student) => student.community,
+      sortValue: (student) => student.community,
     },
     {
       key: "age",

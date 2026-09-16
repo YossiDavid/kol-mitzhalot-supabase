@@ -23,23 +23,32 @@ type StudentKey = "young" | "old" | "middle";
 
 const STUDENTS: Record<
   StudentKey,
-  { lastName: string; city: string; height: number | null; birthDate: string }
+  {
+    lastName: string;
+    city: string;
+    community: string;
+    height: number | null;
+    birthDate: string;
+  }
 > = {
   young: {
     lastName: `אלון${token}`,
     city: "ירושלים",
+    community: "ויז׳ניץ",
     height: 185,
     birthDate: "2000-01-01",
   },
   old: {
     lastName: `בר${token}`,
     city: "אשדוד",
+    community: "בעלזא",
     height: null,
     birthDate: "1995-01-01",
   },
   middle: {
     lastName: `כהן${token}`,
     city: "בני ברק",
+    community: "צאנז",
     height: 170,
     birthDate: "1998-01-01",
   },
@@ -70,6 +79,7 @@ test.beforeAll(async () => {
         personal_status: "single",
         country: "ישראל",
         city: STUDENTS[key].city,
+        community: STUDENTS[key].community,
         height: STUDENTS[key].height,
         in_shidduchim: true,
       })),
@@ -134,15 +144,13 @@ test.describe("מיון טבלת המיועדים - דסקטופ", () => {
       name: "מיון לפי גובה",
     });
     const heightButton = table.getByRole("button", { name: "מיון לפי גובה" });
-    await expect(lastNameHeader).toHaveAttribute("aria-sort", "none");
-
-    // Act + Assert - שם משפחה: עולה, יורד, ובלחיצה שלישית בלי מיון
-    await lastNameButton.click();
+    // ברירת המחדל של הרשימה: א-ב לפי שם משפחה, בלי שנגעו בכותרת
     await expect(lastNameHeader).toHaveAttribute("aria-sort", "ascending");
     await expect
       .poll(() => readOrder(rows))
       .toEqual(labels(["young", "old", "middle"]));
 
+    // Act + Assert - שם משפחה: יורד, בלי מיון, וחזרה לעולה
     await lastNameButton.click();
     await expect(lastNameHeader).toHaveAttribute("aria-sort", "descending");
     await expect
@@ -151,6 +159,9 @@ test.describe("מיון טבלת המיועדים - דסקטופ", () => {
 
     await lastNameButton.click();
     await expect(lastNameHeader).toHaveAttribute("aria-sort", "none");
+
+    await lastNameButton.click();
+    await expect(lastNameHeader).toHaveAttribute("aria-sort", "ascending");
 
     // Act + Assert - גובה: הכרטיס בלי גובה בסוף בשני הכיוונים
     await heightButton.click();
@@ -203,6 +214,29 @@ test.describe("מיון טבלת המיועדים - דסקטופ", () => {
       .poll(() => readOrder(rows))
       .toEqual(labels(["old", "middle", "young"]));
   });
+
+  test("עמודת חסידות מציגה את הקהילה וניתנת למיון", async ({ page }) => {
+    // Arrange
+    await searchForTestStudents(page);
+    const table = page.getByRole("table", { name: TABLE_CAPTION });
+    const rows = table.getByRole("row", { name: /^כרטיס מלא:/ });
+    await expect(rows).toHaveCount(STUDENT_KEYS.length, {
+      timeout: LOAD_TIMEOUT,
+    });
+
+    // Assert - הערך מוצג בשורה
+    await expect(
+      table
+        .getByRole("row", { name: cardLabel("middle") })
+        .getByRole("cell", { name: STUDENTS.middle.community, exact: true }),
+    ).toBeVisible();
+
+    // Act + Assert - מיון א-ב לפי חסידות: בעלזא, ויז׳ניץ, צאנז
+    await table.getByRole("button", { name: "מיון לפי חסידות" }).click();
+    await expect
+      .poll(() => readOrder(rows))
+      .toEqual(labels(["old", "young", "middle"]));
+  });
 });
 
 test.describe("מיון טבלת המיועדים - מובייל", () => {
@@ -222,7 +256,11 @@ test.describe("מיון טבלת המיועדים - מובייל", () => {
       exact: true,
     });
     const directionButton = page.getByRole("button", { name: /^כיוון המיון/ });
-    await expect(directionButton).toBeDisabled();
+    // ברירת המחדל חלה גם במובייל, ולכן פקד הכיוון פעיל כבר בטעינה
+    await expect(directionButton).toBeEnabled();
+    await expect
+      .poll(() => readOrder(cards))
+      .toEqual(labels(["young", "old", "middle"]));
 
     // Act - מיון לפי עיר (עולה כברירת מחדל)
     await columnSelect.selectOption({ label: "עיר" });

@@ -91,5 +91,4 @@ export type PersonalDetails = {
   identity_number?: string | null;
   phone?: string | null;
   cellphone_type?: string | null;
-  in_shidduchim?: boolean | null;
 };

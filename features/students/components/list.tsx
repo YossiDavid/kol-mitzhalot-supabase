@@ -51,7 +51,12 @@ export default function StudentsList() {
   const [reloadKey, setReloadKey] = useState(0);
   // המיון נשמר כאן ולא בטבלה: כל שינוי סינון מציג שלד וטוען מחדש, ובלי
   // זה הטבלה הייתה נבנית מחדש והמיון שבחרו היה מתאפס
-  const [sort, setSort] = useState<DataTableSort | null>(null);
+  // ברירת המחדל: א-ב לפי שם משפחה. רשימה בלי סדר קבוע נראית אקראית, ובלי
+  // limit בשאילתה כל השורות נטענות - ולכן המיון בלקוח הוא על כל התוצאות
+  const [sort, setSort] = useState<DataTableSort | null>({
+    key: "last-name",
+    direction: "asc",
+  });
 
   const supabaseRef = useRef(createClient());
   const supabase = supabaseRef.current;

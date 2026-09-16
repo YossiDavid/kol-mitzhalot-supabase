@@ -11,12 +11,6 @@ import { CardSection } from "./card-section";
 import { InfoTag, InfoTagGrid } from "./info-tag";
 import type { PersonalDetails } from "./types";
 
-function shidduchimLabel(inShidduchim: boolean | null | undefined) {
-  if (inShidduchim === true) return "כן — מיועד לשידוכים";
-  if (inShidduchim === false) return "לא";
-  return null;
-}
-
 /**
  * "פרטים אישיים". אותו רכיב משרת את הגולש המחובר ואת התצוגה הציבורית:
  * בענף הציבורי השדות הרגישים (ת.ז., טלפון, סוג מכשיר, רחוב, מספר בית)
@@ -38,11 +32,9 @@ export function PersonalDetailsSection({
         <p className="leading-relaxed text-muted-foreground">{student.about}</p>
       )}
       <InfoTagGrid>
+        {/* "מיועד לשידוכים" אינו מוצג כאן: כרטיס פעיל הוא בשידוכים כברירת
+            מחדל, והיוצא מן הכלל מסומן בהבלטה בראש הכרטיס */}
         {genderLabel && <InfoTag label="מגדר" value={genderLabel} />}
-        <InfoTag
-          label="מיועד לשידוכים"
-          value={shidduchimLabel(student.in_shidduchim)}
-        />
         <InfoTag label="עיר" value={student.city} />
         <InfoTag label="רחוב" value={student.street} />
         <InfoTag label="מספר בית" value={student.house} />

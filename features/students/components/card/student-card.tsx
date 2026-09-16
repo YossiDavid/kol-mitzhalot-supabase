@@ -88,6 +88,15 @@ export function StudentCard({
         actions={actions}
       />
 
+      {/* היוצא מן הכלל מסומן, לא ברירת המחדל: כרטיס פעיל הוא בשידוכים, ולכן
+          רק כרטיס שהוצא מהם נושא הודעה - והפעולות שמפנות אליו חסומות */}
+      {student.in_shidduchim === false && (
+        <p className="rounded-lg border border-warning bg-warning-muted px-4 py-3 text-body-sm font-bold text-warning-muted-foreground">
+          המיועד/ת אינו/ה בשידוכים כרגע. שיתוף הכרטיס ופנייה למנהל הכרטיס
+          חסומים.
+        </p>
+      )}
+
       <PersonalDetailsSection
         student={student}
         genderLabel={genderLabel}
