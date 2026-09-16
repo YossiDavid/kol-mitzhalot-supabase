@@ -1,12 +1,15 @@
 "use client";
 
+import { useState } from "react";
+
 import { OTPForm } from "@/features/auth/components/otp-form";
 
 export default function OTPPage() {
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const otp = formData.get("otp") as string;
+  // שגיאת אימות מהשרת - לא שדה טופס
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (otp: string) => {
+    setError(null);
 
     const response = await fetch("/api/v1/auth/otp/verify", {
       method: "POST",
@@ -17,13 +20,14 @@ export default function OTPPage() {
     });
 
     if (response.ok) {
-      // Redirect or show success message
       window.location.href = "/app";
-    } else {
-      const data = await response.json();
-      console.error("OTP verification failed:", data);
+      return;
     }
+
+    const data = await response.json().catch(() => ({}));
+    console.error("OTP verification failed:", data);
+    setError(data?.message || "אימות נכשל");
   };
 
-  return <OTPForm handleSubmit={handleSubmit} />;
+  return <OTPForm onSubmit={handleSubmit} error={error} />;
 }

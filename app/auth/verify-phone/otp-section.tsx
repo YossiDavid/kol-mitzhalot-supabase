@@ -1,6 +1,12 @@
 "use client";
 
-import { OTPForm } from "@/features/auth/components/otp-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+import { PageTitle } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,13 +14,23 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
-import { PageTitle } from "@/components/layout/page-header";
+import { Form, FormField } from "@/components/ui/form";
+import { FormFieldShell } from "@/components/ui/form-field-shell";
+import { FormFields, FormSubmitError } from "@/components/ui/form-layout";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { OTPForm } from "@/features/auth/components/otp-form";
+import { requiredText } from "@/lib/forms/schema";
 import { isValidPhone, PHONE_INVALID_MESSAGE } from "@/lib/phone";
-import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+
+const addPhoneSchema = z.object({
+  // הרווחים מוסרים לפני הבדיקה ולפני השמירה, כמו קודם
+  phone: requiredText("מספר טלפון")
+    .transform((value) => value.replace(/\s/g, ""))
+    .refine(isValidPhone, PHONE_INVALID_MESSAGE),
+});
+
+type AddPhoneValues = z.infer<typeof addPhoneSchema>;
 
 interface OTPSectionProps {
   hasPhone?: boolean;
@@ -27,35 +43,28 @@ export default function OTPSection({
 }: OTPSectionProps) {
   const [codeSent, setCodeSent] = useState(false);
   const [addedPhone, setAddedPhone] = useState(false);
-  const [phone, setPhone] = useState("");
-  const [phoneError, setPhoneError] = useState<string | null>(null);
-  const [addLoading, setAddLoading] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
 
   const showAddPhone = !hasPhone && !addedPhone;
 
-  const handleAddPhone = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPhoneError(null);
-    const trimmed = phone.replace(/\s/g, "");
-    if (!isValidPhone(trimmed)) {
-      setPhoneError(PHONE_INVALID_MESSAGE);
-      return;
-    }
-    setAddLoading(true);
+  const phoneForm = useForm<AddPhoneValues>({
+    resolver: zodResolver(addPhoneSchema),
+    defaultValues: { phone: "" },
+  });
+
+  const handleAddPhone = async ({ phone }: AddPhoneValues) => {
+    phoneForm.clearErrors("root");
     try {
       const supabase = createClient();
       const { error } = await supabase.auth.updateUser({
-        data: { phone: trimmed },
+        data: { phone },
       });
       if (error) throw error;
       setAddedPhone(true);
     } catch (err) {
-      setPhoneError(
-        err instanceof Error ? err.message : "שגיאה בשמירת הטלפון",
-      );
-    } finally {
-      setAddLoading(false);
+      phoneForm.setError("root", {
+        message: err instanceof Error ? err.message : "שגיאה בשמירת הטלפון",
+      });
     }
   };
 
@@ -71,10 +80,8 @@ export default function OTPSection({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const otp = formData.get("otp") as string;
+  const handleVerify = async (otp: string) => {
+    setSendError(null);
 
     const response = await fetch("/api/v1/auth/otp/verify", {
       method: "POST",
@@ -84,13 +91,16 @@ export default function OTPSection({
 
     if (response.ok) {
       window.location.href = "/app";
-    } else {
-      const data = await response.json();
-      setSendError(data?.message || "אימות נכשל");
+      return;
     }
+
+    const data = await response.json().catch(() => ({}));
+    setSendError(data?.message || "אימות נכשל");
   };
 
   if (showAddPhone) {
+    const { isSubmitting, errors } = phoneForm.formState;
+
     return (
       <Card>
         <CardHeader>
@@ -100,29 +110,41 @@ export default function OTPSection({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleAddPhone}>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone">מספר טלפון</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+972 50…"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  dir="ltr"
-                  className="text-left"
-                  required
+          <Form {...phoneForm}>
+            {/* noValidate: ההודעות בעברית מגיעות מהסכמה ולא מהדפדפן */}
+            <form
+              onSubmit={phoneForm.handleSubmit(handleAddPhone)}
+              noValidate
+            >
+              <FormFields>
+                <FormField
+                  control={phoneForm.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormFieldShell label="מספר טלפון" required>
+                      <Input
+                        {...field}
+                        type="tel"
+                        placeholder="+972 50…"
+                        autoComplete="tel"
+                        dir="ltr"
+                        className="text-start"
+                        disabled={isSubmitting}
+                      />
+                    </FormFieldShell>
+                  )}
                 />
-                {phoneError && (
-                  <p className="text-body-sm text-destructive">{phoneError}</p>
-                )}
-              </div>
-              <Button type="submit" className="w-full" disabled={addLoading}>
-                {addLoading ? "שומר..." : "המשך"}
-              </Button>
-            </div>
-          </form>
+                <FormSubmitError>{errors.root?.message}</FormSubmitError>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "שומר..." : "המשך"}
+                </Button>
+              </FormFields>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     );
@@ -132,7 +154,7 @@ export default function OTPSection({
     return (
       <div className="space-y-4">
         <OTPForm
-          handleSubmit={handleSubmit}
+          onSubmit={handleVerify}
           channel="phone"
           error={sendError}
           onResend={handleSendCode}
@@ -162,15 +184,16 @@ export default function OTPSection({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {sendError && (
-            <p className="text-body-sm text-destructive">{sendError}</p>
-          )}
+          <FormSubmitError>{sendError}</FormSubmitError>
           <Button onClick={handleSendCode} className="w-full">
             שלח קוד אימות
           </Button>
           {maskedPhone && (
             <p className="text-center text-body-sm text-muted-foreground">
-              <Link href="/app/settings" className="underline hover:text-foreground">
+              <Link
+                href="/app/settings"
+                className="underline hover:text-foreground"
+              >
                 זה לא המספר שלי? לעדכון
               </Link>
             </p>

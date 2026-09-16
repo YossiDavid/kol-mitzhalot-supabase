@@ -43,6 +43,15 @@ export default defineConfig({
       },
       testMatch: "**/marketing/**/*.spec.ts",
     },
+    // טפסי ההתחברות וההרשמה נבדקים בלי משתמש מחובר: עם storageState הם
+    // מנתבים מיד ל-/app, ואי אפשר לראות את הוולידציה שלהם.
+    {
+      name: "auth-forms",
+      use: {
+        ...devices["Desktop Chrome"],
+      },
+      testMatch: "**/auth-forms/**/*.spec.ts",
+    },
     {
       name: "chromium",
       use: {
@@ -50,7 +59,11 @@ export default defineConfig({
         storageState: "playwright/.auth/user.json",
       },
       dependencies: ["setup"],
-      testIgnore: ["**/admin/**/*.spec.ts", "**/marketing/**/*.spec.ts"],
+      testIgnore: [
+        "**/admin/**/*.spec.ts",
+        "**/marketing/**/*.spec.ts",
+        "**/auth-forms/**/*.spec.ts",
+      ],
     },
     {
       name: "chromium-admin",
@@ -63,10 +76,15 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
-    command: "pnpm dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  // PLAYWRIGHT_BASE_URL מצביע על שרת שכבר רץ (למשל ענף עבודה על פורט אחר),
+  // ואז אין להקים שרת נוסף — הקמה כזו הייתה תופסת את פורט 3000 של סביבת
+  // הפיתוח הראשית.
+  webServer: process.env.PLAYWRIGHT_BASE_URL
+    ? undefined
+    : {
+        command: "pnpm dev",
+        url: "http://localhost:3000",
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+      },
 });

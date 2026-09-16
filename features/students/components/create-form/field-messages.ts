@@ -1,14 +1,23 @@
 /**
- * נוסח אחיד לשגיאת "שדה חובה" בטופס המיועדים (docs/design-refactor/PLAN.md, שלב 1).
+ * מתי להחליף הודעת שגיאה בטופס המיועדים (docs/design-refactor/PLAN.md, שלב 1).
  *
  * הסכמה (schema.ts) לא מכירה את התוויות, ובחלק מהשדות התווית תלויה במגדר.
  * לכן הסכמה מחזירה הודעה כללית, והמרנדר מחליף אותה כאן במשפט ספציפי לפי
  * התווית שמוצגת וסוג הפקד: "נא למלא שם פרטי", "נא לבחור סטטוס אישי".
  * הודעה ספציפית שכבר נכתבה בסכמה (למשל "גובה מינימלי הוא 50 ס״מ") נשארת.
+ *
+ * הנוסח עצמו משותף לכל טפסי המערכת (lib/forms/field-messages.ts), כדי
+ * שטפסי ההתחברות, ההגדרות והניהול ידברו באותה שפה.
  */
 
-/** ההודעה שהסכמה מחזירה לשדה חובה ריק. המרנדר מחליף אותה בנוסח ספציפי */
-export const GENERIC_REQUIRED_MESSAGE = "שדה חובה";
+import {
+  chooseMessage,
+  fillMessage,
+  GENERIC_REQUIRED_MESSAGE,
+  uploadMessage,
+} from "@/lib/forms/field-messages";
+
+export { GENERIC_REQUIRED_MESSAGE };
 
 const GENERIC_MESSAGES: ReadonlySet<string> = new Set([
   GENERIC_REQUIRED_MESSAGE,
@@ -31,9 +40,6 @@ const CHOICE_FIELD_TYPES: ReadonlySet<string> = new Set([
 
 const FILE_FIELD_TYPES: ReadonlySet<string> = new Set(["upload", "photos"]);
 
-// "מתעתד בעז״ה:" / "מה עושה כיום?" - סימן בסוף התווית לא נכנס למשפט
-const TRAILING_PUNCTUATION_PATTERN = /[\s:?.]+$/;
-
 export function isGenericErrorMessage(message: string): boolean {
   const trimmed = message.trim();
   return (
@@ -48,11 +54,9 @@ export function getRequiredFieldMessage(
   label: string,
   fieldType: string,
 ): string {
-  const subject = label.replace(TRAILING_PUNCTUATION_PATTERN, "").trim();
-  if (!subject) return GENERIC_REQUIRED_MESSAGE;
-  if (CHOICE_FIELD_TYPES.has(fieldType)) return `נא לבחור ${subject}`;
-  if (FILE_FIELD_TYPES.has(fieldType)) return `נא להעלות ${subject}`;
-  return `נא למלא ${subject}`;
+  if (CHOICE_FIELD_TYPES.has(fieldType)) return chooseMessage(label);
+  if (FILE_FIELD_TYPES.has(fieldType)) return uploadMessage(label);
+  return fillMessage(label);
 }
 
 /** רשומה חוזרת שסומנה חובה ואין בה שורות: "נא להוסיף מחותן" */

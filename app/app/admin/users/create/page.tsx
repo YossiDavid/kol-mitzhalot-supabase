@@ -1,55 +1,74 @@
 "use client";
 
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
-import { Box, Page, PageHeader } from "@/components/layout";
+import { Page, PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Form, FormControl, FormField } from "@/components/ui/form";
+import { FormFieldShell } from "@/components/ui/form-field-shell";
+import {
+  FormActions,
+  FormFields,
+  FormGrid,
+  FormSubmitError,
+} from "@/components/ui/form-layout";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
+import {
+  optionalText,
+  requiredEmail,
+  requiredPhone,
+} from "@/lib/forms/schema";
 
-type Role = "admin" | "shadchan" | "user";
-
-const ROLE_LABELS: Record<Role, string> = {
+const ROLE_LABELS = {
   user: "משתמש",
   shadchan: "שדכן",
   admin: "מנהל מערכת",
-};
+} as const;
+
+type Role = keyof typeof ROLE_LABELS;
+
+const ROLE_VALUES = Object.keys(ROLE_LABELS) as [Role, ...Role[]];
+
+const createUserSchema = z.object({
+  firstName: optionalText(),
+  lastName: optionalText(),
+  email: requiredEmail("אימייל"),
+  phone: requiredPhone("טלפון"),
+  role: z.enum(ROLE_VALUES),
+});
+
+type CreateUserValues = z.infer<typeof createUserSchema>;
 
 export default function CreateAdminUserPage() {
   const router = useRouter();
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [role, setRole] = useState<Role>("user");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const form = useForm<CreateUserValues>({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      role: "user",
+    },
+  });
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError(null);
+  const { isSubmitting, errors } = form.formState;
 
-    if (!email) {
-      setError("יש להזין אימייל למשתמש החדש");
-      return;
-    }
-
-    if (!phone) {
-      setError("יש להזין טלפון למשתמש החדש");
-      return;
-    }
-
-    setIsSubmitting(true);
+  const onSubmit = async (values: CreateUserValues) => {
+    form.clearErrors("root");
 
     try {
       const response = await fetch("/api/v1/users", {
@@ -58,21 +77,22 @@ export default function CreateAdminUserPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          firstName: firstName || null,
-          lastName: lastName || null,
-          email,
-          phone,
-          role,
+          firstName: values.firstName || null,
+          lastName: values.lastName || null,
+          email: values.email,
+          phone: values.phone,
+          role: values.role,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        setError(
-          data?.error ||
+        form.setError("root", {
+          message:
+            data?.error ||
             "אירעה שגיאה בעת יצירת המשתמש. נסה/י שוב מאוחר יותר.",
-        );
+        });
         return;
       }
 
@@ -84,14 +104,14 @@ export default function CreateAdminUserPage() {
       }
     } catch (error) {
       console.error("Error creating user:", error);
-      setError("אירעה שגיאה לא צפויה בעת יצירת המשתמש");
-    } finally {
-      setIsSubmitting(false);
+      form.setError("root", {
+        message: "אירעה שגיאה לא צפויה בעת יצירת המשתמש",
+      });
     }
   };
 
   return (
-    <Page>
+    <Page width="form">
       <PageHeader
         title="יצירת משתמש חדש"
         description="הוספת משתמש חדש למערכת"
@@ -101,90 +121,124 @@ export default function CreateAdminUserPage() {
           </Button>
         }
       />
-        <Box className="max-w-xl space-y-6">
-          {error && (
-            <div className="border-destructive bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-body-sm">
-              {error}
-            </div>
-          )}
+      <Card>
+        <CardContent>
+          <Form {...form}>
+            {/* noValidate: ההודעות בעברית מגיעות מהסכמה ולא מהדפדפן */}
+            <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+              <FormFields>
+                <FormSubmitError>{errors.root?.message}</FormSubmitError>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="firstName">שם פרטי</Label>
-              <Input
-                id="firstName"
-                value={firstName}
-                onChange={(event) => setFirstName(event.target.value)}
-                placeholder="לדוגמה: ישראל"
-              />
-            </div>
+                <FormGrid>
+                  <FormField
+                    control={form.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormFieldShell label="שם פרטי">
+                        <Input
+                          {...field}
+                          placeholder="לדוגמה: ישראל"
+                          autoComplete="off"
+                          disabled={isSubmitting}
+                        />
+                      </FormFieldShell>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormFieldShell label="שם משפחה">
+                        <Input
+                          {...field}
+                          placeholder="לדוגמה: כהן"
+                          autoComplete="off"
+                          disabled={isSubmitting}
+                        />
+                      </FormFieldShell>
+                    )}
+                  />
+                </FormGrid>
 
-            <div className="grid gap-2">
-              <Label htmlFor="lastName">שם משפחה</Label>
-              <Input
-                id="lastName"
-                value={lastName}
-                onChange={(event) => setLastName(event.target.value)}
-                placeholder="לדוגמה: כהן"
-              />
-            </div>
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormFieldShell label="אימייל" required>
+                      <Input
+                        {...field}
+                        type="email"
+                        placeholder="user@example.com"
+                        autoComplete="off"
+                        disabled={isSubmitting}
+                      />
+                    </FormFieldShell>
+                  )}
+                />
 
-            <div className="grid gap-2">
-              <Label htmlFor="email">אימייל</Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="user@example.com"
-              />
-            </div>
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormFieldShell label="טלפון" required>
+                      <Input
+                        {...field}
+                        type="tel"
+                        placeholder="לדוגמה: 050-0000000"
+                        autoComplete="off"
+                        dir="ltr"
+                        className="text-start"
+                        disabled={isSubmitting}
+                      />
+                    </FormFieldShell>
+                  )}
+                />
 
-            <div className="grid gap-2">
-              <Label htmlFor="phone">טלפון</Label>
-              <Input
-                id="phone"
-                type="tel"
-                required
-                value={phone}
-                onChange={(event) => setPhone(event.target.value)}
-                placeholder="לדוגמה: 050-0000000"
-              />
-            </div>
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormFieldShell label="תפקיד במערכת" required isComposite>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={isSubmitting}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="בחר תפקיד" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {ROLE_VALUES.map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {ROLE_LABELS[role]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormFieldShell>
+                  )}
+                />
 
-            <div className="grid gap-2">
-              <Label>תפקיד במערכת</Label>
-              <Select value={role} onValueChange={(value) => setRole(value as Role)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="בחר תפקיד">
-                    {role ? ROLE_LABELS[role] : undefined}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="user">{ROLE_LABELS.user}</SelectItem>
-                  <SelectItem value="shadchan">{ROLE_LABELS.shadchan}</SelectItem>
-                  <SelectItem value="admin">{ROLE_LABELS.admin}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                asChild
-                disabled={isSubmitting}
-              >
-                <Link href="/app/admin/users">ביטול</Link>
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "יוצר משתמש..." : "יצירת משתמש"}
-              </Button>
-            </div>
-          </form>
-        </Box>
+                <FormActions>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    asChild
+                    disabled={isSubmitting}
+                  >
+                    <Link href="/app/admin/users">ביטול</Link>
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? "יוצר משתמש..." : "יצירת משתמש"}
+                  </Button>
+                </FormActions>
+              </FormFields>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </Page>
   );
 }
-

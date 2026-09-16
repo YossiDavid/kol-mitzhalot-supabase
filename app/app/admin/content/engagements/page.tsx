@@ -1,26 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff, Plus, Trash2, X } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Box, Page, PageHeader } from "@/components/layout";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+
 import {
   DataTable,
   DataTableSkeleton,
   type DataTableColumn,
 } from "@/components/data-table";
+import { Box, Page, PageHeader } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Label } from "@/components/ui/label";
+import { Form, FormField } from "@/components/ui/form";
+import { FormFieldShell } from "@/components/ui/form-field-shell";
+import {
+  FormActions,
+  FormFields,
+  FormGrid,
+} from "@/components/ui/form-layout";
 import { Input } from "@/components/ui/input";
+import {
+  optionalEmail,
+  optionalPhone,
+  optionalText,
+  requiredText,
+} from "@/lib/forms/schema";
 import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import { Plus, Trash2, Eye, EyeOff, X, ChevronDown } from "lucide-react";
 
 type Engagement = {
   id: string;
@@ -33,7 +50,24 @@ type Engagement = {
   created_at: string;
 };
 
-const EMPTY_FORM = {
+const engagementSchema = z.object({
+  groom_name: requiredText("שם החתן"),
+  groom_father: optionalText(),
+  groom_city: optionalText(),
+  groom_yeshiva: optionalText(),
+  bride_name: requiredText("שם הכלה"),
+  bride_father: optionalText(),
+  bride_city: optionalText(),
+  bride_seminary: optionalText(),
+  shadchan_name: optionalText(),
+  submitter_name: optionalText(),
+  submitter_phone: optionalPhone(),
+  submitter_email: optionalEmail(),
+});
+
+type EngagementFormValues = z.infer<typeof engagementSchema>;
+
+const EMPTY_FORM: EngagementFormValues = {
   groom_name: "",
   groom_father: "",
   groom_city: "",
@@ -52,9 +86,14 @@ export default function EngagementsAdminPage() {
   const [engagements, setEngagements] = useState<Engagement[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
   const supabase = createClient();
+
+  const form = useForm<EngagementFormValues>({
+    resolver: zodResolver(engagementSchema),
+    defaultValues: EMPTY_FORM,
+  });
+
+  const { isSubmitting } = form.formState;
 
   async function load() {
     setLoading(true);
@@ -71,6 +110,7 @@ export default function EngagementsAdminPage() {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function togglePublish(e: Engagement) {
@@ -96,24 +136,18 @@ export default function EngagementsAdminPage() {
     }
   }
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.groom_name.trim() || !form.bride_name.trim()) {
-      toast.error("נא למלא שם חתן וכלה");
-      return;
-    }
-    setSaving(true);
+  async function handleCreate(values: EngagementFormValues) {
     const { error } = await supabase
       .from("engagements")
-      .insert({ ...form, is_published: false });
-    if (error) toast.error(`שגיאה: ${error.message}`);
-    else {
-      toast.success("מודעה נוצרה");
-      setForm(EMPTY_FORM);
-      setShowForm(false);
-      load();
+      .insert({ ...values, is_published: false });
+    if (error) {
+      toast.error(`שגיאה: ${error.message}`);
+      return;
     }
-    setSaving(false);
+    toast.success("מודעה נוצרה");
+    form.reset(EMPTY_FORM);
+    setShowForm(false);
+    load();
   }
 
   const engagementColumns: DataTableColumn<Engagement>[] = [
@@ -190,17 +224,25 @@ export default function EngagementsAdminPage() {
     },
   ];
 
-  const F = (key: keyof typeof EMPTY_FORM, label: string, type = "text") => (
-    <div>
-      <Label htmlFor={key}>{label}</Label>
-      <Input
-        id={key}
-        type={type}
-        value={form[key]}
-        onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-        className="mt-1"
-      />
-    </div>
+  /** שדה טקסט בטופס המודעה - כולם באותה מעטפת ובאותו רוחב */
+  const textField = (
+    name: keyof EngagementFormValues,
+    label: string,
+    options: { required?: boolean; type?: string } = {},
+  ) => (
+    <FormField
+      control={form.control}
+      name={name}
+      render={({ field }) => (
+        <FormFieldShell label={label} required={options.required}>
+          <Input
+            {...field}
+            type={options.type ?? "text"}
+            disabled={isSubmitting}
+          />
+        </FormFieldShell>
+      )}
+    />
   );
 
   return (
@@ -225,44 +267,59 @@ export default function EngagementsAdminPage() {
         }
       />
       {showForm && (
-        <Box>
-          <form onSubmit={handleCreate} className="space-y-6">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div className="space-y-4">
-                <p className="font-semibold text-primary">החתן</p>
-                {F("groom_name", "שם החתן *")}
-                {F("groom_father", "שם אביו")}
-                {F("groom_city", "עיר")}
-                {F("groom_yeshiva", "מישיבת")}
-              </div>
-              <div className="space-y-4">
-                <p className="font-semibold text-primary">הכלה</p>
-                {F("bride_name", "שם הכלה *")}
-                {F("bride_father", "שם אביה")}
-                {F("bride_city", "עיר")}
-                {F("bride_seminary", "סמינר")}
-              </div>
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              {F("shadchan_name", "שם השדכן")}
-              {F("submitter_name", "שם השולח")}
-              {F("submitter_phone", "טלפון", "tel")}
-            </div>
-            {F("submitter_email", "מייל השולח", "email")}
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowForm(false)}
-              >
-                ביטול
-              </Button>
-              <Button type="submit" disabled={saving}>
-                {saving ? "שומר..." : "צור מודעה"}
-              </Button>
-            </div>
-          </form>
-        </Box>
+        // הטופס אינו נמתח לרוחב העמוד: שדות שם ברוחב מלא אינם קריאים.
+        // הטבלה שמתחתיו נשארת ברוחב מלא.
+        <Card className="w-full max-w-3xl">
+          <CardContent>
+            <Form {...form}>
+              {/* noValidate: ההודעות בעברית מגיעות מהסכמה ולא מהדפדפן */}
+              <form onSubmit={form.handleSubmit(handleCreate)} noValidate>
+                <FormFields>
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <FormFields>
+                      <p className="font-semibold text-primary">החתן</p>
+                      {textField("groom_name", "שם החתן", { required: true })}
+                      {textField("groom_father", "שם אביו")}
+                      {textField("groom_city", "עיר")}
+                      {textField("groom_yeshiva", "מישיבת")}
+                    </FormFields>
+                    <FormFields>
+                      <p className="font-semibold text-primary">הכלה</p>
+                      {textField("bride_name", "שם הכלה", { required: true })}
+                      {textField("bride_father", "שם אביה")}
+                      {textField("bride_city", "עיר")}
+                      {textField("bride_seminary", "סמינר")}
+                    </FormFields>
+                  </div>
+
+                  <FormGrid columns={3}>
+                    {textField("shadchan_name", "שם השדכן")}
+                    {textField("submitter_name", "שם השולח")}
+                    {textField("submitter_phone", "טלפון", { type: "tel" })}
+                  </FormGrid>
+
+                  {textField("submitter_email", "מייל השולח", {
+                    type: "email",
+                  })}
+
+                  <FormActions>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowForm(false)}
+                      disabled={isSubmitting}
+                    >
+                      ביטול
+                    </Button>
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? "שומר..." : "צור מודעה"}
+                    </Button>
+                  </FormActions>
+                </FormFields>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
       )}
 
       <Box>
@@ -279,7 +336,9 @@ export default function EngagementsAdminPage() {
               <Empty size="compact" surface={false}>
                 <EmptyHeader>
                   <EmptyTitle>אין מודעות עדיין</EmptyTitle>
-                  <EmptyDescription>מודעות מהטופס באתר יופיעו כאן לאישור</EmptyDescription>
+                  <EmptyDescription>
+                    מודעות מהטופס באתר יופיעו כאן לאישור
+                  </EmptyDescription>
                 </EmptyHeader>
               </Empty>
             }

@@ -1,11 +1,12 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
-import {
-  AUTH_CONFIRM_PATH,
-  getAuthRedirectUrl,
-} from "@/features/auth/lib/redirect-url";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+import { PageTitle } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,12 +14,23 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
-import { PageTitle } from "@/components/layout/page-header";
+import { Form, FormField } from "@/components/ui/form";
+import { FormFieldShell } from "@/components/ui/form-field-shell";
+import { FormFields, FormSubmitError } from "@/components/ui/form-layout";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import {
+  AUTH_CONFIRM_PATH,
+  getAuthRedirectUrl,
+} from "@/features/auth/lib/redirect-url";
+import { requiredEmail } from "@/lib/forms/schema";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
+
+const loginSchema = z.object({
+  email: requiredEmail("אימייל"),
+});
+
+type LoginValues = z.infer<typeof loginSchema>;
 
 /**
  * כשהאימייל לא קיים, Supabase מחזיר "Signups not allowed for otp" —
@@ -37,16 +49,18 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "" },
+  });
+
+  const { isSubmitting, errors } = form.formState;
+
+  const onSubmit = async ({ email }: LoginValues) => {
+    form.clearErrors("root");
     const supabase = createClient();
-    setIsLoading(true);
-    setError(null);
 
     try {
       const { error } = await supabase.auth.signInWithOtp({
@@ -61,9 +75,7 @@ export function LoginForm({
       if (error) throw error;
       router.push("/auth/check-email");
     } catch (err: unknown) {
-      setError(resolveLoginError(err));
-    } finally {
-      setIsLoading(false);
+      form.setError("root", { message: resolveLoginError(err) });
     }
   };
 
@@ -77,41 +89,45 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin}>
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="email" required>
-                  אימייל
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
+          <Form {...form}>
+            {/* noValidate: ההודעות בעברית מגיעות מהסכמה ולא מהדפדפן */}
+            <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+              <FormFields>
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormFieldShell label="אימייל" required>
+                      <Input
+                        {...field}
+                        type="email"
+                        placeholder="m@example.com"
+                        autoComplete="email"
+                        disabled={isSubmitting}
+                      />
+                    </FormFieldShell>
+                  )}
                 />
+                <FormSubmitError>{errors.root?.message}</FormSubmitError>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "שולח קישור..." : "שלח קישור התחברות"}
+                </Button>
+              </FormFields>
+              <div className="mt-4 text-center text-body-sm text-muted-foreground">
+                אין לך חשבון?{" "}
+                <Link
+                  href="/auth/sign-up"
+                  className="underline underline-offset-4"
+                >
+                  הירשם
+                </Link>
               </div>
-              {error && (
-                <p className="text-body-sm text-destructive" role="alert">
-                  {error}
-                </p>
-              )}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "שולח קישור..." : "שלח קישור התחברות"}
-              </Button>
-            </div>
-            <div className="mt-4 text-center text-body-sm text-muted-foreground">
-              אין לך חשבון?{" "}
-              <Link
-                href="/auth/sign-up"
-                className="underline underline-offset-4"
-              >
-                הירשם
-              </Link>
-            </div>
-          </form>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     </div>

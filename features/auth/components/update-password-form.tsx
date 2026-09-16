@@ -1,7 +1,11 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+import { PageTitle } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,26 +13,37 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
-import { PageTitle } from "@/components/layout/page-header";
+import { Form, FormField } from "@/components/ui/form";
+import { FormFieldShell } from "@/components/ui/form-field-shell";
+import { FormFields, FormSubmitError } from "@/components/ui/form-layout";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { requiredText } from "@/lib/forms/schema";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
+
+// אורך הסיסמה נאכף ב-Supabase, ולכן כאן נבדק רק שהשדה לא ריק
+const updatePasswordSchema = z.object({
+  password: requiredText("סיסמה חדשה"),
+});
+
+type UpdatePasswordValues = z.infer<typeof updatePasswordSchema>;
 
 export function UpdatePasswordForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<UpdatePasswordValues>({
+    resolver: zodResolver(updatePasswordSchema),
+    defaultValues: { password: "" },
+  });
+
+  const { isSubmitting, errors } = form.formState;
+
+  const onSubmit = async ({ password }: UpdatePasswordValues) => {
+    form.clearErrors("root");
     const supabase = createClient();
-    setIsLoading(true);
-    setError(null);
 
     try {
       const { error } = await supabase.auth.updateUser({ password });
@@ -36,9 +51,9 @@ export function UpdatePasswordForm({
       // Redirect to the main app dashboard after password update
       router.push("/app");
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
-    } finally {
-      setIsLoading(false);
+      form.setError("root", {
+        message: error instanceof Error ? error.message : "An error occurred",
+      });
     }
   };
 
@@ -47,30 +62,39 @@ export function UpdatePasswordForm({
       <Card>
         <CardHeader>
           <PageTitle>שחזר את הסיסמה שלך</PageTitle>
-          <CardDescription>
-            הכנס את הסיסמה החדשה שלך שמטה.
-          </CardDescription>
+          <CardDescription>הכנס את הסיסמה החדשה שלך שמטה.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleForgotPassword}>
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="password">סיסמה חדשה</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="סיסמה חדשה"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+          <Form {...form}>
+            {/* noValidate: ההודעות בעברית מגיעות מהסכמה ולא מהדפדפן */}
+            <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+              <FormFields>
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormFieldShell label="סיסמה חדשה" required>
+                      <Input
+                        {...field}
+                        type="password"
+                        placeholder="סיסמה חדשה"
+                        autoComplete="new-password"
+                        disabled={isSubmitting}
+                      />
+                    </FormFieldShell>
+                  )}
                 />
-              </div>
-              {error && <p className="text-body-sm text-destructive">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "שומר..." : "שמור סיסמה חדשה"}
-              </Button>
-            </div>
-          </form>
+                <FormSubmitError>{errors.root?.message}</FormSubmitError>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "שומר..." : "שמור סיסמה חדשה"}
+                </Button>
+              </FormFields>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     </div>
