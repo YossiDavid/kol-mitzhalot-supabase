@@ -16,6 +16,11 @@ test.describe("תוכן מייל הצעת שידוך", () => {
 
     // Assert
     expect(content.subject).toBe("התקבלה הצעת שידוך חדשה");
+    // מייל יצא בפועל בלי כותרת (16.9.2026): SendGrid התעלם מהנושא שנשלח
+    // בבקשה, כי לתבנית לא הייתה שורת נושא. מאז הנושא נשלח גם בנתוני התבנית
+    // והתבנית משתמשת בו - ולכן שניהם חייבים להישאר מלאים.
+    expect(content.subject.trim()).not.toBe("");
+    expect(String(content.templateData.subject).trim()).not.toBe("");
     expect(content.text).toContain("התקבלה הצעת שידוך חדשה");
     expect(content.text).toContain(SHADCHAN_NAME);
     expect(content.text).toContain(`/app/shidduchim/${SHIDDUCH_ID}`);

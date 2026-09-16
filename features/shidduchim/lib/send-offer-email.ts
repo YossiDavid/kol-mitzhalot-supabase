@@ -129,6 +129,13 @@ async function sendOfferEmail(
   to: string,
   content: OfferEmailContent,
 ): Promise<{ messageId: string | null }> {
+  // מייל בלי שורת נושא יצא בפועל למשתמש אמיתי (16.9.2026). עדיף להיכשל
+  // בקול מאשר לשלוח הודעה ריקה. הנושא נשלח גם בהתאמה האישית וגם בנתוני
+  // התבנית, כך שהוא אינו תלוי בהגדרה יחידה ב-SendGrid.
+  if (!content.subject.trim()) {
+    throw new Error("הצעת שידוך לא נשלחה: חסרה שורת נושא למייל");
+  }
+
   const templateId = getShidduchTemplateId();
   if (templateId) {
     return sendSendGridRequest({
