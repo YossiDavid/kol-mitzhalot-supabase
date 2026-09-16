@@ -16,7 +16,10 @@ import { AddCvDialog } from "@/features/students/components/add-cv-dialog";
 import DeleteStudentButton from "@/features/students/components/delete-student-button";
 import { StudentRowPhoto } from "@/features/students/components/student-row-photo";
 import { useStudentThumbnails } from "@/features/students/lib/use-student-thumbnails";
-import { personalStatusToHebrew } from "@/features/students/lib/profile-labels";
+import {
+  formatFirstNameWithNickname,
+  personalStatusToHebrew,
+} from "@/features/students/lib/profile-labels";
 import {
   isOutOfShidduchimStatus,
   isRecentlyEngaged,
@@ -98,10 +101,9 @@ function fullName(student: StudentTableRow) {
   return `${student.first_name} ${student.last_name}`;
 }
 
-/** השם הפרטי, ואחריו הכינוי בסוגריים כשיש. המיון נשאר לפי השם בלבד */
+/** השם הפרטי עם הכינוי, באותו ניסוח של הכרטיס. המיון נשאר לפי השם בלבד */
 function firstNameWithNickname(student: StudentTableRow) {
-  const nickname = student.nickname?.trim();
-  return nickname ? `${student.first_name} (${nickname})` : student.first_name;
+  return formatFirstNameWithNickname(student.first_name, student.nickname);
 }
 
 function studentCardHref(id: string) {

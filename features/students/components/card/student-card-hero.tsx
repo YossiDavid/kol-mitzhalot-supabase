@@ -3,7 +3,11 @@ import Link from "next/link";
 
 import { PageTitle } from "@/components/layout";
 import { CONTROL_HEIGHT } from "@/components/ui/control-size";
-import { personalStatusToHebrew } from "@/features/students/lib/profile-labels";
+import { formatChildrenCount } from "@/features/students/lib/previous-partner-children";
+import {
+  formatFirstNameWithNickname,
+  personalStatusToHebrew,
+} from "@/features/students/lib/profile-labels";
 
 /**
  * "חזרה לרשימה" יושב בשורת הפעולות של ההדר ולא בשורה נפרדת מעליה, ולכן הוא
@@ -45,6 +49,21 @@ function MetaItem({ children }: { children: React.ReactNode }) {
 }
 
 /**
+ * מספר הילדים מנישואים קודמים, צמוד לסטטוס: "גרוש + 3". מובלט משאר שורת
+ * המטא בכוונה - זה נתון שמכריע התאמה, ואסור שיתגלה רק אחרי גלילה למקטע
+ * "נישואין קודמים". קורא מסך שומע את הניסוח המלא ולא "פלוס שלוש".
+ */
+function ChildrenBadge({ count }: { count: number }) {
+  const label = formatChildrenCount(count);
+  return (
+    <span className="font-bold text-foreground" title={label}>
+      <span aria-hidden="true"> + {count}</span>
+      <span className="sr-only">, {label}</span>
+    </span>
+  );
+}
+
+/**
  * ראש הכרטיס: תמונה, שם ושורת מטא (מגדר · גיל · סטטוס · עיר · גובה).
  *
  * שורת הפעולות מחזיקה את "חזרה לרשימה" (`backLink`) ואת הפעולות (`actions`)
@@ -54,10 +73,12 @@ function MetaItem({ children }: { children: React.ReactNode }) {
 export function StudentCardHero({
   firstName,
   lastName,
+  nickname,
   genderLabel,
   age,
   personalStatus,
   gender,
+  childrenCount = 0,
   city,
   height,
   photo,
@@ -66,10 +87,14 @@ export function StudentCardHero({
 }: {
   firstName: string;
   lastName: string;
+  /** כינוי, בסוגריים אחרי השם הפרטי - כמו בטבלת המיועדים */
+  nickname?: string | null;
   genderLabel: string | null;
   age: string | number | null;
   personalStatus: string | null | undefined;
   gender: string | null | undefined;
+  /** סך הילדים מנישואים קודמים. 0 - לא מוצג דבר ליד הסטטוס */
+  childrenCount?: number;
   city: string | null | undefined;
   height: number | null | undefined;
   photo: React.ReactNode;
@@ -82,14 +107,18 @@ export function StudentCardHero({
 
       <div className="min-w-0 flex-1">
         <PageTitle>
-          {firstName} {lastName}
+          {formatFirstNameWithNickname(firstName, nickname)} {lastName}
         </PageTitle>
-        <p className="mt-1.5 flex flex-wrap gap-x-2 gap-y-1 text-body-sm text-muted-foreground">
+        <p
+          data-slot="student-card-meta"
+          className="mt-1.5 flex flex-wrap gap-x-2 gap-y-1 text-body-sm text-muted-foreground"
+        >
           {genderLabel && <span>{genderLabel}</span>}
           {age !== null && <MetaItem>גיל {age}</MetaItem>}
           {personalStatus && (
             <MetaItem>
               {personalStatusToHebrew(personalStatus, gender ?? undefined)}
+              {childrenCount > 0 && <ChildrenBadge count={childrenCount} />}
             </MetaItem>
           )}
           {city && <MetaItem>{city}</MetaItem>}

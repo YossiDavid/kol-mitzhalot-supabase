@@ -1,5 +1,17 @@
 /** Hebrew labels for student profile / CV display (shared by summary + full views). */
 
+/**
+ * השם הפרטי, ואחריו הכינוי בסוגריים כשיש. מקום אחד לטבלת המיועדים ולכרטיס,
+ * כדי שהשם ייראה זהה בשני המסכים. המיון בטבלה נשאר לפי השם עצמו.
+ */
+export function formatFirstNameWithNickname(
+  firstName: string,
+  nickname: string | null | undefined,
+): string {
+  const trimmed = nickname?.trim();
+  return trimmed ? `${firstName} (${trimmed})` : firstName;
+}
+
 export function eduToHebrew(edu: string) {
   switch (edu) {
     case "yeshiva_ktana":

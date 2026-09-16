@@ -5,6 +5,7 @@ import {
   StaffFeedbackList,
 } from "@/features/students/components/student-notes";
 import calculateAge from "@/lib/calculateAge";
+import { getTotalChildrenCount } from "@/features/students/lib/previous-partner-children";
 import { genderToHebrew } from "@/features/students/lib/student-card-data";
 import type {
   PrivateNote,
@@ -66,10 +67,12 @@ export function StudentCard({
       <StudentCardHero
         firstName={student.first_name}
         lastName={student.last_name}
+        nickname={student.nickname}
         genderLabel={genderLabel}
         age={student.birth_date ? calculateAge(student.birth_date) : null}
         personalStatus={student.personal_status}
         gender={student.gender}
+        childrenCount={getTotalChildrenCount(student.previous_partners)}
         city={student.city}
         height={student.height}
         photo={

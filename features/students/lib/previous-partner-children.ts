@@ -111,6 +111,25 @@ export function formatChildrenCount(count: number): string {
   return `${count} ילדים`;
 }
 
+/**
+ * סך הילדים מכל הנישואים הקודמים - לשורת המטא בכרטיס ("גרוש + 3"). כל שורה
+ * נספרת באותם כללים של המקטע עצמו: מהרשימה, ובשורה ישנה מהמספר שנשמר.
+ */
+export function getTotalChildrenCount(partners: unknown): number {
+  if (!Array.isArray(partners)) return 0;
+  return partners
+    .filter(isRecord)
+    .reduce(
+      (total, partner) =>
+        total +
+        getChildrenCount(
+          parseStoredChildren(partner.children),
+          partner.children_number,
+        ),
+      0,
+    );
+}
+
 type StudentGender = string | null | undefined;
 
 /** ההורה שהוא המיועד/ת עצמו/ה, וההורה השני */
