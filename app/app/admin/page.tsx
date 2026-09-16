@@ -9,6 +9,7 @@ import {
   UserCheck,
   UserPlus,
   Users,
+  UsersRound,
 } from "lucide-react";
 
 export default function AdminPage() {
@@ -61,6 +62,12 @@ export default function AdminPage() {
           icon={GraduationCap}
           title="מוסדות לימוד"
           description="ניהול מאגר מוסדות הלימוד לבחירה באשף יצירת כרטיס מיועד"
+        />
+        <LinkCard
+          href="/app/admin/communities"
+          icon={UsersRound}
+          title="חסידויות וקהילות"
+          description="ניהול מאגר החסידויות והקהילות לבחירה באשף יצירת כרטיס מיועד"
         />
         <LinkCard
           href="/app/admin/students/institutions"
