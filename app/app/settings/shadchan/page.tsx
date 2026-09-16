@@ -1,9 +1,14 @@
 "use client";
 
-import { Page, PageHeader } from "@/components/layout";
-import { Suspense, useState, useEffect } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { Suspense, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+
+import { Page, PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,35 +17,55 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { useForm } from "react-hook-form";
-import Link from "next/link";
-import { isValidPhone, PHONE_INVALID_MESSAGE } from "@/lib/phone";
-import { hasRole } from "@/lib/user-role";
-import { SkeletonRegion } from "@/components/ui/skeleton";
 import { CardSkeleton } from "@/components/ui/card-skeleton";
+import { Form, FormField } from "@/components/ui/form";
+import { FormFieldShell } from "@/components/ui/form-field-shell";
+import {
+  FormActions,
+  FormFields,
+  FormGrid,
+} from "@/components/ui/form-layout";
+import { Input } from "@/components/ui/input";
+import { SkeletonRegion } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  optionalEmail,
+  optionalPhone,
+  optionalText,
+  requiredText,
+  requiredWholeNumber,
+} from "@/lib/forms/schema";
+import { createClient } from "@/lib/supabase/client";
+import { hasRole } from "@/lib/user-role";
 
 /** מספר שדות הטופס, לשלד הטעינה. */
 const FORM_FIELD_COUNT = 6;
 
-interface ShadchanFormData {
-  bio: string;
-  experience_years: string;
-  specializations: string;
-  contact_phone: string;
-  contact_email: string;
-  languages: string;
-  closed_matches: string;
+const shadchanSchema = z.object({
+  bio: requiredText("ביוגרפיה"),
+  experience_years: requiredWholeNumber("שנות ניסיון"),
+  closed_matches: requiredWholeNumber("מספר השידוכים שנסגרו"),
+  specializations: optionalText(),
+  contact_phone: optionalPhone(),
+  contact_email: optionalEmail(),
+  languages: optionalText(),
+});
+
+type ShadchanFormData = z.infer<typeof shadchanSchema>;
+
+const EMPTY_FORM: ShadchanFormData = {
+  bio: "",
+  experience_years: "",
+  closed_matches: "",
+  specializations: "",
+  contact_phone: "",
+  contact_email: "",
+  languages: "",
+};
+
+/** רק מה שהטופס באמת צריך לדעת על בקשה שכבר הוגשה */
+interface ExistingShadchanApplication {
+  application_status: string | null;
 }
 
 /** שלד עמוד הבקשה, זהה במבנה לתוכן האמיתי כדי שלא תהיה קפיצה. */
@@ -69,21 +94,16 @@ export default function ShadchanApplicationPage() {
 
 function ShadchanApplicationForm() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
-  const [existingApplication, setExistingApplication] = useState<any>(null);
+  const [existingApplication, setExistingApplication] =
+    useState<ExistingShadchanApplication | null>(null);
 
   const form = useForm<ShadchanFormData>({
-    defaultValues: {
-      bio: "",
-      experience_years: "",
-      specializations: "",
-      contact_phone: "",
-      contact_email: "",
-      languages: "",
-      closed_matches: "",
-    },
+    resolver: zodResolver(shadchanSchema),
+    defaultValues: EMPTY_FORM,
   });
+
+  const { isSubmitting } = form.formState;
 
   useEffect(() => {
     async function fetchExistingData() {
@@ -138,8 +158,16 @@ function ShadchanApplicationForm() {
     fetchExistingData();
   }, [router, form]);
 
+  /** "עברית, אנגלית" → ["עברית", "אנגלית"]; ריק → null */
+  const toList = (value: string) => {
+    const items = value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    return items.length ? items : null;
+  };
+
   const onSubmit = async (data: ShadchanFormData) => {
-    setIsLoading(true);
     const supabase = createClient();
 
     try {
@@ -149,38 +177,20 @@ function ShadchanApplicationForm() {
 
       if (!user) {
         toast.error("יש להתחבר למערכת");
-        setIsLoading(false);
         return;
       }
 
-      // בדיקת טלפון אם הוזן
-      if (data.contact_phone && !isValidPhone(data.contact_phone.trim())) {
-        toast.error(PHONE_INVALID_MESSAGE);
-        setIsLoading(false);
-        return;
-      }
-
-      // הכנת הנתונים להכנסה
-      const insertData: any = {
+      // הערכים כבר חתוכי רווחים ותקינים - הסכמה בדקה אותם
+      const insertData: Record<string, unknown> = {
         user_id: user.id,
         bio: data.bio || null,
         experience_years: data.experience_years
           ? parseInt(data.experience_years)
           : null,
-        specializations: data.specializations
-          ? data.specializations
-              .split(",")
-              .map((s) => s.trim())
-              .filter(Boolean)
-          : null,
+        specializations: toList(data.specializations),
         contact_phone: data.contact_phone || null,
         contact_email: data.contact_email || null,
-        languages: data.languages
-          ? data.languages
-              .split(",")
-              .map((l) => l.trim())
-              .filter(Boolean)
-          : null,
+        languages: toList(data.languages),
         closed_matches: data.closed_matches
           ? parseInt(data.closed_matches)
           : null,
@@ -212,8 +222,6 @@ function ShadchanApplicationForm() {
         error instanceof Error ? error.message : "אירעה שגיאה בשליחת הבקשה";
       toast.error(errorMessage);
       console.error("Error submitting shadchan application:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -227,195 +235,154 @@ function ShadchanApplicationForm() {
         title="הצטרפות כשדכן"
         description="מלא את הפרטים הבאים כדי להגיש בקשה להצטרפות כשדכן במערכת"
       />
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>טופס הצטרפות</CardTitle>
-            <CardDescription>
-              אנא מלא את כל הפרטים הרלוונטיים. הבקשה תבדק על ידי מנהל המערכת.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-6"
-              >
+      <Card>
+        <CardHeader>
+          <CardTitle>טופס הצטרפות</CardTitle>
+          <CardDescription>
+            אנא מלא את כל הפרטים הרלוונטיים. הבקשה תבדק על ידי מנהל המערכת.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            {/* noValidate: ההודעות בעברית מגיעות מהסכמה ולא מהדפדפן */}
+            <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+              <FormFields>
                 <FormField
-                  control={form.control as any}
+                  control={form.control}
                   name="bio"
-                  rules={{ required: "ביוגרפיה היא שדה חובה" }}
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>ביוגרפיה</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          placeholder="ספר על עצמך, הרקע שלך, והניסיון שלך בשדכנות"
-                          rows={5}
-                          disabled={isLoading}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <FormFieldShell label="ביוגרפיה" required>
+                      <Textarea
+                        {...field}
+                        placeholder="ספר על עצמך, הרקע שלך, והניסיון שלך בשדכנות"
+                        rows={5}
+                        disabled={isSubmitting}
+                      />
+                    </FormFieldShell>
                   )}
                 />
 
-                <FormField
-                  control={form.control as any}
-                  name="experience_years"
-                  rules={{ required: "שנות ניסיון הן שדה חובה" }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>שנות ניסיון</FormLabel>
-                      <FormControl>
+                <FormGrid>
+                  <FormField
+                    control={form.control}
+                    name="experience_years"
+                    render={({ field }) => (
+                      <FormFieldShell label="שנות ניסיון" required>
                         <Input
                           {...field}
                           type="number"
                           min="0"
                           placeholder="לדוגמה: 5"
-                          disabled={isLoading}
+                          disabled={isSubmitting}
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control as any}
-                  name="closed_matches"
-                  rules={{
-                    required: "מספר השידוכים שנסגרו הוא שדה חובה",
-                    min: { value: 0, message: "מספר לא יכול להיות שלילי" },
-                  }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>כמה שידוכים סגרתי</FormLabel>
-                      <FormControl>
+                      </FormFieldShell>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="closed_matches"
+                    render={({ field }) => (
+                      <FormFieldShell label="כמה שידוכים סגרתי" required>
                         <Input
                           {...field}
                           type="number"
                           min="0"
                           placeholder="לדוגמה: 12"
-                          disabled={isLoading}
+                          disabled={isSubmitting}
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                      </FormFieldShell>
+                    )}
+                  />
+                </FormGrid>
 
                 <FormField
-                  control={form.control as any}
+                  control={form.control}
                   name="specializations"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>התמחויות (מופרדות בפסיקים)</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="לדוגמה: שידוכים צעירים, שידוכים מבוגרים"
-                          disabled={isLoading}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <FormFieldShell
+                      label="התמחויות"
+                      description="מופרדות בפסיקים"
+                    >
+                      <Input
+                        {...field}
+                        placeholder="לדוגמה: שידוכים צעירים, שידוכים מבוגרים"
+                        disabled={isSubmitting}
+                      />
+                    </FormFieldShell>
                   )}
                 />
 
-                <FormField
-                  control={form.control as any}
-                  name="contact_phone"
-                  rules={{
-                    validate: (v) =>
-                      !v?.trim() ||
-                      isValidPhone(v.trim()) ||
-                      PHONE_INVALID_MESSAGE,
-                  }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>טלפון ליצירת קשר</FormLabel>
-                      <FormControl>
+                <FormGrid>
+                  <FormField
+                    control={form.control}
+                    name="contact_phone"
+                    render={({ field }) => (
+                      <FormFieldShell label="טלפון ליצירת קשר">
                         <Input
                           {...field}
                           type="tel"
                           placeholder="+972 50…"
+                          autoComplete="tel"
                           dir="ltr"
-                          className="text-left"
-                          disabled={isLoading}
+                          className="text-start"
+                          disabled={isSubmitting}
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control as any}
-                  name="contact_email"
-                  rules={{
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "אימייל לא תקין",
-                    },
-                  }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>אימייל ליצירת קשר</FormLabel>
-                      <FormControl>
+                      </FormFieldShell>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="contact_email"
+                    render={({ field }) => (
+                      <FormFieldShell label="אימייל ליצירת קשר">
                         <Input
                           {...field}
                           type="email"
                           placeholder="contact@example.com"
-                          disabled={isLoading}
+                          autoComplete="email"
+                          disabled={isSubmitting}
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                      </FormFieldShell>
+                    )}
+                  />
+                </FormGrid>
 
                 <FormField
-                  control={form.control as any}
+                  control={form.control}
                   name="languages"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>שפות (מופרדות בפסיקים, אופציונלי)</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="לדוגמה: עברית, אנגלית, יידיש"
-                          disabled={isLoading}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <FormFieldShell label="שפות" description="מופרדות בפסיקים">
+                      <Input
+                        {...field}
+                        placeholder="לדוגמה: עברית, אנגלית, יידיש"
+                        disabled={isSubmitting}
+                      />
+                    </FormFieldShell>
                   )}
                 />
 
-                <div className="flex justify-end gap-2">
+                <FormActions>
                   <Button
                     type="button"
                     variant="outline"
                     asChild
-                    disabled={isLoading}
+                    disabled={isSubmitting}
                   >
                     <Link href="/app/settings">ביטול</Link>
                   </Button>
-                  <Button type="submit" disabled={isLoading}>
-                    {isLoading
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting
                       ? "שולח..."
                       : existingApplication
                         ? "עדכן בקשה"
                         : "שלח בקשה"}
                   </Button>
-                </div>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-      </div>
+                </FormActions>
+              </FormFields>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </Page>
   );
 }

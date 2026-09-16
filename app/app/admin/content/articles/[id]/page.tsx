@@ -1,24 +1,61 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Box, Page, PageHeader, PageHeaderSkeleton } from "@/components/layout";
-import { CardSkeleton } from "@/components/ui/card-skeleton";
-import { SkeletonRegion } from "@/components/ui/skeleton";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
+
+import { Box, Page, PageHeader, PageHeaderSkeleton } from "@/components/layout";
+import { Button } from "@/components/ui/button";
+import { CardSkeleton } from "@/components/ui/card-skeleton";
+import { Form, FormField } from "@/components/ui/form";
+import { FormFieldShell } from "@/components/ui/form-field-shell";
+import { FormFields, FormGrid } from "@/components/ui/form-layout";
+import { Input } from "@/components/ui/input";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { SkeletonRegion } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  optionalText,
+  requiredText,
+  requiredWholeNumber,
+} from "@/lib/forms/schema";
+import { createClient } from "@/lib/supabase/client";
 
 const CATEGORIES = [
   { value: "parents", label: "להורים" },
   { value: "singles", label: "למיועדים" },
   { value: "shadchanim", label: "לשדכנים" },
   { value: "general", label: "כללי" },
+] as const;
+
+const CATEGORY_VALUES = CATEGORIES.map((c) => c.value) as [
+  (typeof CATEGORIES)[number]["value"],
+  ...(typeof CATEGORIES)[number]["value"][],
 ];
+
+/** ברירת המחדל לזמן קריאה, בדקות */
+const DEFAULT_READ_TIME = "5";
+
+const articleSchema = z.object({
+  title: requiredText("כותרת"),
+  slug: optionalText(),
+  excerpt: requiredText("תקציר"),
+  category: z.enum(CATEGORY_VALUES),
+  // הפקד הוא type="number", והערך שלו מחרוזת; מומר למספר בשמירה
+  read_time_minutes: requiredWholeNumber("זמן קריאה"),
+  content: requiredText("תוכן המאמר"),
+  is_published: z.boolean(),
+});
+
+type ArticleFormValues = z.infer<typeof articleSchema>;
 
 export default function ArticleEditPage({
   params,
@@ -27,17 +64,26 @@ export default function ArticleEditPage({
 }) {
   const [id, setId] = useState<string>("");
   const [isNew, setIsNew] = useState(false);
-  const [title, setTitle] = useState("");
-  const [slug, setSlug] = useState("");
-  const [excerpt, setExcerpt] = useState("");
-  const [category, setCategory] = useState("general");
-  const [readTime, setReadTime] = useState(5);
-  const [content, setContent] = useState("");
-  const [isPublished, setIsPublished] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+
+  const form = useForm<ArticleFormValues>({
+    resolver: zodResolver(articleSchema),
+    defaultValues: {
+      title: "",
+      slug: "",
+      excerpt: "",
+      category: "general",
+      read_time_minutes: DEFAULT_READ_TIME,
+      content: "",
+      is_published: false,
+    },
+  });
+
+  const { isSubmitting } = form.formState;
+  const isPublished = form.watch("is_published");
+  const title = form.watch("title");
 
   useEffect(() => {
     async function load() {
@@ -62,17 +108,19 @@ export default function ArticleEditPage({
         return;
       }
 
-      setTitle(data.title);
-      setSlug(data.slug);
-      setExcerpt(data.excerpt);
-      setCategory(data.category);
-      setReadTime(data.read_time_minutes);
-      setContent(data.content);
-      setIsPublished(data.is_published);
+      form.reset({
+        title: data.title,
+        slug: data.slug,
+        excerpt: data.excerpt,
+        category: data.category,
+        read_time_minutes: String(data.read_time_minutes),
+        content: data.content,
+        is_published: data.is_published,
+      });
       setLoading(false);
     }
     load();
-  }, [params, router, supabase]);
+  }, [params, router, supabase, form]);
 
   function generateSlug(text: string) {
     return text
@@ -83,27 +131,25 @@ export default function ArticleEditPage({
       .replace(/-+/g, "-");
   }
 
-  async function handleSave(publish?: boolean) {
-    if (!title.trim() || !excerpt.trim() || !content.trim()) {
-      toast.error("נא למלא כותרת, תקציר ותוכן");
-      return;
-    }
-    const finalSlug = slug || generateSlug(title);
-    const publishVal = publish !== undefined ? publish : isPublished;
+  async function save(values: ArticleFormValues, publish?: boolean) {
+    const finalSlug = values.slug || generateSlug(values.title);
+    const publishVal = publish !== undefined ? publish : values.is_published;
 
-    setSaving(true);
+    const record = {
+      title: values.title,
+      slug: finalSlug,
+      excerpt: values.excerpt,
+      category: values.category,
+      read_time_minutes: Number(values.read_time_minutes),
+      content: values.content,
+      is_published: publishVal,
+    };
 
     if (isNew) {
       const { data, error } = await supabase
         .from("articles")
         .insert({
-          title,
-          slug: finalSlug,
-          excerpt,
-          category,
-          read_time_minutes: readTime,
-          content,
-          is_published: publishVal,
+          ...record,
           published_at: publishVal ? new Date().toISOString() : null,
         })
         .select("id")
@@ -111,36 +157,37 @@ export default function ArticleEditPage({
 
       if (error) {
         toast.error(`שגיאה ביצירת מאמר: ${error.message}`);
-      } else {
-        toast.success("המאמר נוצר בהצלחה");
-        router.push(`/app/admin/content/articles/${data.id}` as any);
+        return;
       }
-    } else {
-      const { error } = await supabase
-        .from("articles")
-        .update({
-          title,
-          slug: finalSlug,
-          excerpt,
-          category,
-          read_time_minutes: readTime,
-          content,
-          is_published: publishVal,
-          published_at: publishVal && !isPublished ? new Date().toISOString() : undefined,
-        })
-        .eq("id", id);
-
-      if (error) {
-        toast.error(`שגיאה בשמירה: ${error.message}`);
-      } else {
-        setIsPublished(publishVal);
-        setSlug(finalSlug);
-        toast.success("נשמר בהצלחה");
-      }
+      toast.success("המאמר נוצר בהצלחה");
+      router.push(`/app/admin/content/articles/${data.id}` as any);
+      return;
     }
 
-    setSaving(false);
+    const { error } = await supabase
+      .from("articles")
+      .update({
+        ...record,
+        published_at:
+          publishVal && !values.is_published
+            ? new Date().toISOString()
+            : undefined,
+      })
+      .eq("id", id);
+
+    if (error) {
+      toast.error(`שגיאה בשמירה: ${error.message}`);
+      return;
+    }
+
+    form.setValue("is_published", publishVal);
+    form.setValue("slug", finalSlug);
+    toast.success("נשמר בהצלחה");
   }
+
+  /** אותה שמירה מכל כפתור: הוולידציה רצה קודם ומציגה שגיאות ליד השדות */
+  const submitWith = (publish?: boolean) =>
+    form.handleSubmit((values) => save(values, publish));
 
   if (loading) {
     return (
@@ -163,112 +210,145 @@ export default function ArticleEditPage({
             <Button asChild variant="outline">
               <Link href={"/app/admin/content/articles" as any}>ביטול</Link>
             </Button>
-            <Button variant="outline" onClick={() => handleSave(false)} disabled={saving}>
+            <Button
+              variant="outline"
+              onClick={submitWith(false)}
+              disabled={isSubmitting}
+            >
               שמור טיוטה
             </Button>
-            <Button onClick={() => handleSave(true)} disabled={saving}>
+            <Button onClick={submitWith(true)} disabled={isSubmitting}>
               {isPublished ? "שמור ופרסם" : "פרסם"}
             </Button>
           </div>
         }
       />
-        <div className="space-y-6">
-          <Box className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <Label htmlFor="title">כותרת *</Label>
-                <Input
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="כותרת המאמר"
-                  className="mt-1"
+      <Form {...form}>
+        {/* noValidate: ההודעות בעברית מגיעות מהסכמה ולא מהדפדפן */}
+        <form onSubmit={submitWith()} noValidate className="space-y-6">
+          <Box>
+            <FormFields>
+              <FormGrid>
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormFieldShell label="כותרת" required>
+                      <Input
+                        {...field}
+                        placeholder="כותרת המאמר"
+                        disabled={isSubmitting}
+                      />
+                    </FormFieldShell>
+                  )}
                 />
-              </div>
-              <div>
-                <Label htmlFor="slug">Slug (URL)</Label>
-                <Input
-                  id="slug"
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  placeholder="נוצר אוטומטית מהכותרת"
-                  className="mt-1 font-mono text-body-sm"
-                  dir="ltr"
+                <FormField
+                  control={form.control}
+                  name="slug"
+                  render={({ field }) => (
+                    <FormFieldShell label="Slug (URL)">
+                      <Input
+                        {...field}
+                        placeholder="נוצר אוטומטית מהכותרת"
+                        className="font-mono"
+                        dir="ltr"
+                        disabled={isSubmitting}
+                      />
+                    </FormFieldShell>
+                  )}
                 />
-              </div>
-              <div>
-                <Label htmlFor="category">קטגוריה *</Label>
-                <select
-                  id="category"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-body-sm"
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c.value} value={c.value}>{c.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="readTime">זמן קריאה (דקות)</Label>
-                <Input
-                  id="readTime"
-                  type="number"
-                  min={1}
-                  max={60}
-                  value={readTime}
-                  onChange={(e) => setReadTime(Number(e.target.value))}
-                  className="mt-1"
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormFieldShell label="קטגוריה" required>
+                      <NativeSelect {...field} disabled={isSubmitting}>
+                        {CATEGORIES.map((c) => (
+                          <NativeSelectOption key={c.value} value={c.value}>
+                            {c.label}
+                          </NativeSelectOption>
+                        ))}
+                      </NativeSelect>
+                    </FormFieldShell>
+                  )}
                 />
-              </div>
-            </div>
+                <FormField
+                  control={form.control}
+                  name="read_time_minutes"
+                  render={({ field }) => (
+                    <FormFieldShell label="זמן קריאה (דקות)" required>
+                      <Input
+                        {...field}
+                        type="number"
+                        min={1}
+                        max={60}
+                        disabled={isSubmitting}
+                      />
+                    </FormFieldShell>
+                  )}
+                />
+              </FormGrid>
 
-            <div>
-              <Label htmlFor="excerpt">תקציר *</Label>
-              <textarea
-                id="excerpt"
-                value={excerpt}
-                onChange={(e) => setExcerpt(e.target.value)}
-                placeholder="תקציר קצר שיופיע בכרטיס המאמר"
-                rows={3}
-                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-body-sm outline-none focus:ring-2 focus:ring-ring"
-                style={{ resize: "vertical" }}
+              <FormField
+                control={form.control}
+                name="excerpt"
+                render={({ field }) => (
+                  <FormFieldShell label="תקציר" required>
+                    <Textarea
+                      {...field}
+                      rows={3}
+                      placeholder="תקציר קצר שיופיע בכרטיס המאמר"
+                      disabled={isSubmitting}
+                    />
+                  </FormFieldShell>
+                )}
               />
-            </div>
+            </FormFields>
           </Box>
 
           <Box>
-            <Label>תוכן המאמר *</Label>
-            <div className="mt-2">
-              <RichTextEditor
-                content={content}
-                onChange={setContent}
-                placeholder="כתוב את תוכן המאמר כאן..."
-                className="min-h-[500px]"
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="content"
+              render={({ field }) => (
+                <FormFieldShell label="תוכן המאמר" required isComposite>
+                  <div>
+                    <RichTextEditor
+                      content={field.value}
+                      onChange={field.onChange}
+                      placeholder="כתוב את תוכן המאמר כאן..."
+                      className="min-h-[500px]"
+                    />
+                  </div>
+                </FormFieldShell>
+              )}
+            />
           </Box>
 
           {!isNew && (
             <Box>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="font-semibold">סטטוס פרסום</p>
                   <p className="text-body-sm text-muted-foreground">
-                    {isPublished ? "המאמר מפורסם ומוצג באתר" : "המאמר בטיוטה ולא מוצג"}
+                    {isPublished
+                      ? "המאמר מפורסם ומוצג באתר"
+                      : "המאמר בטיוטה ולא מוצג"}
                   </p>
                 </div>
                 <Button
+                  type="button"
                   variant={isPublished ? "outline" : "default"}
-                  onClick={() => handleSave(!isPublished)}
-                  disabled={saving}
+                  onClick={submitWith(!isPublished)}
+                  disabled={isSubmitting}
                 >
                   {isPublished ? "הסר מפרסום" : "פרסם עכשיו"}
                 </Button>
               </div>
             </Box>
           )}
-        </div>
+        </form>
+      </Form>
     </Page>
   );
 }

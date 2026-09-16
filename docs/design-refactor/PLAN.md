@@ -224,6 +224,62 @@
 
 **קבלה:** אין `useState` לשדות טופס, ואין `control as any`.
 
+**סטטוס:** בוצע בענף `claude/design-refactor-phase-3`.
+
+**תשתית משותפת שנוספה:**
+
+| קובץ | תוכן |
+|---|---|
+| `lib/forms/schema.ts` | אבני בניין ל-`zod`: `requiredText` / `requiredChoice` / `requiredEmail` / `requiredPhone` / `requiredWholeNumber` ו-`optional*`. כל שדה מוגדר פעם אחת יחד עם ההודעה שלו |
+| `lib/forms/field-messages.ts` | הנוסח האחיד: "נא למלא \<תווית\>", "נא לבחור \<תווית\>", "נא להעלות \<תווית\>". טופס המיועדים עבר להישען עליו, כך שיש מקור אחד לכל המערכת |
+| `components/ui/form-layout.tsx` | `FormFields` (מרווח בין שדות), `FormGrid` (1 עמודה במסך צר, 2–3 כשיש מקום, לפי רוחב הטופס ב-container query), `FormActions` (כפתורים; ברוחב מלא במובייל), `FormSubmitError` (כשל שליחה כ-`Alert`) |
+
+**הטפסים שהועברו:**
+
+| טופס | קובץ | מה השתנה |
+|---|---|---|
+| התחברות | `features/auth/components/login-form.tsx` | 3 `useState` → RHF+zod; שגיאת שליחה ב-`root` |
+| הרשמה | `features/auth/components/sign-up-form.tsx` | 6 `useState` → RHF+zod; כל השדות נבדקים יחד במקום אחד-אחרי-השני |
+| שחזור סיסמה | `features/auth/components/forgot-password-form.tsx` | 4 `useState` → RHF+zod; "הצלחה" מ-`isSubmitSuccessful` |
+| סיסמה חדשה | `features/auth/components/update-password-form.tsx` | 3 `useState` → RHF+zod; נוסף `autoComplete="new-password"` |
+| קוד אימות (OTP) | `features/auth/components/otp-form.tsx` | `FormData` גולמי → RHF+zod; ה-API הוא `onSubmit(otp)` |
+| אימות טלפון | `app/auth/verify-phone/otp-section.tsx` | טופס הוספת הטלפון → RHF+zod (4 `useState` ירדו) |
+| פרופיל | `features/settings/components/profile-form.tsx` | 4 `control as any` + `rules` ידניים → zod |
+| בקשת שדכן | `app/app/settings/shadchan/page.tsx` | 7 `control as any` → zod; ההערות בסוגריים עברו לטקסט עזרה מתחת לשדה |
+| בקשת איש צוות | `app/app/settings/staff/page.tsx` | 2 `control as any` → zod; טופס "מוסד חדש" (4 `useState`) הפך ל-RHF נפרד; שורות השיוך קיבלו תוויות |
+| יצירת משתמש | `app/app/admin/users/create/page.tsx` | 7 `useState` → RHF+zod; עבר ל-`Page width="form"` + `Card` |
+| עריכת מאמר | `app/app/admin/content/articles/[id]/page.tsx` | 8 `useState` → RHF+zod; `<select>` ו-`<textarea>` גולמיים → `NativeSelect` ו-`Textarea` |
+| המלצות רבנים | `app/app/admin/content/endorsements/page.tsx` | טופס `useState` → RHF+zod; `input type=checkbox` גולמי → `Checkbox` |
+| מודעות מאורסים | `app/app/admin/content/engagements/page.tsx` | טופס `useState` → RHF+zod |
+| מוסדות לימוד | `app/app/admin/institutions/page.tsx` | טופס הדיאלוג (`useState`) → RHF+zod; שגיאת חובה ליד השדה במקום `toast` |
+
+**בדיקות שנוספו:** `tests/e2e/auth-forms/login.spec.ts`, `tests/e2e/auth-forms/sign-up.spec.ts`,
+`tests/e2e/settings/profile-form.spec.ts`, `tests/e2e/admin/institutions-form.spec.ts`.
+נוסף פרויקט `auth-forms` ב-`playwright.config.ts` (בלי `storageState`, כי עם משתמש
+מחובר עמודי ההתחברות מנתבים ל-`/app`), ו-`webServer` מדלג על הקמת שרת כש-
+`PLAYWRIGHT_BASE_URL` מצביע על שרת שכבר רץ.
+
+**שינויי התנהגות מכוונים:**
+
+- נוסח הודעות החובה אוחד ל-"נא למלא/לבחור \<תווית\>" במקום "X הוא שדה חובה".
+- שדות שעד עכשיו נשענו על ולידציית הדפדפן מקבלים הודעה בעברית (`noValidate`).
+- נוספה בדיקת פורמט לאימייל ולטלפון בטפסים שלא בדקו אותם: יצירת משתמש (ניהול),
+  מודעות מאורסים (טלפון ומייל השולח), ושדות מספר (שנות ניסיון, זמן קריאה, סדר תצוגה).
+- `/auth/otp` הציג כשל אימות ב-`console.error` בלבד; עכשיו ההודעה מוצגת למשתמש.
+- `text-left` בשדות טלפון הוחלף ב-`text-start` (זהה בפועל, מאפיין לוגי).
+
+**מה נשאר:**
+
+- טפסים בדיאלוגים שאינם ברשימת השלב: `forums/create-post-dialog`, `photo-request-dialog`,
+  `contact-shadchan-dialog`, `send-proposal-modal`, `proposal-response-form`,
+  `student-notes`, `chat-view` — עדיין `useState` לשדות.
+- טפסי האתר התדמיתי (`app/(website)/contact`, `components/website/newsletter-signup`)
+  נשארו `useActionState` מול server actions ב-`app/(website)/actions/public-forms.ts`.
+  המרה ל-RHF הייתה מוותרת על השליחה בלי JS, ולכן נדחתה להחלטה נפרדת.
+- `app/app/admin/settings/[key]` הוא עורך תוכן עשיר בלי שדות נוספים, ולכן לא הומר.
+- פאנלי סינון ובחירה (`admin/students/institutions`, `admin/content/submissions`,
+  סינון המוסדות) אינם טפסים ונשארו ב-`useState`.
+
 ### שלב 4: עמודים גדולים
 
 - עמוד הכרטיס (`app/app/students/[id]/page.tsx`): פיצול לרכיבי מקטעים, הסרת ה-`Section`

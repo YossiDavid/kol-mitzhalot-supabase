@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
+import { z } from "zod";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,29 +14,26 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormField } from "@/components/ui/form";
+import { FormFieldShell } from "@/components/ui/form-field-shell";
+import { FormFields, FormGrid } from "@/components/ui/form-layout";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import {
-  isValidPhone,
-  normalizePhoneKey,
-  PHONE_INVALID_MESSAGE,
-} from "@/lib/phone";
+  requiredEmail,
+  requiredPhone,
+  requiredText,
+} from "@/lib/forms/schema";
+import { normalizePhoneKey } from "@/lib/phone";
+import { createClient } from "@/lib/supabase/client";
 
-interface ProfileFormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-}
+const profileSchema = z.object({
+  firstName: requiredText("שם פרטי"),
+  lastName: requiredText("שם משפחה"),
+  email: requiredEmail("אימייל"),
+  phone: requiredPhone("מספר טלפון"),
+});
+
+type ProfileFormData = z.infer<typeof profileSchema>;
 
 interface ProfileFormProps {
   initialData: {
@@ -50,10 +50,10 @@ export function ProfileForm({
   initialData,
   phoneVerificationEnabled = true,
 }: ProfileFormProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const form = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
     defaultValues: {
       firstName: initialData.firstName || "",
       lastName: initialData.lastName || "",
@@ -62,28 +62,25 @@ export function ProfileForm({
     },
   });
 
+  const { isSubmitting } = form.formState;
+
+  // הערכים מגיעים כבר חתוכי רווחים מהסכמה (trim), ותקינות הטלפון והאימייל
+  // נבדקה לפני שהגענו לכאן
   const onSubmit = async (data: ProfileFormData) => {
-    setIsLoading(true);
     const supabase = createClient();
 
     const phoneChanged =
       normalizePhoneKey(initialData.phone || "") !==
-      normalizePhoneKey(data.phone || "");
-
-    if (phoneChanged && !isValidPhone(data.phone.trim())) {
-      toast.error(PHONE_INVALID_MESSAGE);
-      setIsLoading(false);
-      return;
-    }
+      normalizePhoneKey(data.phone);
 
     try {
       const updateData: Record<string, unknown> = {
-        firstName: data.firstName.trim(),
-        lastName: data.lastName.trim(),
+        firstName: data.firstName,
+        lastName: data.lastName,
       };
 
       if (phoneChanged) {
-        updateData.phone = data.phone.trim();
+        updateData.phone = data.phone;
         if (phoneVerificationEnabled) {
           updateData.phone_verified = false;
           updateData.phone_confirmed_at = null;
@@ -113,8 +110,6 @@ export function ProfileForm({
         error instanceof Error ? error.message : "אירעה שגיאה בעדכון הפרופיל";
       toast.error(errorMessage);
       console.error("Error updating profile:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -126,105 +121,78 @@ export function ProfileForm({
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control as any}
-              name="firstName"
-              rules={{
-                // trim: רווחים בלבד עוברים את required אבל נכשלים בשער הזיהוי
-                validate: (v) => Boolean(v?.trim()) || "שם פרטי הוא שדה חובה",
-              }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>שם פרטי</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="הכנס שם פרטי"
-                      disabled={isLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          {/* noValidate: ההודעות בעברית מגיעות מהסכמה ולא מהדפדפן */}
+          <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+            <FormFields>
+              <FormGrid>
+                <FormField
+                  control={form.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormFieldShell label="שם פרטי" required>
+                      <Input
+                        {...field}
+                        placeholder="הכנס שם פרטי"
+                        autoComplete="given-name"
+                        disabled={isSubmitting}
+                      />
+                    </FormFieldShell>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormFieldShell label="שם משפחה" required>
+                      <Input
+                        {...field}
+                        placeholder="הכנס שם משפחה"
+                        autoComplete="family-name"
+                        disabled={isSubmitting}
+                      />
+                    </FormFieldShell>
+                  )}
+                />
+              </FormGrid>
 
-            <FormField
-              control={form.control as any}
-              name="lastName"
-              rules={{
-                validate: (v) => Boolean(v?.trim()) || "שם משפחה הוא שדה חובה",
-              }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>שם משפחה</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="הכנס שם משפחה"
-                      disabled={isLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control as any}
-              name="email"
-              rules={{
-                required: "אימייל הוא שדה חובה",
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: "אימייל לא תקין",
-                },
-              }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>אימייל</FormLabel>
-                  <FormControl>
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormFieldShell label="אימייל" required>
                     <Input
                       {...field}
                       type="email"
                       placeholder="הכנס אימייל"
-                      disabled={isLoading}
+                      autoComplete="email"
+                      disabled={isSubmitting}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  </FormFieldShell>
+                )}
+              />
 
-            <FormField
-              control={form.control as any}
-              name="phone"
-              rules={{
-                required: "מספר טלפון הוא שדה חובה",
-                validate: (v) =>
-                  isValidPhone(v?.trim() ?? "") || PHONE_INVALID_MESSAGE,
-              }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>מספר טלפון</FormLabel>
-                  <FormControl>
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormFieldShell label="מספר טלפון" required>
                     <Input
                       {...field}
                       type="tel"
                       placeholder="+972 50…"
-                      disabled={isLoading}
+                      autoComplete="tel"
                       dir="ltr"
-                      className="text-left"
+                      className="text-start"
+                      disabled={isSubmitting}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  </FormFieldShell>
+                )}
+              />
 
-            <Button type="submit" disabled={isLoading} className="w-full">
-              {isLoading ? "שומר..." : "שמור שינויים"}
-            </Button>
+              <Button type="submit" disabled={isSubmitting} className="w-full">
+                {isSubmitting ? "שומר..." : "שמור שינויים"}
+              </Button>
+            </FormFields>
           </form>
         </Form>
       </CardContent>

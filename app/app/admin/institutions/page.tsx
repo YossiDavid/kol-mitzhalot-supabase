@@ -1,14 +1,28 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Box, Page, PageHeader } from "@/components/layout";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+
 import {
   DataTable,
   DataTableSkeleton,
   type DataTableColumn,
 } from "@/components/data-table";
+import { Box, Page, PageHeader } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Empty,
   EmptyContent,
@@ -16,24 +30,17 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Label } from "@/components/ui/label";
+import { Form, FormControl, FormField } from "@/components/ui/form";
+import { FormFieldShell } from "@/components/ui/form-field-shell";
+import { FormFields, FormGrid } from "@/components/ui/form-layout";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { InstitutionsImportDialog } from "@/features/institutions/components/import-dialog";
 import {
   INSTITUTION_GENDER_LABELS,
   INSTITUTION_GENDER_OPTIONS,
@@ -42,7 +49,8 @@ import {
   type InstitutionGender,
   type InstitutionType,
 } from "@/features/institutions/lib/institution-labels";
-import { InstitutionsImportDialog } from "@/features/institutions/components/import-dialog";
+import { optionalText, requiredText } from "@/lib/forms/schema";
+import { createClient } from "@/lib/supabase/client";
 
 type Institution = {
   id: string;
@@ -54,13 +62,25 @@ type Institution = {
   created_at: string;
 };
 
-type InstitutionFormState = {
-  name: string;
-  city: string;
-  gender: InstitutionGender;
-  type: InstitutionType;
-  is_active: boolean;
-};
+const GENDER_VALUES = INSTITUTION_GENDER_OPTIONS.map((o) => o.value) as [
+  InstitutionGender,
+  ...InstitutionGender[],
+];
+
+const TYPE_VALUES = INSTITUTION_TYPE_OPTIONS.map((o) => o.value) as [
+  InstitutionType,
+  ...InstitutionType[],
+];
+
+const institutionSchema = z.object({
+  name: requiredText("שם המוסד"),
+  city: optionalText(),
+  gender: z.enum(GENDER_VALUES),
+  type: z.enum(TYPE_VALUES),
+  is_active: z.boolean(),
+});
+
+type InstitutionFormState = z.infer<typeof institutionSchema>;
 
 const EMPTY_FORM: InstitutionFormState = {
   name: "",
@@ -78,10 +98,15 @@ export default function InstitutionsAdminPage() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<InstitutionFormState>(EMPTY_FORM);
-  const [saving, setSaving] = useState(false);
 
   const supabase = createClient();
+
+  const form = useForm<InstitutionFormState>({
+    resolver: zodResolver(institutionSchema),
+    defaultValues: EMPTY_FORM,
+  });
+
+  const { isSubmitting } = form.formState;
 
   async function load() {
     setLoading(true);
@@ -112,13 +137,13 @@ export default function InstitutionsAdminPage() {
 
   function openCreateDialog() {
     setEditingId(null);
-    setForm(EMPTY_FORM);
+    form.reset(EMPTY_FORM);
     setDialogOpen(true);
   }
 
   function openEditDialog(institution: Institution) {
     setEditingId(institution.id);
-    setForm({
+    form.reset({
       name: institution.name,
       city: institution.city ?? "",
       gender: institution.gender,
@@ -128,19 +153,13 @@ export default function InstitutionsAdminPage() {
     setDialogOpen(true);
   }
 
-  async function handleSave() {
-    if (!form.name.trim()) {
-      toast.error("נא למלא שם מוסד");
-      return;
-    }
-
-    setSaving(true);
+  async function handleSave(values: InstitutionFormState) {
     const payload = {
-      name: form.name.trim(),
-      city: form.city.trim() || null,
-      gender: form.gender,
-      type: form.type,
-      is_active: form.is_active,
+      name: values.name,
+      city: values.city || null,
+      gender: values.gender,
+      type: values.type,
+      is_active: values.is_active,
     };
 
     const { error } = editingId
@@ -153,12 +172,10 @@ export default function InstitutionsAdminPage() {
           ? "מוסד עם אותו שם, עיר ומגדר כבר קיים במאגר"
           : `שגיאה בשמירת המוסד: ${error.message}`,
       );
-      setSaving(false);
       return;
     }
 
     toast.success(editingId ? "המוסד עודכן בהצלחה" : "המוסד נוצר בהצלחה");
-    setSaving(false);
     setDialogOpen(false);
     load();
   }
@@ -267,11 +284,10 @@ export default function InstitutionsAdminPage() {
       />
       <Box className="space-y-4">
         <div className="flex flex-wrap gap-3">
-          <div className="w-40">
+          <div className="w-40 space-y-2">
             <Label htmlFor="genderFilter">סינון לפי מגדר</Label>
             <NativeSelect
               id="genderFilter"
-              className="mt-1"
               value={genderFilter}
               onChange={(e) =>
                 setGenderFilter(e.target.value as InstitutionGender | "")
@@ -285,11 +301,10 @@ export default function InstitutionsAdminPage() {
               ))}
             </NativeSelect>
           </div>
-          <div className="w-52">
+          <div className="w-52 space-y-2">
             <Label htmlFor="typeFilter">סינון לפי סוג מוסד</Label>
             <NativeSelect
               id="typeFilter"
-              className="mt-1"
               value={typeFilter}
               onChange={(e) =>
                 setTypeFilter(e.target.value as InstitutionType | "")
@@ -340,100 +355,116 @@ export default function InstitutionsAdminPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="institutionName">שם המוסד *</Label>
-              <Input
-                id="institutionName"
-                className="mt-1"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="לדוגמה: ישיבת אור החיים"
-              />
-            </div>
+          <Form {...form}>
+            {/* noValidate: ההודעות בעברית מגיעות מהסכמה ולא מהדפדפן */}
+            <form onSubmit={form.handleSubmit(handleSave)} noValidate>
+              <FormFields>
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormFieldShell label="שם המוסד" required>
+                      <Input
+                        {...field}
+                        placeholder="לדוגמה: ישיבת אור החיים"
+                        disabled={isSubmitting}
+                      />
+                    </FormFieldShell>
+                  )}
+                />
 
-            <div>
-              <Label htmlFor="institutionCity">עיר</Label>
-              <Input
-                id="institutionCity"
-                className="mt-1"
-                value={form.city}
-                onChange={(e) => setForm({ ...form, city: e.target.value })}
-                placeholder="לדוגמה: בני ברק"
-              />
-            </div>
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormFieldShell label="עיר">
+                      <Input
+                        {...field}
+                        placeholder="לדוגמה: בני ברק"
+                        disabled={isSubmitting}
+                      />
+                    </FormFieldShell>
+                  )}
+                />
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="institutionGender">מגדר *</Label>
-                <NativeSelect
-                  id="institutionGender"
-                  className="mt-1"
-                  value={form.gender}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      gender: e.target.value as InstitutionGender,
-                    })
-                  }
-                >
-                  {INSTITUTION_GENDER_OPTIONS.map((option) => (
-                    <NativeSelectOption key={option.value} value={option.value}>
-                      {option.label}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-              </div>
-              <div>
-                <Label htmlFor="institutionType">סוג מוסד *</Label>
-                <NativeSelect
-                  id="institutionType"
-                  className="mt-1"
-                  value={form.type}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      type: e.target.value as InstitutionType,
-                    })
-                  }
-                >
-                  {INSTITUTION_TYPE_OPTIONS.map((option) => (
-                    <NativeSelectOption key={option.value} value={option.value}>
-                      {option.label}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-              </div>
-            </div>
+                <FormGrid>
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormFieldShell label="מגדר" required>
+                        <NativeSelect {...field} disabled={isSubmitting}>
+                          {INSTITUTION_GENDER_OPTIONS.map((option) => (
+                            <NativeSelectOption
+                              key={option.value}
+                              value={option.value}
+                            >
+                              {option.label}
+                            </NativeSelectOption>
+                          ))}
+                        </NativeSelect>
+                      </FormFieldShell>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="type"
+                    render={({ field }) => (
+                      <FormFieldShell label="סוג מוסד" required>
+                        <NativeSelect {...field} disabled={isSubmitting}>
+                          {INSTITUTION_TYPE_OPTIONS.map((option) => (
+                            <NativeSelectOption
+                              key={option.value}
+                              value={option.value}
+                            >
+                              {option.label}
+                            </NativeSelectOption>
+                          ))}
+                        </NativeSelect>
+                      </FormFieldShell>
+                    )}
+                  />
+                </FormGrid>
 
-            <div className="flex items-center justify-between rounded-md border p-3">
-              <div>
-                <p className="font-medium">מוסד פעיל</p>
-                <p className="text-body-sm text-muted-foreground">
-                  מוסד לא פעיל לא יוצג לבחירה באשף יצירת כרטיס מיועד
-                </p>
-              </div>
-              <Switch
-                checked={form.is_active}
-                onCheckedChange={(checked) =>
-                  setForm({ ...form, is_active: checked })
-                }
-              />
-            </div>
-          </div>
+                <FormField
+                  control={form.control}
+                  name="is_active"
+                  render={({ field }) => (
+                    <div className="flex items-center justify-between gap-3 rounded-md border p-3">
+                      <div>
+                        <Label htmlFor="institutionActive">מוסד פעיל</Label>
+                        <p className="text-body-sm text-muted-foreground">
+                          מוסד לא פעיל לא יוצג לבחירה באשף יצירת כרטיס מיועד
+                        </p>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          id="institutionActive"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                    </div>
+                  )}
+                />
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDialogOpen(false)}
-              disabled={saving}
-            >
-              ביטול
-            </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? "שומר..." : "שמירה"}
-            </Button>
-          </DialogFooter>
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setDialogOpen(false)}
+                    disabled={isSubmitting}
+                  >
+                    ביטול
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? "שומר..." : "שמירה"}
+                  </Button>
+                </DialogFooter>
+              </FormFields>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </Page>

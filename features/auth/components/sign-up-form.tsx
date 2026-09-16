@@ -1,67 +1,68 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-} from "@/components/ui/card";
-import { PageTitle } from "@/components/layout/page-header";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { isValidPhone, PHONE_INVALID_MESSAGE } from "@/lib/phone";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+import { PageTitle } from "@/components/layout/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Form, FormField } from "@/components/ui/form";
+import { FormFieldShell } from "@/components/ui/form-field-shell";
+import {
+  FormFields,
+  FormGrid,
+  FormSubmitError,
+} from "@/components/ui/form-layout";
+import { Input } from "@/components/ui/input";
 import {
   AUTH_CONFIRM_PATH,
   getAuthRedirectUrl,
 } from "@/features/auth/lib/redirect-url";
+import { requiredEmail, requiredText } from "@/lib/forms/schema";
+import { isValidPhone, PHONE_INVALID_MESSAGE } from "@/lib/phone";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
+
+const signUpSchema = z.object({
+  firstName: requiredText("שם פרטי"),
+  lastName: requiredText("שם משפחה"),
+  email: requiredEmail("אימייל"),
+  // הרווחים מוסרים לפני הבדיקה ולפני השמירה, כמו קודם
+  phone: requiredText("מספר טלפון")
+    .transform((value) => value.replace(/\s/g, ""))
+    .refine(isValidPhone, PHONE_INVALID_MESSAGE),
+});
+
+type SignUpValues = z.infer<typeof signUpSchema>;
 
 export function SignUpForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const [email, setEmail] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<SignUpValues>({
+    resolver: zodResolver(signUpSchema),
+    defaultValues: { firstName: "", lastName: "", email: "", phone: "" },
+  });
+
+  const { isSubmitting, errors } = form.formState;
+
+  const onSubmit = async (values: SignUpValues) => {
+    form.clearErrors("root");
     const supabase = createClient();
-    setIsLoading(true);
-    setError(null);
-
-    const trimmed = phone.replace(/\s/g, "");
-    if (!isValidPhone(trimmed)) {
-      setError(PHONE_INVALID_MESSAGE);
-      setIsLoading(false);
-      return;
-    }
-
-    const fn = firstName.trim();
-    const ln = lastName.trim();
-    if (!fn || !ln) {
-      setError("הזן שם פרטי ושם משפחה");
-      setIsLoading(false);
-      return;
-    }
 
     try {
       const { error } = await supabase.auth.signInWithOtp({
-        email,
+        email: values.email,
         options: {
           data: {
-            phone: trimmed,
-            firstName: fn,
-            lastName: ln,
+            phone: values.phone,
+            firstName: values.firstName,
+            lastName: values.lastName,
           },
           emailRedirectTo: getAuthRedirectUrl(AUTH_CONFIRM_PATH),
         },
@@ -69,9 +70,9 @@ export function SignUpForm({
       if (error) throw error;
       router.push("/auth/check-email");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "אירעה שגיאה");
-    } finally {
-      setIsLoading(false);
+      form.setError("root", {
+        message: err instanceof Error ? err.message : "אירעה שגיאה",
+      });
     }
   };
 
@@ -80,110 +81,101 @@ export function SignUpForm({
       <Card>
         <CardHeader>
           <PageTitle>הרשמה</PageTitle>
-          {/* <CardDescription>צור חשבון חדש</CardDescription> */}
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSignUp}>
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-2 sm:grid-cols-2 sm:gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="firstName" required>
-                    שם פרטי
-                  </Label>
-                  <Input
-                    id="firstName"
-                    type="text"
-                    required
-                    autoComplete="given-name"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
+          <Form {...form}>
+            {/* noValidate: ההודעות בעברית מגיעות מהסכמה ולא מהדפדפן */}
+            <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+              <FormFields>
+                <FormGrid>
+                  <FormField
+                    control={form.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormFieldShell label="שם פרטי" required>
+                        <Input
+                          {...field}
+                          type="text"
+                          autoComplete="given-name"
+                          disabled={isSubmitting}
+                        />
+                      </FormFieldShell>
+                    )}
                   />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="lastName" required>
-                    שם משפחה
-                  </Label>
-                  <Input
-                    id="lastName"
-                    type="text"
-                    required
-                    autoComplete="family-name"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
+                  <FormField
+                    control={form.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormFieldShell label="שם משפחה" required>
+                        <Input
+                          {...field}
+                          type="text"
+                          autoComplete="family-name"
+                          disabled={isSubmitting}
+                        />
+                      </FormFieldShell>
+                    )}
                   />
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="email" required>
-                  אימייל
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
+                </FormGrid>
+
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormFieldShell label="אימייל" required>
+                      <Input
+                        {...field}
+                        type="email"
+                        placeholder="m@example.com"
+                        autoComplete="email"
+                        disabled={isSubmitting}
+                      />
+                    </FormFieldShell>
+                  )}
                 />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="phone" required>
-                  מספר טלפון
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="05X-XXX-XXXX"
-                  required
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  autoComplete="tel"
-                  dir="ltr"
-                  className="text-left"
+
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormFieldShell
+                      label="מספר טלפון"
+                      required
+                      description="מספר בינלאומי? הזינו עם קידומת מדינה (+…)"
+                    >
+                      <Input
+                        {...field}
+                        type="tel"
+                        placeholder="05X-XXX-XXXX"
+                        autoComplete="tel"
+                        dir="ltr"
+                        className="text-start"
+                        disabled={isSubmitting}
+                      />
+                    </FormFieldShell>
+                  )}
                 />
-                <p className="text-caption text-muted-foreground">
-                  מספר בינלאומי? הזינו עם קידומת מדינה (+…)
-                </p>
+
+                <FormSubmitError>{errors.root?.message}</FormSubmitError>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "יצירת חשבון..." : "הירשם"}
+                </Button>
+              </FormFields>
+              <div className="mt-4 text-center text-body-sm text-muted-foreground">
+                יש לך חשבון?{" "}
+                <Link
+                  href="/auth/login"
+                  className="underline underline-offset-4"
+                >
+                  התחבר
+                </Link>
               </div>
-              {/* <div className="grid gap-2">
-                <Label htmlFor="password">סיסמה</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="new-password"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="repeat-password">חזור סיסמה</Label>
-                <Input
-                  id="repeat-password"
-                  type="password"
-                  required
-                  value={repeatPassword}
-                  onChange={(e) => setRepeatPassword(e.target.value)}
-                  autoComplete="new-password"
-                />
-              </div> */}
-              {error && (
-                <p className="text-body-sm text-destructive" role="alert">
-                  {error}
-                </p>
-              )}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "יצירת חשבון..." : "הירשם"}
-              </Button>
-            </div>
-            <div className="mt-4 text-center text-body-sm text-muted-foreground">
-              יש לך חשבון?{" "}
-              <Link href="/auth/login" className="underline underline-offset-4">
-                התחבר
-              </Link>
-            </div>
-          </form>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     </div>

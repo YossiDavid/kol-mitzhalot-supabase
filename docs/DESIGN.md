@@ -115,9 +115,37 @@ ESLint (`no-restricted-syntax` ב־`eslint.config.mjs`) אוכף את החוזה
 
 ### טפסים
 
+כל טופס במערכת הוא `react-hook-form` עם `zodResolver`. **אין `useState` לשדה טופס**, ואין `control={form.control as any}`. מצב שאינו שדה (טעינה, דיאלוג פתוח, רשימה שנטענה) נשאר ב־`useState`.
+
 - **שדה בטופס:** `FormFieldShell` (`components/ui/form-field-shell.tsx`) בתוך `render` של `FormField` — תווית מודגשת עם `required`, הפקד, טקסט עזרה **תמיד מתחת לפקד**, ושגיאה. `FormControl` מסמן `aria-invalid` כשיש שגיאה.
 - **`FormField` גנרי:** מקבל `control={form.control}` של טופס מוקלד — אין צורך ב־`as any`.
 - **שדה עם תוספות:** `InputGroup` (`components/ui/input-group.tsx`) — `InputGroupInput` לפקד הראשי, `InputGroupAddon` לטקסט או אייקון, `InputGroupSelect` לרשימה קומפקטית (למשל תואר לפני ואחרי שם). המסגרת, הפוקוס והשגיאה שייכים לקבוצה.
+- **סכמה:** `lib/forms/schema.ts` — `requiredText`, `requiredChoice`, `requiredEmail`, `requiredPhone`, `requiredWholeNumber` ומקביליהם `optional*`. כל שדה מוגדר פעם אחת יחד עם הודעת השגיאה שלו, כך שבדיקת האימייל והטלפון זהות בכל הטפסים.
+- **נוסח ההודעות:** `lib/forms/field-messages.ts` — "נא למלא \<תווית\>" לשדה הקלדה, "נא לבחור \<תווית\>" לבחירה ולתאריך, "נא להעלות \<תווית\>" לקובץ. גם טופס המיועדים נשען על אותו מקור.
+- **פריסה:** `components/ui/form-layout.tsx` — `FormFields` (מרווח אחיד בין שדות), `FormGrid` (עמודה אחת במסך צר, 2–3 כשיש מקום; מגיב לרוחב הטופס עצמו ב־container query ולא לרוחב המסך), `FormActions` (כפתורים בסוף השורה בדסקטופ, ברוחב מלא במובייל) ו־`FormSubmitError` (כשל שליחה כ־`Alert`, להבדיל משגיאת שדה שיושבת מתחת לשדה).
+- **`noValidate` על ה־`form`:** בלעדיו הדפדפן חוסם את השליחה בהודעה משלו, באנגלית, במקום ההודעה של הסכמה.
+
+```tsx
+const schema = z.object({ firstName: requiredText("שם פרטי"), email: requiredEmail("אימייל") });
+const form = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema), defaultValues: { firstName: "", email: "" } });
+
+<Form {...form}>
+  <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+    <FormFields>
+      <FormGrid>
+        <FormField control={form.control} name="firstName" render={({ field }) => (
+          <FormFieldShell label="שם פרטי" required><Input {...field} /></FormFieldShell>
+        )} />
+      </FormGrid>
+      <FormSubmitError>{form.formState.errors.root?.message}</FormSubmitError>
+      <FormActions><Button type="submit">שמירה</Button></FormActions>
+    </FormFields>
+  </form>
+</Form>
+```
+
+- **כשל שליחה** נרשם ב־`form.setError("root", { message })` ולא ב־`useState` נפרד.
+- **מצב שליחה** הוא `form.formState.isSubmitting` — לא `useState` משלו.
 
 ### טבלאות (`DataTable`)
 
@@ -273,6 +301,8 @@ const COLUMNS: DataTableColumn<User>[] = [
 | כפתורים / כרטיסים | `components/ui/button.tsx`, `components/ui/card.tsx` |
 | סולם גבהים | `components/ui/control-size.ts` |
 | שדות בטופס | `components/ui/form-field-shell.tsx`, `components/ui/input-group.tsx` |
+| פריסת טופס | `components/ui/form-layout.tsx` |
+| סכמות ונוסח שגיאות | `lib/forms/schema.ts`, `lib/forms/field-messages.ts` |
 | טבלאות | `components/data-table/data-table.tsx`, `components/ui/table.tsx` |
 | צילומי לפני/אחרי | `pnpm capture:ui <label>` (`scripts/capture-ui.mjs`) |
 
