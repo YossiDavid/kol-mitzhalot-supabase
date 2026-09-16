@@ -12,6 +12,7 @@ import {
   getDisplayName,
   type UserMetadata,
 } from "../lib/user-display";
+import { useUnreadChats } from "../lib/unread-chats-context";
 import { ChatEmptyState } from "./chat-empty-state";
 import { RoomRow, RoomRowSkeleton } from "./room-row";
 
@@ -34,6 +35,8 @@ function byLastAtDesc(a: Room, b: Room): number {
 export function RoomList() {
   const supabase = createClient();
   const pathname = usePathname();
+  // אותו מקור כמו התג בניווט — ערוץ realtime אחד לשניהם
+  const { unreadRoomIds } = useUnreadChats();
 
   const [rooms, setRooms] = React.useState<Room[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -198,7 +201,10 @@ export function RoomList() {
         )}
       </div>
 
-      <ScrollArea className="min-h-0 flex-1">
+      {/* Radix עוטף את התוכן ב-div עם display:table, שמתרחב לרוחב התוכן
+          ולא נעצר ברוחב החלונית. בלי הביטול הזה שורה עם הודעה ארוכה גולשת
+          החוצה במקום להיחתך ב-truncate, והסימון שבסופה יוצא מהמסך. */}
+      <ScrollArea className="min-h-0 flex-1 [&>[data-slot=scroll-area-viewport]>div]:!block">
         {loading ? (
           <div
             role="status"
@@ -215,7 +221,11 @@ export function RoomList() {
           <ul className="flex flex-col gap-1 p-2">
             {rooms.map((r) => (
               <li key={r.room_id}>
-                <RoomRow room={r} isActive={r.room_id === activeRoomId} />
+                <RoomRow
+                  room={r}
+                  isActive={r.room_id === activeRoomId}
+                  isUnread={unreadRoomIds.has(r.room_id)}
+                />
               </li>
             ))}
           </ul>

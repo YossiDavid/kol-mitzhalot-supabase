@@ -7,14 +7,19 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Room } from "@/app/app/chats/types";
 import { formatRoomTime } from "../lib/format-time";
+import { unreadRoomLabel } from "../lib/unread-rooms";
 import { ChatAvatar } from "./chat-avatar";
+import { UnreadRoomDot } from "./unread-room-dot";
 
 export const RoomRow = React.memo(function RoomRow({
   room,
   isActive,
+  isUnread,
 }: {
   room: Room;
   isActive: boolean;
+  /** יש בשיחה הודעה מהצד השני שנכנסה אחרי הפעם האחרונה שנקראה */
+  isUnread: boolean;
 }) {
   const time = formatRoomTime(room.lastAt);
 
@@ -22,6 +27,9 @@ export const RoomRow = React.memo(function RoomRow({
     <Link
       href={`/app/chats/${room.room_id}`}
       aria-current={isActive ? "page" : undefined}
+      // הנקודה והבולד הם סימון חזותי; לקורא מסך זה נמסר בשם הקישור
+      aria-label={isUnread ? unreadRoomLabel(room.title) : undefined}
+      data-unread={isUnread ? "true" : undefined}
       className={cn(
         "relative flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors outline-none",
         "focus-visible:ring-2 focus-visible:ring-ring",
@@ -48,7 +56,8 @@ export const RoomRow = React.memo(function RoomRow({
         <div className="flex items-baseline justify-between gap-2">
           <span
             className={cn(
-              "truncate text-body-sm font-semibold",
+              "truncate text-body-sm",
+              isUnread ? "font-bold" : "font-semibold",
               isActive ? "text-primary" : "text-foreground",
             )}
           >
@@ -57,15 +66,30 @@ export const RoomRow = React.memo(function RoomRow({
           {time && room.lastAt && (
             <time
               dateTime={room.lastAt}
-              className="shrink-0 text-caption text-muted-foreground tabular-nums"
+              className={cn(
+                "shrink-0 text-caption tabular-nums",
+                isUnread
+                  ? "font-semibold text-primary"
+                  : "text-muted-foreground",
+              )}
             >
               {time}
             </time>
           )}
         </div>
-        <p className="truncate text-caption text-muted-foreground">
-          {room.lastMessage ?? "אין הודעות עדיין"}
-        </p>
+        <div className="flex items-center gap-2">
+          <p
+            className={cn(
+              "min-w-0 flex-1 truncate text-caption",
+              isUnread
+                ? "font-medium text-foreground"
+                : "text-muted-foreground",
+            )}
+          >
+            {room.lastMessage ?? "אין הודעות עדיין"}
+          </p>
+          {isUnread && <UnreadRoomDot />}
+        </div>
       </div>
     </Link>
   );
