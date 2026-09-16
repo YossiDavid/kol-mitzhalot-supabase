@@ -4,15 +4,10 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { DataTable, DataTableSkeleton } from "@/components/data-table";
+import { Box, Page, PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Box, Page, PageHeader } from "@/components/layout";
-import {
-  DataTable,
-  DataTableSkeleton,
-  type DataTableColumn,
-} from "@/components/data-table";
-import { Label } from "@/components/ui/label";
 import {
   Empty,
   EmptyContent,
@@ -20,46 +15,19 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { Label } from "@/components/ui/label";
+import { BulkInstitutionToolbar } from "@/features/admin/components/bulk-institution-toolbar";
 import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@/components/ui/native-select";
+  bulkStudentColumns,
+  type ActiveInstitution,
+  type AssignmentFilter,
+  type BulkStudentRow,
+  type GenderFilter,
+} from "@/features/admin/lib/bulk-institution-columns";
 import { createClient } from "@/lib/supabase/client";
-import {
-  INSTITUTION_GENDER_LABELS,
-  INSTITUTION_TYPE_LABELS,
-  type InstitutionGender,
-  type InstitutionType,
-} from "@/features/institutions/lib/institution-labels";
-
-type StudentGender = InstitutionGender;
-
-type StudentRow = {
-  id: string;
-  first_name: string;
-  last_name: string;
-  gender: StudentGender;
-  city: string | null;
-  institution_id: string | null;
-  institutions: {
-    name: string;
-    city: string | null;
-    type: InstitutionType;
-  } | null;
-};
-
-type ActiveInstitution = {
-  id: string;
-  name: string;
-  city: string | null;
-  gender: InstitutionGender;
-};
-
-type AssignmentFilter = "all" | "unassigned" | "assigned";
-type GenderFilter = "all" | InstitutionGender;
 
 export default function BulkInstitutionAssignmentPage() {
-  const [students, setStudents] = useState<StudentRow[]>([]);
+  const [students, setStudents] = useState<BulkStudentRow[]>([]);
   const [institutions, setInstitutions] = useState<ActiveInstitution[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -104,7 +72,7 @@ export default function BulkInstitutionAssignmentPage() {
       return;
     }
 
-    setStudents((studentsResult.data as unknown as StudentRow[]) ?? []);
+    setStudents((studentsResult.data as unknown as BulkStudentRow[]) ?? []);
     setInstitutions(institutionsResult.data ?? []);
     setSelectedIds([]);
     setLoading(false);
@@ -132,14 +100,14 @@ export default function BulkInstitutionAssignmentPage() {
     [students],
   );
 
-  const selectedStudents = useMemo(
-    () => students.filter((student) => selectedIds.includes(student.id)),
-    [students, selectedIds],
-  );
-
   const selectedGenders = useMemo(
-    () => new Set(selectedStudents.map((student) => student.gender)),
-    [selectedStudents],
+    () =>
+      new Set(
+        students
+          .filter((student) => selectedIds.includes(student.id))
+          .map((student) => student.gender),
+      ),
+    [students, selectedIds],
   );
 
   const hasMixedGenderSelection = selectedGenders.size > 1;
@@ -223,66 +191,6 @@ export default function BulkInstitutionAssignmentPage() {
     patchInstitution(null);
   }
 
-  const studentColumns: DataTableColumn<StudentRow>[] = [
-    {
-      key: "select",
-      header: (
-        <Checkbox
-          checked={allFilteredSelected}
-          onCheckedChange={toggleSelectAll}
-          aria-label="בחר הכל"
-        />
-      ),
-      size: "min",
-      mobile: "aside",
-      cell: (student) => (
-        <Checkbox
-          checked={selectedIds.includes(student.id)}
-          onCheckedChange={() => toggleSelectOne(student.id)}
-          aria-label={`בחר את ${student.first_name} ${student.last_name}`}
-        />
-      ),
-    },
-    {
-      key: "name",
-      header: "שם",
-      mobile: "title",
-      className: "font-medium",
-      cell: (student) => `${student.first_name} ${student.last_name}`,
-    },
-    {
-      key: "gender",
-      header: "מגדר",
-      size: "min",
-      className: "text-muted-foreground",
-      cell: (student) => INSTITUTION_GENDER_LABELS[student.gender],
-    },
-    {
-      key: "city",
-      header: "עיר",
-      className: "text-muted-foreground",
-      cell: (student) => student.city ?? "-",
-    },
-    {
-      key: "institution",
-      header: "מוסד נוכחי",
-      size: "grow",
-      className: "text-muted-foreground",
-      cell: (student) =>
-        student.institutions
-          ? `${student.institutions.name}${
-              student.institutions.city ? ` (${student.institutions.city})` : ""
-            } - ${INSTITUTION_TYPE_LABELS[student.institutions.type]}`
-          : "—",
-    },
-  ];
-
-  const assignDisabled =
-    submitting ||
-    selectedIds.length === 0 ||
-    hasMixedGenderSelection ||
-    !selectedInstitutionId;
-
   return (
     <Page>
       <PageHeader
@@ -319,81 +227,20 @@ export default function BulkInstitutionAssignmentPage() {
           </Empty>
         ) : (
           <>
-            <div className="flex flex-wrap items-end gap-3">
-              <div className="w-48">
-                <Label htmlFor="assignmentFilter">סטטוס שיוך</Label>
-                <NativeSelect
-                  id="assignmentFilter"
-                  className="mt-1"
-                  value={assignmentFilter}
-                  onChange={(e) =>
-                    setAssignmentFilter(e.target.value as AssignmentFilter)
-                  }
-                >
-                  <NativeSelectOption value="all">הכל</NativeSelectOption>
-                  <NativeSelectOption value="unassigned">
-                    ללא מוסד
-                  </NativeSelectOption>
-                  <NativeSelectOption value="assigned">
-                    עם מוסד
-                  </NativeSelectOption>
-                </NativeSelect>
-              </div>
-              <div className="w-40">
-                <Label htmlFor="genderFilterStudents">מגדר</Label>
-                <NativeSelect
-                  id="genderFilterStudents"
-                  className="mt-1"
-                  value={genderFilter}
-                  onChange={(e) =>
-                    setGenderFilter(e.target.value as GenderFilter)
-                  }
-                >
-                  <NativeSelectOption value="all">הכל</NativeSelectOption>
-                  <NativeSelectOption value="male">בנים</NativeSelectOption>
-                  <NativeSelectOption value="female">בנות</NativeSelectOption>
-                </NativeSelect>
-              </div>
-
-              <div className="flex flex-1 flex-wrap items-end gap-3">
-                <div className="min-w-52 flex-1">
-                  <Label htmlFor="institutionPicker">מוסד לשיוך</Label>
-                  <NativeSelect
-                    id="institutionPicker"
-                    className="mt-1"
-                    value={selectedInstitutionId}
-                    disabled={
-                      selectedIds.length === 0 || hasMixedGenderSelection
-                    }
-                    onChange={(e) => setSelectedInstitutionId(e.target.value)}
-                  >
-                    <NativeSelectOption value="">
-                      בחר מוסד...
-                    </NativeSelectOption>
-                    {eligibleInstitutions.map((institution) => (
-                      <NativeSelectOption
-                        key={institution.id}
-                        value={institution.id}
-                      >
-                        {institution.name}
-                        {institution.city ? ` (${institution.city})` : ""}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
-                </div>
-                <Button onClick={handleAssign} disabled={assignDisabled}>
-                  {submitting ? "משייך..." : "שייך מוסד"}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="text-destructive hover:text-destructive"
-                  disabled={submitting || selectedIds.length === 0}
-                  onClick={handleClear}
-                >
-                  הסר שיוך
-                </Button>
-              </div>
-            </div>
+            <BulkInstitutionToolbar
+              assignmentFilter={assignmentFilter}
+              onAssignmentFilterChange={setAssignmentFilter}
+              genderFilter={genderFilter}
+              onGenderFilterChange={setGenderFilter}
+              eligibleInstitutions={eligibleInstitutions}
+              selectedInstitutionId={selectedInstitutionId}
+              onSelectedInstitutionChange={setSelectedInstitutionId}
+              selectedCount={selectedIds.length}
+              hasMixedGenderSelection={hasMixedGenderSelection}
+              submitting={submitting}
+              onAssign={handleAssign}
+              onClear={handleClear}
+            />
 
             {hasMixedGenderSelection && (
               <p className="rounded-md bg-warning-muted p-3 text-body-sm text-warning-muted-foreground">
@@ -422,7 +269,12 @@ export default function BulkInstitutionAssignmentPage() {
             <DataTable
               surface={false}
               caption="כרטיסים לשיוך מוסד"
-              columns={studentColumns}
+              columns={bulkStudentColumns({
+                selectedIds,
+                allFilteredSelected,
+                onToggleAll: toggleSelectAll,
+                onToggleOne: toggleSelectOne,
+              })}
               rows={filteredStudents}
               getRowKey={(student) => student.id}
               emptyState={

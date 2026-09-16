@@ -5,6 +5,12 @@ import { toast } from "sonner";
 import { Lock, MessageSquareText } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Textarea } from "@/components/ui/textarea";
 import type {
   PrivateNote,
@@ -109,12 +115,21 @@ function NoteComposer({
   );
 }
 
+/** מצב ריק של רשימת הערות - `Empty` המשותף, על המשטח של המקטע שמסביבו */
 function EmptyNotes({ text }: { text: string }) {
   return (
-    <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border py-8 text-center">
-      <MessageSquareText className="h-6 w-6 text-muted-foreground" />
-      <p className="text-body-sm text-muted-foreground">{text}</p>
-    </div>
+    <Empty
+      size="compact"
+      surface={false}
+      className="rounded-lg border border-dashed border-border"
+    >
+      <EmptyMedia variant="icon">
+        <MessageSquareText />
+      </EmptyMedia>
+      <EmptyHeader>
+        <EmptyTitle>{text}</EmptyTitle>
+      </EmptyHeader>
+    </Empty>
   );
 }
 

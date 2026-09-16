@@ -1,28 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 
-import {
-  DataTable,
-  DataTableSkeleton,
-  type DataTableColumn,
-} from "@/components/data-table";
+import { DataTable, DataTableSkeleton } from "@/components/data-table";
 import { Box, Page, PageHeader } from "@/components/layout";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Empty,
   EmptyContent,
@@ -30,65 +16,27 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Form, FormControl, FormField } from "@/components/ui/form";
-import { FormFieldShell } from "@/components/ui/form-field-shell";
-import { FormFields, FormGrid } from "@/components/ui/form-layout";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   NativeSelect,
   NativeSelectOption,
 } from "@/components/ui/native-select";
-import { Switch } from "@/components/ui/switch";
 import { InstitutionsImportDialog } from "@/features/institutions/components/import-dialog";
+import { InstitutionFormDialog } from "@/features/institutions/components/institution-form-dialog";
+import { institutionColumns } from "@/features/institutions/lib/institution-columns";
 import {
-  INSTITUTION_GENDER_LABELS,
+  EMPTY_INSTITUTION_FORM,
+  institutionSchema,
+  type Institution,
+  type InstitutionFormState,
+} from "@/features/institutions/lib/institution-form-schema";
+import {
   INSTITUTION_GENDER_OPTIONS,
-  INSTITUTION_TYPE_LABELS,
   INSTITUTION_TYPE_OPTIONS,
   type InstitutionGender,
   type InstitutionType,
 } from "@/features/institutions/lib/institution-labels";
-import { optionalText, requiredText } from "@/lib/forms/schema";
 import { createClient } from "@/lib/supabase/client";
-
-type Institution = {
-  id: string;
-  name: string;
-  city: string | null;
-  gender: InstitutionGender;
-  type: InstitutionType;
-  is_active: boolean;
-  created_at: string;
-};
-
-const GENDER_VALUES = INSTITUTION_GENDER_OPTIONS.map((o) => o.value) as [
-  InstitutionGender,
-  ...InstitutionGender[],
-];
-
-const TYPE_VALUES = INSTITUTION_TYPE_OPTIONS.map((o) => o.value) as [
-  InstitutionType,
-  ...InstitutionType[],
-];
-
-const institutionSchema = z.object({
-  name: requiredText("שם המוסד"),
-  city: optionalText(),
-  gender: z.enum(GENDER_VALUES),
-  type: z.enum(TYPE_VALUES),
-  is_active: z.boolean(),
-});
-
-type InstitutionFormState = z.infer<typeof institutionSchema>;
-
-const EMPTY_FORM: InstitutionFormState = {
-  name: "",
-  city: "",
-  gender: "male",
-  type: "yeshiva_gedola",
-  is_active: true,
-};
 
 export default function InstitutionsAdminPage() {
   const [institutions, setInstitutions] = useState<Institution[]>([]);
@@ -103,10 +51,8 @@ export default function InstitutionsAdminPage() {
 
   const form = useForm<InstitutionFormState>({
     resolver: zodResolver(institutionSchema),
-    defaultValues: EMPTY_FORM,
+    defaultValues: EMPTY_INSTITUTION_FORM,
   });
-
-  const { isSubmitting } = form.formState;
 
   async function load() {
     setLoading(true);
@@ -137,7 +83,7 @@ export default function InstitutionsAdminPage() {
 
   function openCreateDialog() {
     setEditingId(null);
-    form.reset(EMPTY_FORM);
+    form.reset(EMPTY_INSTITUTION_FORM);
     setDialogOpen(true);
   }
 
@@ -198,76 +144,6 @@ export default function InstitutionsAdminPage() {
     load();
   }
 
-  const institutionColumns: DataTableColumn<Institution>[] = [
-    {
-      key: "name",
-      header: "שם המוסד",
-      size: "grow",
-      mobile: "title",
-      className: "font-medium",
-      cell: (institution) => institution.name,
-    },
-    {
-      key: "city",
-      header: "עיר",
-      className: "text-muted-foreground",
-      cell: (institution) => institution.city ?? "-",
-    },
-    {
-      key: "gender",
-      header: "מגדר",
-      size: "min",
-      className: "text-muted-foreground",
-      cell: (institution) => INSTITUTION_GENDER_LABELS[institution.gender],
-    },
-    {
-      key: "type",
-      header: "סוג מוסד",
-      className: "text-muted-foreground",
-      cell: (institution) => INSTITUTION_TYPE_LABELS[institution.type],
-    },
-    {
-      key: "status",
-      header: "סטטוס",
-      size: "min",
-      mobile: "aside",
-      cell: (institution) => (
-        <Badge variant={institution.is_active ? "success" : "neutral"}>
-          {institution.is_active ? "פעיל" : "לא פעיל"}
-        </Badge>
-      ),
-    },
-    {
-      key: "actions",
-      header: <span className="sr-only">פעולות</span>,
-      size: "min",
-      mobile: "actions",
-      cell: (institution) => (
-        <div className="flex items-center justify-end gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            title="עריכה"
-            aria-label={`עריכה: ${institution.name}`}
-            onClick={() => openEditDialog(institution)}
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-destructive hover:text-destructive"
-            title="מחיקה"
-            aria-label={`מחיקה: ${institution.name}`}
-            onClick={() => deleteInstitution(institution)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
-    },
-  ];
-
   return (
     <Page>
       <PageHeader
@@ -326,7 +202,10 @@ export default function InstitutionsAdminPage() {
           <DataTable
             surface={false}
             caption="מוסדות לימוד"
-            columns={institutionColumns}
+            columns={institutionColumns({
+              onEdit: openEditDialog,
+              onDelete: deleteInstitution,
+            })}
             rows={filteredInstitutions}
             getRowKey={(institution) => institution.id}
             emptyState={
@@ -346,127 +225,13 @@ export default function InstitutionsAdminPage() {
         )}
       </Box>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingId ? "עריכת מוסד" : "מוסד חדש"}</DialogTitle>
-            <DialogDescription>
-              מוסדות אלה מוצעים לבחירה באשף יצירת כרטיס מיועד.
-            </DialogDescription>
-          </DialogHeader>
-
-          <Form {...form}>
-            {/* noValidate: ההודעות בעברית מגיעות מהסכמה ולא מהדפדפן */}
-            <form onSubmit={form.handleSubmit(handleSave)} noValidate>
-              <FormFields>
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormFieldShell label="שם המוסד" required>
-                      <Input
-                        {...field}
-                        placeholder="לדוגמה: ישיבת אור החיים"
-                        disabled={isSubmitting}
-                      />
-                    </FormFieldShell>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="city"
-                  render={({ field }) => (
-                    <FormFieldShell label="עיר">
-                      <Input
-                        {...field}
-                        placeholder="לדוגמה: בני ברק"
-                        disabled={isSubmitting}
-                      />
-                    </FormFieldShell>
-                  )}
-                />
-
-                <FormGrid>
-                  <FormField
-                    control={form.control}
-                    name="gender"
-                    render={({ field }) => (
-                      <FormFieldShell label="מגדר" required>
-                        <NativeSelect {...field} disabled={isSubmitting}>
-                          {INSTITUTION_GENDER_OPTIONS.map((option) => (
-                            <NativeSelectOption
-                              key={option.value}
-                              value={option.value}
-                            >
-                              {option.label}
-                            </NativeSelectOption>
-                          ))}
-                        </NativeSelect>
-                      </FormFieldShell>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                      <FormFieldShell label="סוג מוסד" required>
-                        <NativeSelect {...field} disabled={isSubmitting}>
-                          {INSTITUTION_TYPE_OPTIONS.map((option) => (
-                            <NativeSelectOption
-                              key={option.value}
-                              value={option.value}
-                            >
-                              {option.label}
-                            </NativeSelectOption>
-                          ))}
-                        </NativeSelect>
-                      </FormFieldShell>
-                    )}
-                  />
-                </FormGrid>
-
-                <FormField
-                  control={form.control}
-                  name="is_active"
-                  render={({ field }) => (
-                    <div className="flex items-center justify-between gap-3 rounded-md border p-3">
-                      <div>
-                        <Label htmlFor="institutionActive">מוסד פעיל</Label>
-                        <p className="text-body-sm text-muted-foreground">
-                          מוסד לא פעיל לא יוצג לבחירה באשף יצירת כרטיס מיועד
-                        </p>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          id="institutionActive"
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          disabled={isSubmitting}
-                        />
-                      </FormControl>
-                    </div>
-                  )}
-                />
-
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setDialogOpen(false)}
-                    disabled={isSubmitting}
-                  >
-                    ביטול
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? "שומר..." : "שמירה"}
-                  </Button>
-                </DialogFooter>
-              </FormFields>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+      <InstitutionFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        form={form}
+        editingId={editingId}
+        onSubmit={handleSave}
+      />
     </Page>
   );
 }

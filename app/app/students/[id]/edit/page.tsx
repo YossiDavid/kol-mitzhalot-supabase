@@ -4,7 +4,7 @@ import { Suspense } from "react";
 
 import { Box, PageTitle } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/server";
 import { hasRole } from "@/lib/user";
 import {
@@ -43,11 +43,7 @@ const SKELETON_FIELD_COUNT = 6;
 
 function EditStudentFormSkeleton() {
   return (
-    <div
-      role="status"
-      aria-label="טוען"
-      className="my-2 space-y-4 md:my-6 md:space-y-6"
-    >
+    <SkeletonRegion className="my-2 space-y-4 md:my-6 md:space-y-6">
       <PageTitle>עריכת קו״ח</PageTitle>
       <Box className="px-4 pt-5 pb-0 max-md:-mx-3 max-md:rounded-none md:px-6 md:pt-6">
         <div className="grid gap-5 lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-6">
@@ -79,7 +75,7 @@ function EditStudentFormSkeleton() {
         </div>
       </Box>
       <span className="sr-only">טוען את טופס עריכת הקו״ח…</span>
-    </div>
+    </SkeletonRegion>
   );
 }
 

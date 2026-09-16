@@ -214,6 +214,7 @@ const COLUMNS: DataTableColumn<User>[] = [
 - `asChild` כשהכרטיס הוא `article` או קישור. כרטיס ניווט שכולו קישור: `LinkCard` (`components/layout/link-card.tsx`).
 - אין כרטיס ידני (`rounded-xl border bg-card p-5`), אין `rounded-2xl` ואין `shadow`: ההפרדה מהרקע היא המסגרת. כרטיס אינטראקטיבי מקבל `hover:bg-accent`.
 - כרטיס בקשת הצטרפות בהגדרות: `ApplicationStatusCard role="shadchan" | "staff"` (`features/settings/components/application-status-card.tsx`).
+- **מקטע בכרטיס המיועד:** `CardSection` (`features/students/components/card/card-section.tsx`) — `Card size="sm"` עם שורת כותרת (אייקון ב־`rounded-lg bg-muted p-2` ו־`CardTitle asChild><h2>`) מעל מפריד. זהו המקטע היחיד של עמוד הכרטיס; אין `Box` עם כותרת ידנית ואין `text-title!`. זוגות תווית/ערך בתוכו: `InfoTag` ו־`InfoTagGrid` (`info-tag.tsx`) — ערך ריק אינו מרונדר, וכך שדה שלא נשלף בתצוגה הציבורית פשוט נעלם.
 
 ### תיבת תוכן (`Box`) מול `Card`
 

@@ -288,6 +288,71 @@
 
 **קבלה:** אין קובץ עמוד מעל 400 שורות.
 
+**סטטוס:** בוצע בענף `claude/design-refactor-phase-4`. הקבלה מתקיימת בכל עמודי
+האפליקציה; עמוד הבית השיווקי נשאר מחוץ להיקף (ראו למטה).
+
+| קובץ | לפני | אחרי |
+|---|---|---|
+| `app/app/students/[id]/page.tsx` | 1982 | 255 |
+| `app/app/settings/staff/page.tsx` | 688 | 18 |
+| `app/app/admin/users/[id]/page.tsx` | 503 | 199 |
+| `app/app/admin/institutions/page.tsx` | 472 | 237 |
+| `app/app/admin/content/endorsements/page.tsx` | 461 | 163 |
+| `app/app/admin/students/institutions/page.tsx` | 441 | 296 |
+| `app/(website)/(home)/page.tsx` | 780 | 780 (מחוץ להיקף) |
+
+**כרטיס המיועד — המבנה החדש** (`features/students/components/card/`, אף קובץ מעל 160 שורות):
+
+| קובץ | תפקיד |
+|---|---|
+| `card-section.tsx` | `CardSection` — מתכון ה-`Card` המשותף עם שורת כותרת ואייקון. מחליף את ה-`Section` המקומי; ה-`!` (`text-title! font-bold!`) הוסר לטובת `CardTitle` |
+| `info-tag.tsx` | `InfoTag` (זוג תווית/ערך, ערך ריק לא מרונדר) ו-`InfoTagGrid` |
+| `student-card-hero.tsx` | קישור "חזרה לרשימה", תמונה, שם ושורת מטא |
+| `student-card-photo.tsx` | התמונה למשתמש מחובר (כולל מנעול) ולתצוגה הציבורית (בת — תמיד "חסוי") |
+| `personal-details-section.tsx` | "פרטים אישיים" — משרת את שני הענפים |
+| `family-section.tsx` + `parent-card.tsx` | "רקע משפחתי": הורים, מצב ההורים, פרטים נוספים ומחותנים |
+| `education-section.tsx` | "לימודים" ו"תעסוקה" |
+| `references-section.tsx`, `medical-section.tsx`, `previous-marriages-section.tsx`, `partner-preferences-section.tsx`, `author-info-card.tsx` | המקטעים שנשלפים רק למשתמש מחובר |
+| `student-card.tsx` / `public-student-card.tsx` | הרכבת הכרטיס לכל אחד משני הענפים |
+| `student-card-skeleton.tsx` | שלד הטעינה, על `SkeletonRegion` ו-`Card` |
+| `features/students/lib/student-card-data.ts` | `AnonymousStudentRow`, `PublicStudent`, `buildPublicStudent` ושני ה-`select` |
+
+**מה עבר לאן בשאר העמודים:**
+
+| עמוד | מה יצא ממנו |
+|---|---|
+| הצטרפות כאיש צוות | `features/settings/lib/staff-application-schema.ts` (סכמות וקבועים), `staff-application-form.tsx`, `staff-institution-rows.tsx`, `new-institution-section.tsx` (טופס המוסד החדש, כולל ה-RPC ושגיאותיו), `staff-application-skeleton.tsx`. העמוד עצמו הוא רק `Suspense` + שלד |
+| פרטי משתמש (ניהול) | `features/admin/lib/user-details.ts` (שליפה, טיפוסים, `formatUserDate`), `features/admin/components/user-children-table.tsx`, `service-role-error.tsx` |
+| מוסדות לימוד (ניהול) | `features/institutions/lib/institution-form-schema.ts`, `institution-columns.tsx`, `features/institutions/components/institution-form-dialog.tsx` |
+| המלצות רבנים (ניהול) | `features/admin/lib/endorsement.ts`, `features/admin/components/endorsement-form.tsx` (כולל ההעלאה), `endorsement-row.tsx` |
+| שיוך מוסד המוני (ניהול) | `features/admin/lib/bulk-institution-columns.tsx`, `features/admin/components/bulk-institution-toolbar.tsx` |
+
+**שאריות שנסגרו בשלב הזה:**
+
+- `EmptyNotes` ב-`student-notes.tsx` עבר ל-`Empty` המשותף (`size="compact"`, `surface={false}`, `EmptyMedia variant="icon"`).
+- שלד כרטיס המיועד ושלד עמוד העריכה עברו ל-`SkeletonRegion` במקום `role="status"` ידני, ומשתמשים ב-`Card` ובחלקים המשותפים.
+
+**התנהגות שנשמרה:** אותן שאילתות בדיוק (כולל ה-`select` המצומצם לגולש לא מחובר
+ו-`buildPublicStudent` שמשמיט `birth_date`/`deleted_at` ומכניס `image_url` רק לבן),
+אותן הרשאות (`canViewStudentPhoto`, הפרדת הערות שדכן מפידבק אנשי צוות, גזירת
+שדכן/מנהל, `canEdit` שתואם ל-`update_full_student_profile`), אותם טקסטים וקישורים,
+ואותם גבולות שרת/לקוח. 105 בדיקות e2e עוברות בלי שינוי.
+
+**מה נשאר פתוח:**
+
+- `app/(website)/(home)/page.tsx` (780 שורות) — עמוד שיווקי מחוץ לקריטריון. הוא בנוי
+  מ-10 מקטעים מסומנים (`{/* ── 1. HERO ── */}` וכו') ומ-5 מערכי נתונים מקומיים
+  (`tickerItems`, `steps`, `audiences`, `principles`), ולכן פיצול מכני לתיקיית
+  `components/website/home/` אפשרי — אבל הוא נוגע בכל ההירו והתמונות, ולכן דורש
+  סבב צילומים משלו. לא בוצע כאן.
+- קבצים שאינם עמודים ומעל 400 שורות (מחוץ לקריטריון של השלב): `features/design-system/showcase.tsx` (787),
+  `components/ui/sidebar.tsx` (727), `features/students/lib/student-form-wizard.tsx` (640),
+  `components/website/product-previews.tsx` (612), `features/shidduchim/components/shiduch-desk.tsx` (511),
+  `features/students/components/create-form/fields/search-select-field.tsx` (452),
+  `features/students/lib/build-student-payload.ts` (451), `features/students/components/students-table.tsx` (433).
+- חמש הודעות השגיאה הידניות בעמודי הניהול (שלב 2) עדיין לא עברו ל-`Alert`; אחת מהן
+  (`SUPABASE_SERVICE_ROLE_KEY`) רק רוכזה לרכיב `ServiceRoleError`.
+
 ### שלב 5: נעילה
 
 - כללי ESLint:
