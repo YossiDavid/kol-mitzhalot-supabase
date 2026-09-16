@@ -17,6 +17,7 @@ const SAVE_BUTTON = "שמירת שינויים";
 const SUCCESS_MESSAGE = "השינויים נשמרו בהצלחה!";
 const INVALID_SAVE_MESSAGE = /השינויים לא נשמרו: יש שדות שצריך להשלים/;
 const FATHER_NAME = "אברהם";
+const BACK_STREET = "רחוב האזהרה";
 const CV_FILE_PATTERN = /-cv\.pdf$/;
 // קומפילציית dev של דף העריכה, העלאות ושמירות חוזרות - מעבר ל-30s
 const SLOW_TEST_TIMEOUT_MS = 90_000;
@@ -257,5 +258,52 @@ test.describe.serial("שמירת שינויים מכל שלב בעריכת כר�
     expect(student.street).toBe("סוקולוב");
     expect(student.cv_url).toBe(firstCvUrl);
     expect(await listStoredCvFiles()).toHaveLength(1);
+  });
+
+  test("'אחורה' בדפדפן שואל על שינויים שלא נשמרו, ואחרי שמירה יוצא מיד", async ({
+    page,
+  }) => {
+    test.setTimeout(SLOW_TEST_TIMEOUT_MS);
+
+    // Arrange - נכנסים לעריכה מדף אחר, כדי שיהיה לאן לחזור
+    await page.goto("/app/students");
+    await page.goto(`/app/students/${studentId}/edit`);
+    await openStep(page, PERSONAL_STEP);
+
+    // Act - שינוי שלא נשמר, "אחורה", ובחירה להישאר
+    await page.locator("#street").fill(BACK_STREET);
+    await expect(page.getByText("יש שינויים שלא נשמרו")).toBeVisible();
+
+    // אירוע ה-dialog נמסר ללקוח אחרי ש-goBack נפתר, ולכן ממתינים לו במפורש
+    const confirmDialog = page.waitForEvent("dialog");
+    await page.goBack();
+    const dialog = await confirmDialog;
+
+    // Assert - נשארנו בדף העריכה, והשינוי לא אבד
+    expect(dialog.message()).toContain("יש שינויים שלא נשמרו");
+    // ביטול = "להישאר בדף"
+    await dialog.dismiss();
+    await expect(page).toHaveURL(
+      new RegExp(`/app/students/${studentId}/edit$`),
+    );
+    await expect(page.locator("#street")).toHaveValue(BACK_STREET);
+    await expect(
+      page.getByRole("heading", { name: PERSONAL_STEP }),
+    ).toBeVisible();
+
+    // Act - שמירה, ואז "אחורה" נוסף. בלי שינויים אין מה לאשר
+    await saveAndWaitForBaseline(page);
+    let didAsk = false;
+    // שאלה כאן הייתה משאירה אותנו בדף, ואז בדיקת הכתובת שלמטה נופלת
+    page.on("dialog", async (strayDialog) => {
+      didAsk = true;
+      await strayDialog.dismiss();
+    });
+    await page.goBack();
+
+    // Assert - יציאה מיידית בלחיצה אחת, בלי שאלה
+    await expect(page).toHaveURL(/\/app\/students$/);
+    expect(didAsk).toBe(false);
+    expect((await readStudent()).street).toBe(BACK_STREET);
   });
 });

@@ -3,10 +3,16 @@
 import * as React from "react";
 
 import { createClient } from "@/lib/supabase/client";
-import { countUnreadRooms, parseUnreadRoomRows } from "./unread-rooms";
+import {
+  haveSameRoomIds,
+  parseUnreadRoomRows,
+  selectUnreadRoomIds,
+} from "./unread-rooms";
 
 /** רצף הודעות (או הודעה + סימון קריאה) מתאחד לשאילתה אחת. */
 const REFETCH_DEBOUNCE_MS = 400;
+
+const EMPTY_ROOM_IDS: ReadonlySet<string> = new Set<string>();
 
 /**
  * השורה שלי בכל שיחה, עם ההודעה האחרונה של השיחה. ה-FK נקוב בשמו כי בין
@@ -18,20 +24,27 @@ const UNREAD_ROOMS_SELECT =
 type UnreadChatsValue = {
   /** מספר השיחות שיש בהן הודעה שלא נקראה */
   count: number;
+  /** מזהי אותן שיחות — לסימון השורה ברשימת השיחות ובכרטיסי הדשבורד */
+  unreadRoomIds: ReadonlySet<string>;
   /** טעינה מחדש (מרוסנת) — למשל אחרי סימון שיחה כנקראה */
   refresh: () => void;
 };
 
-const NO_PROVIDER: UnreadChatsValue = { count: 0, refresh: () => {} };
+const NO_PROVIDER: UnreadChatsValue = {
+  count: 0,
+  unreadRoomIds: EMPTY_ROOM_IDS,
+  refresh: () => {},
+};
 
 const UnreadChatsContext = React.createContext<UnreadChatsValue | null>(null);
 
 /**
- * מקור אחד לספירה, ברמת מעטפת האפליקציה: הסיידבר והסרגל התחתון קוראים
- * ממנו, כך שיש ערוץ realtime אחד ולא ערוץ לכל פריט ניווט.
+ * מקור אחד לשיחות שלא נקראו, ברמת מעטפת האפליקציה: הסיידבר, הסרגל התחתון,
+ * רשימת השיחות וכרטיסי הדשבורד קוראים ממנו, כך שיש ערוץ realtime אחד
+ * ושאילתה אחת — ולא ערוץ לכל צרכן.
  *
- * chat_room_participants אינו בפרסום ה-realtime, ולכן קריאה שנעשתה בדפדפן
- * הזה מדווחת דרך refresh, וקריאה במכשיר אחר נקלטת בחזרה ללשונית.
+ * שני מקורות לעדכון: הודעה חדשה מהצד השני (chat_messages), וסימון קריאה על
+ * השורה שלי (chat_room_participants) — שמגיע גם ממכשיר אחר של אותו משתמש.
  */
 export function UnreadChatsProvider({
   userId,
@@ -41,7 +54,8 @@ export function UnreadChatsProvider({
   children: React.ReactNode;
 }) {
   const supabase = React.useMemo(() => createClient(), []);
-  const [count, setCount] = React.useState(0);
+  const [unreadRoomIds, setUnreadRoomIds] =
+    React.useState<ReadonlySet<string>>(EMPTY_ROOM_IDS);
   // רק התשובה לבקשה האחרונה נקבעת — תשובה ישנה שהגיעה באיחור נזרקת
   const requestSeqRef = React.useRef(0);
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -64,7 +78,12 @@ export function UnreadChatsProvider({
       console.error("[chats/unread-count]", error);
       return;
     }
-    setCount(countUnreadRooms(parseUnreadRoomRows(data), userId));
+
+    const next = selectUnreadRoomIds(parseUnreadRoomRows(data), userId);
+    // קבוצה חדשה בכל רענון הייתה מרנדרת מחדש כל שורה ברשימה
+    setUnreadRoomIds((previous) =>
+      haveSameRoomIds(previous, next) ? previous : next,
+    );
   }, [supabase, userId]);
 
   const refresh = React.useCallback(() => {
@@ -82,10 +101,10 @@ export function UnreadChatsProvider({
     // ההרשמה לערוץ אם זו מגיעה מהר
     refresh();
 
-    // RLS מצמצם את האירועים להודעות בשיחות שלי. הודעה שאני שלחתי לא
-    // משנה את הספירה.
     const channel = supabase
       .channel(`unread-chats:${userId}`)
+      // RLS מצמצם את האירועים להודעות בשיחות שלי. הודעה שאני שלחתי לא
+      // משנה את הספירה.
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "chat_messages" },
@@ -95,11 +114,24 @@ export function UnreadChatsProvider({
           refresh();
         },
       )
+      // סימון קריאה. ה-filter נחוץ: מדיניות ה-SELECT מתירה לי לראות גם את
+      // שורת הצד השני באותה שיחה, וקריאה שלו אינה נוגעת לתג שלי.
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "chat_room_participants",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => refresh(),
+      )
       .subscribe((status) => {
         // הודעה שנכנסה בין הטעינה הראשונה להרשמה לא תגיע כאירוע
         if (status === "SUBSCRIBED") refresh();
       });
 
+    // רשת ביטחון לערוץ שנפל (מכשיר שישן, רשת שהתנתקה)
     const onVisibilityChange = () => {
       if (document.visibilityState === "visible") refresh();
     };
@@ -112,7 +144,10 @@ export function UnreadChatsProvider({
     };
   }, [supabase, userId, load, refresh]);
 
-  const value = React.useMemo(() => ({ count, refresh }), [count, refresh]);
+  const value = React.useMemo(
+    () => ({ count: unreadRoomIds.size, unreadRoomIds, refresh }),
+    [unreadRoomIds, refresh],
+  );
 
   return (
     <UnreadChatsContext.Provider value={value}>

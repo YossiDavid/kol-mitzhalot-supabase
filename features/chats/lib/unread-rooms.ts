@@ -60,15 +60,41 @@ export function isRoomUnread(row: UnreadRoomRow, userId: string): boolean {
   );
 }
 
-export function countUnreadRooms(
+/**
+ * מזהי השיחות שיש בהן הודעה שלא נקראה. אותו חישוב משרת גם את התג בניווט
+ * (הספירה היא גודל הקבוצה) וגם את סימון השורות ברשימת השיחות ובדשבורד.
+ */
+export function selectUnreadRoomIds(
   rows: readonly UnreadRoomRow[],
   userId: string,
-): number {
-  return rows.filter((row) => isRoomUnread(row, userId)).length;
+): ReadonlySet<string> {
+  return new Set(
+    rows.filter((row) => isRoomUnread(row, userId)).map((row) => row.room_id),
+  );
+}
+
+/** קבוצות זהות בתוכן — כדי לא לרנדר מחדש רשימה שלא השתנתה. */
+export function haveSameRoomIds(
+  a: ReadonlySet<string>,
+  b: ReadonlySet<string>,
+): boolean {
+  if (a.size !== b.size) return false;
+  for (const id of a) {
+    if (!b.has(id)) return false;
+  }
+  return true;
 }
 
 export function formatUnreadCount(count: number): string {
   return count > UNREAD_DISPLAY_CAP ? `${UNREAD_DISPLAY_CAP}+` : String(count);
+}
+
+/**
+ * השם הנגיש של שורת שיחה שלא נקראה: מתחיל בשם הגלוי, ואחריו הסיבה לסימון
+ * החזותי (נקודה ובולד), שאינו נמסר לקורא מסך בדרך אחרת.
+ */
+export function unreadRoomLabel(title: string): string {
+  return `${title}, הודעה שלא נקראה`;
 }
 
 /** השם הנגיש של פריט הניווט: מתחיל בטקסט הגלוי, ואחריו מספר השיחות. */

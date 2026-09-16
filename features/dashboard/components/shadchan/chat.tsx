@@ -1,4 +1,3 @@
-import { Box } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -10,83 +9,26 @@ import {
 import { MessagesSquare } from "lucide-react";
 import Link from "next/link";
 
-type Chat = {
-  id: string;
-  name: string;
-  description: string;
-  image: string;
-  link: string;
-  lastMessage?: string | null;
-  lastMessageTime?: string | null;
-  lastMessageSender?: string | null;
-};
+import { DashboardChatRooms, type DashboardChat } from "../chat-rooms-list";
 
-export default function Chat({ chats }: { chats: Chat[] }) {
-  return (
-    <>
-      {chats.length > 0 ? (
-        <Box className="space-y-4">
-          {chats.map((chat) => (
-            <Link
-              key={chat.id}
-              href={`/app/chats/${chat.id}`}
-              className="hover:bg-muted group flex items-center rounded-lg border p-4 transition"
-            >
-              <img
-                src={chat.image || "/placeholder-avatar.png"}
-                alt={chat.name}
-                className="me-4 h-10 w-10 rounded-full border"
-              />
-              <div className="min-w-0 flex-1">
-                <div className="mb-1 flex items-center justify-between gap-2">
-                  <span className="truncate text-body font-medium">
-                    {chat.name}
-                  </span>
-                  {/* זמן שליחת ההודעה האחרונה (פורמט יפה) */}
-                  <span className="text-muted-foreground text-caption">
-                    {chat.lastMessageTime
-                      ? new Date(chat.lastMessageTime).toLocaleTimeString(
-                          "he-IL",
-                          {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          },
-                        )
-                      : null}
-                  </span>
-                </div>
-                <div className="text-muted-foreground truncate text-body-sm">
-                  {/* פרטי השולח + תוכן ההודעה האחרונה */}
-                  {chat.lastMessageSender && (
-                    <span className="font-semibold">
-                      {chat.lastMessageSender}:{" "}
-                    </span>
-                  )}
-                  {chat.lastMessage ? (
-                    chat.lastMessage
-                  ) : (
-                    <span className="italic">אין הודעות עדיין</span>
-                  )}
-                </div>
-              </div>
+export default function Chat({ chats }: { chats: DashboardChat[] }) {
+  if (chats.length === 0) {
+    return (
+      <Empty size="compact">
+        <EmptyHeader>
+          <EmptyTitle>עדיין לא קיבלת הודעות פרטיות בצ’אט</EmptyTitle>
+          <EmptyDescription>רוצה לשאול משהו מישהו?</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button asChild>
+            <Link href="/app/students">
+              <MessagesSquare /> לצ'אט
             </Link>
-          ))}
-        </Box>
-      ) : (
-        <Empty size="compact">
-          <EmptyHeader>
-            <EmptyTitle>עדיין לא קיבלת הודעות פרטיות בצ’אט</EmptyTitle>
-            <EmptyDescription>רוצה לשאול משהו מישהו?</EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button asChild>
-              <Link href="/app/students">
-                <MessagesSquare /> לצ'אט
-              </Link>
-            </Button>
-          </EmptyContent>
-        </Empty>
-      )}
-    </>
-  );
+          </Button>
+        </EmptyContent>
+      </Empty>
+    );
+  }
+
+  return <DashboardChatRooms chats={chats} />;
 }

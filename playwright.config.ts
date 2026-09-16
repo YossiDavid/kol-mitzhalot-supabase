@@ -11,6 +11,11 @@ loadEnvFile();
 // מקומי נחסמת כאן — לפני שנוצרה ולו רשומה אחת.
 assertLocalSupabase();
 
+// הבדיקות רצות מול השרת שבכתובת הזו, ואותו פורט מועבר גם ל-webServer: בלעדיו
+// Playwright היה מרים (או "מוצא") שרת על 3000 בזמן שהבדיקות פונות לפורט אחר.
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
+const DEV_PORT = new URL(BASE_URL).port || "3000";
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: false,
@@ -20,7 +25,7 @@ export default defineConfig({
   reporter: process.env.CI ? "github" : "list",
 
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
+    baseURL: BASE_URL,
     trace: "on-first-retry",
     video: "on-first-retry",
     locale: "he-IL",
@@ -64,8 +69,8 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: "pnpm dev",
-    url: "http://localhost:3000",
+    command: `pnpm dev --port ${DEV_PORT}`,
+    url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
