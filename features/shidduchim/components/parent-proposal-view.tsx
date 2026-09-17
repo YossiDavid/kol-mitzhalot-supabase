@@ -81,13 +81,21 @@ export default function ParentProposalView({
             </p>
           )}
           {/* הכרטיס נפתח בזכות ההצעה עצמה (shidduch_reveals_student), בלי
-              פרטי התקשרות ובלי הצהרה רפואית אלא אם השדכן פתח אותם */}
-          {proposal.otherStudentId && (
+              פרטי התקשרות ובלי הצהרה רפואית אלא אם השדכן פתח אותם.
+
+              כשהכרטיס נמחק אחרי שההצעה נשלחה אין לאן לקשר, וגם השם, הגיל
+              והעיר חוזרים ריקים. בלי המשפט המפורש המסך פשוט שותק, וזה נראה
+              כאילו הקישור חסר בגלל תקלה. */}
+          {proposal.otherStudentId ? (
             <Button asChild variant="link" className="h-auto p-0">
               <Link href={`/app/students/${proposal.otherStudentId}`}>
                 לכרטיס המלא
               </Link>
             </Button>
+          ) : (
+            <p className="text-body-sm text-muted-foreground">
+              הכרטיס הוסר מהמערכת ואינו זמין לצפייה.
+            </p>
           )}
         </Field>
         <Field label="השדכן">
