@@ -9,6 +9,11 @@ export type AnonymousStudentRow = {
   id: string;
   first_name: string;
   last_name: string;
+  /**
+   * כינוי ("יוסי" ל"יוסף"). נחשף בכוונה גם בתצוגה הציבורית: זהו כינוי פשוט
+   * שמסייע בזיהוי, ולא פרט מזהה כמו ת.ז. או טלפון.
+   */
+  nickname: string | null;
   gender: string | null;
   personal_status: string | null;
   city: string | null;
@@ -46,7 +51,7 @@ export type PublicStudent = Omit<
 };
 
 /** ה-select של הגולש הלא מחובר - בלי אף עמודה רגישה */
-export const ANONYMOUS_STUDENT_SELECT = `id, first_name, last_name, gender, personal_status, city, height, community, shtible, plan_for_life, head_cover_type, about, parents_info, family_info, author_info, image_url, birth_date, deleted_at,
+export const ANONYMOUS_STUDENT_SELECT = `id, first_name, last_name, nickname, gender, personal_status, city, height, community, shtible, plan_for_life, head_cover_type, about, parents_info, family_info, author_info, image_url, birth_date, deleted_at,
 			education_history(*),
 			employment_history(*)
 		`;

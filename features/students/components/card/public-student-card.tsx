@@ -38,6 +38,7 @@ export function PublicStudentCard({
       <StudentCardHero
         firstName={student.first_name}
         lastName={student.last_name}
+        nickname={student.nickname}
         genderLabel={genderLabel}
         age={student.age}
         personalStatus={student.personal_status}
