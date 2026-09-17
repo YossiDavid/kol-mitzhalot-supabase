@@ -6,6 +6,7 @@ import { CardSkeleton } from "@/components/ui/card-skeleton";
 import { SkeletonRegion } from "@/components/ui/skeleton";
 import { redirect } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
+import { sanitizeNextPath } from "@/features/auth/lib/next-path";
 import { getPhoneVerificationEnabled } from "@/lib/system-settings";
 import { Suspense } from "react";
 
@@ -26,12 +27,14 @@ function SettingsContentSkeleton() {
 async function SettingsContent({
   searchParams,
 }: {
-  searchParams: Promise<{ required?: string }>;
+  searchParams: Promise<{ required?: string; next?: string }>;
 }) {
   noStore();
   const sp = await searchParams;
   const missingIdentityField =
     sp.required === "name" || sp.required === "phone" ? sp.required : null;
+  // היעד שממנו נשלח לכאן שער הזיהוי (lib/name-gate.ts) - לחזרה אחרי השמירה
+  const nextPath = sanitizeNextPath(sp.next);
   const supabase = await createClient();
 
   const {
@@ -72,6 +75,7 @@ async function SettingsContent({
       <ProfileForm
         initialData={initialData}
         phoneVerificationEnabled={phoneVerificationEnabled}
+        next={nextPath}
       />
       <ApplicationStatusCard role="shadchan" />
       <ApplicationStatusCard role="staff" />
@@ -82,7 +86,7 @@ async function SettingsContent({
 export default function SettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ required?: string }>;
+  searchParams: Promise<{ required?: string; next?: string }>;
 }) {
   return (
     <Page width="form">

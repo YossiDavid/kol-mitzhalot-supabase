@@ -21,6 +21,11 @@ import {
 } from "@/features/students/lib/student-notes-data";
 import { loadStudentPhotos } from "@/features/students/lib/student-photos";
 import { canViewStudentPhoto } from "@/features/students/lib/student-photo-access";
+import { getStudentCardAccess } from "@/features/students/lib/student-card-access";
+import {
+  buildProposalStudentSelect,
+  redactProposalStudent,
+} from "@/features/students/lib/student-proposal-card";
 import { recordStudentCardView } from "@/features/students/lib/record-card-view";
 
 // הערה: אין כאן export const dynamic — הוא אסור תחת Cache Components
@@ -88,6 +93,25 @@ async function StudentPageContent({
   // להטבעה ב-HTML, ולכן הגבלת מידע חייבת לקרות כבר ברמת ה-query.
   const isAnonymous = !user;
 
+  // רמת הגישה נקבעת לפני השליפה, כי היא בוחרת את ה-select. מנהל כרטיס
+  // שקיבל הצעת שידוך מקבל "proposal": הכרטיס במלואו, בלי פרטי התקשרות
+  // ובלי הצהרה רפואית - אלא אם השדכן פתח אותם להצעה הזו.
+  const access = isAnonymous
+    ? null
+    : await getStudentCardAccess(supabase, id);
+  const isProposalView = access?.level === "proposal";
+
+  // "אין גישה" זהה למה שה-RLS היה חוסם, ולכן עוצרים כאן עם הודעה במקום
+  // לשלוח שאילתה שתיכשל ותציג למשתמש הודעת שגיאה של Postgres.
+  if (access?.level === "none") {
+    return (
+      <CardNotice
+        title="הכרטיס אינו זמין"
+        body="אין לך הרשאה לצפות בכרטיס הזה, או שהוא אינו קיים במערכת"
+      />
+    );
+  }
+
   const { data, error } = isAnonymous
     ? await createAdminClient()
         .from("students")
@@ -99,7 +123,11 @@ async function StudentPageContent({
         .single()
     : await supabase
         .from("students")
-        .select(FULL_STUDENT_SELECT)
+        .select(
+          isProposalView && access
+            ? buildProposalStudentSelect(access)
+            : FULL_STUDENT_SELECT,
+        )
         .eq("id", id)
         .single();
 
@@ -116,7 +144,16 @@ async function StudentPageContent({
     );
   }
 
-  const student = data;
+  // חיתוך פרטי ההתקשרות שחבויים בעמודות ה-JSON. חייב לקרות כאן, לפני
+  // שהשורה מגיעה לרינדור.
+  //
+  // השורה רופפת בכוונה, כמו StudentRow ב-student-card.tsx: ה-select נבנה
+  // בזמן ריצה לפי רמת הגישה, ולכן PostgREST אינו יכול להסיק ממנו טיפוס.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const student: any =
+    isProposalView && access && data
+      ? redactProposalStudent(data as Record<string, unknown>, access)
+      : data;
   if (!student) {
     return (
       <CardNotice
@@ -172,8 +209,10 @@ async function StudentPageContent({
   });
 
   // הערות שדכן פרטיות לכותב (RLS); פידבק אנשי צוות נשלף למעלה לכל צופה.
-  // איש צוות רשאי לכתוב פידבק - שיוכו למוסד של המיועד נאכף ב-RLS.
-  const canWriteStaffFeedback = hasRole(user, "staff");
+  // איש צוות רשאי לכתוב פידבק - שיוכו למוסד של המיועד נאכף ב-RLS. מי
+  // שרואה את הכרטיס רק בזכות הצעת שידוך אינו כותב עליו, גם אם הוא איש
+  // צוות במוסד אחר - הכתיבה הייתה נכשלת ב-RLS ורק מציגה לו שגיאה.
+  const canWriteStaffFeedback = hasRole(user, "staff") && !isProposalView;
   const shadchanNotes =
     isShadchan && user
       ? await loadMyShadchanNotes(supabase, student.id, user.id)
@@ -200,6 +239,8 @@ async function StudentPageContent({
       currentUserName={currentUserName}
       isShadchan={isShadchan}
       shadchanNotes={shadchanNotes}
+      isProposalView={isProposalView}
+      showMedical={!isProposalView || !!access?.shareMedical}
       actions={
         // ההרשאות נקבעות כאן, בשרת, ונמסרות כדגלים: קו״ח רק כשקיים, עריכה
         // לבעלים/שדכן/מנהל, שיתוף לכל מי שרואה את הכרטיס, פנייה ועדכון
@@ -207,7 +248,7 @@ async function StudentPageContent({
         <StudentCardActions
           studentId={student.id}
           studentName={`${student.first_name} ${student.last_name}`}
-          authorId={student.user_id}
+          authorId={student.user_id ?? null}
           cvUrl={student.cv_url ?? null}
           personalStatus={student.personal_status}
           gender={student.gender}

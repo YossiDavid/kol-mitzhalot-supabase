@@ -19,7 +19,7 @@ import { FormFieldShell } from "@/components/ui/form-field-shell";
 import { FormFields, FormSubmitError } from "@/components/ui/form-layout";
 import { Input } from "@/components/ui/input";
 import {
-  AUTH_CONFIRM_PATH,
+  buildConfirmPath,
   getAuthRedirectUrl,
 } from "@/features/auth/lib/redirect-url";
 import { requiredEmail } from "@/lib/forms/schema";
@@ -47,8 +47,12 @@ function resolveLoginError(err: unknown): string {
 
 export function LoginForm({
   className,
+  next = null,
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: React.ComponentPropsWithoutRef<"div"> & {
+  /** היעד שאליו לחזור אחרי ההתחברות, כשההגעה לכאן הייתה מקישור עמוק */
+  next?: string | null;
+}) {
   const router = useRouter();
 
   const form = useForm<LoginValues>({
@@ -69,7 +73,7 @@ export function LoginForm({
           // התחברות בלבד. בלי זה Supabase יוצר חשבון חדש לכל אימייל שמוקלד
           // כאן ומדלג על טופס ההרשמה — כלומר משתמש בלי שם ובלי טלפון.
           shouldCreateUser: false,
-          emailRedirectTo: getAuthRedirectUrl(AUTH_CONFIRM_PATH),
+          emailRedirectTo: getAuthRedirectUrl(buildConfirmPath(next)),
         },
       });
       if (error) throw error;

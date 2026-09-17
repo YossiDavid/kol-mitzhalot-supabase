@@ -25,6 +25,11 @@ import {
 } from "@/lib/forms/schema";
 import { normalizePhoneKey } from "@/lib/phone";
 import { createClient } from "@/lib/supabase/client";
+import {
+  DEFAULT_NEXT_PATH,
+  sanitizeNextPath,
+  withNextParam,
+} from "@/features/auth/lib/next-path";
 
 const profileSchema = z.object({
   firstName: requiredText("שם פרטי"),
@@ -44,11 +49,18 @@ interface ProfileFormProps {
   };
   /** When false, phone changes do not require OTP or verify-phone redirect */
   phoneVerificationEnabled?: boolean;
+  /**
+   * היעד שאליו לחזור אחרי שמירה מוצלחת. מגיע משער הזיהוי
+   * (lib/name-gate.ts) כשהמשתמש נשלח לכאן באמצע מסע אחר - למשל קישור
+   * להצעת שידוך ממייל. כשהוא ברירת המחדל, המשתמש פשוט נשאר בהגדרות.
+   */
+  next?: string;
 }
 
 export function ProfileForm({
   initialData,
   phoneVerificationEnabled = true,
+  next = DEFAULT_NEXT_PATH,
 }: ProfileFormProps) {
   const router = useRouter();
 
@@ -100,10 +112,17 @@ export function ProfileForm({
       toast.success("הפרופיל עודכן בהצלחה");
       router.refresh();
 
+      const target = sanitizeNextPath(next);
+
       if (phoneChanged && phoneVerificationEnabled) {
         toast.info("הטלפון שונה – נדרש אימות מחדש");
-        router.push("/auth/verify-phone");
+        router.push(withNextParam("/auth/verify-phone", target));
         return;
+      }
+
+      // שער הזיהוי שלח לכאן באמצע מסע אחר - מחזירים אליו
+      if (target !== DEFAULT_NEXT_PATH) {
+        router.push(target);
       }
     } catch (error: unknown) {
       const errorMessage =

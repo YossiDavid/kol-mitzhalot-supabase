@@ -259,10 +259,14 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
     recipientScope,
     noteForGroom,
     noteForBride,
+    shareContactDetails,
+    shareMedicalInfo,
   }: {
     recipientScope: RecipientScope;
     noteForGroom: string;
     noteForBride: string;
+    shareContactDetails: boolean;
+    shareMedicalInfo: boolean;
   }) => {
     if (!newShiduch || !canOffer) return;
     setSendLoading(true);
@@ -277,6 +281,8 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
           recipientScope,
           noteForGroom,
           noteForBride,
+          shareContactDetails,
+          shareMedicalInfo,
         }),
       });
       const data = await res.json();

@@ -1,5 +1,8 @@
+import Link from "next/link";
+
 import { Box } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import calculateAge from "@/lib/calculateAge";
 import MessageShadchanButton from "@/features/shidduchim/components/message-shadchan-button";
 import ProposalResponseForm from "@/features/shidduchim/components/proposal-response-form";
@@ -76,6 +79,15 @@ export default function ParentProposalView({
             <p className="text-body-sm text-muted-foreground">
               {otherDetails.join(" | ")}
             </p>
+          )}
+          {/* הכרטיס נפתח בזכות ההצעה עצמה (shidduch_reveals_student), בלי
+              פרטי התקשרות ובלי הצהרה רפואית אלא אם השדכן פתח אותם */}
+          {proposal.otherStudentId && (
+            <Button asChild variant="link" className="h-auto p-0">
+              <Link href={`/app/students/${proposal.otherStudentId}`}>
+                לכרטיס המלא
+              </Link>
+            </Button>
           )}
         </Field>
         <Field label="השדכן">

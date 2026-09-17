@@ -6,9 +6,17 @@ import { unstable_noStore as noStore } from "next/cache";
 import { maskPhone } from "@/lib/phone";
 import { getPhoneVerificationEnabled } from "@/lib/system-settings";
 import { Spinner } from "@/components/ui/spinner";
+import { sanitizeNextPath } from "@/features/auth/lib/next-path";
 
-async function VerifyPhoneContent() {
+async function VerifyPhoneContent({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
   noStore();
+  // היעד שממנו הגיע המשתמש (app/app/layout.tsx או טופס הפרופיל), כדי
+  // שקישור עמוק ממייל לא יאבד בשער אימות הטלפון.
+  const nextPath = sanitizeNextPath((await searchParams).next);
   const supabase = await createClient();
   const {
     data: { user },
@@ -16,11 +24,11 @@ async function VerifyPhoneContent() {
 
   const phoneVerificationEnabled = await getPhoneVerificationEnabled();
   if (!phoneVerificationEnabled) {
-    redirect("/app");
+    redirect(nextPath);
   }
 
   if (user?.user_metadata?.phone_verified === true) {
-    redirect("/app");
+    redirect(nextPath);
   }
 
   const phoneNumber =
@@ -31,13 +39,19 @@ async function VerifyPhoneContent() {
   const hasPhone = !!phoneNumber;
   const maskedPhone = phoneNumber ? maskPhone(phoneNumber) : null;
 
-  return <OTPSection hasPhone={hasPhone} maskedPhone={maskedPhone} />;
+  return (
+    <OTPSection hasPhone={hasPhone} maskedPhone={maskedPhone} next={nextPath} />
+  );
 }
 
-export default function PageWrapper() {
+export default function PageWrapper({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
   return (
     <Suspense fallback={<Spinner />}>
-      <VerifyPhoneContent />
+      <VerifyPhoneContent searchParams={searchParams} />
     </Suspense>
   );
 }

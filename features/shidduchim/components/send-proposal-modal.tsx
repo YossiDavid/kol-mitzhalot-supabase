@@ -11,6 +11,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,8 @@ type Props = {
     recipientScope: RecipientScope;
     noteForGroom: string;
     noteForBride: string;
+    shareContactDetails: boolean;
+    shareMedicalInfo: boolean;
   }) => Promise<void>;
   loading?: boolean;
   initialNoteGroom?: string;
@@ -47,6 +50,10 @@ export default function SendProposalModal({
   const [scope, setScope] = useState<RecipientScope>("both");
   const [noteGroom, setNoteGroom] = useState(initialNoteGroom);
   const [noteBride, setNoteBride] = useState(initialNoteBride);
+  // סגור כברירת מחדל: יצירת הקשר עוברת דרך השדכן, וההצהרה הרפואית נחשפת
+  // רק כשהצדדים מתקדמים. הפתיחה היא החלטה אקטיבית לכל הצעה בנפרד.
+  const [shareContact, setShareContact] = useState(false);
+  const [shareMedical, setShareMedical] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -56,6 +63,8 @@ export default function SendProposalModal({
       setScope("both");
       setNoteGroom("");
       setNoteBride("");
+      setShareContact(false);
+      setShareMedical(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -68,6 +77,8 @@ export default function SendProposalModal({
       recipientScope: scope,
       noteForGroom: showGroomNote ? noteGroom : "",
       noteForBride: showBrideNote ? noteBride : "",
+      shareContactDetails: shareContact,
+      shareMedicalInfo: shareMedical,
     });
   };
 
@@ -142,6 +153,45 @@ export default function SendProposalModal({
                 />
               </div>
             )}
+          </div>
+
+          <div className="space-y-3 border-t pt-4">
+            <p className="text-body-sm font-medium">
+              מה מנהלי הכרטיסים יראו בכרטיס של הצד השני?
+            </p>
+            <p className="text-caption text-muted-foreground">
+              הכרטיס נפתח להם במלואו. שני אלה סגורים כברירת מחדל.
+            </p>
+
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="share-contact"
+                checked={shareContact}
+                onCheckedChange={(checked) => setShareContact(checked === true)}
+                disabled={loading}
+              />
+              <Label
+                htmlFor="share-contact"
+                className="text-body-sm leading-snug font-normal"
+              >
+                פרטי התקשרות (טלפון, ת.ז., כתובת, קו״ח, טלפוני הורים וממליצים)
+              </Label>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="share-medical"
+                checked={shareMedical}
+                onCheckedChange={(checked) => setShareMedical(checked === true)}
+                disabled={loading}
+              />
+              <Label
+                htmlFor="share-medical"
+                className="text-body-sm leading-snug font-normal"
+              >
+                הצהרה רפואית
+              </Label>
+            </div>
           </div>
         </div>
 

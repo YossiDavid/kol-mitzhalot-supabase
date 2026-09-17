@@ -46,6 +46,8 @@ export function StudentCard({
   currentUserName,
   isShadchan,
   shadchanNotes,
+  isProposalView = false,
+  showMedical = true,
   actions,
 }: {
   student: StudentRow;
@@ -57,6 +59,10 @@ export function StudentCard({
   currentUserName: string;
   isShadchan: boolean;
   shadchanNotes: PrivateNote[];
+  /** הכרטיס נצפה בזכות הצעת שידוך, ולכן חלק מהפרטים אינם נשלפים כלל */
+  isProposalView?: boolean;
+  /** מקטע ההצהרה הרפואית - מוסתר כשהוא לא נשלף, כדי לא להציג "תקין" שקרי */
+  showMedical?: boolean;
   actions: React.ReactNode;
 }) {
   const genderLabel = genderToHebrew(student.gender);
@@ -87,6 +93,16 @@ export function StudentCard({
         backLink={<StudentCardBackLink />}
         actions={actions}
       />
+
+      {/* הצופה הגיע לכאן מהצעת שידוך. ההודעה מסבירה מה חסר ולמה, כדי
+          שהיעדר טלפון או הצהרה רפואית לא ייראה כתקלה או ככרטיס ריק */}
+      {isProposalView && (
+        <p className="rounded-lg border border-border bg-muted/50 px-4 py-3 text-body-sm text-muted-foreground">
+          הכרטיס מוצג לך בעקבות הצעת השידוך. פרטי ההתקשרות
+          {showMedical ? "" : " וההצהרה הרפואית"} אינם מוצגים — לשאלות נוספות
+          אפשר לפנות לשדכן.
+        </p>
+      )}
 
       {/* היוצא מן הכלל מסומן, לא ברירת המחדל: כרטיס פעיל הוא בשידוכים, ולכן
           רק כרטיס שהוצא מהם נושא הודעה - והפעולות שמפנות אליו חסומות */}
@@ -144,7 +160,7 @@ export function StudentCard({
           <EducationSection education={student.education_history} />
           <EmploymentSection employment={student.employment_history} />
           <ReferencesSection references={student.references} />
-          <MedicalSection medical={student.medical_records} />
+          {showMedical && <MedicalSection medical={student.medical_records} />}
           <AuthorInfoCard authorInfo={student.author_info} />
         </div>
       </div>

@@ -2,6 +2,10 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasRequiredFullName } from "@/lib/user-display-name";
 import { resolveUserPhone } from "@/lib/phone";
+import {
+  DEFAULT_NEXT_PATH,
+  sanitizeNextPath,
+} from "@/features/auth/lib/next-path";
 
 /** מה חסר למשתמש כדי לעמוד בדרישות הזיהוי */
 export type MissingIdentityField = "name" | "phone";
@@ -52,8 +56,16 @@ export async function checkNameRequirement(
   const missing = findMissingIdentityField(user, profile);
   if (!missing) return null;
 
+  // היעד המקורי נשמר כדי שהורה חדש שהגיע מקישור להצעת שידוך יוחזר אליה
+  // אחרי השלמת הפרטים, ולא ייתקע בדף ההגדרות.
+  const requestedPath = `${pathname}${request.nextUrl.search}`;
+
   const url = request.nextUrl.clone();
   url.pathname = "/app/settings";
+  url.search = "";
   url.searchParams.set("required", missing);
+  if (sanitizeNextPath(requestedPath) !== DEFAULT_NEXT_PATH) {
+    url.searchParams.set("next", requestedPath);
+  }
   return NextResponse.redirect(url);
 }

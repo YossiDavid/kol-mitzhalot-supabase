@@ -18,6 +18,10 @@ const bodySchema = z.object({
   recipientScope: recipientScopeSchema.optional(),
   noteForGroom: z.string().max(8000).optional().default(""),
   noteForBride: z.string().max(8000).optional().default(""),
+  // מה מנהלי הכרטיסים יראו בכרטיס של הצד השני. סגור כברירת מחדל, גם
+  // כשהלקוח לא שלח כלום - הפתיחה היא בחירה אקטיבית של השדכן.
+  shareContactDetails: z.boolean().optional().default(false),
+  shareMedicalInfo: z.boolean().optional().default(false),
 });
 
 function isBlockingStatus(status: string) {
@@ -62,6 +66,8 @@ export async function POST(req: NextRequest) {
     recipientScope,
     noteForGroom,
     noteForBride,
+    shareContactDetails,
+    shareMedicalInfo,
   } = parsed.data;
 
   if (action === "send" && !recipientScope) {
@@ -106,7 +112,7 @@ export async function POST(req: NextRequest) {
   const { data: pairRows, error: pairErr } = await admin
     .from("shidduchim")
     .select(
-      "id, status, shadchan_id, sent_at, note_for_groom, note_for_bride, recipient_scope",
+      "id, status, shadchan_id, sent_at, note_for_groom, note_for_bride, recipient_scope, share_contact_details, share_medical_info",
     )
     .eq("groom_id", groomId)
     .eq("bride_id", brideId);
@@ -169,6 +175,8 @@ export async function POST(req: NextRequest) {
       note_for_bride: noteForBride || null,
       recipient_scope: null,
       sent_at: null,
+      share_contact_details: shareContactDetails,
+      share_medical_info: shareMedicalInfo,
     };
 
     if (rowToReuse) {
@@ -228,6 +236,8 @@ export async function POST(req: NextRequest) {
     recipient_scope: recipientScope!,
     sent_at: null as string | null,
     updated_at: nowIso,
+    share_contact_details: shareContactDetails,
+    share_medical_info: shareMedicalInfo,
   };
 
   /**
@@ -243,6 +253,8 @@ export async function POST(req: NextRequest) {
         note_for_bride: rowToReuse.note_for_bride,
         recipient_scope: rowToReuse.recipient_scope,
         sent_at: rowToReuse.sent_at,
+        share_contact_details: rowToReuse.share_contact_details,
+        share_medical_info: rowToReuse.share_medical_info,
       }
     : null;
 

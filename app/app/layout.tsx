@@ -9,6 +9,7 @@ import Footer from "@/components/layout/footer";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { Toaster } from "@/components/ui/sonner";
 import { redirect } from "next/navigation";
+import { withNextParam } from "@/features/auth/lib/next-path";
 import { getRoles, getUser } from "@/lib/user";
 import { getPhoneVerificationEnabled } from "@/lib/system-settings";
 import { UnreadChatsProvider } from "@/features/chats/lib/unread-chats-context";
@@ -34,13 +35,18 @@ export default async function AppLayout({
 
   const user = await getUser();
 
-  const pathname = (await headers()).get("x-pathname") ?? "";
+  const requestHeaders = await headers();
+  const pathname = requestHeaders.get("x-pathname") ?? "";
   const isPublicStudentCard = PUBLIC_STUDENT_CARD_PATH_REGEX.test(pathname);
+
+  // הכתובת שאליה המשתמש ניסה להגיע. נשמרת בכל הפניה שמוציאה אותו מכאן, כדי
+  // שקישור עמוק ממייל (הצעת שידוך, למשל) לא יאבד בדרך להתחברות או לאימות.
+  const requestedPath = `${pathname}${requestHeaders.get("x-search") ?? ""}`;
 
   // בדיקת אימות - אם המשתמש לא מחובר, הפנה להתחברות, חוץ מכרטיס מיועד
   // ציבורי (הגבלת המידע הנחשף למשתמש לא מחובר נעשית בתוך הדף עצמו).
   if (!user && !isPublicStudentCard) {
-    redirect("/auth/login");
+    redirect(withNextParam("/auth/login", requestedPath));
   }
 
   // בדיקת אימות טלפון רלוונטית רק למשתמש מחובר - משתמש לא מחובר שצופה
@@ -50,7 +56,7 @@ export default async function AppLayout({
     if (phoneVerificationEnabled) {
       const isPhoneVerified = user.user_metadata?.phone_verified === true;
       if (!isPhoneVerified) {
-        redirect("/auth/verify-phone");
+        redirect(withNextParam("/auth/verify-phone", requestedPath));
       }
     }
   }

@@ -22,6 +22,10 @@ import { OTPForm } from "@/features/auth/components/otp-form";
 import { requiredText } from "@/lib/forms/schema";
 import { isValidPhone, PHONE_INVALID_MESSAGE } from "@/lib/phone";
 import { createClient } from "@/lib/supabase/client";
+import {
+  DEFAULT_NEXT_PATH,
+  sanitizeNextPath,
+} from "@/features/auth/lib/next-path";
 
 const addPhoneSchema = z.object({
   // הרווחים מוסרים לפני הבדיקה ולפני השמירה, כמו קודם
@@ -35,11 +39,14 @@ type AddPhoneValues = z.infer<typeof addPhoneSchema>;
 interface OTPSectionProps {
   hasPhone?: boolean;
   maskedPhone?: string | null;
+  /** לאן לחזור אחרי אימות מוצלח - היעד שהמשתמש ניסה להגיע אליו */
+  next?: string;
 }
 
 export default function OTPSection({
   hasPhone = true,
   maskedPhone = null,
+  next = DEFAULT_NEXT_PATH,
 }: OTPSectionProps) {
   const [codeSent, setCodeSent] = useState(false);
   const [addedPhone, setAddedPhone] = useState(false);
@@ -90,7 +97,9 @@ export default function OTPSection({
     });
 
     if (response.ok) {
-      window.location.href = "/app";
+      // ניווט מלא ולא router.push: הסשן השתנה בשרת, ורענון מלא מוודא
+      // שהעמוד הבא נטען עם המשתמש המאומת.
+      window.location.href = sanitizeNextPath(next);
       return;
     }
 

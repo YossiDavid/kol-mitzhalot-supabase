@@ -31,6 +31,10 @@ export async function runMiddlewareSession(
   // לכרטיס מיועד גם למשתמש לא מחובר.
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", request.nextUrl.pathname);
+  // ה-query נשמר בנפרד מהנתיב: הנתיב לבדו משמש להתאמות regex (כרטיס מיועד
+  // ציבורי), ושניהם יחד מרכיבים את יעד ההפניה שנשמר כשמשתמש לא מחובר נשלח
+  // להתחברות.
+  requestHeaders.set("x-search", request.nextUrl.search);
 
   let supabaseResponse = NextResponse.next({
     request: { headers: requestHeaders },
