@@ -41,6 +41,16 @@ const endorsementSchema = z.object({
 
 type EndorsementFormValues = z.infer<typeof endorsementSchema>;
 
+// חייב להישאר תואם למגבלות ה-bucket `content` (מיגרציה website_content_and_forms)
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+];
+const MAX_IMAGE_MB = 5;
+const MAX_IMAGE_BYTES = MAX_IMAGE_MB * 1024 * 1024;
+
 const EMPTY_FORM: EndorsementFormValues = {
   rav_name: "",
   rav_title: "",
@@ -90,7 +100,29 @@ export function EndorsementForm({
   const { isSubmitting } = form.formState;
   const imageUrl = form.watch("image_url");
 
+  /**
+   * מגבלות ה-bucket `content` נאכפות בשרת ומחזירות שגיאה באנגלית. הבדיקה כאן
+   * מקדימה אותן בהודעה בעברית, כי הסכמה סרוקה מגיעה לרוב כ-PDF או HEIC
+   * או במשקל גדול מדי — ואז ההעלאה נכשלת והכרטיס נשמר בלי תמונה.
+   */
+  function validateImage(file: File): string | null {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      return "ניתן להעלות תמונה בלבד (JPG, PNG, WEBP או GIF). קובץ PDF או HEIC יש להמיר לתמונה לפני ההעלאה.";
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      const sizeMb = (file.size / 1024 / 1024).toFixed(1);
+      return `הקובץ שנבחר שוקל ${sizeMb}MB, והמגבלה היא ${MAX_IMAGE_MB}MB. יש להקטין את התמונה ולנסות שוב.`;
+    }
+    return null;
+  }
+
   async function uploadImage(file: File) {
+    const validationError = validateImage(file);
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
     setUploading(true);
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `endorsements/${crypto.randomUUID()}.${ext}`;
@@ -113,6 +145,15 @@ export function EndorsementForm({
   }
 
   async function handleSave(values: EndorsementFormValues) {
+    // הסכמה בלי תמונה ובלי טקסט מציגה באתר כרטיס עם שם הרב בלבד. זו לרוב
+    // תוצאה של העלאת תמונה שנכשלה, ולכן מבקשים אישור מפורש לפני השמירה.
+    if (!values.image_url && !values.endorsement_text) {
+      const proceed = confirm(
+        "ההסכמה נשמרת ללא תמונה וללא טקסט — באתר יופיע שם הרב בלבד. להמשיך?",
+      );
+      if (!proceed) return;
+    }
+
     const payload = {
       rav_name: values.rav_name,
       rav_title: values.rav_title || null,

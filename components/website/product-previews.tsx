@@ -595,7 +595,7 @@ export function ArticleCover({
         <div className="rounded-md border border-border bg-card px-3 py-2">
           <p className="text-body-sm font-bold text-foreground">קול מצהלות</p>
           <p className="text-caption text-muted-foreground">
-            הארגון לקידום שידוכים בבעלזא
+            הארגון לקידום שידוכים בציבור החסידי
           </p>
         </div>
       </CoverSlice>

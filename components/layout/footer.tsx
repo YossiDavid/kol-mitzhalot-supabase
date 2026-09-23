@@ -24,7 +24,7 @@ export default async function Footer({
               </div>
               {/* Callers: website footer. User: tighten leading a bit. */}
               <p className="text-muted-foreground">
-                הארגון לקידום שידוכים בבעלזא — מערכת חדשנית להצעות וניהול
+                הארגון לקידום שידוכים בציבור החסידי — מערכת חדשנית להצעות וניהול
                 שידוכים, בהמלצת ובפיקוח רבני קהילתנו הק׳.
               </p>
             </div>

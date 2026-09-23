@@ -14,6 +14,7 @@ import SignsSvg from "@/assets/icons/signs.svg";
 import TrustSvg from "@/assets/icons/trust.svg";
 import PrizeSvg from "@/assets/icons/prize.svg";
 import { Button } from "@/components/ui/button";
+import { fetchPublishedEndorsements } from "@/lib/endorsements";
 import { createClient } from "@/lib/supabase/server";
 
 type SvgIcon = FC<SVGProps<SVGSVGElement>>;
@@ -151,7 +152,7 @@ const audiences = [
   },
   {
     title: "שדכנים ושדכניות",
-    desc: 'שורפים שעות על בירורים בסיסיים? הולכים לאיבוד בתוך ים הניירת? הצטרפו לקול מצהלות ותהנו ממאגר מידע עדכני עם קו"ח מפורטים של כלל המיועדים בבעלזא, אפשרויות חיפוש ומיון מתקדמות, שמירת שמות מועדפים, שליחת הצעות וניהול השידוכים ישירות מתוך המערכת!',
+    desc: 'שורפים שעות על בירורים בסיסיים? הולכים לאיבוד בתוך ים הניירת? הצטרפו לקול מצהלות ותהנו ממאגר מידע עדכני עם קו"ח מפורטים של כלל המיועדים בציבור החסידי, אפשרויות חיפוש ומיון מתקדמות, שמירת שמות מועדפים, שליחת הצעות וניהול השידוכים ישירות מתוך המערכת!',
     features: [
       {
         title: "מאגר מתעדכן!",
@@ -235,10 +236,7 @@ function ArticleCard({
         >
           {title}
         </h3>
-        <p
-          className="text-body-sm text-muted-foreground"
-          style={{ margin: 0 }}
-        >
+        <p className="text-body-sm text-muted-foreground" style={{ margin: 0 }}>
           {excerpt}
         </p>
         <div className="mt-auto flex items-center justify-between border-t border-border pt-4">
@@ -393,14 +391,9 @@ async function HomepageKnowledge() {
 }
 
 async function MissionEndorsementsCarousel() {
-  const supabase = await createClient();
-  const { data: endorsements } = await supabase
-    .from("endorsements")
-    .select("id, rav_name, rav_title, image_url, endorsement_text")
-    .eq("is_published", true)
-    .order("sort_order", { ascending: true });
+  const endorsements = await fetchPublishedEndorsements();
 
-  if (!endorsements?.length) {
+  if (!endorsements.length) {
     return null;
   }
 
@@ -451,11 +444,11 @@ export default function HomePage() {
               קול מצהלות
             </h1>
             <p className="mb-10 text-title font-bold text-primary-foreground/95">
-              הארגון לקידום שידוכים בבעלזא
+              הארגון לקידום שידוכים בציבור החסידי
             </p>
 
             {/* Animated ticker */}
-            <div className="mb-10 flex min-w-0 max-w-3xl items-center gap-3">
+            <div className="mb-10 flex max-w-3xl min-w-0 items-center gap-3">
               <CheckSvg size={26} stroke="currentColor" strokeWidth="2.4" />
               <div className="h-12 min-w-0 flex-1 overflow-hidden">
                 <div
@@ -653,9 +646,7 @@ export default function HomePage() {
                 className="flex flex-col gap-6 rounded-2xl border border-border bg-card p-8 md:p-9"
               >
                 <h3 className="text-title font-bold text-primary">{title}</h3>
-                <p className="text-body text-foreground/80">
-                  {desc}
-                </p>
+                <p className="text-body text-foreground/80">{desc}</p>
                 <ul className="flex flex-col gap-4">
                   {features.map(({ title: ft, desc: fd }) => (
                     <li key={ft} className="flex items-start gap-3">
@@ -709,9 +700,7 @@ export default function HomePage() {
                 <h3 className="relative mb-4 text-subtitle leading-snug font-bold text-primary">
                   {title}
                 </h3>
-                <p className="relative text-body text-foreground/80">
-                  {desc}
-                </p>
+                <p className="relative text-body text-foreground/80">{desc}</p>
               </article>
             ))}
           </div>
@@ -722,7 +711,7 @@ export default function HomePage() {
       <section className="bg-background">
         <div className="shell-site py-20 md:py-24">
           <div className="mb-14 text-center md:mb-16">
-            <h2 className="mb-5 text-display leading-[1.08] font-bold text-primary text-balance">
+            <h2 className="mb-5 text-display leading-[1.08] font-bold text-balance text-primary">
               איך זה נראה
               <br />
               <HighlightSpan>מבפנים?</HighlightSpan>
@@ -739,7 +728,7 @@ export default function HomePage() {
             <div className="order-3 h-full min-h-0 md:order-2">
               <ShadchanimProductPreview />
             </div>
-            <div className="order-2 flex flex-col items-start gap-4 md:order-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="order-2 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between md:order-3">
               <h3 className="text-subtitle leading-snug font-bold text-foreground">
                 מערכת קול מצהלות להורים ולמיועדים
               </h3>

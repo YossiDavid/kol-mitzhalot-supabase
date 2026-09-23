@@ -24,7 +24,13 @@ type ParentProposalViewProps = {
   viewerId: string;
 };
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <p className="text-body-sm font-medium text-muted-foreground">{label}</p>
