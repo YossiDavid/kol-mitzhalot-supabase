@@ -22,8 +22,11 @@ setup("authenticate test user", async ({ page }) => {
   let userId: string;
   if (existing) {
     userId = existing.id;
+    // התפקיד ב-app_metadata (user_metadata ניתן לכתיבה ע"י המשתמש ואינו נקרא
+    // להרשאות). ממזגים כדי לא לדרוס provider/providers.
     await admin.auth.admin.updateUserById(userId, {
       user_metadata: { phone_verified: true, phone: TEST_PHONE },
+      app_metadata: { ...existing.app_metadata, roles: ["shadchan"] },
     });
   } else {
     const { data, error } = await admin.auth.admin.createUser({
@@ -31,8 +34,8 @@ setup("authenticate test user", async ({ page }) => {
       phone: TEST_PHONE,
       email_confirm: true,
       phone_confirm: true,
+      app_metadata: { roles: ["shadchan"] },
       user_metadata: {
-        role: "shadchan",
         firstName: "Test",
         lastName: "User",
         phone: TEST_PHONE,

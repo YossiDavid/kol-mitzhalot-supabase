@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { HeartHandshake } from "lucide-react";
 import { AuthButton } from "@/components/auth-button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/server";
@@ -13,6 +14,7 @@ import { Separator } from "../../ui/separator";
 import Image from "next/image";
 import Logo from "@/assets/images/logo-text.svg";
 import { WebMobileNav } from "./mobile-nav";
+import { ENDORSEMENTS_HREF } from "@/components/website/endorsements-anchor";
 
 export default async function Header({
   variant,
@@ -70,6 +72,7 @@ export default async function Header({
               { label: "אודות", href: "/about" },
               { label: "מרכז הידע", href: "/knowledge" },
               { label: "מה חדש", href: "/whats-new" },
+              { label: "הסכמות והמלצות", href: ENDORSEMENTS_HREF },
               { label: "קול מצהלות לשדכנים", href: "/shadchanim" },
               { label: "קול מצהלות להורים ומיועדים", href: "/parents" },
               { label: "צרו קשר", href: "/contact" },
@@ -85,6 +88,17 @@ export default async function Header({
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">
+            {/* מתחת ל-sm אין מקום ליד "הרשמה חינם"; שם הכפתור בראש תפריט המובייל */}
+            <Button
+              asChild
+              variant="outline"
+              className="hidden border-brand-gold text-foreground hover:bg-brand-gold-muted active:bg-brand-gold-muted sm:inline-flex dark:border-brand-gold dark:hover:bg-brand-gold-muted dark:hover:text-brand-gold-foreground"
+            >
+              <Link href="/donations">
+                <HeartHandshake className="text-brand-gold" aria-hidden="true" />
+                לתרומות
+              </Link>
+            </Button>
             <WebMobileNav isLoggedIn={!!user} />
             {/* משתמש מחובר שגולש באתר חוזר למערכת, ולא מופנה שוב לכניסה */}
             {user ? (

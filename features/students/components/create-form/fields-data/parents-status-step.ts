@@ -53,6 +53,9 @@ export const parentsStatusStep: FormSteps = {
           label: "מי נפטר?",
           type: "radio",
           options: PARENT_OPTIONS,
+          // קובע אילו פרטי הורה נשאלים בשלב "על המשפחה"
+          required: true,
+          requiredMessage: "נא לבחור מי נפטר",
           condition: [is("parents.status", "widowed")],
         },
         {

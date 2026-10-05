@@ -59,13 +59,6 @@ export const basicInformationStep: FormSteps = {
           type: "text",
         },
         {
-          name: "identityNumber",
-          width: "sm",
-          label: "תעודת זהות",
-          type: "text",
-          required: true,
-        },
-        {
           name: "birthDate",
           width: "sm",
           label: "תאריך לידה",

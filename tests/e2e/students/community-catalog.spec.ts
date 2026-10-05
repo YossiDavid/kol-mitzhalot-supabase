@@ -17,6 +17,7 @@ test.afterAll(async () => {
 
 async function openCommunityField(page: import("@playwright/test").Page) {
   await page.goto("/app/students/create");
+  await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
   await page.getByRole("radio", { name: "מיועד", exact: true }).check();
   await page.getByRole("button", { name: "המשך לשלב הבא" }).click();
   const cell = page.locator('[data-field-name="community"]');

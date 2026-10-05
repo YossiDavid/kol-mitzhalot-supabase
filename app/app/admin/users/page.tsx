@@ -12,6 +12,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { Suspense } from "react";
 import { ImpersonateButton } from "@/features/admin/components/impersonate-button";
 import { AdminUsersFilters } from "@/features/admin/components/users-filters";
+import { getSignupPurposeLabel } from "@/features/auth/lib/signup-purpose";
 import { getRoleLabel } from "@/lib/user";
 import {
   formatFullName,
@@ -54,6 +55,12 @@ const USER_COLUMNS: DataTableColumn<UserStatsRow>[] = [
     size: "grow",
     className: "wrap-anywhere",
     cell: (user) => user.email || "לא זמין",
+  },
+  {
+    key: "purpose",
+    header: "מטרת ההרשמה",
+    size: "grow",
+    cell: (user) => getSignupPurposeLabel(user.signupPurpose),
   },
   {
     key: "roles",
@@ -351,7 +358,7 @@ function UsersPageFallback() {
       <DataTableSkeleton
         breakpoint="xl"
         rows={FALLBACK_ROW_COUNT}
-        columns={8}
+        columns={9}
       />
     </Page>
   );

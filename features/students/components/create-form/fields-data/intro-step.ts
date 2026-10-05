@@ -12,9 +12,24 @@ export const introStep: FormSteps = {
       title: "",
       fields: [
         {
+          name: "cardFor",
+          width: "full",
+          label: "אני ממלא/ת את הכרטיס:",
+          type: "radio",
+          options: [
+            { value: "self", label: "עבור עצמי" },
+            { value: "child", label: "עבור בני או בתי" },
+            { value: "other", label: "עבור אדם אחר" },
+          ],
+          required: true,
+          // התווית היא משפט שלם, ולכן הודעה מפורשת
+          requiredMessage: "נא לבחור עבור מי ממלאים את הכרטיס",
+          beforeField: WELCOME_HTML,
+        },
+        {
           name: "gender",
           width: "full",
-          label: "אני ממלא/ת את טופס הקו״ח עבור:",
+          label: "מגדר המיועד/ת:",
           type: "radio",
           options: [
             { value: "male", label: "מיועד" },
@@ -23,7 +38,6 @@ export const introStep: FormSteps = {
           required: true,
           // התווית היא משפט שלם, ולכן הודעה מפורשת
           requiredMessage: "נא לבחור מיועד/מיועדת",
-          beforeField: WELCOME_HTML,
         },
       ],
     },

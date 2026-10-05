@@ -7,44 +7,40 @@ function isRole(value: unknown): value is Role {
 }
 
 /**
- * User-like object with optional user_metadata.role (legacy scalar) and/or
- * user_metadata.roles (new array). Auth User or similar.
+ * User-like object with optional app_metadata.roles. Auth User or similar
+ * (an object from getUser()/admin API, or decoded JWT claims - both carry
+ * app_metadata).
+ *
+ * אבטחה: התפקידים נקראים רק מ-app_metadata. user_metadata ניתן לכתיבה ע"י
+ * המשתמש עצמו (supabase.auth.updateUser({ data })) ולכן לעולם אין לקרוא ממנו
+ * הרשאות. app_metadata נכתב רק ע"י service role (auth.admin.updateUserById).
  */
 export type UserWithRole =
   | {
-      user_metadata?: {
-        role?: string | null;
-        roles?: unknown;
-      } | null;
+      app_metadata?: Record<string, unknown> | null;
     }
   | null
   | undefined;
 
 /**
- * Returns ALL roles assigned to a user. Reads the new `roles` array when present,
- * otherwise falls back to the legacy scalar `role`, treated as a one-element array,
- * for backward compatibility with users created before the multi-role migration.
+ * Returns ALL roles assigned to a user, from `app_metadata.roles` only.
  * Missing/invalid data returns ["user"].
  */
 export function getRoles(user: UserWithRole): Role[] {
-  const metadata = user?.user_metadata;
-  const rawRoles = metadata?.roles;
+  const rawRoles = user?.app_metadata?.roles;
 
   if (Array.isArray(rawRoles)) {
     const validRoles = rawRoles.filter(isRole);
     if (validRoles.length > 0) return validRoles;
   }
 
-  const legacyRole = metadata?.role;
-  if (isRole(legacyRole)) return [legacyRole];
-
   return ["user"];
 }
 
 /**
- * Returns whether the user has the given role. Checks both the new `roles` array
- * and the legacy scalar `role` (via getRoles). Use this for ALL permission checks —
- * a user can legitimately hold multiple roles at once (e.g. shadchan AND staff).
+ * Returns whether the user has the given role (via getRoles). Use this for ALL
+ * permission checks - a user can legitimately hold multiple roles at once
+ * (e.g. shadchan AND staff).
  */
 export function hasRole(user: UserWithRole, role: Role): boolean {
   return getRoles(user).includes(role);
@@ -54,9 +50,7 @@ const ROLE_PRECEDENCE: readonly Role[] = ["admin", "shadchan", "staff", "user"];
 
 /**
  * Given a list of roles, returns the single highest-precedence one:
- * admin > shadchan > staff > user. Used to derive the legacy scalar `role`
- * value that must still be written whenever roles are updated, for backward
- * compatibility with any code path that hasn't been converted to `hasRole` yet.
+ * admin > shadchan > staff > user. For DISPLAY / API responses only.
  */
 export function pickHighestPrecedenceRole(roles: readonly Role[]): Role {
   for (const candidate of ROLE_PRECEDENCE) {

@@ -9,6 +9,8 @@ import {
   personalStatusToHebrew,
 } from "@/features/students/lib/profile-labels";
 
+import { AgeBirthDate } from "./age-birth-date";
+
 /**
  * "חזרה לרשימה" יושב בשורת הפעולות של ההדר ולא בשורה נפרדת מעליה, ולכן הוא
  * לוקח את הגובה מסולם הרכיבים - כדי שיתיישר עם הכפתורים שלצדו.
@@ -76,6 +78,7 @@ export function StudentCardHero({
   nickname,
   genderLabel,
   age,
+  ageHebrewDate,
   personalStatus,
   gender,
   childrenCount = 0,
@@ -91,6 +94,8 @@ export function StudentCardHero({
   nickname?: string | null;
   genderLabel: string | null;
   age: string | number | null;
+  /** תאריך הלידה העברי, לחשיפה בלחיצה על הגיל. חסר בתצוגה הציבורית */
+  ageHebrewDate?: string | null;
   personalStatus: string | null | undefined;
   gender: string | null | undefined;
   /** סך הילדים מנישואים קודמים. 0 - לא מוצג דבר ליד הסטטוס */
@@ -114,7 +119,11 @@ export function StudentCardHero({
           className="mt-1.5 flex flex-wrap gap-x-2 gap-y-1 text-body-sm text-muted-foreground"
         >
           {genderLabel && <span>{genderLabel}</span>}
-          {age !== null && <MetaItem>גיל {age}</MetaItem>}
+          {age !== null && (
+            <MetaItem>
+              <AgeBirthDate label={`גיל ${age}`} hebrewDate={ageHebrewDate} />
+            </MetaItem>
+          )}
           {personalStatus && (
             <MetaItem>
               {personalStatusToHebrew(personalStatus, gender ?? undefined)}

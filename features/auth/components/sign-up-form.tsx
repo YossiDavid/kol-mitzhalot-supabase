@@ -18,10 +18,19 @@ import {
 } from "@/components/ui/form-layout";
 import { Input } from "@/components/ui/input";
 import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import {
+  isSignupPurpose,
+  SIGNUP_PURPOSE_METADATA_KEY,
+  SIGNUP_PURPOSE_OPTIONS,
+} from "@/features/auth/lib/signup-purpose";
+import {
   AUTH_CONFIRM_PATH,
   getAuthRedirectUrl,
 } from "@/features/auth/lib/redirect-url";
-import { requiredEmail, requiredText } from "@/lib/forms/schema";
+import { requiredChoice, requiredEmail, requiredText } from "@/lib/forms/schema";
 import { isValidPhone, PHONE_INVALID_MESSAGE } from "@/lib/phone";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -34,6 +43,10 @@ const signUpSchema = z.object({
   phone: requiredText("מספר טלפון")
     .transform((value) => value.replace(/\s/g, ""))
     .refine(isValidPhone, PHONE_INVALID_MESSAGE),
+  // ריק = לא נבחר; הבדיקה השנייה מגינה מערך שאינו ברשימה
+  signupPurpose: requiredChoice("מטרת ההרשמה").refine(isSignupPurpose, {
+    message: "נא לבחור מטרת ההרשמה",
+  }),
 });
 
 type SignUpValues = z.infer<typeof signUpSchema>;
@@ -46,7 +59,13 @@ export function SignUpForm({
 
   const form = useForm<SignUpValues>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: { firstName: "", lastName: "", email: "", phone: "" },
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      signupPurpose: "",
+    },
   });
 
   const { isSubmitting, errors } = form.formState;
@@ -63,6 +82,7 @@ export function SignUpForm({
             phone: values.phone,
             firstName: values.firstName,
             lastName: values.lastName,
+            [SIGNUP_PURPOSE_METADATA_KEY]: values.signupPurpose,
           },
           emailRedirectTo: getAuthRedirectUrl(AUTH_CONFIRM_PATH),
         },
@@ -152,6 +172,23 @@ export function SignUpForm({
                         className="text-start"
                         disabled={isSubmitting}
                       />
+                    </FormFieldShell>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="signupPurpose"
+                  render={({ field }) => (
+                    <FormFieldShell label="מטרת ההרשמה" required>
+                      <NativeSelect {...field} disabled={isSubmitting}>
+                        <NativeSelectOption value="">בחרו…</NativeSelectOption>
+                        {SIGNUP_PURPOSE_OPTIONS.map(({ value, label }) => (
+                          <NativeSelectOption key={value} value={value}>
+                            {label}
+                          </NativeSelectOption>
+                        ))}
+                      </NativeSelect>
                     </FormFieldShell>
                   )}
                 />

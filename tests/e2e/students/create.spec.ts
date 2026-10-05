@@ -61,6 +61,7 @@ test.describe("יצירת תלמיד חדש", () => {
 
   test("ניווט בין שלבים עובד", async ({ page }) => {
     // Step 0 — select gender
+    await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
     await page.getByRole("radio", { name: "מיועד", exact: true }).click();
     await page.locator("button:has-text('הבא')").click();
 
@@ -83,17 +84,17 @@ test.describe("יצירת תלמיד חדש", () => {
     });
 
     // ── Step 0: Gender ─────────────────────────────────────────────
+    await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
     await page.getByRole("radio", { name: "מיועד", exact: true }).click();
     await page.locator("button:has-text('הבא')").click();
 
     // ── Step 1: Basic information ───────────────────────────────────
     await expect(page.locator("text=שם פרטי")).toBeVisible();
 
-    // Use a timestamp-based identity number to avoid UNIQUE constraint violations
-    const identityNumber = String(Date.now()).slice(-9);
+    // ת"ז לא נאספת בטופס: בלי null בשרת, שני כרטיסים היו מתנגשים ב-UNIQUE
+    await expect(page.locator("#identityNumber")).toHaveCount(0);
     await fill(page, "firstName", "ישראל");
     await fill(page, "lastName", "ישראלי");
-    await fill(page, "identityNumber", identityNumber);
     await fill(page, "country", "ישראל");
     await fill(page, "city", "בני ברק");
     await fill(page, "street", "רב שך");
@@ -113,7 +114,13 @@ test.describe("יצירת תלמיד חדש", () => {
 
     await page.locator("button:has-text('הבא')").click();
 
-    // ── Step 2: Family info ─────────────────────────────────────────
+    // ── Step 2: Parents status (לפני המשפחה: מי נפטר קובע מה נשאל שם) ──
+    await expect(page.locator("button:has-text('הבא')")).toBeVisible({
+      timeout: 5_000,
+    });
+    await page.locator("button:has-text('הבא')").click();
+
+    // ── Step 3: Family info ─────────────────────────────────────────
     await expect(page.locator("text=על המשפחה").first()).toBeVisible({
       timeout: 5_000,
     });
@@ -137,13 +144,7 @@ test.describe("יצירת תלמיד חדש", () => {
 
     await page.locator("button:has-text('הבא')").click();
 
-    // ── Step 3: Education ───────────────────────────────────────────
-    await expect(page.locator("button:has-text('הבא')")).toBeVisible({
-      timeout: 5_000,
-    });
-    await page.locator("button:has-text('הבא')").click();
-
-    // ── Step 4: Parents status ──────────────────────────────────────
+    // ── Step 4: Education ───────────────────────────────────────────
     await expect(page.locator("button:has-text('הבא')")).toBeVisible({
       timeout: 5_000,
     });
@@ -190,5 +191,61 @@ test.describe("יצירת תלמיד חדש", () => {
     });
     createdStudentId = page.url().match(STUDENT_URL_ID)?.[1] ?? null;
     expect(createdStudentId).not.toBeNull();
+
+    // card_for נשמר, וה-ת"ז נשארת null (לא מחרוזת ריקה שמתנגשת ב-UNIQUE)
+    const { data: created, error } = await createServiceClient()
+      .from("students")
+      .select("card_for, identity_number")
+      .eq("id", createdStudentId as string)
+      .single();
+    expect(error).toBeNull();
+    expect(created).toEqual({ card_for: "child", identity_number: null });
+  });
+
+  test("עבור עצמי: מקטע ממלא הטופס מוסתר ואינו חובה", async ({ page }) => {
+    // Arrange: השלב האחרון נפתח בקפיצה דרך ניווט השלבים
+    await page.getByRole("radio", { name: "עבור עצמי" }).check();
+    await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
+
+    // Act
+    await page
+      .getByRole("navigation", { name: "שלבי הטופס" })
+      .getByRole("button", { name: "קצת על המיועד שאתם מחפשים", exact: true })
+      .click();
+
+    // Assert
+    await expect(page.locator("#partner-additionalInformation")).toBeVisible();
+    await expect(page.locator("#author-name")).toHaveCount(0);
+    await expect(page.locator("#author-phone")).toHaveCount(0);
+    await expect(page.locator("#author-relation")).toHaveCount(0);
+  });
+
+  test("עבור בני או בתי: מקטע ממלא הטופס מוצג", async ({ page }) => {
+    // Arrange
+    await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
+    await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
+
+    // Act
+    await page
+      .getByRole("navigation", { name: "שלבי הטופס" })
+      .getByRole("button", { name: "קצת על המיועד שאתם מחפשים", exact: true })
+      .click();
+
+    // Assert
+    await expect(page.locator("#author-name")).toBeVisible();
+  });
+
+  test("אי אפשר להמשיך מההקדמה בלי לבחור עבור מי הכרטיס", async ({ page }) => {
+    // Arrange
+    await page.getByRole("radio", { name: "מיועד", exact: true }).check();
+
+    // Act
+    await page.getByRole("button", { name: "המשך לשלב הבא" }).click();
+
+    // Assert
+    await expect(
+      page.getByText("נא לבחור עבור מי ממלאים את הכרטיס"),
+    ).toBeVisible();
+    await expect(page.locator("text=ברוכים הבאים")).toBeVisible();
   });
 });

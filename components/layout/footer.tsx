@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { LogoSvg } from "@/components/website/logo-svg";
+import { ENDORSEMENTS_HREF } from "@/components/website/endorsements-anchor";
 import { NewsletterSignup } from "@/components/website/newsletter-signup";
 
 export default async function Footer({
@@ -57,6 +58,8 @@ export default async function Footer({
                   { label: "לשדכנים", href: "/shadchanim" },
                   { label: "להורים ומיועדים", href: "/parents" },
                   { label: "מרכז הידע", href: "/knowledge" },
+                  { label: "תרומות והנצחות", href: "/donations" },
+                  { label: "הסכמות והמלצות", href: ENDORSEMENTS_HREF },
                   { label: "צרו קשר", href: "/contact" },
                 ].map(({ label, href }) => (
                   <li key={label}>
@@ -128,6 +131,9 @@ export default async function Footer({
           </li>
           <li>
             <Link href="/support">שירות ותמיכה</Link>
+          </li>
+          <li>
+            <Link href="/donations">תרומות והנצחות</Link>
           </li>
         </ul>
       </nav>

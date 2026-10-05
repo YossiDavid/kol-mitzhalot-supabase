@@ -16,10 +16,10 @@ import {
 
 // הסט שנאכף לפני שהאכיפה נגזרה מהנתונים. שינוי כאן = שדה חובה נוסף או הוסר
 const EXPECTED_REQUIRED_PATHS = [
+  "cardFor",
   "gender",
   "firstName",
   "lastName",
-  "identityNumber",
   "birthDate",
   "country",
   "city",
@@ -54,7 +54,6 @@ const PERSONAL_STEP_REQUIRED = [
   "country",
   "firstName",
   "house",
-  "identityNumber",
   "lastName",
   "personalStatus",
   "street",
@@ -293,6 +292,90 @@ test.describe("כללי שדה חובה נגזרים ממערך השדות", () 
     ]);
   });
 
+  test("עבור עצמי: ממלא הטופס לא חובה; עבור אחרים - חובה", () => {
+    // Arrange
+    const authorPaths = ["author.name", "author.phone", "author.relation"];
+    const pathsFor = (cardFor: string) =>
+      issuePaths(studentFields, { gender: "male", cardFor }).filter((path) =>
+        path.startsWith("author."),
+      );
+
+    // Act + Assert
+    expect(pathsFor("self")).toEqual([]);
+    expect(pathsFor("child")).toEqual(authorPaths);
+    expect(pathsFor("other")).toEqual(authorPaths);
+  });
+
+  test("הורה שנפטר: טלפון, עיסוק ואימייל לא חובה ולא מוצגים; השם כן", () => {
+    // Arrange
+    const parentPaths = (parents: Record<string, string>) =>
+      issuePaths(studentFields, { gender: "male", parents }).filter(
+        (path) => path.startsWith("father.") || path.startsWith("mother."),
+      );
+
+    // Act
+    const fatherDead = parentPaths({ status: "widowed", deadParent: "father" });
+    const motherDead = parentPaths({ status: "widowed", deadParent: "mother" });
+    const bothDead = parentPaths({ status: "widowed", deadParent: "both" });
+    const bothAlive = parentPaths({ status: "married" });
+
+    // Assert
+    expect(fatherDead).not.toContain("father.phone");
+    expect(fatherDead).not.toContain("father.job");
+    expect(fatherDead).toContain("father.self");
+    expect(fatherDead).toContain("mother.phone");
+    expect(motherDead).not.toContain("mother.phone");
+    expect(motherDead).not.toContain("mother.job");
+    expect(motherDead).toContain("mother.self");
+    expect(motherDead).toContain("father.job");
+    for (const path of ["phone", "job"]) {
+      expect(bothDead).not.toContain(`father.${path}`);
+      expect(bothDead).not.toContain(`mother.${path}`);
+      expect(bothAlive).toContain(`father.${path}`);
+    }
+  });
+
+  test("אלמנ/ה בלי בחירה מי נפטר: הבחירה חובה", () => {
+    // Arrange
+    const values = { gender: "male", parents: { status: "widowed" } };
+
+    // Act
+    const paths = issuePaths(studentFields, values);
+
+    // Assert
+    expect(paths).toContain("parents.deadParent");
+  });
+
+  test("אין ילדים מנישואין אלו: פריטי הילדים לא נאכפים", () => {
+    // Arrange
+    const row = (noChildren: boolean) => ({
+      gender: "male",
+      personalStatus: "divorced",
+      previousPartners: [
+        {
+          separationType: "divorce",
+          noChildren,
+          children: [{ gender: "", birthDate: "", livesWith: "" }],
+        },
+      ],
+    });
+    const childPaths = (values: unknown) =>
+      issuePaths(studentFields, values).filter((path) =>
+        path.startsWith("previousPartners."),
+      );
+
+    // Act
+    const withSwitchOn = childPaths(row(true));
+    const withSwitchOff = childPaths(row(false));
+
+    // Assert
+    expect(withSwitchOn).toEqual([]);
+    expect(withSwitchOff).toEqual([
+      "previousPartners.0.children.0.birthDate",
+      "previousPartners.0.children.0.gender",
+    ]);
+  });
+
   test("מה נחשב ריק", () => {
     // Arrange
     const newFile = new Blob(["x"]);
@@ -359,6 +442,7 @@ test.describe("כוכבית ואכיפה בטופס", () => {
   }) => {
     // Arrange
     await page.goto("/app/students/create");
+    await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
     await page.getByRole("radio", { name: "מיועד", exact: true }).check();
     const nextButton = page.getByRole("button", { name: "המשך לשלב הבא" });
     await nextButton.click();
@@ -382,6 +466,7 @@ test.describe("כוכבית ואכיפה בטופס", () => {
   test("על המשפחה, כולל שורת מחותן: כוכבית = שגיאה", async ({ page }) => {
     // Arrange
     await page.goto("/app/students/create");
+    await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
     await page.getByRole("radio", { name: "מיועד", exact: true }).check();
     await page
       .getByRole("navigation", { name: "שלבי הטופס" })
@@ -422,14 +507,17 @@ test.describe("כוכבית ואכיפה בטופס", () => {
 
     // Assert
     await expect(genderCell.getByText("נא לבחור מיועד/מיועדת")).toBeVisible();
+    // השגיאה הראשונה לפי סדר התצוגה היא "עבור מי הכרטיס"
     await expect(
-      page.getByRole("radio", { name: "מיועד", exact: true }),
-    ).toBeFocused();
+      page.getByText("נא לבחור עבור מי ממלאים את הכרטיס"),
+    ).toBeVisible();
+    await expect(page.getByRole("radio", { name: "עבור עצמי" })).toBeFocused();
   });
 
   test("תאריך לידה: גובה ומסגרת שגיאה כמו שדה טקסט", async ({ page }) => {
     // Arrange
     await page.goto("/app/students/create");
+    await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
     await page.getByRole("radio", { name: "מיועד", exact: true }).check();
     const nextButton = page.getByRole("button", { name: "המשך לשלב הבא" });
     await nextButton.click();

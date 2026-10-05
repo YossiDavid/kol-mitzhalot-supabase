@@ -14,15 +14,24 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 import ParentProposalView from "@/features/shidduchim/components/parent-proposal-view";
+import ClosedNoticesList from "@/features/shidduchim/components/closed-notices-list";
 import DeleteShidduchButton from "@/features/shidduchim/components/delete-shidduch-button";
+import InformOtherSideButton from "@/features/shidduchim/components/inform-other-side-button";
 import SendOtherSideButton from "@/features/shidduchim/components/send-other-side-button";
+import ProposalThreadPanel from "@/features/shidduchim/components/proposal-thread-panel";
 import SideResponsesPanel from "@/features/shidduchim/components/side-responses-panel";
 import StatusSelector from "@/features/shidduchim/components/status-selector";
 import {
   getMyProposals,
   getSideResponses,
 } from "@/features/shidduchim/lib/proposals-data";
-import { formatDateTime } from "@/features/shidduchim/lib/responses";
+import { defaultNoticeSide } from "@/features/shidduchim/lib/closed-notice";
+import { getClosedNotices } from "@/features/shidduchim/lib/closed-notices-data";
+import {
+  SHIDDUCH_SIDES,
+  formatDateTime,
+  type ShidduchSide,
+} from "@/features/shidduchim/lib/responses";
 
 function fullName(
   row: { first_name: string | null; last_name: string | null } | null,
@@ -118,21 +127,22 @@ async function ShidduchCardContent({
   }
 
   const admin = createAdminClient();
-  const [{ data: groomRow }, { data: brideRow }, sideResponses] =
+  const [{ data: groomRow }, { data: brideRow }, sideResponses, closedNotices] =
     await Promise.all([
       admin
         .from("students")
-        .select("first_name, last_name")
+        .select("first_name, last_name, user_id")
         .eq("id", shidduch.groom_id)
         .is("deleted_at", null)
         .maybeSingle(),
       admin
         .from("students")
-        .select("first_name, last_name")
+        .select("first_name, last_name, user_id")
         .eq("id", shidduch.bride_id)
         .is("deleted_at", null)
         .maybeSingle(),
       getSideResponses(supabase, [shidduch.id]),
+      getClosedNotices(supabase, shidduch.id),
     ]);
 
   const groomName = fullName(groomRow, "המיועד");
@@ -140,6 +150,20 @@ async function ShidduchCardContent({
   const currentStatus: ShidduchStatus = isShidduchStatus(shidduch.status)
     ? shidduch.status
     : "draft";
+
+  // "עדכון הצד השני": רלוונטי כשצד דחה (תגובת rejected) או שההצעה נדחתה/נסגרה
+  // בסטטוס, ורק לצדדים שההצעה נשלחה אליהם בפועל.
+  const recipientSides: ShidduchSide[] = SHIDDUCH_SIDES.filter(
+    (side) =>
+      shidduch.recipient_scope === "both" ||
+      shidduch.recipient_scope === `${side}_only`,
+  );
+  const declinedSides: ShidduchSide[] = sideResponses
+    .filter((r) => r.response === "rejected")
+    .map((r) => r.side);
+  const canInformOtherSide =
+    recipientSides.length > 0 &&
+    (declinedSides.length > 0 || currentStatus === "rejected");
 
   const scopeLabel =
     shidduch.recipient_scope === "both"
@@ -202,6 +226,15 @@ async function ShidduchCardContent({
           canEdit
         />
 
+        {canInformOtherSide && (
+          <InformOtherSideButton
+            shidduchId={shidduch.id}
+            recipientSides={recipientSides}
+            defaultSide={defaultNoticeSide(recipientSides, declinedSides)}
+          />
+        )}
+        <ClosedNoticesList notices={closedNotices} />
+
         {/* מחיקה מותרת רק לשדכן שיצר את ההצעה — כך גם מדיניות ה-RLS,
             ולכן אין להציג את הכפתור למנהל שצופה בהצעה של אחר */}
         {shidduch.shadchan_id === user.id && (
@@ -247,6 +280,26 @@ async function ShidduchCardContent({
           נוצר: {formatDateTime(shidduch.created_at)}
         </p>
       </Box>
+
+      {/* שרשור מלא מול כל צד שההצעה נשלחה אליו. צד שהמנהל שלו הוא המשתמש
+          עצמו (שדכן שמנהל כרטיס בהצעה שלו) מטופל למטה כתצוגת הורה */}
+      {recipientSides.length > 0 && (
+        <Box className="space-y-2">
+          {recipientSides.map((side) => {
+            const ownerId =
+              side === "groom" ? groomRow?.user_id : brideRow?.user_id;
+            if (!ownerId || ownerId === user.id) return null;
+            return (
+              <ProposalThreadPanel
+                key={side}
+                shidduchId={shidduch.id}
+                otherUserId={ownerId}
+                title={side === "groom" ? "שיחה עם צד החתן" : "שיחה עם צד הכלה"}
+              />
+            );
+          })}
+        </Box>
+      )}
 
       {/* שדכן/מנהל שהוא גם מנהל כרטיס באחד הצדדים מגיב כאן כהורה */}
       {parentProposals.map((proposal) => (

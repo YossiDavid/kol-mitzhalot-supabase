@@ -1,23 +1,24 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
+import { sendApplicationDecisionEmail } from "@/features/notifications/lib/send-application-decision-email";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  approveBodySchema,
+  parseDecisionBody,
+} from "@/features/admin/lib/application-decision-body";
 import { createClient } from "@/lib/supabase/server";
-import { hasRole, pickHighestPrecedenceRole } from "@/lib/user";
-import type { Role } from "@/lib/user";
+import { hasRole, primaryRole } from "@/lib/user";
+import { updateUserRoles } from "@/lib/supabase/user-roles";
 import { unstable_noStore as noStore } from "next/cache";
 
 export async function POST(req: NextRequest) {
   noStore();
 
   try {
-    const body = await req.json();
-    const { userId }: { userId?: string } = body;
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "User ID is required" },
-        { status: 400 },
-      );
+    const parsedBody = await parseDecisionBody(req, approveBodySchema);
+    if (!parsedBody.ok) {
+      return NextResponse.json({ error: parsedBody.error }, { status: 400 });
     }
+    const { userId } = parsedBody.data;
 
     // Verify the requesting user is authenticated and is an admin
     const supabase = await createClient();
@@ -36,63 +37,50 @@ export async function POST(req: NextRequest) {
 
     const adminClient = createAdminClient();
 
-    // שליפת המשתמש הקיים לפני העדכון: updateUserById מחליף את כל ה-user_metadata
-    // באובייקט שמועבר, ולכן חובה למזג לתוכו את המטא-דאטה הקיימת (firstName,
-    // lastName, phone וכו') ולהוסיף shadchan לרשימת ה-roles הקיימת בלי לדרוס
-    // אותה - דריסת role היא בדיוק הבאג שהוריד למשתמש אמיתי (hello@shos.digital)
-    // את הרשאות השדכן שלו כשהוא אושר בנפרד כאיש צוות.
-    const { data: existingUserData, error: fetchError } =
-      await adminClient.auth.admin.getUserById(userId);
+    // התפקידים יושבים ב-app_metadata.roles (לא ב-user_metadata, שהמשתמש עצמו
+    // יכול לכתוב). מוסיפים shadchan לרשימה הקיימת בלי לדרוס אותה - דריסה היא
+    // הבאג שהוריד למשתמש אמיתי (hello@shos.digital) את הרשאות השדכן שלו כשאושר
+    // בנפרד כאיש צוות.
+    const roleUpdate = await updateUserRoles(adminClient, userId, (existing) => [
+      ...existing,
+      "shadchan",
+    ]);
 
-    if (fetchError || !existingUserData.user) {
-      console.error("Error fetching user before approval:", fetchError);
+    if (!roleUpdate.ok) {
+      console.error("Error updating user role:", roleUpdate.message);
       return NextResponse.json(
-        { error: fetchError?.message || "User not found" },
-        { status: 404 },
+        { error: roleUpdate.message },
+        { status: roleUpdate.status },
       );
     }
+    const updatedUser = roleUpdate.user;
 
-    const existingRoles: Role[] = Array.isArray(
-      existingUserData.user.user_metadata?.roles,
-    )
-      ? (existingUserData.user.user_metadata?.roles as Role[])
-      : [];
-    const nextRoles = Array.from(
-      new Set([...existingRoles, "shadchan" as Role]),
-    );
-
-    // עדכון התפקיד של המשתמש: מוסיפים shadchan ל-roles ושומרים גם role (הסקלר
-    // הישן) לפי סדר העדיפות, כדי שקוד שעדיין לא הומר ל-hasRole ימשיך לעבוד
-    const { data: updateData, error: updateError } =
-      await adminClient.auth.admin.updateUserById(userId, {
-        user_metadata: {
-          ...existingUserData.user.user_metadata,
-          roles: nextRoles,
-          role: pickHighestPrecedenceRole(nextRoles),
-        },
-      });
-
-    if (updateError || !updateData.user) {
-      console.error("Error updating user role:", updateError);
-      return NextResponse.json(
-        { error: updateError?.message || "Failed to update user role" },
-        { status: 500 },
-      );
-    }
-
-    // עדכון הסטטוס ב-shadchanim_info
-    const { error: dbError } = await supabase
+    // עדכון הסטטוס ב-shadchanim_info. מעדכנים רק שורה שעדיין לא מאושרת, ו-select
+    // מחזיר את השורות שבאמת השתנו: כך המייל נשלח רק במעבר סטטוס אמיתי
+    // (לא בלחיצה חוזרת ולא כשאף שורה לא עודכנה).
+    const { data: changedRows, error: dbError } = await supabase
       .from("shadchanim_info")
       .update({
         application_status: "approved",
         approved_at: new Date().toISOString(),
       })
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .or("application_status.is.null,application_status.neq.approved")
+      .select("user_id");
 
     if (dbError) {
       console.error("Error updating application status:", dbError);
       // לא נחזיר שגיאה כאן כי התפקיד כבר עודכן
       // אבל נדווח על זה
+    } else if (changedRows && changedRows.length > 0) {
+      // אחרי התגובה ובלי לזרוק: כשל במייל אינו מכשיל את האישור.
+      after(() =>
+        sendApplicationDecisionEmail({
+          applicantId: userId,
+          kind: "shadchan",
+          decision: "approved",
+        }),
+      );
     }
 
     return NextResponse.json(
@@ -100,9 +88,9 @@ export async function POST(req: NextRequest) {
         success: true,
         message: "Application approved successfully",
         user: {
-          id: updateData.user.id,
-          email: updateData.user.email,
-          role: updateData.user.user_metadata?.role,
+          id: updatedUser.id,
+          email: updatedUser.email,
+          role: primaryRole(updatedUser),
         },
       },
       { status: 200 },

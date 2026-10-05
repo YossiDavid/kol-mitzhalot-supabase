@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { openContextRoom } from "@/features/chats/lib/open-room";
 import { createClient } from "@/lib/supabase/client";
 
 export async function getOrCreateDmRoom(otherUserId: string) {
@@ -51,11 +52,16 @@ export async function sendChatMessage(roomId: string, content: string) {
   if (error) throw error;
 }
 
+/** פנייה לבעל הכרטיס נפתחת כשרשור של אותו כרטיס, לא בשיחה הכללית. */
 export async function messageCardAuthor(params: {
   authorId: string;
+  studentId: string;
   content: string;
 }) {
-  const roomId = await getOrCreateDmRoom(params.authorId);
+  const roomId = await openContextRoom(params.authorId, {
+    kind: "student",
+    studentId: params.studentId,
+  });
   await sendChatMessage(roomId, params.content);
   return roomId;
 }
@@ -67,10 +73,12 @@ export async function messageCardAuthor(params: {
  */
 export function StudentMessageDialog({
   authorId,
+  studentId,
   open,
   onOpenChange,
 }: {
   authorId: string;
+  studentId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -89,7 +97,11 @@ export function StudentMessageDialog({
 
     startTransition(async () => {
       try {
-        const roomId = await messageCardAuthor({ authorId, content });
+        const roomId = await messageCardAuthor({
+          authorId,
+          studentId,
+          content,
+        });
         setMessage("");
         onOpenChange(false);
         router.push(`/app/chats/${roomId}`);

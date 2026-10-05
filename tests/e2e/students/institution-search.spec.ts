@@ -56,6 +56,7 @@ test.describe("חיפוש מוסד ברשומות ההשכלה", () => {
       if (response.status() === 404) notFoundUrls.push(response.url());
     });
     await page.goto("/app/students/create");
+    await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
     await page.getByRole("radio", { name: "מיועד", exact: true }).check();
     await page
       .getByRole("navigation", { name: "שלבי הטופס" })

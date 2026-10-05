@@ -39,6 +39,8 @@ test.describe("גלריית תמונות בעריכת כרטיס", () => {
         first_name: "גלריה",
         last_name: `בדיקה${Date.now()}`,
         identity_number: `9${String(Date.now()).slice(-8)}`,
+        // כרטיס שנוצר בלי card_for נחסם בעריכה עד שנבחר עבור מי הוא
+        card_for: "child",
         birth_date: "1998-01-01",
         gender: "male",
         personal_status: "single",

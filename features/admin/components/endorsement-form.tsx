@@ -20,6 +20,7 @@ import { FormFieldShell } from "@/components/ui/form-field-shell";
 import { FormActions, FormFields, FormGrid } from "@/components/ui/form-layout";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { EndorsementImageLink } from "@/features/admin/components/endorsement-image-link";
 import { Textarea } from "@/components/ui/textarea";
 import type { Endorsement } from "@/features/admin/lib/endorsement";
 import {
@@ -250,6 +251,7 @@ export function EndorsementForm({
                   className="h-24 w-24 rounded-lg object-cover"
                 />
               ) : null}
+              {imageUrl ? <EndorsementImageLink url={imageUrl} /> : null}
 
               <FormGrid>
                 <FormField

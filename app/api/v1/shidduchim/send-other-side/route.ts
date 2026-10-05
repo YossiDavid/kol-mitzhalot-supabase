@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import {
+  dbBlockFromError,
+  findProposalBlocks,
+  proposalBlocksBody,
+  type ProposalBlock,
+} from "@/features/shidduchim/lib/proposal-gate";
 import { sendShidduchOfferEmails } from "@/features/shidduchim/lib/send-offer-email";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -9,6 +15,9 @@ import { hasRole } from "@/lib/user";
 const bodySchema = z.object({
   shidduchId: z.guid(),
   note: z.string().max(8000).optional().default(""),
+  // אם נשלח - מעדכן את בחירת השדכן לגבי תמונות הבחור. בלעדיו נשמרת הבחירה
+  // שנעשתה בשליחה הראשונה.
+  shareGroomPhoto: z.boolean().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -41,7 +50,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { shidduchId, note } = parsed.data;
+  const { shidduchId, note, shareGroomPhoto } = parsed.data;
   const admin = createAdminClient();
 
   const { data: shidduch, error: shidduchErr } = await admin
@@ -104,6 +113,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "פרטי מועמדים חסרים" }, { status: 404 });
   }
 
+  // הצד שמקבל עכשיו הצעה חדשה חייב להיות פעיל ובתוך המכסה שלו. נבדק לפני
+  // המייל; הטריגר במסד אוכף זאת גם בכתיבה עצמה.
+  let blocks: ProposalBlock[];
+  try {
+    blocks = await findProposalBlocks(admin, [
+      missingScope === "groom_only"
+        ? { side: "groom", studentId: groom.id }
+        : { side: "bride", studentId: bride.id },
+    ]);
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json({ error: "שגיאת מסד" }, { status: 500 });
+  }
+  if (blocks.length > 0) {
+    return NextResponse.json(proposalBlocksBody(blocks), { status: 409 });
+  }
+
   const [{ data: groomAuth }, { data: brideAuth }] = await Promise.all([
     admin.auth.admin.getUserById(groom.user_id),
     admin.auth.admin.getUserById(bride.user_id),
@@ -132,6 +158,9 @@ export async function POST(req: NextRequest) {
       .from("shidduchim")
       .update({
         ...notePatch,
+        ...(shareGroomPhoto === undefined
+          ? {}
+          : { share_groom_photo: shareGroomPhoto }),
         recipient_scope: "both",
         // לא מאפסים ל-"sent": הסטטוס נגזר מתגובות הצדדים (respond_to_shidduch),
         // ותגובה שהצד הראשון כבר נתן חייבת להישאר בתוקף
@@ -140,6 +169,12 @@ export async function POST(req: NextRequest) {
       })
       .eq("id", shidduch.id);
 
+    const raceBlock = dbBlockFromError(updErr);
+    if (raceBlock) {
+      return NextResponse.json(proposalBlocksBody([raceBlock]), {
+        status: 409,
+      });
+    }
     if (updErr) {
       console.error(updErr);
       return NextResponse.json(

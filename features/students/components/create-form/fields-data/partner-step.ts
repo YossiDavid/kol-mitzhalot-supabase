@@ -134,6 +134,8 @@ export const partnerStep: FormSteps = {
     {
       name: "author",
       title: "ממלא הטופס",
+      // מילוי עבור עצמי: אין ממלא נפרד, והשדות מוסתרים ואינם חובה
+      condition: [{ parameter: "cardFor", operator: "!==", value: "self" }],
       fields: [
         {
           name: "author.name",

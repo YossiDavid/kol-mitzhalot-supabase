@@ -23,6 +23,8 @@ test.describe("קו״ח שמור בעריכת כרטיס", () => {
         first_name: "קו״ח",
         last_name: `שמור${Date.now()}`,
         identity_number: `8${String(Date.now()).slice(-8)}`,
+        // כרטיס שנוצר בלי card_for נחסם בעריכה עד שנבחר עבור מי הוא
+        card_for: "child",
         birth_date: "1998-01-01",
         gender: "male",
         personal_status: "single",

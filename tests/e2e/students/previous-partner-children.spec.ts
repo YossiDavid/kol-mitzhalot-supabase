@@ -43,6 +43,8 @@ async function createDivorcedStudent(): Promise<string> {
       first_name: "גרוש",
       last_name: LAST_NAME,
       identity_number: String(RUN_ID).slice(-9),
+      // כרטיס שנוצר בלי card_for נחסם בעריכה עד שנבחר עבור מי הוא
+      card_for: "child",
       birth_date: "1985-05-05",
       gender: "male",
       personal_status: "divorced",
@@ -108,13 +110,17 @@ async function createDivorcedStudent(): Promise<string> {
 async function readPreviousPartner() {
   const { data, error } = await admin
     .from("previous_partners")
-    .select("children_number, children")
+    .select("children_number, children, no_children")
     .eq("student_id", studentId)
     .single();
   if (error || !data) {
     throw new Error(`קריאת הנישואים הקודמים נכשלה: ${error?.message}`);
   }
-  return data as { children_number: number | null; children: StoredChild[] };
+  return data as {
+    children_number: number | null;
+    children: StoredChild[];
+    no_children: boolean;
+  };
 }
 
 async function openPreviousPartnersStep(page: Page) {
@@ -273,5 +279,60 @@ test.describe.serial("ילדים מנישואים קודמים", () => {
         exact: true,
       }),
     ).toBeVisible();
+  });
+
+  test("אין ילדים: הרשימה מוסתרת, לא נשמר דבר בה, והכרטיס מציג ללא ילדים", async ({
+    page,
+  }) => {
+    // Arrange - בשורה יש עכשיו שני ילדים מהבדיקה הקודמת
+    await openPreviousPartnersStep(page);
+    const noChildrenSwitch = page.getByRole("checkbox", {
+      name: "אין ילדים מנישואין אלו",
+    });
+    await expect(page.getByText("ילדים מנישואין אלו (2)")).toBeVisible();
+
+    // Act
+    await noChildrenSwitch.check();
+
+    // Assert - הרשימה מוסתרת
+    await expect(page.getByText(/^ילדים מנישואין אלו \(/)).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "הוספת ילד/ה" })).toHaveCount(
+      0,
+    );
+
+    // Act - שמירה
+    await submitFromLastStep(page);
+
+    // Assert - במסד ובכרטיס
+    const partner = await readPreviousPartner();
+    expect(partner.no_children).toBe(true);
+    expect(partner.children).toEqual([]);
+    expect(partner.children_number).toBeNull();
+    await expect(
+      page.getByText("ללא ילדים", { exact: true }).first(),
+    ).toBeVisible();
+  });
+
+  test("אין ילדים נטען בעריכה, וביטולו מחזיר את הרשימה; לא מולא לא מוצג", async ({
+    page,
+  }) => {
+    // Arrange
+    await openPreviousPartnersStep(page);
+    const noChildrenSwitch = page.getByRole("checkbox", {
+      name: "אין ילדים מנישואין אלו",
+    });
+    await expect(noChildrenSwitch).toBeChecked();
+
+    // Act - ביטול המתג: הרשימה חוזרת (ריקה), ושמירה בלי ילדים
+    await noChildrenSwitch.uncheck();
+    await expect(page.getByText("ילדים מנישואין אלו (0)")).toBeVisible();
+    await submitFromLastStep(page);
+
+    // Assert - "לא מולא": no_children כבוי, ובכרטיס לא מוצג דבר
+    const partner = await readPreviousPartner();
+    expect(partner.no_children).toBe(false);
+    expect(partner.children).toEqual([]);
+    await expect(page.getByText("ללא ילדים", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("אין ילדים", { exact: true })).toHaveCount(0);
   });
 });

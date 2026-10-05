@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 
-import { Mail } from "lucide-react";
+import { HeartHandshake, IdCard, Mail, MessagesSquare } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,21 +15,41 @@ import {
 } from "@/components/ui/context-menu";
 import type { Room } from "@/app/app/chats/types";
 import { formatRoomTime } from "../lib/format-time";
+import { roomContextTitle } from "../lib/room-context";
 import { canMarkRoomUnread, useMarkRoomUnread } from "../lib/mark-room-unread";
 import { unreadRoomLabel } from "../lib/unread-rooms";
 import { ChatAvatar } from "./chat-avatar";
 import { UnreadRoomDot } from "./unread-room-dot";
 
+const THREAD_ICONS = {
+  general: MessagesSquare,
+  student: IdCard,
+  shidduch: HeartHandshake,
+} as const;
+
 export const RoomRow = React.memo(function RoomRow({
   room,
   isActive,
   isUnread,
+  variant = "person",
 }: {
   room: Room;
   isActive: boolean;
   /** הודעה שלא נקראה מהצד השני, או סימון עצמי של "לטיפול בהמשך" */
   isUnread: boolean;
+  /** thread: שרשור מתחת לשורת האדם — כותרת ההקשר במקום השם, בלי אווטאר */
+  variant?: "person" | "thread";
 }) {
+  const isThread = variant === "thread";
+  const title = isThread
+    ? roomContextTitle({
+        kind: room.contextKind,
+        studentId: room.studentId,
+        shidduchId: room.shidduchId,
+        label: room.contextLabel,
+      })
+    : room.title;
+  const ThreadIcon = THREAD_ICONS[room.contextKind];
   const time = formatRoomTime(room.lastAt);
   const markUnread = useMarkRoomUnread();
   const canMarkUnread = canMarkRoomUnread({
@@ -44,10 +64,16 @@ export const RoomRow = React.memo(function RoomRow({
           href={`/app/chats/${room.room_id}`}
           aria-current={isActive ? "page" : undefined}
           // הנקודה והבולד הם סימון חזותי; לקורא מסך זה נמסר בשם הקישור
-          aria-label={isUnread ? unreadRoomLabel(room.title) : undefined}
+          aria-label={
+            isUnread
+              ? unreadRoomLabel(isThread ? `${room.title}, ${title}` : title)
+              : undefined
+          }
+          data-room-id={room.room_id}
           data-unread={isUnread ? "true" : undefined}
           className={cn(
             "relative flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors outline-none",
+            isThread && "ms-8 py-2",
             "focus-visible:ring-2 focus-visible:ring-ring",
             isActive ? "bg-primary-muted" : "hover:bg-muted",
           )}
@@ -60,14 +86,21 @@ export const RoomRow = React.memo(function RoomRow({
               isActive ? "bg-primary" : "bg-transparent",
             )}
           />
-          <ChatAvatar
-            name={room.title}
-            src={room.avatarUrl}
-            className="size-11"
-            fallbackClassName={
-              isActive ? "bg-primary text-primary-foreground" : undefined
-            }
-          />
+          {isThread ? (
+            <ThreadIcon
+              aria-hidden="true"
+              className="size-4 shrink-0 text-muted-foreground"
+            />
+          ) : (
+            <ChatAvatar
+              name={room.title}
+              src={room.avatarUrl}
+              className="size-11"
+              fallbackClassName={
+                isActive ? "bg-primary text-primary-foreground" : undefined
+              }
+            />
+          )}
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline justify-between gap-2">
               <span
@@ -77,7 +110,7 @@ export const RoomRow = React.memo(function RoomRow({
                   isActive ? "text-primary" : "text-foreground",
                 )}
               >
-                {room.title}
+                {title}
               </span>
               {time && room.lastAt && (
                 <time

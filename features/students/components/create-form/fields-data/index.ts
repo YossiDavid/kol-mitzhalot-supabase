@@ -15,9 +15,10 @@ export * from "./types";
 export const studentFields: FormSteps[] = [
   introStep,
   basicInformationStep,
+  // לפני "על המשפחה": מי נפטר קובע אילו פרטי הורה נשאלים שם
+  parentsStatusStep,
   familyStep,
   educationStep,
-  parentsStatusStep,
   medicalStep,
   partnerStep,
 ];

@@ -6,7 +6,8 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
 SET search_path TO public, extensions, auth;
 
 -- ---------------------------------------------------------------------------
--- Auth users (roles live in raw_user_meta_data.role — matches is_admin/is_shadchan)
+-- Auth users (roles live in raw_app_meta_data.roles — matches has_role/is_admin/is_shadchan;
+-- raw_user_meta_data is user-writable and must never carry roles)
 -- ---------------------------------------------------------------------------
 INSERT INTO auth.users (
   instance_id,
@@ -33,8 +34,8 @@ INSERT INTO auth.users (
     'admin@local.test',
     extensions.crypt('password123', extensions.gen_salt('bf')),
     now(),
-    '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"role":"admin","firstName":"אבי","lastName":"מנהל","phone":"+972500000101","phone_verified":true}'::jsonb,
+    '{"provider":"email","providers":["email"],"roles":["admin"]}'::jsonb,
+    '{"firstName":"אבי","lastName":"מנהל","phone":"+972500000101","phone_verified":true}'::jsonb,
     now(),
     now(),
     '',
@@ -50,8 +51,8 @@ INSERT INTO auth.users (
     'shadchan@local.test',
     extensions.crypt('password123', extensions.gen_salt('bf')),
     now(),
-    '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"role":"shadchan","firstName":"שרה","lastName":"שדכנית","phone":"+972500000102","phone_verified":true}'::jsonb,
+    '{"provider":"email","providers":["email"],"roles":["shadchan"]}'::jsonb,
+    '{"firstName":"שרה","lastName":"שדכנית","phone":"+972500000102","phone_verified":true}'::jsonb,
     now(),
     now(),
     '',
@@ -68,7 +69,7 @@ INSERT INTO auth.users (
     extensions.crypt('password123', extensions.gen_salt('bf')),
     now(),
     '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"role":"user","firstName":"יוסף","lastName":"כהן","phone":"+972500000103","phone_verified":true}'::jsonb,
+    '{"firstName":"יוסף","lastName":"כהן","phone":"+972500000103","phone_verified":true}'::jsonb,
     now(),
     now(),
     '',
@@ -85,7 +86,7 @@ INSERT INTO auth.users (
     extensions.crypt('password123', extensions.gen_salt('bf')),
     now(),
     '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"role":"user","firstName":"רחל","lastName":"לוי","phone":"+972500000104","phone_verified":true}'::jsonb,
+    '{"firstName":"רחל","lastName":"לוי","phone":"+972500000104","phone_verified":true}'::jsonb,
     now(),
     now(),
     '',

@@ -1,5 +1,18 @@
+import type { FieldCondition } from "../field-visibility";
 import { FEMALE_NAME_TITLES, MALE_NAME_TITLES } from "./shared-options";
 import type { FormSteps } from "./types";
+
+/**
+ * טלפון, עיסוק ואימייל לא נשאלים על הורה שנפטר. "מי נפטר" נאסף בשלב "מצב
+ * ההורים", שמופיע לפני השלב הזה (fields-data/index.ts), והאשף מנקה אותו
+ * כשהסטטוס חדל להיות אלמנ/ה (student-form-wizard.tsx)
+ */
+function parentIsAlive(parent: "father" | "mother"): FieldCondition[] {
+  return [
+    { parameter: "parents.deadParent", operator: "!==", value: parent },
+    { parameter: "parents.deadParent", operator: "!==", value: "both" },
+  ];
+}
 
 export const familyStep: FormSteps = {
   name: "familyInfoForm",
@@ -23,6 +36,7 @@ export const familyStep: FormSteps = {
           type: "text",
           width: "sm",
           required: true,
+          condition: parentIsAlive("father"),
         },
         {
           name: "father.job",
@@ -30,6 +44,7 @@ export const familyStep: FormSteps = {
           type: "text",
           width: "sm",
           required: true,
+          condition: parentIsAlive("father"),
         },
         {
           name: "father.grandFather",
@@ -54,6 +69,7 @@ export const familyStep: FormSteps = {
           label: "אימייל",
           type: "text",
           width: "lg",
+          condition: parentIsAlive("father"),
         },
       ],
     },
@@ -75,6 +91,7 @@ export const familyStep: FormSteps = {
           type: "text",
           width: "sm",
           required: true,
+          condition: parentIsAlive("mother"),
         },
         {
           name: "mother.job",
@@ -82,6 +99,7 @@ export const familyStep: FormSteps = {
           type: "text",
           width: "sm",
           required: true,
+          condition: parentIsAlive("mother"),
         },
         {
           name: "mother.grandFather",
@@ -112,6 +130,7 @@ export const familyStep: FormSteps = {
           label: "אימייל",
           type: "text",
           width: "lg",
+          condition: parentIsAlive("mother"),
         },
       ],
     },

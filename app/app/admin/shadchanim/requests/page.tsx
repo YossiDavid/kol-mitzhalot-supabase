@@ -29,6 +29,7 @@ type ShadchanRequest = {
   contact_email: string | null;
   website_url: string | null;
   location: string | null;
+  community: string | null;
   languages: string[] | null;
   certifications: string[] | null;
   application_status: "pending" | "approved" | "rejected" | null;
@@ -260,6 +261,12 @@ async function ShadchanRequestsContent() {
                       <div>
                         <h4 className="font-semibold mb-1">אימייל:</h4>
                         <p className="text-body-sm">{request.contact_email}</p>
+                      </div>
+                    )}
+                    {request.community && (
+                      <div>
+                        <h4 className="font-semibold mb-1">קהילה / חסידות:</h4>
+                        <p className="text-body-sm">{request.community}</p>
                       </div>
                     )}
                     {request.location && (

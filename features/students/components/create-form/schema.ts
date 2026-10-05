@@ -23,12 +23,13 @@ const NUMERIC_SEGMENT_PATTERN = /^\d+$/;
 
 const studentFormBaseSchema = z.object({
   isOnShiduchim: z.boolean().default(true),
+  // עבור מי הכרטיס מולא: self / child / other. ריק בכרטיס ישן
+  cardFor: opt,
   gender: opt,
 
   firstName: opt,
   lastName: opt,
   nickname: opt,
-  identityNumber: opt,
   birthDate: opt,
   // תמונות שמורות מגיעות כפריטים ברשימה, ולכן בעריכה הן נחשבות מולאו.
   // המגבלות על כל קובץ נבדקות בהוספה לגלריה.

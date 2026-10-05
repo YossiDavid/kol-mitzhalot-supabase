@@ -28,6 +28,29 @@ export function findMissingIdentityField(
   return null;
 }
 
+/** מה ש-getClaims מחזיר ויש בו שדות זיהוי (JWT חתום, לא קריאה לשרת) */
+export type IdentityClaims = {
+  sub?: string;
+  phone?: string | null;
+  user_metadata?: Record<string, unknown> | null;
+};
+
+/**
+ * מסלול מהיר: אם כבר ה-claims החתומים מראים שם פרטי, שם משפחה וטלפון, אין
+ * צורך בקריאת getUser לשרת האימות ובשאילתת user_profiles. חסר משהו ב-claims
+ * (שהם עד שעה מאחור) - ממשיכים למסלול המלא, שהוא המקור העדכני. הבדיקה הזו
+ * רק מוותרת על הפניה מיותרת; היא אינה מעניקה הרשאה לשום דבר.
+ */
+function isIdentityCompleteInClaims(claims: IdentityClaims | null | undefined) {
+  if (!claims?.sub) return false;
+  // רק השדות שהבדיקה קוראת (user_metadata, phone) - בלי שאר שדות ה-User
+  const claimsAsUser = {
+    user_metadata: claims.user_metadata ?? {},
+    phone: claims.phone ?? undefined,
+  } as User;
+  return findMissingIdentityField(claimsAsUser) === null;
+}
+
 /**
  * משתמש מחובר באזור /app חייב שם פרטי, שם משפחה וטלפון
  * (מטא־דאטה או user_profiles). מחריגים את דף ההגדרות שבו ממלאים אותם.
@@ -35,12 +58,15 @@ export function findMissingIdentityField(
 export async function checkNameRequirement(
   request: NextRequest,
   supabase: SupabaseClient,
+  claims?: IdentityClaims | null,
 ): Promise<NextResponse | null> {
   const pathname = request.nextUrl.pathname;
   if (!pathname.startsWith("/app")) return null;
   if (pathname === "/app/settings" || pathname.startsWith("/app/settings/")) {
     return null;
   }
+
+  if (isIdentityCompleteInClaims(claims)) return null;
 
   const {
     data: { user },

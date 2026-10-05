@@ -1,4 +1,5 @@
 import type { StudentFormValues } from "@/features/students/components/create-form/schema";
+import { isParentDeceased } from "@/features/students/lib/deceased-parents";
 import {
   LEGACY_CHILDREN_COUNT_KEY,
   getChildrenCount,
@@ -246,6 +247,8 @@ function buildReferences(values: StudentFormValues) {
 
 // previous_partners.children: תאריך הלידה ב-ISO, ערך לא מוכר נשמר כ-null
 function buildPartnerChildren(partner: RepeaterItem): StoredPartnerChild[] {
+  // "אין ילדים" מסומן: לא נשמר דבר ברשימה, גם אם נשארו בה פריטים מוסתרים
+  if (partner.noChildren === true) return [];
   const children = Array.isArray(partner.children) ? partner.children : [];
   return children
     .filter((child): child is RepeaterItem =>
@@ -263,12 +266,12 @@ function buildPreviousPartners(values: StudentFormValues) {
   return (values.previousPartners ?? []).map((partner) => {
     const divorce = toNested(partner, "divorce");
     const children = buildPartnerChildren(partner);
+    const noChildren = partner.noChildren === true;
     // בלי פרטי ילדים נשמר המספר מהשורה הישנה, כדי שהעריכה לא תמחק אותו.
     // ה-RPC גוזר את המספר מהרשימה בעצמו; כאן זה אותו כלל, כדי שה-payload יהיה עקבי
-    const childrenCount = getChildrenCount(
-      children,
-      partner[LEGACY_CHILDREN_COUNT_KEY],
-    );
+    const childrenCount = noChildren
+      ? 0
+      : getChildrenCount(children, partner[LEGACY_CHILDREN_COUNT_KEY]);
     return {
       separation_type: toText(partner.separationType) || null,
       full_name: toText(partner.fullName) || null,
@@ -277,6 +280,7 @@ function buildPreviousPartners(values: StudentFormValues) {
       death_date: formatDateToISO(toText(partner.deathDate)),
       children_number: childrenCount > 0 ? childrenCount : null,
       children,
+      no_children: noChildren,
       divorce_details:
         partner.separationType === "divorce"
           ? {
@@ -311,6 +315,10 @@ function buildPartnerPreferences(values: StudentFormValues) {
 
 function buildParentsInfo(values: StudentFormValues) {
   const { father, mother, parents } = values;
+  // לא נשאלים טלפון, עיסוק ואימייל של הורה שנפטר: ערך שנשאר מלפני שנבחרה
+  // הפטירה לא נשמר
+  const isFatherDead = isParentDeceased(parents, "father");
+  const isMotherDead = isParentDeceased(parents, "mother");
   return {
     father: {
       self: {
@@ -318,9 +326,9 @@ function buildParentsInfo(values: StudentFormValues) {
         name: father?.self?.name || "",
         suffix: father?.self?.suffix || "",
       },
-      phone: father?.phone || "",
-      job: father?.job || "",
-      email: father?.email || "",
+      phone: isFatherDead ? "" : father?.phone || "",
+      job: isFatherDead ? "" : father?.job || "",
+      email: isFatherDead ? "" : father?.email || "",
       grandFather: {
         prefix: father?.grandFather?.prefix || "",
         name: father?.grandFather?.name || "",
@@ -339,9 +347,9 @@ function buildParentsInfo(values: StudentFormValues) {
         suffix: mother?.self?.suffix || "",
       },
       maidenName: mother?.maidenName || "",
-      phone: mother?.phone || "",
-      job: mother?.job || "",
-      email: mother?.email || "",
+      phone: isMotherDead ? "" : mother?.phone || "",
+      job: isMotherDead ? "" : mother?.job || "",
+      email: isMotherDead ? "" : mother?.email || "",
       grandFather: {
         prefix: mother?.grandFather?.prefix || "",
         name: mother?.grandFather?.name || "",
@@ -355,13 +363,24 @@ function buildParentsInfo(values: StudentFormValues) {
     },
     status: parents?.status || null,
     holding: parents?.holding || null,
-    deadParent: parents?.deadParent || null,
+    deadParent:
+      parents?.status === "widowed" ? parents?.deadParent || null : null,
     fatherDeathDate: formatDateToISO(parents?.fatherDeathDate),
     motherDeathDate: formatDateToISO(parents?.motherDeathDate),
     isMotherRemarried: parents?.isMotherRemarried || null,
     newHusbandName: parents?.newHusbandName || null,
     isFatherRemarried: parents?.isFatherRemarried || null,
     newWifeName: parents?.newWifeName || null,
+  };
+}
+
+// מילוי עבור עצמי: אין "ממלא טופס" נפרד, ולכן לא נשמר מה שנשאר בשדות
+function buildAuthorInfo(values: StudentFormValues) {
+  if (values.cardFor === "self") return { name: "", phone: "", relation: "" };
+  return {
+    name: values.author?.name || "",
+    phone: values.author?.phone || "",
+    relation: values.author?.relation || "",
   };
 }
 
@@ -414,10 +433,10 @@ export function buildStudentPayload(
   return {
     ...(userId ? { user_id: userId } : {}),
     in_shidduchim: values.isOnShiduchim ?? true,
+    card_for: values.cardFor || null,
     first_name: values.firstName,
     last_name: values.lastName,
     nickname: toText(values.nickname) || null,
-    identity_number: values.identityNumber,
     birth_date: formatDateToISO(values.birthDate),
     gender: values.gender,
     personal_status: mapPersonalStatus(values.personalStatus),
@@ -437,11 +456,7 @@ export function buildStudentPayload(
     about: values.about || null,
     parents_info: buildParentsInfo(values),
     family_info: buildFamilyInfo(values),
-    author_info: {
-      name: values.author?.name || "",
-      phone: values.author?.phone || "",
-      relation: values.author?.relation || "",
-    },
+    author_info: buildAuthorInfo(values),
     education_history: buildEducationHistory(values),
     employment_history: buildEmploymentHistory(values),
     medical_records: buildMedicalRecords(values, medicalDocuments),

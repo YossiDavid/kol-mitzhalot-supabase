@@ -38,7 +38,7 @@ export default function ActiveShidduchim({
           <EmptyContent>
             <Button asChild>
               <Link href="/app/premium">
-                <Crown className="text-favorite fill-current" /> להצטרפות למנוי
+                <Crown className="fill-current text-favorite" /> להצטרפות למנוי
                 פרימיום
               </Link>
             </Button>

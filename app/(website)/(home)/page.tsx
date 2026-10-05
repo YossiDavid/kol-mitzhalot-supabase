@@ -14,6 +14,7 @@ import SignsSvg from "@/assets/icons/signs.svg";
 import TrustSvg from "@/assets/icons/trust.svg";
 import PrizeSvg from "@/assets/icons/prize.svg";
 import { Button } from "@/components/ui/button";
+import { ENDORSEMENTS_SECTION_ID } from "@/components/website/endorsements-anchor";
 import { fetchPublishedEndorsements } from "@/lib/endorsements";
 import { createClient } from "@/lib/supabase/server";
 
@@ -518,7 +519,12 @@ export default function HomePage() {
       </section>
 
       {/* ── 2. MISSION + ENDORSEMENTS ── */}
-      <section className="bg-background">
+      {/* העוגן על כל הסקשן ולא על הקרוסלה: גם בלי הסכמות מפורסמות הקישור
+          נוחת על פסקת המטרה במקום על כלום. scroll-mt מפצה על ההדר הדביק. */}
+      <section
+        id={ENDORSEMENTS_SECTION_ID}
+        className="scroll-mt-20 bg-background"
+      >
         <div className="shell-site flex flex-col gap-14 py-20 md:gap-16 md:py-24">
           <div className="mx-auto w-[65vw] max-w-5xl text-center max-md:w-[92%]">
             <h2 className="mb-6 text-display font-bold text-primary">

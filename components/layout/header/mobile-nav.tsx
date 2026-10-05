@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { HeartHandshake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -14,11 +15,14 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
+import { ENDORSEMENTS_HREF } from "@/components/website/endorsements-anchor";
+
 const NAV_LINKS = [
   { label: "בית", href: "/" },
   { label: "אודות", href: "/about" },
   { label: "מרכז הידע", href: "/knowledge" },
   { label: "מה חדש", href: "/whats-new" },
+  { label: "הסכמות והמלצות", href: ENDORSEMENTS_HREF },
   { label: "קול מצהלות לשדכנים", href: "/shadchanim" },
   { label: "קול מצהלות להורים ומיועדים", href: "/parents" },
   { label: "צרו קשר", href: "/contact" },
@@ -59,6 +63,17 @@ export function WebMobileNav({ isLoggedIn }: { isLoggedIn: boolean }) {
         </SheetHeader>
         <nav className="flex-1 overflow-y-auto px-3 pt-14 pb-2">
           <ul className="m-0 flex list-none flex-col p-0">
+            <li className="mb-2">
+              <SheetClose asChild>
+                <Link
+                  href="/donations"
+                  className="flex items-center justify-center gap-2 rounded-md bg-brand-gold px-3 py-3 text-body font-bold text-brand-gold-foreground no-underline transition-colors hover:bg-brand-gold-soft"
+                >
+                  <HeartHandshake className="size-5" aria-hidden="true" />
+                  לתרומות
+                </Link>
+              </SheetClose>
+            </li>
             {NAV_LINKS.map(({ label, href }) => (
               <li key={href}>
                 <SheetClose asChild>

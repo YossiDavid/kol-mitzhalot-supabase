@@ -19,8 +19,33 @@ import {
   type StudentTableRow,
 } from "@/features/students/components/students-table";
 import { isOutOfShidduchimStatus } from "@/features/students/lib/student-status";
+import { buildCommunityFilterExpression } from "@/features/students/lib/community-filter";
 
 type Student = StudentTableRow;
+
+/**
+ * העמודות שהטבלה קוראת: התצוגה, המיון (שם משפחה/פרטי, אב, אם, עיר, חסידות,
+ * גיל, גובה, סטטוס), הכוכב, הקו״ח, אייקון התמונה והדגשת מאורסים. parents_info
+ * נשלף כולו כי שם האב והאם יושבים בתוכו. בלי העמודות הכבדות של הכרטיס המלא
+ * (family_info, author_info, about...) שכל שורה ברשימה לא קוראת.
+ */
+const STUDENT_ROW_COLUMNS = [
+  "id",
+  "gender",
+  "personal_status",
+  "first_name",
+  "last_name",
+  "nickname",
+  "parents_info",
+  "city",
+  "community",
+  "birth_date",
+  "height",
+  "cv_url",
+  "photo_count",
+  "status_changed_at",
+  "in_shidduchim",
+];
 
 /** מנקה תווים שיש להם משמעות בתחביר הסינון של PostgREST */
 function sanitizeTerm(value: string | undefined): string {
@@ -86,7 +111,9 @@ export default function StudentsList() {
         // גם כשאין לה עיסוק/מוסד תואם, רק עם מערך קשור ריק
         const institution = sanitizeTerm(query.institution);
         const selectColumns = [
-          "*",
+          ...STUDENT_ROW_COLUMNS,
+          // לשורת הילדים של גרוש/אלמן. ללא הרשאה (RLS) המערך חוזר ריק, וזה בסדר
+          "previous_partners(children, children_number, no_children)",
           ...(query.employment ? ["employment_history!inner(category)"] : []),
           ...(institution ? ["education_history!inner(name)"] : []),
         ].join(",");
@@ -125,6 +152,12 @@ export default function StudentsList() {
             );
           }
         }
+
+        // קהילה: הביטוי מטפל ב-NULL/ריק במפורש ו-or נפרד משתלב ב-AND עם השאר
+        const communityExpression = buildCommunityFilterExpression(
+          query.communities,
+        );
+        if (communityExpression) q = q.or(communityExpression);
 
         if (query.first_name)
           q = q.ilike("first_name", `%${query.first_name}%`);

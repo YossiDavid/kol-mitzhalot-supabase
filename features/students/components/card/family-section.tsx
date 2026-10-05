@@ -1,6 +1,7 @@
 import { Heart, Users } from "lucide-react";
 
 import { jewishDateHebrew } from "@/lib/jewishDatte";
+import { isParentDeceased } from "@/features/students/lib/deceased-parents";
 import { parentsStatusToHebrew } from "@/features/students/lib/profile-labels";
 
 import { CardSection } from "./card-section";
@@ -12,6 +13,22 @@ function holdingLabel(holding: string) {
   if (holding === "mother") return "האם";
   if (holding === "father") return "האב";
   return "שניהם";
+}
+
+/** תאריך הפטירה מתחת לשם ההורה שנפטר. בלי תאריך - לא מוצג דבר */
+function DeathNote({
+  date,
+  verb,
+}: {
+  date: string | null | undefined;
+  verb: string;
+}) {
+  if (!date) return null;
+  return (
+    <p className="mt-2 text-caption text-destructive">
+      {verb} ב-{jewishDateHebrew(date)}
+    </p>
+  );
 }
 
 /** "מצב ההורים": סטטוס, מי מגדל, פטירה ונישואים מחדש */
@@ -27,12 +44,6 @@ function ParentsStatusBox({ parentsInfo }: { parentsInfo: ParentsInfo }) {
         />
         {parentsInfo.holding && (
           <InfoTag label="מי מגדל" value={holdingLabel(parentsInfo.holding)} />
-        )}
-        {parentsInfo.deadParent === "father" && parentsInfo.fatherDeathDate && (
-          <InfoTag
-            label="תאריך פטירת האב"
-            value={parentsInfo.fatherDeathDate}
-          />
         )}
         {parentsInfo.isMotherRemarried && (
           <InfoTag
@@ -132,6 +143,12 @@ export function FamilySection({
             grandFatherLabel="אביו:"
             grandMotherLabel="אמו:"
             jobItalic
+            isDeceased={isParentDeceased(parentsInfo, "father")}
+            deathNote={
+              isParentDeceased(parentsInfo, "father") ? (
+                <DeathNote date={parentsInfo?.fatherDeathDate} verb="נפטר" />
+              ) : null
+            }
           />
           <ParentCard
             label="אמא"
@@ -139,13 +156,10 @@ export function FamilySection({
             grandFatherLabel="אביה:"
             grandMotherLabel="אימה:"
             maidenName={parentsInfo?.mother?.maidenName}
+            isDeceased={isParentDeceased(parentsInfo, "mother")}
             deathNote={
-              parentsInfo?.deadParent === "mother" &&
-              parentsInfo?.motherDeathDate ? (
-                <p className="mt-2 text-caption text-destructive">
-                  נפטרה ב-
-                  {jewishDateHebrew(parentsInfo.motherDeathDate)}
-                </p>
+              isParentDeceased(parentsInfo, "mother") ? (
+                <DeathNote date={parentsInfo?.motherDeathDate} verb="נפטרה" />
               ) : null
             }
           />

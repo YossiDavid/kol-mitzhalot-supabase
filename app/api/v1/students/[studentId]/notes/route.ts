@@ -6,7 +6,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { hasRole } from "@/lib/user";
 
-// יצירת "הערת שדכן" (פרטית לכותב) או "פידבק איש צוות" (גלוי בשיתוף הכרטיס).
+// יצירת "הערת שדכן" (גלויה לכל השדכנים והמנהלים) או "פידבק איש צוות" (גלוי בשיתוף הכרטיס).
 // הסוג נבחר במפורש, כי למשתמש יכולים להיות גם תפקיד שדכן וגם איש צוות.
 // author_role נגזר בשרת מהסוג ומהתפקידים האמיתיים - לעולם לא מהלקוח - ומדיניות
 // ה-INSERT של RLS היא האכיפה האמיתית (כולל שיוך איש הצוות למוסד של המיועד).
@@ -64,6 +64,15 @@ async function resolveStaffAuthor(
   if (!student) return FORBIDDEN;
 
   return { role: "staff", institutionId: student.institution_id ?? null };
+}
+
+/** שם הכותב להצגה מיידית אחרי השמירה; בטעינה הבאה השם מגיע מהפרופיל */
+function displayNameOf(user: User): string | null {
+  const name = [user.user_metadata?.firstName, user.user_metadata?.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  return name || null;
 }
 
 export async function POST(
@@ -147,6 +156,8 @@ export async function POST(
         created_at: created.created_at,
         institution_name: institution?.name ?? null,
         institution_city: institution?.city ?? null,
+        author_id: user.id,
+        author_name: displayNameOf(user),
       },
     },
     { status: 201 },

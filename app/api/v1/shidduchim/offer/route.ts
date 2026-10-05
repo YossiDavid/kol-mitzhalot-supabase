@@ -5,6 +5,13 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { sendShidduchOfferEmails } from "@/features/shidduchim/lib/send-offer-email";
+import {
+  cardsInScope,
+  dbBlockFromError,
+  findProposalBlocks,
+  proposalBlocksBody,
+  type ProposalBlock,
+} from "@/features/shidduchim/lib/proposal-gate";
 import { hasRole } from "@/lib/user";
 
 const recipientScopeSchema = z.enum(["both", "groom_only", "bride_only"]);
@@ -22,6 +29,9 @@ const bodySchema = z.object({
   // כשהלקוח לא שלח כלום - הפתיחה היא בחירה אקטיבית של השדכן.
   shareContactDetails: z.boolean().optional().default(false),
   shareMedicalInfo: z.boolean().optional().default(false),
+  // תמונות הבחור בכרטיס שרואה צד הכלה. פתוח כברירת מחדל: זו ההתנהגות
+  // שהייתה תמיד, והשדכן סוגר אותה במפורש.
+  shareGroomPhoto: z.boolean().optional().default(true),
 });
 
 function isBlockingStatus(status: string) {
@@ -68,6 +78,7 @@ export async function POST(req: NextRequest) {
     noteForBride,
     shareContactDetails,
     shareMedicalInfo,
+    shareGroomPhoto,
   } = parsed.data;
 
   if (action === "send" && !recipientScope) {
@@ -112,7 +123,7 @@ export async function POST(req: NextRequest) {
   const { data: pairRows, error: pairErr } = await admin
     .from("shidduchim")
     .select(
-      "id, status, shadchan_id, sent_at, note_for_groom, note_for_bride, recipient_scope, share_contact_details, share_medical_info",
+      "id, status, shadchan_id, sent_at, note_for_groom, note_for_bride, recipient_scope, share_contact_details, share_medical_info, share_groom_photo",
     )
     .eq("groom_id", groomId)
     .eq("bride_id", brideId);
@@ -177,6 +188,7 @@ export async function POST(req: NextRequest) {
       sent_at: null,
       share_contact_details: shareContactDetails,
       share_medical_info: shareMedicalInfo,
+      share_groom_photo: shareGroomPhoto,
     };
 
     if (rowToReuse) {
@@ -217,6 +229,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, id: inserted.id, status: "draft" });
   }
 
+  // כרטיס מושהה או שמיצה את המכסה אינו מקבל הצעה. נבדק לפני כל כתיבה
+  // ולפני המייל; הטריגר במסד אוכף את אותו כלל גם אם הבדיקה הזו נעקפה.
+  let blocks: ProposalBlock[];
+  try {
+    blocks = await findProposalBlocks(
+      admin,
+      cardsInScope(recipientScope!, groomId, brideId),
+    );
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json({ error: "שגיאת מסד" }, { status: 500 });
+  }
+  if (blocks.length > 0) {
+    return NextResponse.json(proposalBlocksBody(blocks), { status: 409 });
+  }
+
   const [{ data: groomAuth }, { data: brideAuth }] = await Promise.all([
     admin.auth.admin.getUserById(groom.user_id),
     admin.auth.admin.getUserById(bride.user_id),
@@ -238,6 +266,7 @@ export async function POST(req: NextRequest) {
     updated_at: nowIso,
     share_contact_details: shareContactDetails,
     share_medical_info: shareMedicalInfo,
+    share_groom_photo: shareGroomPhoto,
   };
 
   /**
@@ -255,6 +284,7 @@ export async function POST(req: NextRequest) {
         sent_at: rowToReuse.sent_at,
         share_contact_details: rowToReuse.share_contact_details,
         share_medical_info: rowToReuse.share_medical_info,
+        share_groom_photo: rowToReuse.share_groom_photo,
       }
     : null;
 
@@ -271,6 +301,12 @@ export async function POST(req: NextRequest) {
       .select("id")
       .single();
 
+    const raceBlock = dbBlockFromError(uErr);
+    if (raceBlock) {
+      return NextResponse.json(proposalBlocksBody([raceBlock]), {
+        status: 409,
+      });
+    }
     if (uErr || !upgraded) {
       console.error(uErr);
       return NextResponse.json(
@@ -286,6 +322,12 @@ export async function POST(req: NextRequest) {
       .select("id")
       .single();
 
+    const raceBlock = dbBlockFromError(iErr);
+    if (raceBlock) {
+      return NextResponse.json(proposalBlocksBody([raceBlock]), {
+        status: 409,
+      });
+    }
     if (iErr || !inserted) {
       console.error(iErr);
       return NextResponse.json(

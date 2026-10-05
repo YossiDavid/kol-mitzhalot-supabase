@@ -9,6 +9,7 @@ import {
   Pencil,
   Share2,
   Trash2,
+  UserRound,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -34,7 +35,8 @@ type OpenDialog = "message" | "delete" | null;
  *
  * ההרשאות מגיעות מהשרת ואינן נקבעות כאן: `canEdit` (בעלים/שדכן/מנהל),
  * `canManage` (שדכן/מנהל - פנייה ועדכון סטטוס), `canDelete` (מנהל בלבד).
- * השיתוף פתוח לכל מי שרואה את הכרטיס, וקובץ קו״ח מוצג רק כשקיים.
+ * השיתוף פתוח לכל מי שרואה את הכרטיס. קובץ קו״ח הוא כפתור גלוי בהדר, ורק
+ * כשקיים (בהצעת שידוך הוא נשלף רק כשההתקשרות נפתחה).
  */
 export function StudentCardActions({
   studentId,
@@ -47,6 +49,7 @@ export function StudentCardActions({
   canManage,
   canDelete,
   inShidduchim,
+  ownerUserId,
 }: {
   studentId: string;
   studentName: string;
@@ -60,6 +63,8 @@ export function StudentCardActions({
   canDelete: boolean;
   /** false - הכרטיס הוצא משידוכים. null/undefined בשורה ישנה נחשב פעיל */
   inShidduchim?: boolean | null;
+  /** בעל הכרטיס, לקישור "פרטי המשתמש" - נמסר למנהל מערכת בלבד */
+  ownerUserId?: string | null;
 }) {
   const [openDialog, setOpenDialog] = useState<OpenDialog>(null);
 
@@ -86,6 +91,15 @@ export function StudentCardActions({
         </Button>
       )}
 
+      {cvUrl && (
+        <Button asChild variant="outline" size="sm">
+          <a href={cvUrl} target="_blank" rel="noopener noreferrer">
+            <FileText className="h-4 w-4" />
+            קובץ קו״ח
+          </a>
+        </Button>
+      )}
+
       {/* modal={false}: התפריט נסגר ברגע שנבחר פריט שפותח דיאלוג, ובלעדיו שתי
           שכבות הסגירה מתנגשות ונועלות את העכבר על העמוד */}
       <DropdownMenu dir="rtl" modal={false}>
@@ -97,15 +111,6 @@ export function StudentCardActions({
         {/* align="end": בממשק RTL הקצה הזה הוא שמאל, וכך התפריט נפתח פנימה
             אל תוך העמוד במקום להידחק אל שפת החלון */}
         <DropdownMenuContent align="end" className="min-w-52">
-          {cvUrl && (
-            <DropdownMenuItem asChild>
-              <a href={cvUrl} target="_blank" rel="noopener noreferrer">
-                <FileText />
-                קובץ קו״ח
-              </a>
-            </DropdownMenuItem>
-          )}
-
           <DropdownMenuItem
             disabled={!isInShidduchim}
             onSelect={() => {
@@ -123,6 +128,15 @@ export function StudentCardActions({
             >
               <MessageSquare />
               פניה למנהל הכרטיס
+            </DropdownMenuItem>
+          )}
+
+          {ownerUserId && (
+            <DropdownMenuItem asChild>
+              <Link href={`/app/admin/users/${ownerUserId}`}>
+                <UserRound />
+                פרטי המשתמש
+              </Link>
             </DropdownMenuItem>
           )}
 
@@ -152,6 +166,7 @@ export function StudentCardActions({
       {canMessage && authorId && (
         <StudentMessageDialog
           authorId={authorId}
+          studentId={studentId}
           open={openDialog === "message"}
           onOpenChange={(open) => setOpenDialog(open ? "message" : null)}
         />

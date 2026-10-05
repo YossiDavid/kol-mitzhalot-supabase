@@ -10,14 +10,17 @@ import { CardSection } from "./card-section";
 import { EducationSection, EmploymentSection } from "./education-section";
 import { FamilySection } from "./family-section";
 import { PersonalDetailsSection } from "./personal-details-section";
+import { ReferencesSection } from "./references-section";
 import { StudentCardBackLink, StudentCardHero } from "./student-card-hero";
 import { PublicStudentCardPhoto } from "./student-card-photo";
 
 /**
  * התצוגה הציבורית (גולש לא מחובר שנכנס דרך קישור השיתוף). מוגבלת בכוונה:
  * אין שורת פעולות, אין הערות שדכן, ואין מקטעי "מה אני מחפש"/"הצהרה רפואית"/
- * "ממליצים"/"נישואין קודמים" - הטבלאות שמזינות אותם לא נשלפות כלל
- * (`ANONYMOUS_STUDENT_SELECT`). פידבק אנשי צוות כן מוצג, לקריאה בלבד.
+ * "נישואין קודמים" - הטבלאות שמזינות אותם לא נשלפות כלל
+ * (`ANONYMOUS_STUDENT_SELECT`). הממליצים כן מוצגים במלואם (סוג, שם, טלפון,
+ * אימייל) - החלטת הלקוח. פידבק אנשי צוות מוצג גם הוא, לקריאה בלבד.
+ * תאריך הלידה אינו מגיע לכאן בכלל, ולכן אין בתצוגה הזו גם לחיצה על הגיל.
  */
 export function PublicStudentCard({
   studentId,
@@ -73,6 +76,7 @@ export function PublicStudentCard({
         <div className="space-y-6">
           <EducationSection education={student.education_history} />
           <EmploymentSection employment={student.employment_history} />
+          <ReferencesSection references={student.references} />
           {staffFeedback.length > 0 && (
             <CardSection title="פידבק אנשי צוות" icon={MessageSquareText}>
               <StaffFeedbackList

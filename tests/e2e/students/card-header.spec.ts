@@ -11,7 +11,8 @@ import {
  * כשורה שלמה של כפתורים במקום פקד אחד שנפתח.
  */
 const ACTIONS_BAR = '[data-slot="student-card-actions"]';
-const MAX_HEADER_CONTROLS = 3;
+// חזרה, קו״ח, עריכה ו"עוד פעולות" (קו״ח מוצג רק כשקיים)
+const MAX_HEADER_CONTROLS = 4;
 const CV_URL = "https://example.com/cv-test.pdf";
 
 async function openActionsMenu(page: Page) {
@@ -55,7 +56,7 @@ test.describe("הדר כרטיס המיועד — שדכן", () => {
     await admin.from("students").delete().eq("id", studentId);
   });
 
-  test("ההדר מציג לכל היותר שלושה פקדים", async ({ page }) => {
+  test("ההדר מציג לכל היותר ארבעה פקדים", async ({ page }) => {
     // Arrange
     await page.goto(cardUrl);
     await expect(page.locator("h1")).toContainText(lastName);
@@ -76,6 +77,25 @@ test.describe("הדר כרטיס המיועד — שדכן", () => {
     ).toBeVisible();
   });
 
+  test("קובץ הקו״ח הוא כפתור גלוי בהדר ולא פריט בתפריט", async ({ page }) => {
+    // Arrange
+    await page.goto(cardUrl);
+    await expect(page.locator("h1")).toContainText(lastName);
+
+    // Assert - גלוי בלי לפתוח תפריט, וקישור לקובץ
+    const cvLink = page.locator(ACTIONS_BAR).getByRole("link", {
+      name: "קובץ קו״ח",
+    });
+    await expect(cvLink).toBeVisible();
+    await expect(cvLink).toHaveAttribute("href", CV_URL);
+
+    // Act + Assert - אין כפילות בתפריט
+    await openActionsMenu(page);
+    await expect(
+      page.getByRole("menuitem", { name: "קובץ קו״ח" }),
+    ).toHaveCount(0);
+  });
+
   test("שאר הפעולות זמינות בתפריט, והמחיקה אינה מוצגת לשדכן", async ({
     page,
   }) => {
@@ -86,10 +106,7 @@ test.describe("הדר כרטיס המיועד — שדכן", () => {
     // Act
     await openActionsMenu(page);
 
-    // Assert - כל מה שהיה בהדר לפני השינוי נשאר נגיש
-    await expect(
-      page.getByRole("menuitem", { name: "קובץ קו״ח" }),
-    ).toBeVisible();
+    // Assert - כל מה שהיה בהדר לפני השינוי נשאר נגיש (קו״ח עבר להדר)
     await expect(
       page.getByRole("menuitem", { name: "שיתוף הכרטיס" }),
     ).toBeVisible();
@@ -102,6 +119,22 @@ test.describe("הדר כרטיס המיועד — שדכן", () => {
     await expect(
       page.getByRole("menuitem", { name: "מחיקת כרטיס" }),
     ).toHaveCount(0);
+    // "פרטי המשתמש" ואימייל מנהל הכרטיס הם למנהל מערכת בלבד
+    await expect(
+      page.getByRole("menuitem", { name: "פרטי המשתמש" }),
+    ).toHaveCount(0);
+  });
+
+  test("שדכן אינו רואה אימייל מנהל הכרטיס ולא קישור לפרטי המשתמש", async ({
+    page,
+  }) => {
+    // Arrange
+    await page.goto(cardUrl);
+    await expect(page.locator("h1")).toContainText(lastName);
+
+    // Assert
+    await expect(page.getByText("אימייל מנהל הכרטיס")).toHaveCount(0);
+    await expect(page.locator('a[href^="/app/admin/users/"]')).toHaveCount(0);
   });
 
   test("עדכון סטטוס הוא פקד אחד שנפתח ומעדכן את המסד", async ({ page }) => {

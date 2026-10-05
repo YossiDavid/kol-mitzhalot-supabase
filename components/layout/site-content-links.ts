@@ -1,4 +1,4 @@
-import { BookOpen, Info, LifeBuoy, Sparkles } from "lucide-react";
+import { BookOpen, HeartHandshake, Info, LifeBuoy, Sparkles } from "lucide-react";
 
 /**
  * תוכן האתר הכללי שמשתמש מחובר צריך להגיע אליו מתוך המערכת - בתפריט
@@ -9,4 +9,5 @@ export const SITE_CONTENT_LINKS = [
   { title: "מה חדש", href: "/whats-new", icon: Sparkles },
   { title: "אודות", href: "/about", icon: Info },
   { title: "שירות ותמיכה", href: "/support", icon: LifeBuoy },
+  { title: "תרומות והנצחות", href: "/donations", icon: HeartHandshake },
 ] as const;

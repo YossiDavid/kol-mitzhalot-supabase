@@ -1,4 +1,5 @@
-import { Phone, User } from "lucide-react";
+import { Mail, Phone, User } from "lucide-react";
+import Link from "next/link";
 
 import {
   cellphoneTypeToHebrew,
@@ -7,9 +8,17 @@ import {
   planForLifeToHebrew,
 } from "@/features/students/lib/profile-labels";
 
+import { AgeBirthDate } from "./age-birth-date";
 import { CardSection } from "./card-section";
 import { InfoTag, InfoTagGrid } from "./info-tag";
 import type { PersonalDetails } from "./types";
+
+/** מנהל הכרטיס (החשבון שבבעלותו הכרטיס) - נמסר למנהל מערכת בלבד */
+export type CardOwnerInfo = {
+  userId: string;
+  /** null כשהאימייל לא נמצא או שהשליפה נכשלה */
+  email: string | null;
+};
 
 /**
  * "פרטים אישיים". אותו רכיב משרת את הגולש המחובר ואת התצוגה הציבורית:
@@ -20,11 +29,17 @@ export function PersonalDetailsSection({
   student,
   genderLabel,
   ageValue,
+  ageHebrewDate,
+  owner,
 }: {
   student: PersonalDetails;
   genderLabel: string | null;
   /** "26 שנים" או null - מחושב בכל ענף בנפרד, כדי שתאריך הלידה לא ידלוף */
   ageValue: string | null;
+  /** תאריך הלידה העברי, לחשיפה בלחיצה על הגיל. לא נמסר בתצוגה הציבורית */
+  ageHebrewDate?: string | null;
+  /** אימייל מנהל הכרטיס וקישור לפרטיו - מנהל מערכת בלבד */
+  owner?: CardOwnerInfo | null;
 }) {
   return (
     <CardSection title="פרטים אישיים" icon={User}>
@@ -39,7 +54,18 @@ export function PersonalDetailsSection({
         <InfoTag label="רחוב" value={student.street} />
         <InfoTag label="מספר בית" value={student.house} />
         <InfoTag label="ארץ" value={student.country} />
-        <InfoTag label="גיל" value={ageValue} />
+        {ageValue && (
+          <div className="flex flex-col">
+            <span className="text-caption font-medium text-muted-foreground">
+              גיל
+            </span>
+            <AgeBirthDate
+              label={ageValue}
+              hebrewDate={ageHebrewDate}
+              className="self-start text-body-sm font-semibold text-foreground"
+            />
+          </div>
+        )}
         <InfoTag label="תעודת זהות" value={student.identity_number} />
         <InfoTag
           label="סטטוס אישי"
@@ -77,6 +103,31 @@ export function PersonalDetailsSection({
             >
               <Phone size={12} /> {student.phone}
             </a>
+          </div>
+        )}
+        {owner && (
+          <div className="flex flex-col" data-slot="card-owner">
+            <span className="text-caption font-medium text-muted-foreground">
+              אימייל מנהל הכרטיס
+            </span>
+            {owner.email ? (
+              <a
+                href={`mailto:${owner.email}`}
+                className="flex items-center gap-1 text-body-sm font-semibold text-primary hover:underline"
+              >
+                <Mail size={12} /> {owner.email}
+              </a>
+            ) : (
+              <span className="text-body-sm text-muted-foreground">
+                לא זמין
+              </span>
+            )}
+            <Link
+              href={`/app/admin/users/${owner.userId}`}
+              className="text-caption text-primary hover:underline"
+            >
+              פרטי המשתמש
+            </Link>
           </div>
         )}
         <InfoTag

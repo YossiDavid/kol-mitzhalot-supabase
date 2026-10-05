@@ -41,6 +41,7 @@ export function ParentCard({
   maidenName,
   jobItalic,
   deathNote,
+  isDeceased,
 }: {
   label: string;
   parent: ParentInfo | null | undefined;
@@ -49,7 +50,15 @@ export function ParentCard({
   maidenName?: string | null;
   jobItalic?: boolean;
   deathNote?: React.ReactNode;
+  /** הורה שנפטר: ז"ל ליד השם, בלי טלפון, עיסוק ואימייל */
+  isDeceased?: boolean;
 }) {
+  // נתונים ישנים עלולים עדיין להחזיק פרטי קשר של הורה שנפטר: לא מציגים
+  // אותם, גם בכרטיס הציבורי
+  const job = isDeceased ? null : parent?.job;
+  const phone = isDeceased ? null : parent?.phone;
+  const email = isDeceased ? null : parent?.email;
+
   return (
     <div className="rounded-lg border border-border bg-muted/30 p-4">
       <p className="mb-2 text-caption font-bold text-muted-foreground uppercase">
@@ -57,6 +66,7 @@ export function ParentCard({
       </p>
       <p className="font-bold">
         {fullName(parent?.self)}
+        {isDeceased && <span> ז״ל</span>}
         {maidenName && (
           <span className="text-body-sm font-normal text-muted-foreground">
             {" "}
@@ -64,7 +74,7 @@ export function ParentCard({
           </span>
         )}
       </p>
-      {parent?.job && (
+      {job && (
         <p
           className={
             jobItalic
@@ -72,23 +82,23 @@ export function ParentCard({
               : "mt-1 text-body-sm text-muted-foreground"
           }
         >
-          {parent.job}
+          {job}
         </p>
       )}
-      {parent?.phone && (
+      {phone && (
         <a
-          href={`tel:${parent.phone}`}
+          href={`tel:${phone}`}
           className="mt-2 flex items-center gap-1 text-caption text-muted-foreground hover:text-primary"
         >
-          <Phone size={12} /> {parent.phone}
+          <Phone size={12} /> {phone}
         </a>
       )}
-      {parent?.email && (
+      {email && (
         <a
-          href={`mailto:${parent.email}`}
+          href={`mailto:${email}`}
           className="mt-1 flex items-center gap-1 text-caption text-muted-foreground hover:text-primary"
         >
-          <Mail size={12} /> {parent.email}
+          <Mail size={12} /> {email}
         </a>
       )}
       {deathNote}

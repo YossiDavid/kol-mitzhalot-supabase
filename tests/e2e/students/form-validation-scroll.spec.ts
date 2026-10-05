@@ -20,6 +20,7 @@ for (const viewport of VIEWPORTS) {
       height: viewport.height,
     });
     await page.goto("/app/students/create");
+    await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
     await page.getByRole("radio", { name: "מיועד", exact: true }).check();
     const nextButton = page.getByRole("button", { name: "המשך לשלב הבא" });
     await nextButton.click();
@@ -50,6 +51,7 @@ for (const viewport of VIEWPORTS) {
 test("הודעות שדה חובה ספציפיות לפי תווית וסוג פקד", async ({ page }) => {
   // Arrange
   await page.goto("/app/students/create");
+  await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
   await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
   const nextButton = page.getByRole("button", { name: "המשך לשלב הבא" });
   await nextButton.click();
@@ -73,6 +75,7 @@ test("הודעות שדה חובה ספציפיות לפי תווית וסוג �
 test("שם עם תוארים מקבל הודעה עם התווית המגדרית", async ({ page }) => {
   // Arrange
   await page.goto("/app/students/create");
+  await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
   await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
   await page
     .getByRole("navigation", { name: "שלבי הטופס" })

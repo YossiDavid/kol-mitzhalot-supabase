@@ -38,7 +38,7 @@ async function ProposalsList() {
 
   const proposals = await getMyProposals(supabase);
 
-  // כדי להבחין בין "אין ילדים עדיין" ל"אין הצעות עדיין" במצב הריק
+  // כדי להבחין בין "אין מיועדים עדיין" ל"אין הצעות עדיין" במצב הריק
   const { count: childrenCount, error: childrenErr } =
     proposals.length === 0
       ? await supabase
@@ -61,14 +61,14 @@ async function ProposalsList() {
           <EmptyTitle>אין הצעות עדיין</EmptyTitle>
           <EmptyDescription>
             {hasNoChildren
-              ? "כדי לקבל הצעות, צריך קודם להוסיף לפחות בן/בת אחד לרשימת הילדים."
-              : "כשתגיע הצעת שידוך עבור אחד הילדים, היא תופיע כאן."}
+              ? "כדי לקבל הצעות, צריך קודם להוסיף לפחות מיועד/ת אחד/ת."
+              : "כשתגיע הצעת שידוך עבור אחד המיועדים שלך, היא תופיע כאן."}
           </EmptyDescription>
         </EmptyHeader>
         {hasNoChildren && (
           <EmptyContent>
             <Button asChild>
-              <Link href="/app/students/create">להוספת בן / בת</Link>
+              <Link href="/app/students/create">להוספת מיועד/ת</Link>
             </Button>
           </EmptyContent>
         )}

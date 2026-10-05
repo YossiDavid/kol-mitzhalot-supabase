@@ -17,6 +17,8 @@ import {
   type StudentTableRow,
 } from "@/features/students/components/students-table";
 import { createClient } from "@/lib/supabase/client";
+import { ProposalLimitControl } from "@/features/dashboard/components/user/proposal-limit-control";
+import type { ProposalLimitPeriod } from "@/features/students/lib/proposal-limit";
 
 export default function Children({ childs }: { childs: StudentTableRow[] }) {
   const supabaseRef = useRef(createClient());
@@ -25,18 +27,24 @@ export default function Children({ childs }: { childs: StudentTableRow[] }) {
   const [localChilds, setLocalChilds] = useState<StudentTableRow[]>(childs);
 
   const handleIsInShidduchimChange = async (id: string, checked: boolean) => {
-    const { error } = await supabase
+    // הערך שחוזר מהמסד הוא האמת: כרטיס שהנהלה השהתה נשאר false גם אם
+    // נשלח true (הטריגר enforce_student_admin_pause)
+    const { data, error } = await supabase
       .from("students")
       .update({ in_shidduchim: checked })
-      .eq("id", id);
-    if (error) {
+      .eq("id", id)
+      .select("in_shidduchim")
+      .single();
+    if (error || !data) {
       toast.error("שגיאה בעדכון סטטוס השידוכים");
       return;
     }
     // rerender-functional-setstate: use functional form to avoid stale closure
     setLocalChilds((prev) =>
       prev.map((child) =>
-        child.id === id ? { ...child, in_shidduchim: checked } : child,
+        child.id === id
+          ? { ...child, in_shidduchim: data.in_shidduchim }
+          : child,
       ),
     );
   };
@@ -45,9 +53,33 @@ export default function Children({ childs }: { childs: StudentTableRow[] }) {
     <StudentsTable
       preset="children"
       className="pt-4"
-      caption="הילדים שלך"
+      caption="המיועדים שלך"
       students={localChilds}
       onInShidduchimChange={handleIsInShidduchimChange}
+      renderProposalLimit={(child) => (
+        <ProposalLimitControl
+          studentId={child.id}
+          studentName={`${child.first_name} ${child.last_name}`}
+          limit={{
+            count: child.proposal_limit_count ?? null,
+            period: (child.proposal_limit_period ??
+              null) as ProposalLimitPeriod | null,
+          }}
+          onChanged={(limit) =>
+            setLocalChilds((prev) =>
+              prev.map((row) =>
+                row.id === child.id
+                  ? {
+                      ...row,
+                      proposal_limit_count: limit.count,
+                      proposal_limit_period: limit.period,
+                    }
+                  : row,
+              ),
+            )
+          }
+        />
+      )}
       onCvAdded={(id, cvUrl) =>
         setLocalChilds((prev) =>
           prev.map((child) =>
@@ -58,18 +90,16 @@ export default function Children({ childs }: { childs: StudentTableRow[] }) {
       emptyState={
         <Empty size="compact">
           <EmptyHeader>
-            <EmptyTitle>
-              לא ידוע לנו על ילדים בגיל שידוכים במשפחה שלך
-            </EmptyTitle>
+            <EmptyTitle>עדיין לא נוסף מיועד/ת בחשבון שלך</EmptyTitle>
             <EmptyDescription>
-              טעות שלנו? אוי ווי! באפשרותך להוסיף ילדים בשידוכים מגיל 17 ומעלה
+              באפשרותך להוסיף מיועד/ת מגיל 17 ומעלה
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button asChild>
               <Link href="/app/students/create">
                 <User />
-                להוספת בן / בת
+                להוספת מיועד/ת
               </Link>
             </Button>
           </EmptyContent>

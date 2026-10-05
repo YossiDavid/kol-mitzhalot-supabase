@@ -4,8 +4,10 @@ import {
   BookOpen,
   FileText,
   GraduationCap,
+  HeartHandshake,
   Image as ImageIcon,
   Link2,
+  ListChecks,
   UserCheck,
   UserPlus,
   Users,
@@ -40,6 +42,12 @@ export default function AdminPage() {
           description="אישור ודחייה של בקשות שדכנים לצפות בתמונת מיועדת"
         />
         <LinkCard
+          href="/app/admin/proposals"
+          icon={ListChecks}
+          title="דוח הצעות"
+          description="מי הציע לאיזה כרטיס, מתי, ומה מצב ההצעה כיום"
+        />
+        <LinkCard
           href="/app/admin/users"
           icon={Users}
           title="כל המשתמשים"
@@ -56,6 +64,12 @@ export default function AdminPage() {
           icon={BookOpen}
           title="ניהול תוכן"
           description="מאמרים, מאורסים, והמלצות רבנים"
+        />
+        <LinkCard
+          href="/app/admin/donations"
+          icon={HeartHandshake}
+          title="תרומות"
+          description="תרומות שהתקבלו דרך האתר, מצב האישור והתשלומים שלא הותאמו"
         />
         <LinkCard
           href="/app/admin/institutions"

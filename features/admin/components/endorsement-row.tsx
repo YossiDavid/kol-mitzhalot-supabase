@@ -3,6 +3,7 @@
 import { ChevronDown, ChevronUp, Pencil, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { EndorsementImageLink } from "@/features/admin/components/endorsement-image-link";
 import { Button } from "@/components/ui/button";
 import type { Endorsement } from "@/features/admin/lib/endorsement";
 
@@ -40,6 +41,9 @@ export function EndorsementRow({
         <p className="font-semibold">{item.rav_name}</p>
         {item.rav_title && (
           <p className="text-body-sm text-muted-foreground">{item.rav_title}</p>
+        )}
+        {item.image_url && (
+          <EndorsementImageLink url={item.image_url} className="mt-1" />
         )}
         {item.endorsement_text && (
           <p className="mt-1 line-clamp-2 text-body-sm text-muted-foreground">

@@ -3,6 +3,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { after } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { describeSupabaseError } from "@/lib/supabase/describe-error";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hasRole } from "@/lib/user";
 import { StudentCardActions } from "@/features/students/components/card/student-card-actions";
@@ -20,13 +21,17 @@ import {
   loadStaffFeedback,
 } from "@/features/students/lib/student-notes-data";
 import { loadStudentPhotos } from "@/features/students/lib/student-photos";
-import { canViewStudentPhoto } from "@/features/students/lib/student-photo-access";
+import {
+  canViewStudentPhoto,
+  isGroomPhotoWithheld,
+} from "@/features/students/lib/student-photo-access";
 import { getStudentCardAccess } from "@/features/students/lib/student-card-access";
 import {
   buildProposalStudentSelect,
   redactProposalStudent,
 } from "@/features/students/lib/student-proposal-card";
 import { recordStudentCardView } from "@/features/students/lib/record-card-view";
+import { loadCardOwnerInfo } from "@/features/students/lib/card-owner";
 
 // הערה: אין כאן export const dynamic — הוא אסור תחת Cache Components
 // (next.config: cacheComponents) והבנייה נכשלת עליו. גם אין בו צורך:
@@ -135,11 +140,18 @@ async function StudentPageContent({
   const isAdmin = hasRole(user, "admin");
 
   if (error) {
+    // הודעת Postgres נשארת בשרת: גולש אנונימי אינו אמור לראות שמות
+    // טבלאות ועמודות
+    console.error(
+      "[students/card] load failed",
+      id,
+      describeSupabaseError(error),
+    );
     return (
       <CardNotice
         tone="error"
         title="שגיאה בטעינת הפרופיל"
-        body={error.message}
+        body="לא ניתן לטעון את הכרטיס כרגע. נסו שוב בעוד מספר רגעים"
       />
     );
   }
@@ -194,19 +206,27 @@ async function StudentPageContent({
     );
   }
 
+  // בחור שנחשף לצד הכלה דרך הצעה ששדכן סימן בה "בלי תמונה": אין תמונות
+  // כלל - לא גלריה ולא מונה למנעול. image_url (האווטאר בכותרת) אינו נשלף
+  // בתצוגת הצעה בשום מצב (ראו student-proposal-card.ts ובדיקתו). ההכרעה
+  // נעשית פה, בשרת, לפני שהשורה מגיעה לרינדור.
+  const isGroomPhotoHidden =
+    isProposalView && student.gender === "male"
+      ? await isGroomPhotoWithheld(supabase, student.id)
+      : false;
+
   // תמונה של בת נחשפת למנהל, לבעל הכרטיס, ולשדכן שקיבל אישור צפייה
   // מפורש. ההכרעה נעשית ב-can_view_student_photo ולא כאן, כדי שאותו
   // כלל יחול גם על כל קורא אחר של הטבלה.
   // (אותה בדיקה משמשת את התמונות הממוזערות בטבלת המיועדים)
-  const photoPrivate = !(await canViewStudentPhoto(
-    supabase,
-    user?.id ?? null,
-    student,
-  ));
-  // בלי הרשאה נטען רק מספר התמונות (למנעול) - אף קישור חתום לא נוצר
-  const studentPhotos = await loadStudentPhotos(student.id, {
-    canView: !photoPrivate,
-  });
+  const photoPrivate =
+    !isGroomPhotoHidden &&
+    !(await canViewStudentPhoto(supabase, user?.id ?? null, student));
+  // בלי הרשאה נטען רק מספר התמונות (למנעול) - אף קישור חתום לא נוצר.
+  // בחור שהתמונות שלו הוסתרו לא נקרא מהמסד בכלל.
+  const studentPhotos = isGroomPhotoHidden
+    ? { count: 0, paths: [], photos: [] }
+    : await loadStudentPhotos(student.id, { canView: !photoPrivate });
 
   // הערות שדכן פרטיות לכותב (RLS); פידבק אנשי צוות נשלף למעלה לכל צופה.
   // איש צוות רשאי לכתוב פידבק - שיוכו למוסד של המיועד נאכף ב-RLS. מי
@@ -228,6 +248,13 @@ async function StudentPageContent({
   // מנהל), אחרת כפתור "עריכה" יוביל למסך שהשמירה בו תיפול על not_allowed.
   const canEdit = student.user_id === user?.id || isShadchan || isAdmin;
 
+  // פרטי מנהל הכרטיס (אימייל + קישור) נשלפים רק למנהל מערכת, ורק בכרטיס
+  // המלא - לא בענף הציבורי ולא בתצוגת הצעה, ולכן לא מגיעים אליהם גם כ-props.
+  const owner =
+    isAdmin && !isProposalView && student.user_id
+      ? await loadCardOwnerInfo(student.user_id)
+      : null;
+
   return (
     <StudentCard
       student={student}
@@ -241,6 +268,7 @@ async function StudentPageContent({
       shadchanNotes={shadchanNotes}
       isProposalView={isProposalView}
       showMedical={!isProposalView || !!access?.shareMedical}
+      owner={owner}
       actions={
         // ההרשאות נקבעות כאן, בשרת, ונמסרות כדגלים: קו״ח רק כשקיים, עריכה
         // לבעלים/שדכן/מנהל, שיתוף לכל מי שרואה את הכרטיס, פנייה ועדכון
@@ -256,6 +284,7 @@ async function StudentPageContent({
           canEdit={canEdit}
           canManage={isShadchan}
           canDelete={isAdmin}
+          ownerUserId={owner?.userId ?? null}
         />
       }
     />

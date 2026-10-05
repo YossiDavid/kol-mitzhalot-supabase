@@ -24,6 +24,7 @@ import {
   isOutOfShidduchimStatus,
   isRecentlyEngaged,
 } from "@/features/students/lib/student-status";
+import { summarizeChildren } from "@/features/students/lib/children-summary";
 import calculateAge from "@/lib/calculateAge";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +53,13 @@ export type StudentTableRow = {
   photo_count?: number | null;
   status_changed_at?: string | null;
   in_shidduchim?: boolean | null;
+  /** הנהלת המערכת השהתה את הכרטיס - מנהל הכרטיס אינו יכול לבטל */
+  admin_paused_at?: string | null;
+  /** מכסת הצעות שקבע מנהל הכרטיס (null = ללא הגבלה) */
+  proposal_limit_count?: number | null;
+  proposal_limit_period?: string | null;
+  /** נישואים קודמים (children, children_number, no_children) - רק ברשימה */
+  previous_partners?: unknown;
 };
 
 /** רשימת המיועדים: כוכב מועדפים, ומחיקה למנהל */
@@ -73,6 +81,8 @@ type FavoritesPreset = {
 type ChildrenPreset = {
   preset: "children";
   onInShidduchimChange: (id: string, checked: boolean) => void;
+  /** תא "הגבלת הצעות" - נמסר מהקורא כי הוא יודע לשמור ולעדכן את השורה */
+  renderProposalLimit: (student: StudentTableRow) => ReactNode;
 };
 
 export type StudentsTablePreset = (
@@ -156,9 +166,21 @@ function StarToggle({
 }
 
 function StatusCell({ student }: { student: StudentTableRow }) {
+  const childrenSummary = summarizeChildren(
+    student.personal_status,
+    student.previous_partners,
+  );
   return (
     <span className="inline-flex items-center gap-1 whitespace-nowrap">
       {personalStatusToHebrew(student.personal_status, student.gender)}
+      {childrenSummary && (
+        <span
+          className="text-caption text-muted-foreground"
+          data-testid="children-summary"
+        >
+          · {childrenSummary}
+        </span>
+      )}
       {(student.photo_count ?? 0) > 0 && (
         <Camera
           className="size-3.5 shrink-0 text-muted-foreground"
@@ -245,13 +267,25 @@ function leadingColumn(
       mobileLabel: "פעיל בשידוכים",
       size: "min",
       cell: (student) => (
-        <Switch
-          checked={student.in_shidduchim ?? false}
-          onCheckedChange={(checked) =>
-            props.onInShidduchimChange(student.id, checked)
-          }
-          aria-label={`פעיל בשידוכים: ${fullName(student)}`}
-        />
+        <div className="flex flex-col items-start gap-1">
+          <Switch
+            checked={student.in_shidduchim ?? false}
+            // השהיית הנהלה: הנעילה נאכפת גם במסד, וכאן רק מונעים את הלחיצה
+            disabled={!!student.admin_paused_at}
+            onCheckedChange={(checked) =>
+              props.onInShidduchimChange(student.id, checked)
+            }
+            aria-label={`פעיל בשידוכים: ${fullName(student)}`}
+          />
+          {student.admin_paused_at && (
+            <span
+              className="max-w-40 text-caption text-muted-foreground"
+              data-testid="admin-paused-note"
+            >
+              הכרטיס הושהה על ידי הנהלת המערכת
+            </span>
+          )}
+        </div>
       ),
     };
   }
@@ -309,12 +343,30 @@ function leadingColumn(
   };
 }
 
+/** עמודת "הגבלת הצעות" - רק בטבלת הילדים של ההורה */
+function proposalLimitColumns(
+  props: StudentsTableProps,
+): DataTableColumn<StudentTableRow>[] {
+  if (props.preset !== "children") return [];
+  const { renderProposalLimit } = props;
+  return [
+    {
+      key: "proposal-limit",
+      header: "הגבלת הצעות",
+      size: "min",
+      mobileLabel: "הגבלת הצעות",
+      cell: (student) => renderProposalLimit(student),
+    },
+  ];
+}
+
 function buildColumns(
   props: StudentsTableProps,
   renderPhoto: RenderPhoto,
 ): DataTableColumn<StudentTableRow>[] {
   return [
     leadingColumn(props),
+    ...proposalLimitColumns(props),
     {
       key: "photo",
       header: "תמונה",

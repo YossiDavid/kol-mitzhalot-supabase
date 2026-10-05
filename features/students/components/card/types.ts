@@ -56,6 +56,8 @@ export type PreviousPartnerEntry = {
   death_date?: string;
   children_number?: number;
   children?: unknown;
+  /** סומן במפורש "אין ילדים מנישואין אלו" */
+  no_children?: boolean;
   divorce_details?: {
     reason?: string;
     rabbiName?: string;

@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useState } from "react";
 
+import type { CommunityFilter } from "@/features/students/lib/community-filter";
+
 /**
  * סינון רשימת המיועדים. כל שדה כאן מוחל בפועל בשאילתה ב-
  * features/students/components/list.tsx - שדה שאין לו מימוש שם לא נכנס לכאן.
@@ -27,6 +29,8 @@ export interface StudentQuery {
   institution?: string;
   /** "true" / "false", ריק = הכל */
   is_yeshiva?: string;
+  /** קהילה / חסידות (students.community). undefined = הכל מסומן, בלי סינון */
+  communities?: CommunityFilter;
 }
 
 interface QueryContextType {

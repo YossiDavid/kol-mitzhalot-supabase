@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { hasRole } from "@/lib/user";
+import { hasRole, primaryRole } from "@/lib/user";
 import { unstable_noStore as noStore } from "next/cache";
 
 export async function POST(req: NextRequest) {
@@ -72,7 +72,10 @@ export async function POST(req: NextRequest) {
         firstName: trimmedFirstName,
         lastName: trimmedLastName,
         phone,
-        role: safeRole,
+      },
+      // תפקיד ב-app_metadata בלבד (user_metadata ניתן לכתיבה ע"י המשתמש)
+      app_metadata: {
+        roles: safeRole === "user" ? [] : [safeRole],
       },
     });
 
@@ -92,7 +95,7 @@ export async function POST(req: NextRequest) {
         email: user.email,
         firstName: user.user_metadata?.firstName ?? null,
         lastName: user.user_metadata?.lastName ?? null,
-        role: user.user_metadata?.role ?? "user",
+        role: primaryRole(user),
       },
       { status: 201 },
     );

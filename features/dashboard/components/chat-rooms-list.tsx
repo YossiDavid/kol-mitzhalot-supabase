@@ -14,6 +14,8 @@ export type DashboardChat = {
   id: string;
   name: string;
   image: string;
+  /** "כרטיס: <שם>" / "הצעה: <X ו-Y>"; חסר בשיחה כללית */
+  contextTitle?: string | null;
   lastMessage?: string | null;
   lastMessageTime?: string | null;
   lastMessageSender?: string | null;
@@ -39,7 +41,15 @@ export function DashboardChatRooms({ chats }: { chats: DashboardChat[] }) {
           <Link
             key={chat.id}
             href={`/app/chats/${chat.id}`}
-            aria-label={isUnread ? unreadRoomLabel(chat.name) : undefined}
+            aria-label={
+              isUnread
+                ? unreadRoomLabel(
+                    chat.contextTitle
+                      ? `${chat.name}, ${chat.contextTitle}`
+                      : chat.name,
+                  )
+                : undefined
+            }
             data-unread={isUnread ? "true" : undefined}
             className={cn(
               "group flex items-center rounded-lg border p-4 transition hover:bg-muted",
@@ -73,6 +83,14 @@ export function DashboardChatRooms({ chats }: { chats: DashboardChat[] }) {
                   {time}
                 </span>
               </div>
+              {chat.contextTitle && (
+                <div
+                  data-slot="chat-context"
+                  className="mb-1 truncate text-caption text-muted-foreground"
+                >
+                  {chat.contextTitle}
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <div
                   className={cn(

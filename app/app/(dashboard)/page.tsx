@@ -13,253 +13,72 @@ import {
   Chat as UserChat,
 } from "@/features/dashboard/components/user";
 import { createClient } from "@/lib/supabase/server";
-import { getDisplayName } from "@/features/chats/lib/user-display";
+import {
+  getChatsWithLastMessage,
+  getFavoriteStudents,
+  getLatestForumPosts,
+  getOwnStudents,
+  getRecentShidduchim,
+  getSentShidduchimCount,
+} from "@/features/dashboard/lib/queries";
 import { getMyProposals } from "@/features/shidduchim/lib/proposals-data";
-import { hasRole } from "@/lib/user";
+import { getUser, hasRole } from "@/lib/user";
 import DashboardSkeleton from "@/features/dashboard/components/dashboard-skeleton";
 import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 import { Suspense } from "react";
 
+const OPEN_PROPOSALS_LIMIT = 5;
+
 async function DashboardSections() {
   noStore();
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // ממוזכר לבקשה: המעטפת (layout) כבר שלפה את המשתמש, ובלי זה היינו
+  // פונים שוב לשרת האימות
+  const user = await getUser();
 
   const isAdmin = hasRole(user, "admin");
   const isShadchan = hasRole(user, "shadchan");
-  const isUser = hasRole(user, "user");
 
-  // מיועדים שעניינו אותך והוספת ללוח העבודה
-  const favorites = user?.user_metadata?.favorites || [];
-  const favoritesStudents = await supabase
-    .from("students")
-    .select(
-      `*,
-      education_history(*),
-      employment_history(*),
-      medical_records(*),
-      partner_preferences(*),
-      references(*),
-      previous_partners(*)
-    `,
-    )
-    .in("id", favorites);
+  const isShadchanView = Boolean(user?.id && (isShadchan || isAdmin));
+  const favorites: string[] = user?.user_metadata?.favorites || [];
 
-  if (favoritesStudents.error) {
-    console.error(favoritesStudents.error);
-  }
+  // כל הסקשנים בלתי תלויים זה בזה, ולכן נשלפים במקביל. כל שליפה מטפלת
+  // בשגיאה שלה (רישום + ערך ריק), כך שתקלה בסקשן אחד לא מפילה את האחרים.
+  const [
+    favoritesStudentsData,
+    childrenData,
+    activeShidduchimData,
+    activeShidduchimCountRaw,
+    openProposals,
+    forumPostsData,
+    chatsWithLastMessage,
+  ] = await Promise.all([
+    // מיועדים שעניינו אותך והוספת ללוח העבודה - מוצגים לשדכן ולמנהל בלבד
+    isShadchanView ? getFavoriteStudents(supabase, favorites) : [],
+    // הילדים שלך
+    user?.id ? getOwnStudents(supabase, user.id) : [],
+    // השידוכים שהשדכן המחובר הציע
+    user?.id && isShadchanView ? getRecentShidduchim(supabase, user.id) : [],
+    // המספר בכותרת הוא כלל ההצעות שנשלחו, ולא רק האחרונות שמוצגות
+    user?.id && isShadchanView ? getSentShidduchimCount(supabase, user.id) : 0,
+    // הצעות פתוחות שנשלחו לילדי המשתמש (כמנהל כרטיס) - החדשות קודם
+    user?.id
+      ? getMyProposals(supabase, {
+          openOnly: true,
+          limit: OPEN_PROPOSALS_LIMIT,
+        })
+      : [],
+    // פוסטים אחרונים בפורום השדכנים
+    isShadchanView ? getLatestForumPosts(supabase) : [],
+    // חדרי הצ'אט של המשתמש עם ההודעה האחרונה בכל חדר
+    user?.id ? getChatsWithLastMessage(supabase, user.id) : [],
+  ]);
 
-  const favoritesStudentsData = favoritesStudents.data || [];
-
-  // הילדים שלך
-  const children = user?.id
-    ? await supabase
-        .from("students")
-        .select(
-          `*,
-      education_history(*),
-      employment_history(*),
-      medical_records(*),
-      partner_preferences(*),
-      references(*),
-      previous_partners(*)
-    `,
-        )
-        .eq("user_id", user.id)
-    : { data: [], error: null };
-
-  if (children.error) {
-    console.error(children.error);
-  }
-
-  const childrenData = children.data || [];
-
-  // השידוכים שהשדכן המחובר הציע
-  const activeShidduchimRes =
-    user?.id && (isShadchan || isAdmin)
-      ? await supabase
-          .from("shidduchim")
-          .select(
-            `
-            id,
-            note_for_groom,
-            note_for_bride,
-            status,
-            created_at,
-            updated_at,
-            sent_at,
-            recipient_scope,
-            groom_id,
-            bride_id,
-            groom:students!shidduchim_groom_id_fkey(
-              first_name,
-              last_name,
-              birth_date,
-              city,
-              cv_url,
-              parents_info,
-              education_history(name),
-              employment_history(category,role)
-            ),
-            bride:students!shidduchim_bride_id_fkey(
-              first_name,
-              last_name,
-              birth_date,
-              city,
-              cv_url,
-              parents_info,
-              education_history(name),
-              employment_history(category,role)
-            )
-          `,
-          )
-          .eq("shadchan_id", user.id)
-          .neq("status", "draft")
-          .order("created_at", { ascending: false })
-          // "ההצעות האחרונות שלך" — הרשימה המלאה ב-/app/shadchan/proposals
-          .limit(6)
-      : { data: [], error: null };
-
-  if (activeShidduchimRes.error) {
-    console.error(activeShidduchimRes.error);
-  }
-  const activeShidduchimData = activeShidduchimRes.data || [];
-
-  // המספר בכותרת הוא כלל ההצעות שנשלחו, ולא רק האחרונות שמוצגות
-  const activeShidduchimCountRes =
-    user?.id && (isShadchan || isAdmin)
-      ? await supabase
-          .from("shidduchim")
-          .select("id", { count: "exact", head: true })
-          .eq("shadchan_id", user.id)
-          .neq("status", "draft")
-      : { count: 0, error: null };
-
-  if (activeShidduchimCountRes.error) {
-    console.error(activeShidduchimCountRes.error);
-  }
   const activeShidduchimCount =
-    activeShidduchimCountRes.count ?? activeShidduchimData.length;
+    activeShidduchimCountRaw ?? activeShidduchimData.length;
 
-  // הצעות פתוחות שנשלחו לילדי המשתמש (כמנהל כרטיס) - החדשות קודם
-  const OPEN_PROPOSALS_LIMIT = 5;
-  const openProposals = user?.id
-    ? await getMyProposals(supabase, {
-        openOnly: true,
-        limit: OPEN_PROPOSALS_LIMIT,
-      })
-    : [];
-
-  // פוסטים אחרונים בפורום השדכנים
-  const forumPostsRes =
-    user?.id && (isShadchan || isAdmin)
-      ? await supabase
-          .from("forum_posts")
-          .select("id, title, body, created_at")
-          .order("created_at", { ascending: false })
-          .limit(3)
-      : { data: [], error: null };
-  const forumPostsData = forumPostsRes.data || [];
-
-  // נשלוף את כל חדרי הצ'אט של המשתמש עם ההודעה האחרונה בכל חדר, כולל פרטי השולח
-  let chatRooms = null;
-  let chatRoomsError = null;
-
-  if (user?.id) {
-    // נשלוף את כל החדרים שהמשתמש משתתף בהם
-    const { data: participants, error: participantsError } = await supabase
-      .from("chat_room_participants")
-      .select("room_id, joined_at")
-      .eq("user_id", user.id)
-      .is("deleted_before", null);
-
-    if (participantsError) {
-      chatRoomsError = participantsError;
-    } else {
-      if (participants && participants.length > 0) {
-        const roomIds = participants.map((p) => p.room_id);
-
-        const { data: roomsData, error: roomsError } = await supabase
-          .from("chat_rooms")
-          .select("*")
-          .in("room_id", roomIds)
-          .order("last_message_at", { ascending: false, nullsFirst: false });
-
-        if (roomsError) {
-          chatRoomsError = roomsError;
-        } else {
-          chatRooms = roomsData;
-        }
-      } else {
-        // fallback: query by user_a/user_b directly
-        const { data: roomsData, error: roomsError } = await supabase
-          .from("chat_rooms")
-          .select("*")
-          .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
-          .order("last_message_at", { ascending: false, nullsFirst: false });
-
-        if (roomsError) {
-          chatRoomsError = roomsError;
-        } else {
-          chatRooms = roomsData;
-        }
-      }
-    }
-  }
-
-  // async-parallel: process all chat rooms concurrently instead of sequentially
-  const chatsWithLastMessage = chatRooms
-    ? (
-        await Promise.all(
-          chatRooms.map(async (room) => {
-            const otherUserId =
-              room.user_a === user?.id ? room.user_b : room.user_a;
-            if (!otherUserId) return null;
-
-            const [userMetaResult, lastMsgResult] = await Promise.all([
-              Promise.resolve(
-                supabase.rpc("get_user_metadata", {
-                  target_user_id: otherUserId,
-                }),
-              ).catch(() => ({ data: null, error: null })),
-              room.last_message_id
-                ? supabase
-                    .from("chat_messages")
-                    .select("message_id, content, created_at, sender_id")
-                    .eq("message_id", room.last_message_id)
-                    .single()
-                : Promise.resolve({ data: null, error: null }),
-            ]);
-
-            const userData = userMetaResult.data as {
-              firstName?: string;
-              lastName?: string;
-              email?: string;
-              avatar_url?: string;
-            } | null;
-
-            // שם תצוגה משותף לצ'אטים - לעולם לא uid
-            const otherUserName = getDisplayName(userData);
-
-            const lastMsg = lastMsgResult.data;
-            return {
-              id: room.room_id,
-              name: otherUserName,
-              description: "",
-              image: userData?.avatar_url || "/placeholder-avatar.png",
-              link: `/app/chats/${room.room_id}`,
-              lastMessage: lastMsg?.content ?? null,
-              lastMessageTime: lastMsg?.created_at ?? null,
-              lastMessageSender: null,
-            };
-          }),
-        )
-      ).filter(Boolean)
-    : [];
   const firstName = user?.user_metadata?.firstName as string | undefined;
   const roleLabel = isAdmin ? "מנהל" : isShadchan ? "שדכן" : "משתמש";
 
@@ -351,11 +170,11 @@ async function DashboardSections() {
             <UserChat chats={chatsWithLastMessage as any} />
           </DashboardSection>
           <DashboardSection
-            title="הילדים שלך"
+            title="המיועדים שלך"
             subTitle="מגיל 17 ועד החתונה בעז”ה"
             button={
               <Button asChild>
-                <Link href="/app/students/create">להוספת בן / בת</Link>
+                <Link href="/app/students/create">להוספת מיועד/ת</Link>
               </Button>
             }
           >
@@ -363,7 +182,7 @@ async function DashboardSections() {
           </DashboardSection>
           <DashboardSection
             title="שדכנים שפעלו בשבילך"
-            subTitle="שדכנים שהציעו שידוכים או צפו בקו”ח של ילדיך"
+            subTitle="שדכנים שהציעו שידוכים או צפו בקו”ח של המיועדים שלך"
             button={
               <Button asChild>
                 <Link href="/app/shadchanim">לכל השדכנים</Link>

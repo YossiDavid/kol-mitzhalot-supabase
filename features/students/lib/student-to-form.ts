@@ -214,6 +214,8 @@ function toPreviousPartners(rows: Row[]) {
       marriageDate: toDisplayDate(row.marriage_date),
       deathDate: toDisplayDate(row.death_date),
       children,
+      // "אין ילדים" במפורש (previous_partners.no_children)
+      noChildren: row.no_children === true,
       // שורה ישנה: מספר ילדים בלי פרטים. נשמר עד שיתווספו הפרטים
       [LEGACY_CHILDREN_COUNT_KEY]:
         children.length === 0 && getChildrenCount([], row.children_number) > 0
@@ -242,12 +244,12 @@ export function studentToFormValues(
 
   return {
     isOnShiduchim: student.in_shidduchim !== false,
+    cardFor: text(student.card_for),
     gender: text(student.gender),
 
     firstName: text(student.first_name),
     lastName: text(student.last_name),
     nickname: text(student.nickname),
-    identityNumber: text(student.identity_number),
     birthDate: toDisplayDate(student.birth_date),
     // הגלריה אינה חלק משורת students (student_photos סגורה ללקוחות); דף
     // העריכה טוען אותה בשרת אחרי בדיקת ההרשאה ומחליף את הרשימה הריקה.

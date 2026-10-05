@@ -2,15 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import {
+  PERSONAL_STATUS_VALUES,
+  setStudentPersonalStatus,
+} from "@/features/engagements/lib/set-student-personal-status";
 import { hasRole } from "@/lib/user";
-
-const PERSONAL_STATUS_VALUES = [
-  "single",
-  "divorced",
-  "widowed",
-  "engaged",
-  "married",
-] as const;
 
 const bodySchema = z.object({
   status: z.enum(PERSONAL_STATUS_VALUES),
@@ -52,22 +48,11 @@ export async function PATCH(
   const { status } = parsed.data;
   const admin = createAdminClient();
 
-  // אירוסין/נישואין מוציאים את הכרטיס משידוכים, וחזרה לרווק/גרוש/אלמן
-  // מחזירה אותו. בלי הצד השני של התנאי, תיקון סטטוס שגוי היה משאיר את
-  // הכרטיס עם in_shidduchim=false והוא היה נעלם מהרשימה בלי שאיש ישים לב.
-  const isEngagedOrMarried = status === "engaged" || status === "married";
-
-  const { data: updated, error: updateError } = await admin
-    .from("students")
-    .update({
-      personal_status: status,
-      status_changed_at: new Date().toISOString(),
-      in_shidduchim: !isEngagedOrMarried,
-    })
-    .eq("id", studentId)
-    .is("deleted_at", null)
-    .select("id, personal_status, in_shidduchim, status_changed_at")
-    .maybeSingle();
+  const { data: updated, error: updateError } = await setStudentPersonalStatus(
+    admin,
+    studentId,
+    status,
+  );
 
   if (updateError) {
     console.error(updateError);

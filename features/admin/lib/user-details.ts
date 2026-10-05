@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { readSignupPurpose } from "@/features/auth/lib/signup-purpose";
 import { getEffectiveRole, getRoles, type Role } from "@/lib/user";
 
 export type UserDetails = {
@@ -8,6 +9,7 @@ export type UserDetails = {
   lastName: string | null;
   email: string | null;
   phone: string | null;
+  signupPurpose: string | null;
   role: string | null;
   roles: Role[];
   staffInstitutionId: string | null;
@@ -21,6 +23,8 @@ export type UserDetails = {
     birthDate: string;
     city: string;
     inShidduchim: boolean | null;
+    /** הנהלת המערכת השהתה את הכרטיס (נעול למנהל הכרטיס) */
+    isAdminPaused: boolean;
   }>;
   shidduchimStats: {
     totalOffered: number;
@@ -28,7 +32,8 @@ export type UserDetails = {
     byChild: Array<{
       childId: string;
       childName: string;
-      offered: number;
+      /** כמה הצעות הכרטיס קיבל - מיומן השליחות, לפי צד ולא לפי שורת הצעה */
+      received: number;
       completed: number;
     }>;
   };
@@ -46,6 +51,26 @@ export function formatUserDate(dateString: string | null): string {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+/** כמה הצעות כל כרטיס קיבל, מתוך shidduch_events (RLS: קריאה למנהל בלבד) */
+async function countReceivedProposals(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  studentIds: readonly string[],
+): Promise<ReadonlyMap<string, number>> {
+  const entries = await Promise.all(
+    studentIds.map(async (studentId) => {
+      const { count, error } = await supabase
+        .from("shidduch_events")
+        .select("id", { count: "exact", head: true })
+        .eq("student_id", studentId);
+      if (error) {
+        console.error("Error counting received proposals:", error);
+      }
+      return [studentId, count ?? 0] as const;
+    }),
+  );
+  return new Map(entries);
 }
 
 export async function getUserDetails(
@@ -88,7 +113,7 @@ export async function getUserDetails(
   const { data: children, error: childrenError } = await supabase
     .from("students")
     .select(
-      "id, first_name, last_name, gender, birth_date, city, in_shidduchim",
+      "id, first_name, last_name, gender, birth_date, city, in_shidduchim, admin_paused_at",
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
@@ -131,10 +156,17 @@ export async function getUserDetails(
     const offeredNonDraft = uniqueShidduchim.filter(
       (s) => s.status !== "draft",
     );
-    shidduchimStats.totalOffered = offeredNonDraft.length;
     shidduchimStats.totalCompleted = offeredNonDraft.filter(
       (s) => s.status === "completed",
     ).length;
+
+    // "הוצעו" נספר מיומן השליחות ולא משורות shidduchim: שורה אחת יכולה
+    // להישלח רק לצד אחד, והיומן סופר כל כרטיס שקיבל הצעה בפועל
+    const receivedByChild = await countReceivedProposals(supabase, studentIds);
+    shidduchimStats.totalOffered = studentIds.reduce(
+      (sum, id) => sum + (receivedByChild.get(id) ?? 0),
+      0,
+    );
 
     // חישוב לפי ילד
     for (const child of childrenData) {
@@ -145,7 +177,7 @@ export async function getUserDetails(
       shidduchimStats.byChild.push({
         childId: child.id,
         childName: `${child.first_name} ${child.last_name}`,
-        offered: childNonDraft.length,
+        received: receivedByChild.get(child.id) ?? 0,
         completed: childNonDraft.filter((s) => s.status === "completed").length,
       });
     }
@@ -157,6 +189,7 @@ export async function getUserDetails(
     lastName: user.user_metadata?.lastName || null,
     email: user.email || null,
     phone: user.phone || null,
+    signupPurpose: readSignupPurpose(user),
     role: getEffectiveRole(user),
     roles: getRoles(user),
     staffInstitutionId: staffInfo?.institution_id ?? null,
@@ -170,6 +203,7 @@ export async function getUserDetails(
       birthDate: c.birth_date,
       city: c.city,
       inShidduchim: c.in_shidduchim,
+      isAdminPaused: c.admin_paused_at !== null,
     })),
     shidduchimStats,
   };

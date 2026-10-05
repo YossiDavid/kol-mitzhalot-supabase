@@ -66,10 +66,14 @@ export async function runMiddlewareSession(
     },
   );
 
-  await supabase.auth.getClaims();
+  const { data: claimsData } = await supabase.auth.getClaims();
 
   if (checkName) {
-    const redirect = await checkNameRequirement(request, supabase);
+    const redirect = await checkNameRequirement(
+      request,
+      supabase,
+      claimsData?.claims,
+    );
     if (redirect) {
       copyCookies(supabaseResponse, redirect);
       return redirect;

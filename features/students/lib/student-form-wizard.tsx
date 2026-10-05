@@ -37,11 +37,11 @@ type AfterStepChange = "scrollToTop" | "focusFirstError" | null;
 
 export const emptyStudentFormValues: StudentFormValues = {
   isOnShiduchim: true,
+  cardFor: "",
   gender: "",
   firstName: "",
   lastName: "",
   nickname: "",
-  identityNumber: "",
   birthDate: "",
   photos: [],
   country: "",
@@ -255,6 +255,8 @@ const genderedStepTitles: Record<string, { male: string; female: string }> = {
   },
 };
 
+const WIDOWED_STATUS = "widowed";
+
 const INVALID_SAVE_MESSAGE =
   "השינויים לא נשמרו: יש שדות שצריך להשלים או לתקן. עברנו לשדה הראשון.";
 
@@ -316,6 +318,18 @@ export function StudentFormWizard({
     | "male"
     | "female"
     | "";
+
+  const cardFor = useWatch({ control: form.control, name: "cardFor" }) ?? "";
+  const parentsStatus =
+    useWatch({ control: form.control, name: "parents.status" }) ?? "";
+
+  // "מי נפטר" רלוונטי רק לאלמנ/ה. שינוי הסטטוס מנקה אותו, כדי שהוא לא ימשיך
+  // להסתיר טלפון ועיסוק של הורה בשלב "על המשפחה"
+  useEffect(() => {
+    if (parentsStatus === WIDOWED_STATUS) return;
+    if (form.getValues("parents.deadParent") === "") return;
+    form.setValue("parents.deadParent", "");
+  }, [form, parentsStatus]);
 
   const steps = studentFields;
   const currentStep = steps[currentStepIndex];
@@ -499,7 +513,7 @@ export function StudentFormWizard({
             isForwardDisabled={
               !shouldSkipStepValidation &&
               currentStep.name === "intro" &&
-              !gender
+              (!gender || !cardFor)
             }
             onStepClick={handleStepClick}
           />

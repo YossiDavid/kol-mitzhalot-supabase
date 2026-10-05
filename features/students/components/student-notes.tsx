@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Lock, MessageSquareText } from "lucide-react";
+import { MessageSquareText, Pencil, Trash2, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/empty";
 import { Textarea } from "@/components/ui/textarea";
 import type {
-  PrivateNote,
+  ShadchanNote,
   StaffFeedback,
 } from "@/features/students/lib/student-notes-data";
 
@@ -28,6 +28,8 @@ type CreatedNote = {
   created_at: string;
   institution_name: string | null;
   institution_city: string | null;
+  author_id: string;
+  author_name: string | null;
 };
 
 function formatNoteDate(dateString: string): string {
@@ -159,50 +161,231 @@ function NoteItem({
   );
 }
 
+/** שמירת עריכה/מחיקה של הערת שדכן. מחזיר true בהצלחה; בכשל המשתמש כבר קיבל הודעה. */
+async function requestNoteChange(
+  studentId: string,
+  noteId: string,
+  init: { method: "PATCH" | "DELETE"; body?: string },
+): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/v1/students/${studentId}/notes/${noteId}`, {
+      method: init.method,
+      headers: { "Content-Type": "application/json" },
+      body:
+        init.body === undefined
+          ? undefined
+          : JSON.stringify({ body: init.body }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      toast.error(err.error || "הפעולה נכשלה");
+      return false;
+    }
+    return true;
+  } catch {
+    toast.error("הפעולה נכשלה - בדקו את החיבור לרשת ונסו שוב");
+    return false;
+  }
+}
+
+/** עריכה במקום של הערה: תיבת טקסט עם שמירה וביטול */
+function NoteEditor({
+  initialBody,
+  onSave,
+  onCancel,
+}: {
+  initialBody: string;
+  onSave: (body: string) => Promise<boolean>;
+  onCancel: () => void;
+}) {
+  const [draft, setDraft] = useState(initialBody);
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave() {
+    const trimmed = draft.trim();
+    if (!trimmed) return;
+    setSaving(true);
+    const saved = await onSave(trimmed);
+    if (!saved) setSaving(false);
+  }
+
+  return (
+    <div className="mt-1.5 space-y-2">
+      <Textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        disabled={saving}
+        dir="rtl"
+        maxLength={MAX_NOTE_LENGTH}
+        className="min-h-20"
+        aria-label="עריכת הערה"
+      />
+      <div className="flex justify-end gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onCancel}
+          disabled={saving}
+        >
+          ביטול
+        </Button>
+        <Button
+          size="sm"
+          onClick={handleSave}
+          disabled={saving || !draft.trim()}
+        >
+          {saving ? "שומר..." : "שמירה"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function ShadchanNoteItem({
+  note,
+  onEdit,
+  onDelete,
+}: {
+  note: ShadchanNote;
+  onEdit: (id: string, body: string) => Promise<boolean>;
+  onDelete: (id: string) => Promise<void>;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+
+  async function handleSave(body: string): Promise<boolean> {
+    const saved = await onEdit(note.id, body);
+    if (saved) setIsEditing(false);
+    return saved;
+  }
+
+  return (
+    <li className="rounded-lg border border-border bg-muted/30 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex flex-wrap items-baseline gap-x-1.5">
+          <span className="text-caption font-bold text-foreground">
+            {note.authorName}
+          </span>
+        </span>
+        <span className="flex shrink-0 items-center gap-1">
+          <span className="text-caption text-muted-foreground">
+            {formatNoteDate(note.createdAt)}
+          </span>
+          {note.canManage && !isEditing && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                title="עריכת ההערה"
+                aria-label="עריכת ההערה"
+                onClick={() => setIsEditing(true)}
+              >
+                <Pencil className="size-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-destructive hover:text-destructive"
+                title="מחיקת ההערה"
+                aria-label="מחיקת ההערה"
+                onClick={() => onDelete(note.id)}
+              >
+                <Trash2 className="size-3.5" />
+              </Button>
+            </>
+          )}
+        </span>
+      </div>
+      {isEditing ? (
+        <NoteEditor
+          initialBody={note.body}
+          onSave={handleSave}
+          onCancel={() => setIsEditing(false)}
+        />
+      ) : (
+        <p className="mt-1.5 text-body-sm leading-relaxed whitespace-pre-wrap text-foreground">
+          {note.body}
+        </p>
+      )}
+    </li>
+  );
+}
+
 /**
- * "הערות שדכן": הערות עבודה פרטיות. גלויות לכותב בלבד (RLS), ואינן נכללות
- * בשיתוף הכרטיס.
+ * "הערות שדכן": הערות עבודה של שדכנים. גלויות לכל השדכנים ולמנהלי המערכת
+ * (RLS), עם שם הכותב והתאריך; לא לבעל הכרטיס, לא לאנשי צוות ולא בשיתוף
+ * הכרטיס. עריכה ומחיקה - לכותב בלבד (מנהל: לכל ההערות).
  */
 export function ShadchanNotes({
   studentId,
   initialNotes,
 }: {
   studentId: string;
-  initialNotes: PrivateNote[];
+  initialNotes: ShadchanNote[];
 }) {
-  const [notes, setNotes] = useState<PrivateNote[]>(initialNotes);
+  const [notes, setNotes] = useState<ShadchanNote[]>(initialNotes);
 
   async function handleSubmit(body: string): Promise<boolean> {
     const created = await postNote(studentId, "shadchan_note", body);
     if (!created) return false;
     setNotes((prev) => [
-      { id: created.id, body: created.body, created_at: created.created_at },
+      {
+        id: created.id,
+        body: created.body,
+        createdAt: created.created_at,
+        authorId: created.author_id,
+        authorName: created.author_name || "את/ה",
+        canManage: true,
+      },
       ...prev,
     ]);
     toast.success("ההערה נשמרה");
     return true;
   }
 
+  async function handleEdit(id: string, body: string): Promise<boolean> {
+    const saved = await requestNoteChange(studentId, id, {
+      method: "PATCH",
+      body,
+    });
+    if (!saved) return false;
+    setNotes((prev) =>
+      prev.map((note) => (note.id === id ? { ...note, body } : note)),
+    );
+    toast.success("ההערה עודכנה");
+    return true;
+  }
+
+  async function handleDelete(id: string): Promise<void> {
+    if (!confirm("למחוק את ההערה?")) return;
+    const deleted = await requestNoteChange(studentId, id, {
+      method: "DELETE",
+    });
+    if (!deleted) return;
+    setNotes((prev) => prev.filter((note) => note.id !== id));
+    toast.success("ההערה נמחקה");
+  }
+
   return (
     <div className="space-y-4">
       <p className="flex items-center gap-1.5 text-caption text-muted-foreground">
-        <Lock className="size-3.5 shrink-0" aria-hidden />
-        גלוי לך בלבד - לא לשדכנים אחרים ולא בשיתוף הכרטיס.
+        <Users className="size-3.5 shrink-0" aria-hidden />
+        גלוי לכל השדכנים ולמנהלי המערכת - לא לבעל הכרטיס ולא בשיתוף הכרטיס.
       </p>
       <NoteComposer
-        placeholder="הערה פרטית על המיועד/ת..."
+        placeholder="הערה על המיועד/ת, גלויה לשדכנים..."
         submitLabel="שמירת הערה"
         onSubmit={handleSubmit}
       />
       {notes.length === 0 ? (
-        <EmptyNotes text="עדיין לא כתבת הערות על כרטיס זה" />
+        <EmptyNotes text="עדיין אין הערות שדכנים על כרטיס זה" />
       ) : (
         <ul className="space-y-3">
           {notes.map((note) => (
-            <NoteItem
+            <ShadchanNoteItem
               key={note.id}
-              createdAt={note.created_at}
-              body={note.body}
+              note={note}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
             />
           ))}
         </ul>

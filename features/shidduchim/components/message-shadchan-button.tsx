@@ -17,27 +17,28 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { contactErrorMessage } from "@/features/shadchanim/lib/contact";
 import {
-  getOrCreateDmRoom,
-  sendChatMessage,
-} from "@/features/students/components/message-button";
+  openContextRoom,
+  openRoomErrorMessage,
+} from "@/features/chats/lib/open-room";
+import { sendChatMessage } from "@/features/students/components/message-button";
 
 const CHAT_MESSAGE_MAX_LENGTH = 4000;
 
 type MessageShadchanButtonProps = {
   shadchanId: string;
-  /** שורת פתיחה שמזהה לשדכן על איזו הצעה מדובר */
-  contextLine: string;
+  /** ההצעה שעליה השיחה: החדר נפתח כשרשור ההצעה, בלי שורת הקשר בטקסט */
+  shidduchId: string;
 };
 
 /**
- * פתיחת צ'אט עם השדכן מתוך ההצעה - אותו מנגנון כמו "פניה למנהל הכרטיס"
- * (get_or_create_dm_room), כדי שהשיחה תמשיך בעמוד הצ'אטים הרגיל.
+ * פתיחת צ'אט עם השדכן מתוך ההצעה: פותח את חדר ההקשר של ההצעה
+ * (get_or_create_context_room, shidduch), כך שהצ'אט עצמו יודע על איזו הצעה
+ * מדובר והשיחה ממשיכה בעמוד הצ'אטים הרגיל.
  */
 export default function MessageShadchanButton({
   shadchanId,
-  contextLine,
+  shidduchId,
 }: MessageShadchanButtonProps) {
   const router = useRouter();
   const messageId = useId();
@@ -54,13 +55,16 @@ export default function MessageShadchanButton({
 
     startTransition(async () => {
       try {
-        const roomId = await getOrCreateDmRoom(shadchanId);
-        await sendChatMessage(roomId, `${contextLine}\n\n${body}`);
+        const roomId = await openContextRoom(shadchanId, {
+          kind: "shidduch",
+          shidduchId,
+        });
+        await sendChatMessage(roomId, body);
         setOpen(false);
         router.push(`/app/chats/${roomId}`);
       } catch (err) {
         // למשל daily_contact_limit_reached מהטריגר על chat_rooms
-        toast.error(contactErrorMessage(err));
+        toast.error(openRoomErrorMessage(err));
       }
     });
   };

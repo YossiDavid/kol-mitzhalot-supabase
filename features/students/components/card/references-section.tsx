@@ -5,7 +5,10 @@ import { referenceTypeToHebrew } from "@/features/students/lib/profile-labels";
 import { CardSection } from "./card-section";
 import type { ReferenceEntry } from "./types";
 
-/** "ממליצים" - נשלף רק למשתמש מחובר (הטבלה לא נשלפת בענף הציבורי) */
+/**
+ * "ממליצים" - סוג, שם, טלפון ואימייל. מוצג בכל הווריאנטים, גם בציבורי (החלטת
+ * הלקוח); בהצעת שידוך הטלפון והאימייל נחתכים ב-select כשההתקשרות סגורה.
+ */
 export function ReferencesSection({
   references,
 }: {

@@ -72,6 +72,7 @@ async function createStudent(
 /** פותח את בורר "חסידות או קהילה" בטופס המיועד, כמו community-catalog.spec */
 async function openCommunityPicker(page: Page) {
   await page.goto("/app/students/create");
+  await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
   await page.getByRole("radio", { name: "מיועד", exact: true }).check();
   await page.getByRole("button", { name: "המשך לשלב הבא" }).click();
   const cell = page.locator('[data-field-name="community"]');

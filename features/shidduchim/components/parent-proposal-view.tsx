@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import calculateAge from "@/lib/calculateAge";
 import MessageShadchanButton from "@/features/shidduchim/components/message-shadchan-button";
+import ProposalThreadPanel from "@/features/shidduchim/components/proposal-thread-panel";
 import ProposalResponseForm from "@/features/shidduchim/components/proposal-response-form";
 import type { ParentProposal } from "@/features/shidduchim/lib/proposals-data";
 import {
@@ -163,10 +164,18 @@ export default function ParentProposalView({
       </div>
 
       {canMessageShadchan && (
-        <MessageShadchanButton
-          shadchanId={proposal.shadchanId}
-          contextLine={`בנוגע להצעה: ${myName} ו${otherName}`}
-        />
+        <>
+          {/* השרשור המלא מול השדכן; הכפתור שומר על פנייה מהירה בלי לגלול */}
+          <ProposalThreadPanel
+            shidduchId={proposal.shidduchId}
+            otherUserId={proposal.shadchanId}
+            title="שיחה עם השדכן"
+          />
+          <MessageShadchanButton
+            shadchanId={proposal.shadchanId}
+            shidduchId={proposal.shidduchId}
+          />
+        </>
       )}
     </Box>
   );

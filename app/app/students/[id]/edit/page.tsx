@@ -160,7 +160,6 @@ async function EditStudentPageContent({
   const photos = await loadEditablePhotos(supabase, {
     userId: user.id,
     studentId: id,
-    gender: student.gender,
   });
 
   return (
@@ -175,23 +174,20 @@ async function EditStudentPageContent({
 }
 
 /**
- * הגלריה לעריכה, לפי אותו כלל כמו בדף הכרטיס: תמונה של בת נחשפת רק למי
- * ש-can_view_student_photo מאשר. תמונה שאין הרשאה לראות מגיעה בלי קישור -
+ * הגלריה לעריכה, לפי אותו כלל כמו בדף הכרטיס: תמונה נחשפת רק למי
+ * ש-can_view_student_photo מאשר (בת: בעלים/מנהל/אישור; בן: אלא אם הוסתר). תמונה שאין הרשאה לראות מגיעה בלי קישור -
  * הטופס מציג אותה נעולה ושומר אותה במקומה.
  */
 async function loadEditablePhotos(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  {
-    userId,
-    studentId,
-    gender,
-  }: { userId: string; studentId: string; gender: unknown },
+  { userId, studentId }: { userId: string; studentId: string },
 ): Promise<StudentPhotoItem[]> {
-  const { data: canViewFemalePhoto } = await supabase.rpc(
-    "can_view_student_photo",
-    { uid: userId, sid: studentId },
-  );
-  const photoPrivate = gender === "female" && !canViewFemalePhoto;
+  const { data: canViewPhoto } = await supabase.rpc("can_view_student_photo", {
+    uid: userId,
+    sid: studentId,
+  });
+  // כשל או "לא" - סגור, לכל מגדר (בן שהוסתר בהצעה נחסם גם הוא)
+  const photoPrivate = canViewPhoto !== true;
   const { paths, photos } = await loadStudentPhotos(studentId, {
     canView: !photoPrivate,
   });

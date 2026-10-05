@@ -3,7 +3,8 @@ import calculateAge from "@/lib/calculateAge";
 /**
  * העמודות שנשלפות לגולש לא מחובר. חייבות להישאר תואמות בדיוק ל-
  * `ANONYMOUS_STUDENT_SELECT` - שום שדה רגיש (ת.ז./טלפון/סוג מכשיר/רחוב/בית/
- * קו"ח/user_id/institution_id) לא מופיע כאן.
+ * קו"ח/user_id/institution_id) לא מופיע כאן. החריג המוסכם הוא הממליצים
+ * (`references`), שמוצגים במלואם לבקשת הלקוח.
  */
 export type AnonymousStudentRow = {
   id: string;
@@ -36,6 +37,9 @@ export type AnonymousStudentRow = {
   education_history: Array<Record<string, any>> | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   employment_history: Array<Record<string, any>> | null;
+  /** ממליצים - מוצגים בכוונה במלואם (סוג, שם, טלפון, אימייל), גם בציבורי */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  references: Array<Record<string, any>> | null;
 };
 
 /**
@@ -53,7 +57,8 @@ export type PublicStudent = Omit<
 /** ה-select של הגולש הלא מחובר - בלי אף עמודה רגישה */
 export const ANONYMOUS_STUDENT_SELECT = `id, first_name, last_name, nickname, gender, personal_status, city, height, community, shtible, plan_for_life, head_cover_type, about, parents_info, family_info, author_info, image_url, birth_date, deleted_at,
 			education_history(*),
-			employment_history(*)
+			employment_history(*),
+			references(id, reference_type, name, phone, email)
 		`;
 
 /** ה-select של משתמש מחובר - הכרטיס המלא עם כל הטבלאות המקושרות */

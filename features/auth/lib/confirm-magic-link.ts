@@ -1,9 +1,21 @@
 import { createClient } from "@/lib/supabase/server";
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
-import { type NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
+
+import { notifyAdminsOfNewSignup } from "@/features/notifications/lib/notify-admins-new-signup";
 
 import { sanitizeNextPath } from "@/features/auth/lib/next-path";
+
+/**
+ * מייל למנהלים על הרשמה חדשה. רץ אחרי שליחת התגובה (after), ולכן אינו מעכב
+ * ואינו יכול להכשיל את הכניסה; notifyAdminsOfNewSignup אינו זורק, והוא
+ * אידמפוטנטי (מייל אחד לכל היותר לכל משתמש), כך שנקרא בכל כניסה בלי חשש.
+ */
+function scheduleNewSignupAdminEmail(userId: string | undefined): void {
+  if (!userId) return;
+  after(() => notifyAdminsOfNewSignup(userId));
+}
 
 /**
  * אימות הקישור מהמייל (Magic Link / הרשמה / התחזות) והפניה ליעד.
@@ -50,11 +62,12 @@ export async function confirmMagicLink(
     // כש-{{ .TokenType }} בתבנית המייל ריק – Supabase ב-PKCE לפעמים לא ממלא; magic link = magiclink
     const otpType = (type?.trim() || "magiclink") as EmailOtpType;
     console.log("[auth/confirm] calling verifyOtp, type:", otpType);
-    const { error } = await supabase.auth.verifyOtp({
+    const { data, error } = await supabase.auth.verifyOtp({
       type: otpType,
       token_hash,
     });
     if (!error) {
+      scheduleNewSignupAdminEmail(data.user?.id);
       console.log("[auth/confirm] verifyOtp success, redirecting to:", next);
       redirect(next as never);
     }
@@ -66,8 +79,9 @@ export async function confirmMagicLink(
   if (code) {
     const supabase = await createClient();
     console.log("[auth/confirm] exchanging code for session");
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      scheduleNewSignupAdminEmail(data.user?.id);
       console.log(
         "[auth/confirm] exchangeCodeForSession success, redirecting to:",
         next,

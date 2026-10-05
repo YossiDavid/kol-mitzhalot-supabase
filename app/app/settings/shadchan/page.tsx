@@ -33,13 +33,22 @@ import {
   optionalPhone,
   optionalText,
   requiredText,
+  requiredChoice,
   requiredWholeNumber,
 } from "@/lib/forms/schema";
+import { SearchSelectField } from "@/features/students/components/create-form/fields/search-select-field";
+import { COMMUNITY_SEARCH } from "@/features/students/components/create-form/fields-data/shared-options";
 import { createClient } from "@/lib/supabase/client";
 import { hasRole } from "@/lib/user-role";
 
 /** מספר שדות הטופס, לשלד הטעינה. */
 const FORM_FIELD_COUNT = 6;
+
+/**
+ * האם "קהילה / חסידות" שדה חובה בבקשת ההצטרפות. הלקוח עשוי להחליט שכן -
+ * מספיק להחליף ל-true (הסכמה והכוכבית בטופס נגזרות מכאן).
+ */
+const IS_COMMUNITY_REQUIRED = false;
 
 const shadchanSchema = z.object({
   bio: requiredText("ביוגרפיה"),
@@ -49,6 +58,9 @@ const shadchanSchema = z.object({
   contact_phone: optionalPhone(),
   contact_email: optionalEmail(),
   languages: optionalText(),
+  community: IS_COMMUNITY_REQUIRED
+    ? requiredChoice("קהילה / חסידות")
+    : optionalText(),
 });
 
 type ShadchanFormData = z.infer<typeof shadchanSchema>;
@@ -61,6 +73,7 @@ const EMPTY_FORM: ShadchanFormData = {
   contact_phone: "",
   contact_email: "",
   languages: "",
+  community: "",
 };
 
 /** רק מה שהטופס באמת צריך לדעת על בקשה שכבר הוגשה */
@@ -149,6 +162,7 @@ function ShadchanApplicationForm() {
             ? data.languages.join(", ")
             : data.languages || "",
           closed_matches: data.closed_matches?.toString() || "",
+          community: data.community || "",
         });
       }
 
@@ -194,6 +208,7 @@ function ShadchanApplicationForm() {
         closed_matches: data.closed_matches
           ? parseInt(data.closed_matches)
           : null,
+        community: data.community || null,
       };
 
       // אם זו בקשה חדשה, הוסף application_status = 'pending'
@@ -346,6 +361,25 @@ function ShadchanApplicationForm() {
                     )}
                   />
                 </FormGrid>
+
+                <FormField
+                  control={form.control}
+                  name="community"
+                  render={({ field }) => (
+                    <FormFieldShell
+                      label="קהילה / חסידות"
+                      required={IS_COMMUNITY_REQUIRED}
+                    >
+                      <SearchSelectField
+                        {...COMMUNITY_SEARCH}
+                        id="community"
+                        value={field.value}
+                        onChange={field.onChange}
+                        disabled={isSubmitting}
+                      />
+                    </FormFieldShell>
+                  )}
+                />
 
                 <FormField
                   control={form.control}

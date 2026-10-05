@@ -41,6 +41,7 @@ test.describe("תאריך לידה — חישוב גיל תקין", () => {
     await expect(page.locator("h1, h2, h3").first()).toBeVisible({ timeout: 10_000 });
 
     // בחר מגדר
+    await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
     await page.getByRole("radio", { name: "מיועד", exact: true }).click();
     await page.locator("button:has-text('הבא')").click();
 
@@ -55,6 +56,7 @@ test.describe("מספר טלפון — קבלת פורמטים שונים", () =
     await expect(page.locator("h1, h2, h3").first()).toBeVisible({ timeout: 10_000 });
 
     // נווט לשלב 1
+    await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
     await page.getByRole("radio", { name: "מיועד", exact: true }).click();
     await page.locator("button:has-text('הבא')").click();
 

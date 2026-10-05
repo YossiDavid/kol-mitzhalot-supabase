@@ -1,4 +1,5 @@
 import { getAppOrigin } from "@/lib/app-url";
+import { readTemplateId, sendEmail } from "@/lib/email/send-email";
 
 export type RecipientScope = "both" | "groom_only" | "bride_only";
 
@@ -59,101 +60,30 @@ export function buildOfferEmailContent(
   };
 }
 
-type Personalization = { to?: { email?: string }[]; subject?: string };
+const OFFER_TEMPLATE_ENV = "SENDGRID_TEMPLATE_ID_SHIDDUCH_OFFER";
 
-/**
- * שליחה אמיתית רק ב-production. בפיתוח כתובת בדיקה שאינה קיימת נרשמת
- * כ-bounce בחשבון הדיוור, וכתובת אמיתית באמת מקבלת מייל מזהות השולח
- * של המערכת. לבדיקת מסירה אמיתית מכוונת: SENDGRID_SEND_IN_DEV=true
- */
-function isRealSendingEnabled(): boolean {
-  return (
-    process.env.NODE_ENV === "production" ||
-    process.env.SENDGRID_SEND_IN_DEV === "true"
-  );
-}
-
-/** מזהה הודעה מהתגובה — לחיפוש ב-Email Activity ב-SendGrid */
-async function sendSendGridRequest(
-  body: Record<string, unknown>,
-): Promise<{ messageId: string | null }> {
-  if (!isRealSendingEnabled()) {
-    const recipients =
-      (body.personalizations as Personalization[] | undefined)?.flatMap(
-        (p) => p.to?.map((t) => t.email).filter(Boolean) ?? [],
-      ) ?? [];
-    console.info(
-      "[send-offer-email] פיתוח: המייל לא נשלח בפועל. נמענים:",
-      recipients,
-    );
-    return { messageId: null };
-  }
-
-  const key = process.env.SENDGRID_API_KEY;
-  const fromEmail = process.env.SENDGRID_FROM_EMAIL;
-  const fromName = process.env.SENDGRID_FROM_NAME || "קול מצהלות";
-
-  if (!key || !fromEmail) {
-    throw new Error(
-      "SENDGRID_API_KEY או SENDGRID_FROM_EMAIL לא מוגדרים בסביבה",
-    );
-  }
-
-  const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      ...body,
-      from: { email: fromEmail, name: fromName },
-    }),
-  });
-
-  if (!res.ok) {
-    const errText = await res.text().catch(() => "");
-    throw new Error(`SendGrid: ${res.status} ${errText}`);
-  }
-
-  const messageId = res.headers.get("x-message-id");
-  return { messageId: messageId?.trim() || null };
-}
-
-function getShidduchTemplateId(): string | null {
-  const id = process.env.SENDGRID_TEMPLATE_ID_SHIDDUCH_OFFER?.trim();
-  return id || null;
-}
-
+/** זורק כשל מסירה: הקורא (route ההצעה) מגלגל אחורה את השורה לפיו */
 async function sendOfferEmail(
   to: string,
   content: OfferEmailContent,
 ): Promise<{ messageId: string | null }> {
   // מייל בלי שורת נושא יצא בפועל למשתמש אמיתי (16.9.2026). עדיף להיכשל
-  // בקול מאשר לשלוח הודעה ריקה. הנושא נשלח גם בהתאמה האישית וגם בנתוני
-  // התבנית, כך שהוא אינו תלוי בהגדרה יחידה ב-SendGrid.
+  // בקול מאשר לשלוח הודעה ריקה.
   if (!content.subject.trim()) {
     throw new Error("הצעת שידוך לא נשלחה: חסרה שורת נושא למייל");
   }
 
-  const templateId = getShidduchTemplateId();
-  if (templateId) {
-    return sendSendGridRequest({
-      personalizations: [
-        {
-          to: [{ email: to }],
-          subject: content.subject,
-          dynamic_template_data: content.templateData,
-        },
-      ],
-      template_id: templateId,
-    });
-  }
-  return sendSendGridRequest({
-    personalizations: [{ to: [{ email: to }] }],
+  // טקסט גולמי בלבד כשאין תבנית Dynamic, כמו תמיד - בלי html
+  const result = await sendEmail({
+    to,
     subject: content.subject,
-    content: [{ type: "text/plain", value: content.text }],
+    text: content.text,
+    templateId: readTemplateId(OFFER_TEMPLATE_ENV),
+    dynamicData: content.templateData,
   });
+
+  if (!result.ok) throw new Error(result.error);
+  return { messageId: result.messageId };
 }
 
 /**

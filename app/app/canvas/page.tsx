@@ -9,6 +9,29 @@ import { Suspense } from "react";
 /** כמה כרטיסי מועדפים מסומנים בשלד שולחן העבודה. */
 const SKELETON_FAVORITE_COUNT = 4;
 
+/**
+ * מה שהלוח קורא מכרטיס מועדף: התצוגה (שם, גיל, עיר, הורים, תעסוקה) ובדיקות
+ * ההתאמה ב-compatibility.ts (מדינה, סטטוס, גובה, כיוון חיים, כיסוי ראש,
+ * סוג טלפון והעדפות הצד השני). בלי עמודות הכרטיס הכבדות.
+ */
+const DESK_STUDENT_SELECT = `
+  id,
+  gender,
+  first_name,
+  last_name,
+  birth_date,
+  city,
+  country,
+  personal_status,
+  height,
+  plan_for_life,
+  head_cover_type,
+  cellphone_type,
+  parents_info,
+  employment_history(category),
+  partner_preferences(age_min, age_max, preferred_countries, work_status, head_cover_type, plan_for_life, cellphone_type)
+` as const;
+
 async function ShiduchDeskContent() {
   noStore();
   const supabase = await createClient();
@@ -17,7 +40,7 @@ async function ShiduchDeskContent() {
 
   const favorites = await supabase
     .from("students")
-    .select(`*,employment_history(*),partner_preferences(*)`)
+    .select(DESK_STUDENT_SELECT)
     .in("id", user?.user_metadata?.favorites || []);
 
   return <ShiduchDesk initialFavorites={favorites.data || []} />;

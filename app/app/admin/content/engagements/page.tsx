@@ -25,11 +25,7 @@ import {
 } from "@/components/ui/empty";
 import { Form, FormField } from "@/components/ui/form";
 import { FormFieldShell } from "@/components/ui/form-field-shell";
-import {
-  FormActions,
-  FormFields,
-  FormGrid,
-} from "@/components/ui/form-layout";
+import { FormActions, FormFields, FormGrid } from "@/components/ui/form-layout";
 import { Input } from "@/components/ui/input";
 import {
   optionalEmail,
@@ -48,7 +44,13 @@ type Engagement = {
   shadchan_name: string | null;
   is_published: boolean;
   created_at: string;
+  source: string;
+  shidduch_id: string | null;
+  groom_student_id: string | null;
+  bride_student_id: string | null;
 };
+
+const SYSTEM_SOURCE = "system";
 
 const engagementSchema = z.object({
   groom_name: requiredText("שם החתן"),
@@ -82,6 +84,51 @@ const EMPTY_FORM: EngagementFormValues = {
   submitter_email: "",
 };
 
+/**
+ * מודעה שנוצרה אוטומטית כששידוך הושלם במערכת: תג וקישורים לשני הכרטיסים
+ * ולהצעה, כדי שהמנהל יוכל לבדוק ולפרסם בלחיצה אחת. קישור שהיעד שלו נמחק
+ * (המזהה התאפס) אינו מוצג.
+ */
+function SystemOriginInfo({ engagement }: { engagement: Engagement }) {
+  const links = [
+    {
+      label: "כרטיס החתן",
+      href:
+        engagement.groom_student_id &&
+        `/app/students/${engagement.groom_student_id}`,
+    },
+    {
+      label: "כרטיס הכלה",
+      href:
+        engagement.bride_student_id &&
+        `/app/students/${engagement.bride_student_id}`,
+    },
+    {
+      label: "ההצעה",
+      href:
+        engagement.shidduch_id && `/app/shidduchim/${engagement.shidduch_id}`,
+    },
+  ];
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <Badge variant="info">נוצר אוטומטית מהמערכת</Badge>
+      {links.map(
+        ({ label, href }) =>
+          href && (
+            <Link
+              key={label}
+              href={href as any}
+              className="text-caption font-normal text-primary underline-offset-2 hover:underline"
+            >
+              {label}
+            </Link>
+          ),
+      )}
+    </div>
+  );
+}
+
 export default function EngagementsAdminPage() {
   const [engagements, setEngagements] = useState<Engagement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,12 +144,8 @@ export default function EngagementsAdminPage() {
 
   async function load() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("engagements")
-      .select(
-        "id, groom_name, bride_name, groom_city, bride_city, shadchan_name, is_published, created_at",
-      )
-      .order("created_at", { ascending: false });
+    // קריאה ישירה לטבלה חושפת רק עמודות ציבוריות; הפונקציה מחזירה הכול למנהל
+    const { data, error } = await supabase.rpc("admin_list_engagements");
     if (error) toast.error("שגיאה בטעינה");
     else setEngagements(data ?? []);
     setLoading(false);
@@ -139,7 +182,7 @@ export default function EngagementsAdminPage() {
   async function handleCreate(values: EngagementFormValues) {
     const { error } = await supabase
       .from("engagements")
-      .insert({ ...values, is_published: false });
+      .insert({ ...values, is_published: false, source: "admin" });
     if (error) {
       toast.error(`שגיאה: ${error.message}`);
       return;
@@ -156,7 +199,12 @@ export default function EngagementsAdminPage() {
       header: "חתן",
       mobile: "title",
       className: "font-medium",
-      cell: (e) => e.groom_name,
+      cell: (e) => (
+        <div className="space-y-1">
+          <span>{e.groom_name}</span>
+          {e.source === SYSTEM_SOURCE && <SystemOriginInfo engagement={e} />}
+        </div>
+      ),
     },
     {
       key: "bride",
@@ -249,7 +297,7 @@ export default function EngagementsAdminPage() {
     <Page>
       <PageHeader
         title="מודעות מאורסים"
-        description="אישור ופרסום שידוכים שנסגרו"
+        description="אישור ופרסום שידוכים שנסגרו. מודעות שנוצרות אוטומטית משידוך שהושלם במערכת ממתינות כאן לאישורכם"
         actions={
           <div className="flex gap-2">
             <Button asChild variant="outline">

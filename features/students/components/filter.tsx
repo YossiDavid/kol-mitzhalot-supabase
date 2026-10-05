@@ -16,6 +16,9 @@ import {
   useStudentQuery,
   type StudentQuery,
 } from "@/features/students/lib/student-query-context";
+import { CommunityFilterField } from "@/features/students/components/community-filter";
+import { useCommunityOptions } from "@/features/students/lib/use-community-options";
+import type { CommunityFilter } from "@/features/students/lib/community-filter";
 import { cn } from "@/lib/utils";
 
 /** הכל מוחל תוך כדי הקלדה; ההשהיה חוסכת שאילתה על כל תו ועדיין מרגישה מיידית. */
@@ -52,7 +55,8 @@ const YES_NO_OPTIONS: Option[] = [
   { value: "false", label: "לא" },
 ];
 
-type UpdateFilter = (key: keyof StudentQuery, value: string) => void;
+type StringFilterKey = Exclude<keyof StudentQuery, "communities">;
+type UpdateFilter = (key: StringFilterKey, value: string) => void;
 
 interface FieldGroupProps {
   /** מזהים ייחודיים: גרסת המובייל והדסקטופ נמצאות שתיהן ב-DOM */
@@ -61,8 +65,14 @@ interface FieldGroupProps {
   onChange: UpdateFilter;
 }
 
+/** שדות הבסיס כוללים את סינון הקהילה, שמצבו אינו מחרוזת */
+interface BasicFieldsProps extends FieldGroupProps {
+  communityOptions: ReturnType<typeof useCommunityOptions>;
+  onCommunitiesChange: (next: CommunityFilter | undefined) => void;
+}
+
 interface FieldProps extends FieldGroupProps {
-  name: keyof StudentQuery;
+  name: StringFilterKey;
   label: string;
   className?: string;
 }
@@ -122,7 +132,11 @@ function SelectFilter({
 }
 
 /** השדות שמוצגים תמיד. מובייל: 2 עמודות; דסקטופ: 12. */
-function BasicFields(props: FieldGroupProps) {
+function BasicFields({
+  communityOptions,
+  onCommunitiesChange,
+  ...props
+}: BasicFieldsProps) {
   const searchId = `${props.idPrefix}search`;
   return (
     <>
@@ -140,6 +154,15 @@ function BasicFields(props: FieldGroupProps) {
           />
         </div>
       </div>
+      <CommunityFilterField
+        idPrefix={props.idPrefix}
+        value={props.filter.communities}
+        options={communityOptions.options}
+        isLoading={communityOptions.isLoading}
+        hasError={communityOptions.error !== null}
+        onChange={onCommunitiesChange}
+        className="col-span-2 md:col-span-3"
+      />
       <SelectFilter
         {...props}
         name="gender"
@@ -259,7 +282,10 @@ export default function FilterSection() {
 
   const updateFilter: UpdateFilter = (key, value) =>
     setFilter((prev) => ({ ...prev, [key]: value }));
+  const updateCommunities = (next: CommunityFilter | undefined) =>
+    setFilter((prev) => ({ ...prev, communities: next }));
   const clearFilter = () => setFilter({});
+  const communityOptions = useCommunityOptions();
 
   const activeFilterCount = Object.values(filter).filter(
     (value) => value !== undefined && value !== "",
@@ -309,6 +335,8 @@ export default function FilterSection() {
                 idPrefix="m-"
                 filter={filter}
                 onChange={updateFilter}
+                communityOptions={communityOptions}
+                onCommunitiesChange={updateCommunities}
               />
               <AdvancedFields
                 idPrefix="m-"
@@ -327,7 +355,13 @@ export default function FilterSection() {
       <div className="mt-6 hidden md:block">
         <div className="box space-y-4 p-4">
           <div className="grid grid-cols-12 gap-4">
-            <BasicFields idPrefix="" filter={filter} onChange={updateFilter} />
+            <BasicFields
+              idPrefix=""
+              filter={filter}
+              onChange={updateFilter}
+              communityOptions={communityOptions}
+              onCommunitiesChange={updateCommunities}
+            />
           </div>
 
           {advancedOpen && (

@@ -8,7 +8,8 @@ export interface FieldCondition {
   parameter: string;
   operator: "===" | "!==" | "includes" | "in";
   /** ל-`in`: מערך הערכים המותרים (למשל רק סוגי בעיה, לא ריק / עוד לא נבחר) */
-  value: string | string[];
+  /** boolean: להשוואה לערך של מתג ("switch"), למשל "בלי ילדים" */
+  value: string | string[] | boolean;
 }
 
 const INDEX_SEGMENT_PATTERN = /\[(\d+)\]/g;

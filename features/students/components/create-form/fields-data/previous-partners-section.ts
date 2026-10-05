@@ -12,6 +12,10 @@ const previousPartnerChildrenField: ChildrenListField = {
   addLabel: "הוספת ילד/ה",
   itemLabel: "ילד/ה",
   emptyText: "לא נוספו ילדים מנישואין אלו.",
+  // מוסתרת כשסומן "אין ילדים מנישואין אלו" (המתג שמעליה)
+  condition: [
+    { parameter: "previousPartners.noChildren", operator: "!==", value: true },
+  ],
   fields: [
     {
       name: "previousPartners.children.gender",
@@ -160,6 +164,14 @@ export const previousPartnersSection: FormSection = {
           label: "סיבת הגירושין",
           type: "textarea",
           condition: separationIs("divorce"),
+        },
+        {
+          // "אין ילדים" במפורש. נשמר ב-previous_partners.no_children, ונפרד
+          // מרשימה ריקה: ריקה בלי המתג = עדיין לא מולא
+          name: "previousPartners.noChildren",
+          width: "full",
+          label: "אין ילדים מנישואין אלו",
+          type: "switch",
         },
         previousPartnerChildrenField,
       ],

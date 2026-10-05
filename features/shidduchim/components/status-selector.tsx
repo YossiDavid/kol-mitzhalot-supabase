@@ -50,6 +50,11 @@ export default function StatusSelector({
           return;
         }
         toast.success("סטטוס השידוך עודכן");
+        if (data.engagementWarning) {
+          toast.warning(
+            "הסטטוס נשמר, אך מודעת האירוסין האוטומטית לא נוצרה במלואה. יש לבדוק במודעות מאורסים.",
+          );
+        }
         router.refresh();
       } catch {
         setStatus(prev);
@@ -60,7 +65,7 @@ export default function StatusSelector({
 
   return (
     <div className="space-y-2">
-      <p className="text-muted-foreground text-body-sm font-medium">סטטוס</p>
+      <p className="text-body-sm font-medium text-muted-foreground">סטטוס</p>
       <div className="flex flex-wrap items-center gap-3">
         <Badge variant={SHIDDUCH_STATUS_BADGE_VARIANT[status]}>
           {SHIDDUCH_STATUS_LABELS[status]}
@@ -70,7 +75,7 @@ export default function StatusSelector({
             value={status}
             onChange={(e) => saveStatus(e.target.value)}
             disabled={!canEdit || isPending}
-            className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-body-sm shadow-xs outline-none transition-colors focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-body-sm shadow-xs transition-colors outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {SHIDDUCH_STATUS_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>

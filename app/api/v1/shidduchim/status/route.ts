@@ -8,6 +8,11 @@ import {
   SHIDDUCH_STATUS_LABELS,
   SHIDDUCH_STATUS_VALUES,
 } from "@/features/shidduchim/lib/status";
+import { closeMatchInSystem } from "@/features/engagements/lib/close-match";
+import {
+  dbBlockFromError,
+  proposalBlocksBody,
+} from "@/features/shidduchim/lib/proposal-gate";
 import { hasRole } from "@/lib/user";
 
 const bodySchema = z.object({
@@ -72,17 +77,27 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { data: updated, error: updateError } = await admin
-    .from("shidduchim")
-    .update({
-      status,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", shidduchId)
-    .select("id, status, updated_at")
-    .single();
+  // דרך RPC ולא update ישיר: הכתיבה היא ב-service role (auth.uid() ריק),
+  // והפונקציה מציבה את המבצע בטרנזקציה כדי שהשדכן לא יקבל התראה על שינוי
+  // הסטטוס שביצע בעצמו (notify_shidduch_response).
+  const { data: rows, error: updateError } = await admin.rpc(
+    "set_shidduch_status_as",
+    { p_shidduch_id: shidduchId, p_status: status, p_actor: user.id },
+  );
+  const result = (
+    rows as
+      | { out_id: string; out_status: string; out_updated_at: string }[]
+      | null
+  )?.[0];
 
-  if (updateError || !updated) {
+  // פתיחה מחדש של הצעה שנדחתה היא שליחה חוזרת: כרטיס מושהה או שמיצה את
+  // המכסה חוסם אותה במסד, וכאן זה מוצג כהודעה ברורה (409)
+  const gateBlock = dbBlockFromError(updateError);
+  if (gateBlock) {
+    return NextResponse.json(proposalBlocksBody([gateBlock]), { status: 409 });
+  }
+
+  if (updateError || !result) {
     console.error(updateError);
     return NextResponse.json(
       { error: "Failed to update status" },
@@ -90,9 +105,25 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
+  const updated = {
+    id: result.out_id,
+    status: result.out_status,
+    updated_at: result.out_updated_at,
+  };
+
+  // שידוך שהושלם בתוך המערכת: כרטיסים מאורסים ומודעת אירוסין לא מפורסמת
+  // (לאישור מנהל). כשל כאן אינו מבטל את הסטטוס שכבר נשמר - הוא מוחזר
+  // כדגל כדי שהממשק יוכל להזהיר.
+  const engagementWarning =
+    status === "completed"
+      ? (await closeMatchInSystem(admin, { shidduchId, actor: user }))
+          .hasWarning
+      : false;
+
   return NextResponse.json({
     ok: true,
     row: updated,
     statusLabel: SHIDDUCH_STATUS_LABELS[status],
+    engagementWarning,
   });
 }

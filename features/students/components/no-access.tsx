@@ -21,8 +21,8 @@ export function StudentsNoAccess() {
       <div className="space-y-1">
         <PageTitle>אין לך הרשאה לצפות בתוכן זה</PageTitle>
         <p className="mx-auto max-w-[38ch] text-body-sm text-muted-foreground">
-          רשימת המיועדים פתוחה לשדכנים, לאנשי צוות ולמנהלים בלבד. את הכרטיסים של
-          ילדיך אפשר לראות בעמוד הראשי.
+          רשימת המיועדים פתוחה לשדכנים, לאנשי צוות ולמנהלים בלבד. את המיועדים
+          שלך אפשר לראות בעמוד הראשי.
         </p>
       </div>
       <div className="flex flex-wrap items-center justify-center gap-2">
@@ -30,7 +30,7 @@ export function StudentsNoAccess() {
           <Link href="/app">לעמוד הראשי</Link>
         </Button>
         <Button asChild variant="outline">
-          <Link href="/app/students/create">להוספת בן / בת</Link>
+          <Link href="/app/students/create">להוספת מיועד/ת</Link>
         </Button>
       </div>
     </div>

@@ -38,6 +38,8 @@ async function createCompleteStudent(): Promise<string> {
       first_name: "שמירה",
       last_name: `בכלשלב${RUN_ID}`,
       identity_number: `7${String(RUN_ID).slice(-8)}`,
+      // כרטיס שנוצר בלי card_for נחסם בעריכה עד שנבחר עבור מי הוא
+      card_for: "child",
       birth_date: "1997-03-03",
       gender: "male",
       personal_status: "single",

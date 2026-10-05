@@ -32,11 +32,17 @@ export default function DraftActions({
     recipientScope,
     noteForGroom: groomNote,
     noteForBride: brideNote,
+    shareContactDetails,
+    shareMedicalInfo,
+    shareGroomPhoto,
   }: {
     recipientScope: "both" | "groom_only" | "bride_only";
     noteForGroom: string;
     noteForBride: string;
-  }) => {
+    shareContactDetails: boolean;
+    shareMedicalInfo: boolean;
+    shareGroomPhoto: boolean;
+  }): Promise<string | void> => {
     setLoading(true);
     try {
       const res = await fetch("/api/v1/shidduchim/offer", {
@@ -49,10 +55,15 @@ export default function DraftActions({
           recipientScope,
           noteForGroom: groomNote,
           noteForBride: brideNote,
+          shareContactDetails,
+          shareMedicalInfo,
+          shareGroomPhoto,
         }),
       });
       const data = await res.json();
       if (!res.ok) {
+        // סירוב של כללי הכרטיס (מכסה/השהיה) מוצג בתוך החלון
+        if (data.code) return data.error;
         toast.error(data.error || "שגיאה בשליחת ההצעה");
         return;
       }

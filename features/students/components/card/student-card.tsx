@@ -5,6 +5,7 @@ import {
   StaffFeedbackList,
 } from "@/features/students/components/student-notes";
 import calculateAge from "@/lib/calculateAge";
+import { hebrewBirthDate } from "@/features/students/lib/birth-date-hebrew";
 import { getTotalChildrenCount } from "@/features/students/lib/previous-partner-children";
 import { genderToHebrew } from "@/features/students/lib/student-card-data";
 import type {
@@ -19,7 +20,10 @@ import { EducationSection, EmploymentSection } from "./education-section";
 import { FamilySection } from "./family-section";
 import { MedicalSection } from "./medical-section";
 import { PartnerPreferencesSection } from "./partner-preferences-section";
-import { PersonalDetailsSection } from "./personal-details-section";
+import {
+  PersonalDetailsSection,
+  type CardOwnerInfo,
+} from "./personal-details-section";
 import { PreviousMarriagesSection } from "./previous-marriages-section";
 import { ReferencesSection } from "./references-section";
 import { StudentCardBackLink, StudentCardHero } from "./student-card-hero";
@@ -48,6 +52,7 @@ export function StudentCard({
   shadchanNotes,
   isProposalView = false,
   showMedical = true,
+  owner = null,
   actions,
 }: {
   student: StudentRow;
@@ -63,8 +68,12 @@ export function StudentCard({
   isProposalView?: boolean;
   /** מקטע ההצהרה הרפואית - מוסתר כשהוא לא נשלף, כדי לא להציג "תקין" שקרי */
   showMedical?: boolean;
+  /** מנהל הכרטיס - נמסר מהעמוד למנהל מערכת בלבד, ואחרת לא נמסר כלל */
+  owner?: CardOwnerInfo | null;
   actions: React.ReactNode;
 }) {
+  // נחשב בשרת: ללקוח עובר רק המחרוזת העברית, לא תאריך הלידה
+  const ageHebrewDate = hebrewBirthDate(student.birth_date);
   const genderLabel = genderToHebrew(student.gender);
   const fullName = `${student.first_name} ${student.last_name}`;
 
@@ -76,6 +85,7 @@ export function StudentCard({
         nickname={student.nickname}
         genderLabel={genderLabel}
         age={student.birth_date ? calculateAge(student.birth_date) : null}
+        ageHebrewDate={ageHebrewDate}
         personalStatus={student.personal_status}
         gender={student.gender}
         childrenCount={getTotalChildrenCount(student.previous_partners)}
@@ -119,6 +129,8 @@ export function StudentCard({
         ageValue={
           student.birth_date ? `${calculateAge(student.birth_date)} שנים` : null
         }
+        ageHebrewDate={ageHebrewDate}
+        owner={owner}
       />
 
       {/* פידבק אנשי צוות - גלוי לכל צופה בכרטיס, וגם בשיתוף */}

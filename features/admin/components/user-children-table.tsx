@@ -4,6 +4,8 @@ import Link from "next/link";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import calculateAge from "@/lib/calculateAge";
+import { AdminPauseButton } from "@/features/admin/components/admin-pause-button";
+import { proposalsReportHref } from "@/features/admin/lib/proposals-report-query";
 import type {
   UserChildRow,
   UserDetails,
@@ -13,7 +15,7 @@ function childColumns(
   byChild: UserDetails["shidduchimStats"]["byChild"],
 ): DataTableColumn<UserChildRow>[] {
   const statsFor = (childId: string) =>
-    byChild.find((s) => s.childId === childId) ?? { offered: 0, completed: 0 };
+    byChild.find((s) => s.childId === childId) ?? { received: 0, completed: 0 };
 
   return [
     {
@@ -44,11 +46,20 @@ function childColumns(
     },
     { key: "city", header: "עיר", cell: (child) => child.city },
     {
-      key: "offered",
-      header: "שידוכים הוצעו",
+      key: "received",
+      header: "הצעות שהתקבלו",
       size: "min",
       align: "center",
-      cell: (child) => statsFor(child.id).offered,
+      // מקושר לדוח ההצעות מסונן לכרטיס הזה
+      cell: (child) => (
+        <Link
+          href={proposalsReportHref({ card: child.id }) as Route}
+          className="text-primary hover:underline"
+          data-testid={`received-count-${child.id}`}
+        >
+          {statsFor(child.id).received}
+        </Link>
+      ),
     },
     {
       key: "completed",
@@ -56,6 +67,28 @@ function childColumns(
       size: "min",
       align: "center",
       cell: (child) => statsFor(child.id).completed,
+    },
+    {
+      key: "pause",
+      header: "השהיה",
+      size: "min",
+      cell: (child) => (
+        <div className="flex flex-col items-start gap-1">
+          {child.isAdminPaused && (
+            <span
+              className="text-caption text-warning-muted-foreground"
+              data-testid={`admin-paused-badge-${child.id}`}
+            >
+              מושהה על ידי הנהלה
+            </span>
+          )}
+          <AdminPauseButton
+            studentId={child.id}
+            studentName={`${child.firstName} ${child.lastName}`}
+            isPaused={child.isAdminPaused}
+          />
+        </div>
+      ),
     },
   ];
 }

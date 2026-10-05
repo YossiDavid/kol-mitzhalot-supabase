@@ -16,6 +16,7 @@ test("שורת מחותן: בלי חיפוש במאגר, והשדות פתוחי
     }
   });
   await page.goto("/app/students/create");
+  await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
   await page.getByRole("radio", { name: "מיועד", exact: true }).check();
   await page
     .getByRole("navigation", { name: "שלבי הטופס" })

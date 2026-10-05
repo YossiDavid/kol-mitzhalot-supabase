@@ -12,8 +12,15 @@ import {
   getDisplayName,
   type UserMetadata,
 } from "../lib/user-display";
+import {
+  byLastAtDesc,
+  groupRoomsByPerson,
+  isPlainGeneralGroup,
+} from "../lib/group-rooms";
+import { parseRoomContext } from "../lib/room-context";
 import { useUnreadChats } from "../lib/unread-chats-context";
 import { ChatEmptyState } from "./chat-empty-state";
+import { PersonGroup } from "./person-group";
 import { RoomRow, RoomRowSkeleton } from "./room-row";
 
 const SKELETON_ROWS = 6;
@@ -22,15 +29,6 @@ type RoomChangePayload = {
   room_id?: string;
   last_message_id?: string | null;
 };
-
-function toTime(iso: string | null): number {
-  return iso ? new Date(iso).getTime() : 0;
-}
-
-/** השיחה עם ההודעה האחרונה ביותר ראשונה; שיחות בלי הודעות בסוף. */
-function byLastAtDesc(a: Room, b: Room): number {
-  return toTime(b.lastAt) - toTime(a.lastAt);
-}
 
 export function RoomList() {
   const supabase = createClient();
@@ -106,6 +104,7 @@ export function RoomList() {
             const userData = userMetaResult.data as UserMetadata;
             const otherUserName = getDisplayName(userData);
             const lastMsg = lastMsgResult.data;
+            const context = parseRoomContext(room);
 
             return {
               room_id: room.room_id,
@@ -115,6 +114,10 @@ export function RoomList() {
               avatarUrl: getAvatarUrl(userData),
               other_user_id: otherUserId,
               other_user_name: otherUserName,
+              contextKind: context.kind,
+              studentId: context.studentId,
+              shidduchId: context.shidduchId,
+              contextLabel: context.label,
             };
           }),
         );
@@ -185,6 +188,8 @@ export function RoomList() {
     };
   }, [currentUserId, supabase, rooms]);
 
+  const groups = React.useMemo(() => groupRoomsByPerson(rooms), [rooms]);
+
   const activeRoomId = pathname.startsWith("/app/chats/")
     ? pathname.slice("/app/chats/".length)
     : null;
@@ -193,9 +198,9 @@ export function RoomList() {
     <aside aria-label="רשימת הצ׳אטים" className="flex h-full min-h-0 flex-col">
       <div className="flex h-16 shrink-0 items-center gap-2 border-b border-border px-4">
         <h1 className="text-subtitle font-bold text-foreground">צ׳אטים</h1>
-        {!loading && rooms.length > 0 && (
+        {!loading && groups.length > 0 && (
           <span className="rounded-full bg-primary-muted px-2 py-0.5 text-caption font-semibold text-primary tabular-nums">
-            {rooms.length}
+            {groups.length}
             <span className="sr-only"> שיחות</span>
           </span>
         )}
@@ -219,13 +224,21 @@ export function RoomList() {
           <ChatEmptyState variant="no-rooms" className="py-14" />
         ) : (
           <ul className="flex flex-col gap-1 p-2">
-            {rooms.map((r) => (
-              <li key={r.room_id}>
-                <RoomRow
-                  room={r}
-                  isActive={r.room_id === activeRoomId}
-                  isUnread={unreadRoomIds.has(r.room_id)}
-                />
+            {groups.map((group) => (
+              <li key={group.otherUserId}>
+                {isPlainGeneralGroup(group) ? (
+                  <RoomRow
+                    room={group.rooms[0]}
+                    isActive={group.rooms[0].room_id === activeRoomId}
+                    isUnread={unreadRoomIds.has(group.rooms[0].room_id)}
+                  />
+                ) : (
+                  <PersonGroup
+                    group={group}
+                    activeRoomId={activeRoomId}
+                    unreadRoomIds={unreadRoomIds}
+                  />
+                )}
               </li>
             ))}
           </ul>

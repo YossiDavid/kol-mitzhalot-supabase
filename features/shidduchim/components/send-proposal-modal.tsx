@@ -27,7 +27,8 @@ type Props = {
     noteForBride: string;
     shareContactDetails: boolean;
     shareMedicalInfo: boolean;
-  }) => Promise<void>;
+    shareGroomPhoto: boolean;
+  }) => Promise<string | void>;
   loading?: boolean;
   initialNoteGroom?: string;
   initialNoteBride?: string;
@@ -54,6 +55,10 @@ export default function SendProposalModal({
   // רק כשהצדדים מתקדמים. הפתיחה היא החלטה אקטיבית לכל הצעה בנפרד.
   const [shareContact, setShareContact] = useState(false);
   const [shareMedical, setShareMedical] = useState(false);
+  // פתוח כברירת מחדל: תמונת הבחור נשלחה תמיד, והשדכן סוגר אותה כשצריך
+  const [shareGroomPhoto, setShareGroomPhoto] = useState(true);
+  // סירוב מהשרת (מכסה / השהיה) מוצג בתוך החלון, ולא כהודעה חולפת
+  const [refusal, setRefusal] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -65,21 +70,26 @@ export default function SendProposalModal({
       setNoteBride("");
       setShareContact(false);
       setShareMedical(false);
+      setShareGroomPhoto(true);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    setRefusal(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const showGroomNote = scope === "both" || scope === "groom_only";
   const showBrideNote = scope === "both" || scope === "bride_only";
 
   const handleSubmit = async () => {
-    await onConfirm({
+    setRefusal(null);
+    const failure = await onConfirm({
       recipientScope: scope,
       noteForGroom: showGroomNote ? noteGroom : "",
       noteForBride: showBrideNote ? noteBride : "",
       shareContactDetails: shareContact,
       shareMedicalInfo: shareMedical,
+      shareGroomPhoto,
     });
+    if (typeof failure === "string") setRefusal(failure);
   };
 
   return (
@@ -107,7 +117,10 @@ export default function SendProposalModal({
                   role="tab"
                   aria-selected={scope === tabScope}
                   disabled={loading}
-                  onClick={() => setScope(tabScope)}
+                  onClick={() => {
+                    setScope(tabScope);
+                    setRefusal(null);
+                  }}
                   className={cn(
                     "min-h-9 flex-1 rounded-md px-2 py-1.5 text-center text-body-sm font-medium transition-colors",
                     scope === tabScope
@@ -160,7 +173,8 @@ export default function SendProposalModal({
               מה מנהלי הכרטיסים יראו בכרטיס של הצד השני?
             </p>
             <p className="text-caption text-muted-foreground">
-              הכרטיס נפתח להם במלואו. שני אלה סגורים כברירת מחדל.
+              הכרטיס נפתח להם במלואו. פרטי ההתקשרות וההצהרה הרפואית סגורים
+              כברירת מחדל.
             </p>
 
             <div className="flex items-start gap-2">
@@ -192,7 +206,34 @@ export default function SendProposalModal({
                 הצהרה רפואית
               </Label>
             </div>
+
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="share-groom-photo"
+                checked={shareGroomPhoto}
+                onCheckedChange={(checked) =>
+                  setShareGroomPhoto(checked === true)
+                }
+                disabled={loading}
+              />
+              <Label
+                htmlFor="share-groom-photo"
+                className="text-body-sm leading-snug font-normal"
+              >
+                לשלוח את תמונת הבחור
+              </Label>
+            </div>
           </div>
+
+          {refusal && (
+            <p
+              role="alert"
+              data-testid="send-proposal-refusal"
+              className="rounded-md border border-destructive bg-destructive/10 p-3 text-body-sm text-destructive"
+            >
+              {refusal}
+            </p>
+          )}
         </div>
 
         <DialogFooter className="gap-2 sm:justify-start">

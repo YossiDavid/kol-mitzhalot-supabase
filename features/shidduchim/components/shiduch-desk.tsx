@@ -261,13 +261,15 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
     noteForBride,
     shareContactDetails,
     shareMedicalInfo,
+    shareGroomPhoto,
   }: {
     recipientScope: RecipientScope;
     noteForGroom: string;
     noteForBride: string;
     shareContactDetails: boolean;
     shareMedicalInfo: boolean;
-  }) => {
+    shareGroomPhoto: boolean;
+  }): Promise<string | void> => {
     if (!newShiduch || !canOffer) return;
     setSendLoading(true);
     try {
@@ -283,10 +285,13 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
           noteForBride,
           shareContactDetails,
           shareMedicalInfo,
+          shareGroomPhoto,
         }),
       });
       const data = await res.json();
       if (!res.ok) {
+        // סירוב של כללי הכרטיס (מכסה/השהיה) מוצג בתוך החלון
+        if (data.code) return data.error;
         toast.error(data.error || "שגיאה בשליחה");
         return;
       }

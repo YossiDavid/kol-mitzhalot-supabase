@@ -33,6 +33,9 @@ export default async function AppLayout({
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
+  // הגדרת אימות הטלפון לא תלויה במשתמש, ולכן יוצאת במקביל ל-getUser ולא
+  // אחריו. היא לא נזרקת (תופסת שגיאות בעצמה), ונצרכת רק למשתמש מחובר.
+  const phoneVerificationPromise = getPhoneVerificationEnabled();
   const user = await getUser();
 
   const requestHeaders = await headers();
@@ -52,7 +55,7 @@ export default async function AppLayout({
   // בדיקת אימות טלפון רלוונטית רק למשתמש מחובר - משתמש לא מחובר שצופה
   // בכרטיס מיועד ציבורי מדלג עליה לגמרי.
   if (user) {
-    const phoneVerificationEnabled = await getPhoneVerificationEnabled();
+    const phoneVerificationEnabled = await phoneVerificationPromise;
     if (phoneVerificationEnabled) {
       const isPhoneVerified = user.user_metadata?.phone_verified === true;
       if (!isPhoneVerified) {

@@ -4,7 +4,8 @@ import { z } from "zod";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { hasRole, pickHighestPrecedenceRole } from "@/lib/user";
+import { hasRole, primaryRole } from "@/lib/user";
+import { updateUserRoles } from "@/lib/supabase/user-roles";
 import type { Role } from "@/lib/user";
 
 // עדכון תפקידי משתמש (multi-role) ע"י מנהל - מסך app/app/admin/users/[id].
@@ -84,37 +85,22 @@ export async function PATCH(
     }
   }
 
-  // שליפת המשתמש הקיים לפני העדכון: updateUserById מחליף את כל ה-user_metadata
-  // באובייקט שמועבר, ולכן חובה למזג לתוכו את המטא-דאטה הקיימת (firstName,
-  // lastName, phone וכו') ולא רק להעביר roles - אחרת הנתונים האלה נמחקים.
-  const { data: existingUserData, error: fetchError } =
-    await admin.auth.admin.getUserById(userId);
+  // התפקידים נכתבים ל-app_metadata.roles (לא user_metadata - את זה המשתמש עצמו
+  // יכול לכתוב). updateUserRoles ממזג את app_metadata הקיים ולא דורס אותו.
+  const roleUpdate = await updateUserRoles(admin, userId, () => nextRoles);
 
-  if (fetchError || !existingUserData.user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
-
-  const { data: updateData, error: updateError } =
-    await admin.auth.admin.updateUserById(userId, {
-      user_metadata: {
-        ...existingUserData.user.user_metadata,
-        roles: nextRoles,
-        role: pickHighestPrecedenceRole(nextRoles),
-      },
-    });
-
-  if (updateError || !updateData.user) {
-    console.error("[admin/users/roles]", updateError);
+  if (!roleUpdate.ok) {
+    console.error("[admin/users/roles]", roleUpdate.message);
     return NextResponse.json(
-      { error: updateError?.message || "Failed to update roles" },
-      { status: 500 },
+      { error: roleUpdate.message },
+      { status: roleUpdate.status },
     );
   }
 
   return NextResponse.json({
     ok: true,
-    roles: nextRoles,
-    role: updateData.user.user_metadata?.role,
+    roles: roleUpdate.roles,
+    role: primaryRole(roleUpdate.user),
   });
 }
 

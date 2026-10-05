@@ -27,6 +27,8 @@ export function PreviousMarriagesSection({
         {partners.map((p, idx) => {
           const children = parseStoredChildren(p.children);
           const childrenCount = getChildrenCount(children, p.children_number);
+          // "ללא ילדים" רק כשסומן במפורש; שורה שלא מולאה לא מציגה דבר
+          const hasNoChildren = p.no_children === true;
           return (
             <div
               key={idx}
@@ -73,11 +75,15 @@ export function PreviousMarriagesSection({
                     </p>
                   )}
                 </div>
-                <div className="text-end">
-                  <span className="rounded-lg border border-border bg-card px-2 py-1 text-caption font-bold whitespace-nowrap">
-                    {formatChildrenCount(childrenCount)}
-                  </span>
-                </div>
+                {(hasNoChildren || childrenCount > 0) && (
+                  <div className="text-end">
+                    <span className="rounded-lg border border-border bg-card px-2 py-1 text-caption font-bold whitespace-nowrap">
+                      {hasNoChildren
+                        ? "ללא ילדים"
+                        : formatChildrenCount(childrenCount)}
+                    </span>
+                  </div>
+                )}
               </div>
               {children.length > 0 && (
                 <div className="mt-3 border-t border-border pt-3">
