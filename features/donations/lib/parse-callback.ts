@@ -3,6 +3,11 @@
  * לפי התיעוד שמות השדות לא משתנים אבל נוספים חדשים והסדר עשוי להשתנות, ולכן:
  * מפתחות לא מוכרים מותרים, ערכים יכולים להיות מחרוזת או מספר, והחיפוש אינו
  * תלוי רישיות. הגוף המלא נשמר בנפרד כ-raw.
+ *
+ * שני מקורות שולחים לנו: ה-CallBack של העסקה (אותו JSON כמו TransactionResponse של ה-iframe:
+ * Status + ID, ובהוראת קבע גם NextDate ו-AuthorisationNumber), וה-Webhook ברמת המוסד
+ * ("עדכוני עסקאות": TransactionId). לכן מזהה העסקה הוא TransactionId, ובהיעדרו ID
+ * (כש-Status הוא OK או חסר).
  */
 import { z } from "zod";
 
@@ -35,7 +40,32 @@ export interface NormalizedCallback {
   transactionTime: string | null;
 }
 
+interface ExemptionFields {
+  solek: number | null;
+  paymentMethod: string | null;
+  preTransactionId: string | null;
+}
+
+/** האם אמצעי התשלום אינו כרטיס אשראי של Shva, ולכן אין לדרוש בו Confirmation */
+function isConfirmationExempt(fields: ExemptionFields): boolean {
+  return (
+    (fields.solek !== null && NON_CARD_SOLEKS.has(fields.solek)) ||
+    NON_CARD_PAYMENT_METHODS.has(fields.paymentMethod?.toLowerCase() ?? "") ||
+    fields.preTransactionId !== null
+  );
+}
+
 const MAX_FIELD_LENGTH = 200;
+
+/**
+ * אמצעי תשלום בלי מספר אישור של Shva (ביט והעברה בקליק): מדווחים ב-PaymentMethod או עם
+ * PreTransactionId, ולפעמים בלי Solek. הכלל לפטור מ-Confirmation נמצא כאן ובמקום אחד נוסף
+ * (NON_CARD_SOLEKS), ו-isConfirmationExempt הוא המקום היחיד שמשלב אותם.
+ */
+const NON_CARD_PAYMENT_METHODS: ReadonlySet<string> = new Set([
+  "bit",
+  "digitaltransfer",
+]);
 
 /**
  * סולקים שאינם כרטיס אשראי של Shva: 27/28/29 ביט, 30 העברה בקליק, 31 מטבע
@@ -111,8 +141,21 @@ export function parseNedarimCallback(
   if (!body.success) return null;
 
   const fields = lowerKeyed(body.data);
-  const transactionId = readText(fields, "TransactionId");
-  const kevaId = readText(fields, "KevaId");
+  const status = readText(fields, "Status")?.toLowerCase() ?? null;
+  const isStatusOk = status === null || status === "ok";
+  const transactionIdField = readText(fields, "TransactionId");
+  // ID הוא מזהה העסקה ב-CallBack של העסקה; בהוראת קבע (HK) הוא מזהה ההוראה
+  const idField = isStatusOk ? readText(fields, "ID") : null;
+  const hasKevaCreationMarker =
+    fields.has("authorisationnumber") || readText(fields, "NextDate") !== null;
+  const isKevaCreationById =
+    transactionIdField === null && idField !== null && hasKevaCreationMarker;
+
+  const transactionId = isKevaCreationById
+    ? null
+    : (transactionIdField ?? idField);
+  const kevaId =
+    readText(fields, "KevaId") ?? (isKevaCreationById ? idField : null);
   const kind = transactionId
     ? CALLBACK_KIND.transaction
     : kevaId
@@ -122,7 +165,11 @@ export function parseNedarimCallback(
 
   const confirmation = readConfirmation(fields);
   const solek = parseSolek(readText(fields, "Solek"));
-  const isNonCard = solek !== null && NON_CARD_SOLEKS.has(solek);
+  const isExempt = isConfirmationExempt({
+    solek,
+    paymentMethod: readText(fields, "PaymentMethod"),
+    preTransactionId: readText(fields, "PreTransactionId"),
+  });
 
   return {
     kind,
@@ -134,8 +181,68 @@ export function parseNedarimCallback(
     confirmation,
     solek,
     isTemporary:
-      kind === CALLBACK_KIND.transaction && confirmation === null && !isNonCard,
+      kind === CALLBACK_KIND.transaction && confirmation === null && !isExempt,
     last4: readText(fields, "LastNum"),
     transactionTime: readText(fields, "TransactionTime"),
   };
+}
+
+/** עדכון שגיאה/סירוב מהספק: Status=Error, לעולם בלי TransactionId או Confirmation */
+export interface ErrorUpdate {
+  /** טקסט הסירוב (עברית או קוד), כפי שהגיע */
+  message: string | null;
+  /** Transaction או Keva */
+  source: string | null;
+  /** קוד הסירוב של חברת האשראי (ErrorCode), בדחיית חיוב בלבד */
+  errorCode: string | null;
+  /** ה-id של התרומה כפי שחזר (אמור להיות uuid) */
+  param2: string | null;
+}
+
+/**
+ * עדכון שגיאה: Status שווה ל-Error (בלי רגישות לרישיות) ואין TransactionId.
+ * null בכל מקרה אחר, כולל גוף שאינו JSON. בכוונה לא קוראים שדות לקוח (שם/טלפון/מייל/זהות).
+ */
+export function parseNedarimErrorUpdate(jsonText: string): ErrorUpdate | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonText);
+  } catch {
+    return null;
+  }
+  const body = bodySchema.safeParse(parsed);
+  if (!body.success) return null;
+
+  const fields = lowerKeyed(body.data);
+  const isError = readText(fields, "Status")?.toLowerCase() === "error";
+  if (!isError || readText(fields, "TransactionId")) return null;
+
+  return {
+    message: readText(fields, "Message"),
+    source: readText(fields, "Source"),
+    errorCode: readText(fields, "ErrorCode"),
+    param2: readText(fields, "Param2"),
+  };
+}
+
+export type NedarimBody =
+  | { type: "invalid_json" }
+  | { type: "error_update"; update: ErrorUpdate }
+  | { type: "payment"; callback: NormalizedCallback }
+  | { type: "unrecognized" };
+
+/**
+ * סיווג גוף חתום: רק טקסט שאינו JSON הוא invalid_json (400); כל JSON אחר מאושר
+ * ב-200, גם כשאיננו פועלים לפיו, כי הספק שולח כל עדכון פעם אחת ומתריע על כל כשל.
+ */
+export function classifyNedarimBody(jsonText: string): NedarimBody {
+  try {
+    JSON.parse(jsonText);
+  } catch {
+    return { type: "invalid_json" };
+  }
+  const update = parseNedarimErrorUpdate(jsonText);
+  if (update) return { type: "error_update", update };
+  const callback = parseNedarimCallback(jsonText);
+  return callback ? { type: "payment", callback } : { type: "unrecognized" };
 }

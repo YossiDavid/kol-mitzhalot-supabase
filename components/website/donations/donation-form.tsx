@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { HeartHandshake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,13 +15,15 @@ import {
   NO_DEDICATION,
   composeDedication,
   resolveAmount,
-  validateDonationForm,
+  validateDonationFormClient,
   type DonationFormErrors,
   type DonationFormField,
   type DonationFormValues,
 } from "@/features/donations/lib/donation-form";
 import {
   DEDICATION_NAME_MAX_LENGTH,
+  DONOR_ID_MAX_DIGITS,
+  isDonorIdRequired,
   DONOR_NAME_MAX_LENGTH,
   type DonationFrequency,
 } from "@/features/donations/lib/nedarim";
@@ -30,6 +32,7 @@ import {
   buildStartPaymentValue,
   type StartPaymentValue,
 } from "@/features/donations/lib/start-payment";
+import type { ProviderFieldError } from "@/features/donations/lib/provider-errors";
 import { ChoiceCard } from "./choice-card";
 import { FormField, fieldDescriptionId } from "./form-field";
 
@@ -39,6 +42,8 @@ interface DonationFormProps {
   apiValid: string;
   /** נקרא אחרי וולידציה ויצירת כוונה בשרת: ה-Value ל-StartPayment וה-id של הכוונה */
   onContinue: (value: StartPaymentValue, intentId: string) => void;
+  /** סירוב מהספק שממופה לשדה: מציג את ההודעה ומעביר אליו מיקוד. אובייקט חדש בכל סירוב */
+  providerError?: ProviderFieldError | null;
 }
 
 const INITIAL_VALUES: DonationFormValues = {
@@ -50,18 +55,27 @@ const INITIAL_VALUES: DonationFormValues = {
   lastName: "",
   phone: "",
   email: "",
+  donorId: "",
 };
+
+/** חברת הסליקה דורשת טלפון ומייל לחיוב אשראי מכתובת IP מחוץ לישראל */
+const ABROAD_HINT = "לתורמים מחו״ל: חברת הסליקה דורשת טלפון ומייל";
+
+/** אורך שדה הזהות: מקום לרווחים/מקפים; הבדיקה האמיתית אחרי הסרתם */
+const DONOR_ID_INPUT_MAX_LENGTH = DONOR_ID_MAX_DIGITS + 6;
 
 const FIELD_IDS: Record<DonationFormField, string> = {
   amount: "donation-custom-amount",
   dedicationName: "donation-dedication-name",
   phone: "donation-phone",
   email: "donation-email",
+  donorId: "donation-donor-id",
 };
 
 const FIELD_ORDER: DonationFormField[] = [
   "amount",
   "dedicationName",
+  "donorId",
   "phone",
   "email",
 ];
@@ -80,6 +94,7 @@ export function DonationForm({
   mosadId,
   apiValid,
   onContinue,
+  providerError = null,
 }: DonationFormProps) {
   const [values, setValues] = useState<DonationFormValues>(INITIAL_VALUES);
   const [frequency, setFrequency] = useState<DonationFrequency>("once");
@@ -92,12 +107,23 @@ export function DonationForm({
   const update = (patch: Partial<DonationFormValues>) =>
     setValues((current) => ({ ...current, ...patch }));
 
+  // סירוב מהספק (למשל NEED ZEOUT): ההודעה ליד השדה והמיקוד אליו. הטופס כבר גלוי ברינדור הזה
+  useEffect(() => {
+    if (!providerError) return;
+    setErrors((current) => ({
+      ...current,
+      [providerError.field]: providerError.message,
+    }));
+    document.getElementById(FIELD_IDS[providerError.field])?.focus();
+  }, [providerError]);
+
+  const isIdRequired = isDonorIdRequired(frequency);
   const hasDedication = values.dedicationType !== NO_DEDICATION;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isSubmittingRef.current) return;
-    const nextErrors = validateDonationForm(values);
+    const nextErrors = validateDonationFormClient(values, frequency);
     setErrors(nextErrors);
     setSubmitError(null);
 
@@ -115,6 +141,7 @@ export function DonationForm({
       values.dedicationName,
     );
     // כוונה חדשה בכל המשך: StartPayment חוזר דורס את הקודם, וכל תשלום נקשר ל-id משלו
+    // מספר הזהות אינו נשלח לשרת שלנו: רק ל-iframe של הספק (ראו buildStartPaymentValue)
     const result = await createDonationIntent({
       amount,
       frequency,
@@ -142,6 +169,7 @@ export function DonationForm({
       lastName: values.lastName,
       phone: values.phone,
       email: values.email,
+      donorId: values.donorId,
       createId: () => result.intent.id,
       callBack: result.intent.callbackUrl,
     });
@@ -271,12 +299,12 @@ export function DonationForm({
         <legend className="mb-1 text-subtitle font-bold text-foreground">
           פרטי התורם{" "}
           <span className="text-body-sm font-normal text-muted-foreground">
-            (לא חובה)
+            {isIdRequired ? "(תעודת זהות נדרשת, השאר לא חובה)" : "(לא חובה)"}
           </span>
         </legend>
         <p className="text-body-sm text-muted-foreground">
-          פרטים שתמלאו כאן יועברו למסך התשלום כך שלא תצטרכו להקלידם שוב. אפשר גם
-          להשאיר ריק ולמלא שם.
+          פרטים שתמלאו כאן יועברו למסך התשלום כך שלא תצטרכו להקלידם שוב. את שאר
+          הפרטים אפשר להשאיר ריקים ולמלא שם.
         </p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField id="donation-first-name" label="שם פרטי">
@@ -297,7 +325,35 @@ export function DonationForm({
               onChange={(event) => update({ lastName: event.target.value })}
             />
           </FormField>
-          <FormField id={FIELD_IDS.phone} label="טלפון" error={errors.phone}>
+          <FormField
+            id={FIELD_IDS.donorId}
+            label="תעודת זהות"
+            error={errors.donorId}
+            hint={
+              isIdRequired
+                ? "הוראת קבע באשראי דורשת מספר תעודת זהות"
+                : "לבעלי כרטיס אשראי ישראלי. חברת הסליקה עשויה לדרוש זאת להשלמת התרומה."
+            }
+            optional={!isIdRequired}
+          >
+            <Input
+              id={FIELD_IDS.donorId}
+              inputMode="numeric"
+              dir="ltr"
+              className="text-end"
+              autoComplete="off"
+              maxLength={DONOR_ID_INPUT_MAX_LENGTH}
+              value={values.donorId}
+              onChange={(event) => update({ donorId: event.target.value })}
+              {...fieldA11y("donorId", errors)}
+            />
+          </FormField>
+          <FormField
+            id={FIELD_IDS.phone}
+            label="טלפון"
+            error={errors.phone}
+            hint={ABROAD_HINT}
+          >
             <Input
               id={FIELD_IDS.phone}
               type="tel"
@@ -309,7 +365,12 @@ export function DonationForm({
               {...fieldA11y("phone", errors)}
             />
           </FormField>
-          <FormField id={FIELD_IDS.email} label="מייל" error={errors.email}>
+          <FormField
+            id={FIELD_IDS.email}
+            label="מייל"
+            error={errors.email}
+            hint={ABROAD_HINT}
+          >
             <Input
               id={FIELD_IDS.email}
               type="email"

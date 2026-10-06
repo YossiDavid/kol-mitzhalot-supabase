@@ -15,6 +15,8 @@ export const FRAME_READY_TIMEOUT_MS = 15_000;
 interface FrameHandlers {
   onBack: () => void;
   onTransactionOk: () => void;
+  /** סירוב מהספק (Status=Error) עם הטקסט שלו, אם היה */
+  onTransactionError: (message: string | null) => void;
 }
 
 /**
@@ -71,6 +73,7 @@ export function useNedarimFrame(handlers: FrameHandlers) {
         case "transaction":
           // הודעה בדפדפן של התורם, ניתנת לזיוף: מספיקה להצגת תודה, לא הוכחת תשלום
           if (frameEvent.isOk) handlersRef.current.onTransactionOk();
+          else handlersRef.current.onTransactionError(frameEvent.message);
           break;
         case "other":
           break;

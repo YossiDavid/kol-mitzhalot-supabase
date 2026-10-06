@@ -17,7 +17,6 @@ const OPEN = { shareContact: true, shareMedical: true };
 
 /** העמודות שאסור שיישלפו כשההתקשרות סגורה */
 const CONTACT_COLUMNS = [
-  "identity_number",
   "phone",
   "street",
   "house",
@@ -112,6 +111,12 @@ test.describe("ה-select של כרטיס בהצעה", () => {
     }
     expect(select).toContain("medical_records(*)");
     expect(select).toContain("references(*)");
+  });
+
+  test("ת.ז. אינה נשלפת לעולם, גם כשההתקשרות פתוחה", () => {
+    // Act / Assert
+    expect(buildProposalStudentSelect(CLOSED)).not.toContain("identity_number");
+    expect(buildProposalStudentSelect(OPEN)).not.toContain("identity_number");
   });
 });
 

@@ -25,10 +25,26 @@ test.describe("תרומות (ניהול)", () => {
         donor_first_name: "דנה",
         donor_last_name: `בדיקה${RUN}`,
         dedication_text: "לזכות בדיקה",
+        // ניסיון כושל שקדם לתשלום: לא מוצג אחרי ששולם
+        last_error: "NEED ZEOUT",
+        last_error_at: new Date().toISOString(),
       },
       { amount: 7772, frequency: "monthly", status: "pending" },
       { amount: 7773, frequency: "one_time", status: "mismatch" },
       { amount: 7774, frequency: "one_time", status: "pending" },
+      {
+        amount: 7776,
+        frequency: "monthly",
+        status: "pending",
+        provider_keva_id: `${RUN}-keva`,
+      },
+      {
+        amount: 7775,
+        frequency: "one_time",
+        status: "pending",
+        last_error: "NEED ZEOUT",
+        last_error_at: new Date().toISOString(),
+      },
     ];
     const { data, error } = await db
       .from("donations")
@@ -110,6 +126,21 @@ test.describe("תרומות (ניהול)", () => {
     const temporaryRow = table.getByRole("row").filter({ hasText: "7,774" });
     await expect(temporaryRow).toContainText("ממתין לאישור סליקה");
     await expect(monthlyRow).not.toContainText("ממתין לאישור סליקה");
+
+    // ניסיון תשלום שנכשל מוצג כהערה עמומה רק לתרומה שעדיין ממתינה
+    const failedRow = table.getByRole("row").filter({ hasText: "7,775" });
+    await expect(failedRow).toContainText("ממתין");
+    await expect(failedRow.getByTestId("donation-last-error")).toContainText(
+      "ניסיון תשלום נכשל: NEED ZEOUT",
+    );
+    await expect(paidRow).not.toContainText("ניסיון תשלום נכשל");
+
+    // הוראת קבע שהוקמה וממתינה לחיוב הראשון; ו-7772 (עם חיובים) לא
+    const kevaRow = table.getByRole("row").filter({ hasText: "7,776" });
+    await expect(
+      kevaRow.getByTestId("donation-awaiting-first-charge"),
+    ).toContainText("הוראת קבע הוקמה, ממתין לחיוב ראשון");
+    await expect(monthlyRow).not.toContainText("ממתין לחיוב ראשון");
 
     const unmatched = page.getByTestId("donations-unmatched");
     await expect(unmatched).not.toContainText(`${RUN}-temp`);

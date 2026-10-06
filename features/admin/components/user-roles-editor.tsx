@@ -6,16 +6,12 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@/components/ui/native-select";
 import { createClient } from "@/lib/supabase/client";
 import type { Role } from "@/lib/user-role";
 import {
-  INSTITUTION_TYPE_LABELS,
-  type InstitutionType,
-} from "@/features/institutions/lib/institution-labels";
+  StaffInstitutionsPicker,
+  type StaffInstitutionOption,
+} from "@/features/admin/components/staff-institutions-picker";
 
 const EDITABLE_ROLES: {
   role: Extract<Role, "admin" | "shadchan" | "staff">;
@@ -26,32 +22,28 @@ const EDITABLE_ROLES: {
   { role: "staff", label: "איש צוות" },
 ];
 
-interface InstitutionOption {
-  id: string;
-  name: string;
-  city: string | null;
-  type: InstitutionType;
-}
-
 interface UserRolesEditorProps {
   userId: string;
   initialRoles: Role[];
-  initialInstitutionId?: string | null;
+  /** המוסדות שאיש הצוות משויך אליהם כרגע (staff_institutions) */
+  initialInstitutionIds?: string[];
 }
 
 export function UserRolesEditor({
   userId,
   initialRoles,
-  initialInstitutionId = null,
+  initialInstitutionIds = [],
 }: UserRolesEditorProps) {
   const router = useRouter();
   const [roles, setRoles] = useState<Set<string>>(
     () => new Set(initialRoles.filter((r) => r !== "user")),
   );
-  const [institutionId, setInstitutionId] = useState<string>(
-    initialInstitutionId ?? "",
+  const [institutionIds, setInstitutionIds] = useState<Set<string>>(
+    () => new Set(initialInstitutionIds),
   );
-  const [institutions, setInstitutions] = useState<InstitutionOption[]>([]);
+  const [institutions, setInstitutions] = useState<StaffInstitutionOption[]>(
+    [],
+  );
   const [isInstitutionsLoading, setIsInstitutionsLoading] = useState(true);
   const [institutionsError, setInstitutionsError] = useState<string | null>(
     null,
@@ -89,8 +81,17 @@ export function UserRolesEditor({
     });
   };
 
+  const toggleInstitution = (institutionId: string, checked: boolean) => {
+    setInstitutionIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(institutionId);
+      else next.delete(institutionId);
+      return next;
+    });
+  };
+
   const isStaffChecked = roles.has("staff");
-  const isMissingInstitution = isStaffChecked && !institutionId;
+  const isMissingInstitution = isStaffChecked && institutionIds.size === 0;
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -100,7 +101,7 @@ export function UserRolesEditor({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           roles: Array.from(roles),
-          institutionId: isStaffChecked ? institutionId : null,
+          institutionIds: isStaffChecked ? Array.from(institutionIds) : [],
         }),
       });
       const data = await res.json();
@@ -142,9 +143,9 @@ export function UserRolesEditor({
       </div>
 
       {isStaffChecked && (
-        <div className="max-w-sm space-y-1">
+        <div className="max-w-xl space-y-1">
           <label className="text-body-sm font-medium">
-            מוסד לימודים <span className="text-destructive">*</span>
+            מוסדות לימוד <span className="text-destructive">*</span>
           </label>
           {institutionsError ? (
             <p className="text-body-sm text-destructive">{institutionsError}</p>
@@ -160,28 +161,20 @@ export function UserRolesEditor({
             </p>
           ) : (
             <>
-              <NativeSelect
-                value={institutionId}
+              <StaffInstitutionsPicker
+                institutions={institutions}
+                selectedIds={institutionIds}
                 disabled={isSaving || isInstitutionsLoading}
-                onChange={(e) => setInstitutionId(e.target.value)}
-              >
-                <NativeSelectOption value="" disabled>
-                  {isInstitutionsLoading
-                    ? "טוען מוסדות..."
-                    : "בחר/י מוסד לימודים"}
-                </NativeSelectOption>
-                {institutions.map((institution) => (
-                  <NativeSelectOption
-                    key={institution.id}
-                    value={institution.id}
-                  >
-                    {`${institution.name}${institution.city ? ` · ${institution.city}` : ""} · ${INSTITUTION_TYPE_LABELS[institution.type]}`}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
+                onToggle={toggleInstitution}
+              />
               {isMissingInstitution && (
-                <p className="text-body-sm text-muted-foreground">
-                  יש לבחור מוסד לימודים כדי להעניק תפקיד &quot;איש צוות&quot;
+                <p
+                  role="alert"
+                  data-slot="staff-institution-required"
+                  className="text-body-sm text-destructive"
+                >
+                  יש לבחור לפחות מוסד לימודים אחד כדי להעניק תפקיד &quot;איש
+                  צוות&quot;
                 </p>
               )}
             </>

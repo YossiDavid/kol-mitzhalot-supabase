@@ -16,10 +16,13 @@ import {
   resolveNedarimMosadId,
 } from "@/features/donations/lib/nedarim";
 import {
-  validateDonationForm,
+  DONOR_ID_INVALID_MESSAGE,
+  DONOR_ID_REQUIRED_MESSAGE,
+  validateDonationFormClient,
   NO_DEDICATION,
   type DonationFormValues,
 } from "@/features/donations/lib/donation-form";
+import { resolveProviderError } from "@/features/donations/lib/provider-errors";
 import { parseFrameMessage } from "@/features/donations/lib/frame-messages";
 import {
   COMMENT_MAX_LENGTH,
@@ -28,8 +31,10 @@ import {
 
 const MOSAD = "1234567";
 const API_VALID = "test-valid";
+const DONOR_ID = "123456789";
 const base = {
   mosadId: MOSAD,
+  donorId: DONOR_ID,
   apiValid: API_VALID,
   amount: 180,
   frequency: "once" as const,
@@ -48,6 +53,7 @@ test.describe("buildStartPaymentValue", () => {
       Groupe: "תרומה",
       Param2: "id-1",
       ButtonText: "תרומה",
+      Zeout: DONOR_ID,
     });
   });
 
@@ -78,6 +84,7 @@ test.describe("buildStartPaymentValue", () => {
       Phone: "0501234567",
       Mail: "a@b.co",
       Comment: "לעילוי נשמת משה בן שרה",
+      Zeout: DONOR_ID,
     });
     expect(value).not.toHaveProperty("Param1");
   });
@@ -120,6 +127,36 @@ test.describe("buildStartPaymentValue", () => {
       "לזכות src=1",
     ]) {
       expect(buildStartPaymentValue({ ...base, dedication })).toBeNull();
+    }
+  });
+
+  test("Zeout: רווחים ומקפים מוסרים, 4 עד 9 ספרות", () => {
+    const zeoutOf = (donorId: string) =>
+      buildStartPaymentValue({ ...base, donorId })?.Zeout;
+    expect(zeoutOf(" 123-456 789 ")).toBe("123456789");
+    expect(zeoutOf("1234")).toBe("1234");
+    expect(zeoutOf("012345678")).toBe("012345678");
+  });
+
+  test("בלי מספר זהות: אין מפתח Zeout בכלל (גם לא ריק)", () => {
+    for (const donorId of [undefined, "", "   ", " - "]) {
+      const value = buildStartPaymentValue({ ...base, donorId });
+      expect(value, String(donorId)).not.toBeNull();
+      expect(value, String(donorId)).not.toHaveProperty("Zeout");
+    }
+  });
+
+  test("הוראת קבע בלי מספר זהות תקין מחזירה null; עם מספר שולחת Zeout", () => {
+    const monthly = { ...base, frequency: "monthly" as const };
+    for (const donorId of [undefined, "", " - ", "123"]) {
+      expect(buildStartPaymentValue({ ...monthly, donorId })).toBeNull();
+    }
+    expect(buildStartPaymentValue(monthly)?.Zeout).toBe(DONOR_ID);
+  });
+
+  test("מספר זהות שהוקלד ואינו תקין מחזיר null ולא נשלח", () => {
+    for (const donorId of ["123", "1234567890", "12a456", "12.456", "١٢٣٤٥٦"]) {
+      expect(buildStartPaymentValue({ ...base, donorId }), donorId).toBeNull();
     }
   });
 
@@ -179,18 +216,85 @@ test.describe("וולידציה והודעות", () => {
     lastName: "",
     phone: "",
     email: "",
+    donorId: DONOR_ID,
   };
 
   test("קישור בשם ההקדשה נדחה בעברית", () => {
-    expect(validateDonationForm(values)).toEqual({});
-    const errors = validateDonationForm({
-      ...values,
-      dedicationName: "http://evil.co",
-    });
+    expect(validateDonationFormClient(values, "once")).toEqual({});
+    const errors = validateDonationFormClient(
+      {
+        ...values,
+        dedicationName: "http://evil.co",
+      },
+      "once",
+    );
     expect(errors.dedicationName).toMatch(/קישורים/);
     expect(
-      validateDonationForm({ ...values, dedicationType: NO_DEDICATION }),
+      validateDonationFormClient(
+        { ...values, dedicationType: NO_DEDICATION },
+        "once",
+      ),
     ).toEqual({});
+  });
+
+  test("מספר זהות אופציונלי: ריק תקין, ואם הוקלד ספרות בלבד, 4 עד 9", () => {
+    for (const donorId of ["", "  ", " - "]) {
+      expect(
+        validateDonationFormClient({ ...values, donorId }, "once"),
+        donorId,
+      ).toEqual({});
+    }
+    for (const donorId of ["123", "1234567890", "12ab56", "12-3"]) {
+      expect(
+        validateDonationFormClient({ ...values, donorId }, "once").donorId,
+        donorId,
+      ).toBe(DONOR_ID_INVALID_MESSAGE);
+    }
+    for (const donorId of ["1234", "123456789", " 12-34 56 "]) {
+      expect(
+        validateDonationFormClient({ ...values, donorId }, "once"),
+        donorId,
+      ).toEqual({});
+    }
+  });
+
+  test("הוראת קבע דורשת מספר זהות (לפי הספק); חד-פעמית לא", () => {
+    expect(
+      validateDonationFormClient({ ...values, donorId: "" }, "monthly"),
+    ).toEqual({ donorId: DONOR_ID_REQUIRED_MESSAGE });
+    expect(
+      validateDonationFormClient({ ...values, donorId: "12" }, "monthly")
+        .donorId,
+    ).toBe(DONOR_ID_INVALID_MESSAGE);
+    expect(validateDonationFormClient(values, "monthly")).toEqual({});
+    expect(
+      validateDonationFormClient({ ...values, donorId: "" }, "once"),
+    ).toEqual({});
+  });
+
+  test("resolveProviderError ממפה NEED ZEOUT (בכל רישיות, בתוך טקסט) לשדה הזהות", () => {
+    for (const message of [
+      "NEED ZEOUT",
+      " need zeout ",
+      "Error: NEED ZEOUT.",
+    ]) {
+      expect(resolveProviderError(message), message).toMatchObject({
+        field: "donorId",
+        message: expect.stringContaining("תעודת זהות"),
+      });
+    }
+    expect(resolveProviderError("NEED PHONE")?.field).toBe("phone");
+    expect(resolveProviderError(" need Mail")?.field).toBe("email");
+    for (const message of [
+      null,
+      "",
+      "נדחה",
+      "Declined",
+      "NEED ADRESSE",
+      "we NEED PHONE",
+    ]) {
+      expect(resolveProviderError(message), String(message)).toBeNull();
+    }
   });
 
   test("parseFrameMessage מצמצם הודעות לא אמינות", () => {
@@ -208,16 +312,16 @@ test.describe("וולידציה והודעות", () => {
         Name: "TransactionResponse",
         Value: JSON.stringify({ Status: "OK" }),
       }),
-    ).toEqual({ type: "transaction", isOk: true });
+    ).toEqual({ type: "transaction", isOk: true, message: null });
     expect(
       parseFrameMessage({
         Name: "TransactionResponse",
         Value: { Status: "Error", Message: "x" },
       }),
-    ).toEqual({ type: "transaction", isOk: false });
+    ).toEqual({ type: "transaction", isOk: false, message: "x" });
     expect(
       parseFrameMessage({ Name: "TransactionResponse", Value: "not json" }),
-    ).toEqual({ type: "transaction", isOk: false });
+    ).toEqual({ type: "transaction", isOk: false, message: null });
     expect(parseFrameMessage({ Name: "PendingTransaction" })).toEqual({
       type: "other",
     });
@@ -245,6 +349,14 @@ const STUB_FRAME_HTML = `<!doctype html><html><body><script>
 </script></body></html>`;
 
 const CONTINUE_BUTTON = /המשך לתשלום/;
+
+const UI_DONOR_ID = "123-456 782";
+const NEED_ZEOUT_MESSAGE =
+  "חברת הסליקה דורשת מספר תעודת זהות להשלמת התרומה בכרטיס זה. נא להזין ולנסות שוב.";
+const NEED_ZEOUT_FRAME_MESSAGE = {
+  Name: "TransactionResponse",
+  Value: JSON.stringify({ Status: "Error", Message: "NEED ZEOUT" }),
+};
 
 const INTENT_ROUTE = "**/api/v1/donations/intent";
 const STATUS_ROUTE = "**/api/v1/donations/*/status";
@@ -280,6 +392,9 @@ async function openDonationPage(page: Page) {
     "משתני הסביבה של נדרים פלוס לא מוגדרים בשרת - רץ מסלול ה-fallback",
   );
 }
+
+const fillDonorId = (page: Page, value = UI_DONOR_ID) =>
+  page.getByLabel("תעודת זהות").fill(value);
 
 async function fillMonthlyDedication(page: Page) {
   await page.getByText("360 ₪").click();
@@ -341,6 +456,7 @@ test.describe("עמוד תרומות והנצחות", () => {
   test("המשך לתשלום מציג את ה-iframe ומזריק את הערכים", async ({ page }) => {
     await openDonationPage(page);
     await fillMonthlyDedication(page);
+    await fillDonorId(page);
     await page.getByRole("button", { name: CONTINUE_BUTTON }).click();
 
     await expect(page.locator("#NedarimFrame")).toBeVisible();
@@ -365,6 +481,7 @@ test.describe("עמוד תרומות והנצחות", () => {
       FirstName: "ישראל",
       LastName: "ישראלי",
       ButtonText: "תרומה",
+      Zeout: "123456782",
     });
     expect(value).not.toHaveProperty("Param1");
     expect(value.Param2).toMatch(/^[0-9a-f-]{36}$/);
@@ -373,6 +490,7 @@ test.describe("עמוד תרומות והנצחות", () => {
   test("Back מחזיר לטופס עם הערכים שהוזנו", async ({ page }) => {
     await openDonationPage(page);
     await fillMonthlyDedication(page);
+    await fillDonorId(page);
     await page.getByRole("button", { name: CONTINUE_BUTTON }).click();
     await expect(page.locator("#NedarimFrame")).toBeVisible();
 
@@ -471,6 +589,172 @@ test.describe("עמוד תרומות והנצחות", () => {
       page.getByText("נא להזין את שם מי שמוקדשת התרומה."),
     ).toBeVisible();
     await expectFrameHidden(page);
+  });
+
+  test("מספר זהות ריק: ממשיכים, וב-StartPayment אין מפתח Zeout", async ({
+    page,
+  }) => {
+    await openDonationPage(page);
+    await page.getByRole("button", { name: CONTINUE_BUTTON }).click();
+    await expect(page.locator("#NedarimFrame")).toBeVisible();
+    await expect.poll(async () => (await received(page)).length).toBe(1);
+    const [message] = await received(page);
+    expect(message.data.Value).not.toHaveProperty("Zeout");
+  });
+
+  test("מספר זהות שהוקלד ואינו תקין נחסם בטופס, ובלי קריאה לשרת", async ({
+    page,
+  }) => {
+    await openDonationPage(page);
+    let intentCalls = 0;
+    await page.route(INTENT_ROUTE, (route) => {
+      intentCalls += 1;
+      return route.fulfill({ status: 201, json: { id: crypto.randomUUID() } });
+    });
+    const donorId = page.getByLabel("תעודת זהות");
+    const submit = page.getByRole("button", { name: CONTINUE_BUTTON });
+
+    await donorId.fill("12ab56");
+    await submit.click();
+    await expect(page.getByText(/4 עד 9 ספרות/)).toBeVisible();
+    await expect(donorId).toBeFocused();
+
+    await donorId.fill("123");
+    await submit.click();
+    await expect(page.getByText(/4 עד 9 ספרות/)).toBeVisible();
+
+    await expectFrameHidden(page);
+    expect(await received(page)).toHaveLength(0);
+    expect(intentCalls).toBe(0);
+  });
+
+  test("NEED ZEOUT מהספק: חזרה לטופס עם ערכים, הודעה ומיקוד, והמשך שולח Zeout", async ({
+    page,
+  }) => {
+    await openDonationPage(page);
+    await page.getByLabel("שם פרטי").fill("ישראל");
+    await page.getByLabel("טלפון").fill("0501234567");
+    await page.getByRole("button", { name: CONTINUE_BUTTON }).click();
+    await expect(page.locator("#NedarimFrame")).toBeVisible();
+
+    await emit(page, NEED_ZEOUT_FRAME_MESSAGE);
+
+    const donorId = page.getByLabel("תעודת זהות");
+    await expect(
+      page.getByRole("button", { name: CONTINUE_BUTTON }),
+    ).toBeVisible();
+    await expect(page.getByText(NEED_ZEOUT_MESSAGE)).toBeVisible();
+    await expect(donorId).toBeFocused();
+    await expect(page.getByLabel("שם פרטי")).toHaveValue("ישראל");
+    await expect(page.getByLabel("טלפון")).toHaveValue("0501234567");
+    await expectFrameHidden(page);
+
+    await fillDonorId(page);
+    await page.getByRole("button", { name: CONTINUE_BUTTON }).click();
+    await expect.poll(async () => (await received(page)).length).toBe(2);
+    const [first, second] = await received(page);
+    expect(first.data.Value).not.toHaveProperty("Zeout");
+    expect(second.data.Name).toBe("StartPayment");
+    expect(second.data.Value).toMatchObject({ Zeout: "123456782" });
+    expect((second.data.Value as Record<string, string>).Param2).not.toBe(
+      (first.data.Value as Record<string, string>).Param2,
+    );
+  });
+
+  test("NEED PHONE מהספק: חזרה לטופס עם מיקוד בטלפון והודעה", async ({
+    page,
+  }) => {
+    await openDonationPage(page);
+    await page.getByRole("button", { name: CONTINUE_BUTTON }).click();
+    await expect(page.locator("#NedarimFrame")).toBeVisible();
+
+    await emit(page, {
+      Name: "TransactionResponse",
+      Value: JSON.stringify({ Status: "Error", Message: "NEED PHONE" }),
+    });
+
+    await expect(page.getByLabel("טלפון")).toBeFocused();
+    await expect(page.getByText(/דורשת מספר טלפון/)).toBeVisible();
+  });
+
+  test("הוראת קבע דורשת מספר זהות בטופס, ושדה הזהות מציג רמז מתאים", async ({
+    page,
+  }) => {
+    await openDonationPage(page);
+    await expect(page.getByText(/לבעלי כרטיס אשראי ישראלי/)).toBeVisible();
+    await expect(page.getByText(/לתורמים מחו״ל/)).toHaveCount(2);
+
+    await page.getByText("הוראת קבע חודשית", { exact: true }).click();
+    await expect(
+      page.getByText("הוראת קבע באשראי דורשת מספר תעודת זהות", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: CONTINUE_BUTTON }).click();
+    await expect(
+      page.getByText("הוראת קבע באשראי דורשת מספר תעודת זהות.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(page.getByLabel("תעודת זהות")).toBeFocused();
+    expect(await received(page)).toHaveLength(0);
+
+    await fillDonorId(page);
+    await page.getByRole("button", { name: CONTINUE_BUTTON }).click();
+    await expect.poll(async () => (await received(page)).length).toBe(1);
+    expect((await received(page))[0].data.Value).toMatchObject({
+      PaymentType: "HK",
+      Zeout: "123456782",
+    });
+  });
+
+  test("שגיאה אחרת מהספק: נשארים ב-iframe ולא חוזרים לטופס", async ({
+    page,
+  }) => {
+    await openDonationPage(page);
+    await page.getByRole("button", { name: CONTINUE_BUTTON }).click();
+    await expect(page.locator("#NedarimFrame")).toBeVisible();
+
+    await emit(page, {
+      Name: "TransactionResponse",
+      Value: JSON.stringify({ Status: "Error", Message: "כרטיס נדחה" }),
+    });
+    await page.waitForTimeout(300);
+
+    await expect(
+      page.getByRole("button", { name: CONTINUE_BUTTON }),
+    ).toHaveCount(0);
+    await expect(page.getByText(NEED_ZEOUT_MESSAGE)).toBeHidden();
+    await expect(page.locator("#NedarimFrame")).toBeVisible();
+  });
+
+  test("מספר הזהות נשלח רק ל-iframe ולא בבקשת הכוונה לשרת", async ({
+    page,
+  }) => {
+    await openDonationPage(page);
+    await fillDonorId(page);
+    const intentBodies: string[] = [];
+    await page.route(INTENT_ROUTE, (route) => {
+      intentBodies.push(route.request().postData() ?? "");
+      return route.fulfill({
+        status: 201,
+        json: { id: crypto.randomUUID(), callbackUrl: null },
+      });
+    });
+    await page.getByRole("button", { name: CONTINUE_BUTTON }).click();
+    await expect(page.locator("#NedarimFrame")).toBeVisible();
+
+    expect(intentBodies).toHaveLength(1);
+    const body = JSON.parse(intentBodies[0]) as Record<string, unknown>;
+    for (const key of Object.keys(body)) {
+      expect(key.toLowerCase()).not.toMatch(/zeout|donorid|idnumber|tz/);
+    }
+    expect(intentBodies[0]).not.toContain("123456782");
+    expect(intentBodies[0]).not.toContain("123-456 782");
+
+    await expect.poll(async () => (await received(page)).length).toBe(1);
+    const [message] = await received(page);
+    expect(message.data.Value).toMatchObject({ Zeout: "123456782" });
   });
 
   test("קישור בהקדשה נחסם בטופס", async ({ page }) => {

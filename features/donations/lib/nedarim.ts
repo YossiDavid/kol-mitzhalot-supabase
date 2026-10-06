@@ -19,6 +19,19 @@ export const DONOR_NAME_MAX_LENGTH = 60;
 export const DEDICATION_NAME_MAX_LENGTH = 80;
 export const EMAIL_MAX_LENGTH = 100;
 
+/**
+ * מספר זהות של התורם (Zeout): אופציונלי כברירת מחדל, כי תורם עם כרטיס אשראי זר אין לו
+ * תעודת זהות ישראלית. חברת הסליקה עשויה לסרב בלעדיו ("NEED ZEOUT") ואז הטופס מחזיר
+ * את התורם להזין אותו (ראו provider-errors.ts). כדי להפוך אותו לחובה: true.
+ * המספר נשלח רק ל-iframe ב-postMessage, ולעולם לא לשרת שלנו.
+ */
+export const DONOR_ID_REQUIRED = false;
+/** לפי הספק: הוראת קבע באשראי מדף התשלום דורשת תעודת זהות תמיד */
+export const DONOR_ID_REQUIRED_FOR_MONTHLY = true;
+/** לפי הספק: 4 עד 9 ספרות */
+export const DONOR_ID_MIN_DIGITS = 4;
+export const DONOR_ID_MAX_DIGITS = 9;
+
 export const DONATION_GROUP = "תרומה";
 export const DEDICATION_GROUP = "הנצחה";
 
@@ -74,4 +87,25 @@ export function isValidEmail(value: string): boolean {
 
 export function containsForbiddenLink(text: string): boolean {
   return FORBIDDEN_COMMENT_PATTERN.test(text);
+}
+
+/** האם מספר הזהות חובה לתדירות הזו */
+export function isDonorIdRequired(frequency: DonationFrequency): boolean {
+  return (
+    DONOR_ID_REQUIRED ||
+    (frequency === "monthly" && DONOR_ID_REQUIRED_FOR_MONTHLY)
+  );
+}
+
+/** מסיר רווחים ומקפים; לא בודק תקינות */
+export function normalizeDonorId(raw: string | null | undefined): string {
+  return (raw ?? "").replace(/[\s-]/g, "");
+}
+
+/** ספרות בלבד, 4 עד 9 (אחרי הסרת רווחים ומקפים) */
+export function isValidDonorId(raw: string | null | undefined): boolean {
+  const digits = normalizeDonorId(raw);
+  return new RegExp(
+    `^\\d{${DONOR_ID_MIN_DIGITS},${DONOR_ID_MAX_DIGITS}}$`,
+  ).test(digits);
 }

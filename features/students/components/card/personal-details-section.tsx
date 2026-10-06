@@ -22,7 +22,7 @@ export type CardOwnerInfo = {
 
 /**
  * "פרטים אישיים". אותו רכיב משרת את הגולש המחובר ואת התצוגה הציבורית:
- * בענף הציבורי השדות הרגישים (ת.ז., טלפון, סוג מכשיר, רחוב, מספר בית)
+ * בענף הציבורי השדות הרגישים (טלפון, סוג מכשיר, רחוב, מספר בית)
  * אינם קיימים באובייקט כלל, ו-`InfoTag` לא מרנדר אותם.
  */
 export function PersonalDetailsSection({
@@ -66,7 +66,6 @@ export function PersonalDetailsSection({
             />
           </div>
         )}
-        <InfoTag label="תעודת זהות" value={student.identity_number} />
         <InfoTag
           label="סטטוס אישי"
           value={

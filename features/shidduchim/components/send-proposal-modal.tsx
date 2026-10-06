@@ -188,7 +188,7 @@ export default function SendProposalModal({
                 htmlFor="share-contact"
                 className="text-body-sm leading-snug font-normal"
               >
-                פרטי התקשרות (טלפון, ת.ז., כתובת, קו״ח, טלפוני הורים וממליצים)
+                פרטי התקשרות (טלפון, כתובת, קו״ח, טלפוני הורים וממליצים)
               </Label>
             </div>
 

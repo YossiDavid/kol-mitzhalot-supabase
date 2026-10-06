@@ -12,7 +12,8 @@ export type UserDetails = {
   signupPurpose: string | null;
   role: string | null;
   roles: Role[];
-  staffInstitutionId: string | null;
+  /** המוסדות שאיש הצוות משויך אליהם (staff_institutions) - קובע אילו כרטיסים הוא רואה */
+  staffInstitutions: Array<{ id: string; name: string; city: string | null }>;
   createdAt: string;
   lastSignInAt: string | null;
   children: Array<{
@@ -96,17 +97,31 @@ export async function getUserDetails(
 
   const supabase = await createClient();
 
-  // שליפת מוסד הלימודים הקיים של המשתמש (אם הוא איש צוות) כדי למלא מראש את
-  // בורר המוסד ב-UserRolesEditor. משתמשים ב-admin client כי מדובר ברשומת
-  // staff_info של משתמש אחר, ו-RLS מתירה קריאה כזו רק למנהל (או לבעל הרשומה).
-  const { data: staffInfo, error: staffInfoError } = await adminClient
-    .from("staff_info")
+  // שיוכי המוסדות של איש הצוות: ממלאים מראש את הבורר ב-UserRolesEditor ומראים
+  // למנהל למה המשתמש רואה (או לא רואה) כרטיסים. admin client כי מדובר בשורות
+  // של משתמש אחר, ו-RLS מתירה קריאה כזו רק למנהל (או לבעל הרשומה).
+  const { data: affiliations, error: affiliationsError } = await adminClient
+    .from("staff_institutions")
     .select("institution_id")
-    .eq("user_id", userId)
-    .maybeSingle();
+    .eq("user_id", userId);
 
-  if (staffInfoError) {
-    console.error("Error fetching staff_info:", staffInfoError);
+  if (affiliationsError) {
+    console.error("Error fetching staff_institutions:", affiliationsError);
+  }
+
+  const affiliatedIds = (affiliations ?? []).map((a) => a.institution_id);
+  const staffInstitutions: UserDetails["staffInstitutions"] = [];
+  if (affiliatedIds.length > 0) {
+    const { data: institutionRows, error: institutionsError } =
+      await adminClient
+        .from("institutions")
+        .select("id, name, city")
+        .in("id", affiliatedIds)
+        .order("name");
+    if (institutionsError) {
+      console.error("Error fetching staff institutions:", institutionsError);
+    }
+    staffInstitutions.push(...(institutionRows ?? []));
   }
 
   // שליפת ילדים
@@ -192,7 +207,7 @@ export async function getUserDetails(
     signupPurpose: readSignupPurpose(user),
     role: getEffectiveRole(user),
     roles: getRoles(user),
-    staffInstitutionId: staffInfo?.institution_id ?? null,
+    staffInstitutions,
     createdAt: user.created_at,
     lastSignInAt: user.last_sign_in_at || null,
     children: childrenData.map((c) => ({

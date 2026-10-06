@@ -17,27 +17,46 @@ const envelopeSchema = z.object({
   Value: z.unknown().optional(),
 });
 
-const transactionSchema = z.object({ Status: z.string() });
+const transactionSchema = z.object({
+  Status: z.string(),
+  Message: z.unknown().optional(),
+});
+
+const MAX_MESSAGE_LENGTH = 200;
 
 export type FrameEvent =
   | { type: "ready" }
   | { type: "height"; height: number }
   | { type: "back" }
-  | { type: "transaction"; isOk: boolean }
+  | { type: "transaction"; isOk: boolean; message: string | null }
   | { type: "other" };
 
-/** Value של TransactionResponse מגיע כמחרוזת JSON או כאובייקט */
-function parseTransactionValue(value: unknown): boolean {
+/**
+ * Value של TransactionResponse מגיע כמחרוזת JSON או כאובייקט. Message (טקסט הסירוב)
+ * נקרא רק כשהוא מחרוזת, ונחתך באורכו.
+ */
+function parseTransactionValue(value: unknown): {
+  isOk: boolean;
+  message: string | null;
+} {
   let candidate = value;
   if (typeof value === "string") {
     try {
       candidate = JSON.parse(value);
     } catch {
-      return false;
+      return { isOk: false, message: null };
     }
   }
   const parsed = transactionSchema.safeParse(candidate);
-  return parsed.success && parsed.data.Status === "OK";
+  if (!parsed.success) return { isOk: false, message: null };
+  const message =
+    typeof parsed.data.Message === "string"
+      ? parsed.data.Message.trim().slice(0, MAX_MESSAGE_LENGTH)
+      : "";
+  return {
+    isOk: parsed.data.Status === "OK",
+    message: message || null,
+  };
 }
 
 /** מחזיר null להודעה שאינה בפורמט של הספק (תתעלם ממנה) */
@@ -58,7 +77,7 @@ export function parseFrameMessage(data: unknown): FrameEvent | null {
     case "Back":
       return { type: "back" };
     case "TransactionResponse":
-      return { type: "transaction", isOk: parseTransactionValue(Value) };
+      return { type: "transaction", ...parseTransactionValue(Value) };
     default:
       // PaymentMethod / WalletCanceled / PendingTransaction: ה-iframe מטפל בהם בעצמו
       return { type: "other" };

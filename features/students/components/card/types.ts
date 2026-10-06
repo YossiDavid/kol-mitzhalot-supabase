@@ -90,7 +90,6 @@ export type PersonalDetails = {
   street?: string | null;
   house?: string | null;
   country?: string | null;
-  identity_number?: string | null;
   phone?: string | null;
   cellphone_type?: string | null;
 };

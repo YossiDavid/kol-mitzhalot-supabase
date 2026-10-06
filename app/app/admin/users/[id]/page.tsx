@@ -83,6 +83,37 @@ function BasicInfoCard({ userDetails }: { userDetails: UserDetails }) {
   );
 }
 
+/** המוסדות של איש הצוות, או אזהרה אם יש תפקיד בלי שיוך (לא רואה כרטיסים) */
+function StaffInstitutionsSummary({
+  userDetails,
+}: {
+  userDetails: UserDetails;
+}) {
+  if (!userDetails.roles.includes("staff")) return null;
+
+  if (userDetails.staffInstitutions.length === 0) {
+    return (
+      <p
+        role="alert"
+        data-slot="staff-without-institution-warning"
+        className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-body-sm text-destructive"
+      >
+        למשתמש יש תפקיד צוות אך אינו משויך למוסד, ולכן אינו רואה כרטיסים. יש
+        לבחור מוסד בעורך שמתחת ולשמור.
+      </p>
+    );
+  }
+
+  return (
+    <div data-slot="staff-institutions-summary" className="mb-4 text-body-sm">
+      <span className="text-muted-foreground">מוסדות איש הצוות:</span>{" "}
+      {userDetails.staffInstitutions
+        .map((i) => (i.city ? `${i.name} · ${i.city}` : i.name))
+        .join(" | ")}
+    </div>
+  );
+}
+
 async function UserDetailsContent({ params }: UserDetailsPageProps) {
   noStore();
   const { id } = await params;
@@ -130,10 +161,13 @@ async function UserDetailsContent({ params }: UserDetailsPageProps) {
               <h2>תפקידים</h2>
             </CardTitle>
           </CardHeader>
+          <StaffInstitutionsSummary userDetails={userDetails} />
           <UserRolesEditor
             userId={userDetails.id}
             initialRoles={userDetails.roles}
-            initialInstitutionId={userDetails.staffInstitutionId}
+            initialInstitutionIds={userDetails.staffInstitutions.map(
+              (i) => i.id,
+            )}
           />
         </Card>
 

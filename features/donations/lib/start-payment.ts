@@ -2,7 +2,7 @@
  * המרת ערכי הטופס לאובייקט ה-Value של הודעת StartPayment ל-iframe של נדרים פלוס.
  * טהור, ללא React. כל הערכים מחרוזות, ושדות אופציונליים ריקים מושמטים.
  * לא שולחים Param1 (מסתיר ביט והעברה בנקאית). Param2 הוא ה-id שהשרת הנפיק, ו-CallBack
- * (כתובת ה-webhook של השרת) נשלח רק כשהשרת החזיר כזו.
+ * (כתובת ה-webhook של השרת) נשלח רק כשהשרת החזיר כזו. Zeout (מספר זהות) נשלח רק ל-iframe.
  */
 import { isValidPhone, normalizePhoneKey } from "@/lib/phone";
 import {
@@ -10,8 +10,11 @@ import {
   DONATION_GROUP,
   DONOR_NAME_MAX_LENGTH,
   containsForbiddenLink,
+  isDonorIdRequired,
   isValidDonationAmount,
+  isValidDonorId,
   isValidEmail,
+  normalizeDonorId,
   type DonationFrequency,
 } from "./nedarim";
 
@@ -34,6 +37,8 @@ export interface StartPaymentInput {
   lastName?: string;
   phone?: string;
   email?: string;
+  /** מספר זהות (Zeout): נשלח רק ל-iframe; לא נשמר ולא נרשם בשום מקום */
+  donorId?: string;
   /** מזהה הכוונה מהשרת (Param2); ברירת מחדל UUID חדש (בדיקות) */
   createId?: () => string;
   /** כתובת ה-CallBack מהשרת; null/חסר = משמיטים (למשל ב-localhost) */
@@ -63,6 +68,11 @@ export function buildStartPaymentValue(
   const comment = clean(input.dedication, COMMENT_MAX_LENGTH);
   if (containsForbiddenLink(comment)) return null;
 
+  const hasDonorId = isValidDonorId(input.donorId);
+  // רשת ביטחון: ערך לא תקין לעולם לא נשלח לספק, וכשהזהות חובה (הוראת קבע, או הגדרה) בלעדיה אין תשלום
+  if (normalizeDonorId(input.donorId) !== "" && !hasDonorId) return null;
+  if (isDonorIdRequired(input.frequency) && !hasDonorId) return null;
+
   const isMonthly = input.frequency === "monthly";
   const email = clean(input.email, 200);
   const optional: StartPaymentValue = {
@@ -71,6 +81,7 @@ export function buildStartPaymentValue(
     Phone: toProviderPhone(input.phone),
     Mail: isValidEmail(email) ? email : "",
     Comment: comment,
+    Zeout: hasDonorId ? normalizeDonorId(input.donorId) : "",
   };
   const presentOptional = Object.fromEntries(
     Object.entries(optional).filter(([, value]) => value !== ""),

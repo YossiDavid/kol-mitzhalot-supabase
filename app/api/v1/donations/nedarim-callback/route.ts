@@ -3,14 +3,20 @@
  * ציבורי (אין סשן): ההרשאה היא חתימת ה-HMAC על הגוף הגולמי. נכשל סגור.
  * מתעד אידמפוטנטית, מתאים ל-Param2 ומסמן "שולם" דרך record_nedarim_payment
  * (עסקה זמנית, בלי Confirmation, נרשמת אך לא מסומנת שולם).
- * מחזיר {WEBDocID: ref} כשהותאם, אחרת {}. רץ ב-Node (ברירת המחדל; export runtime אסור עם
+ * מחזיר {WEBDocID: ref} כשהותאם, אחרת {}.
+ * עדכון שגיאה (Status=Error בלי TransactionId) ובכלל כל JSON חתום שאיננו מזהים נענה ב-200 {}:
+ * הספק שולח כל עדכון פעם אחת ומתריע בדוא"ל על כל תשובה שאינה 2xx. 400 רק לגוף חתום שאינו
+ * JSON, ו-401 לחתימה שגויה. רץ ב-Node (ברירת המחדל; export runtime אסור עם
  * cacheComponents), כי האימות משתמש ב-node:crypto.
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { getClientIp } from "@/lib/client-ip";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
-import { parseNedarimCallback } from "@/features/donations/lib/parse-callback";
+import {
+  classifyNedarimBody,
+  type ErrorUpdate,
+} from "@/features/donations/lib/parse-callback";
 import {
   SIGNATURE_HEADER,
   TIMESTAMP_HEADER,
@@ -21,6 +27,43 @@ import { isKnownNedarimIp } from "@/features/donations/lib/webhook-ips";
 const LOG_TAG = "[donations/webhook]";
 /** גוף עדכון אמיתי הוא כמה KB; מעל זה אין טעם אפילו לחשב חתימה */
 const MAX_BODY_BYTES = 64 * 1024;
+
+/** תשובת אישור: חתום ותקין, גם אם לא פעלנו לפיו */
+const acknowledge = () => NextResponse.json({});
+
+/** הטקסט שנשמר בתרומה: ההודעה, ובסופה קוד הסירוב אם יש */
+function describeError(update: ErrorUpdate): string | null {
+  const code = update.errorCode ? `(${update.errorCode})` : null;
+  return [update.message, code].filter(Boolean).join(" ") || null;
+}
+
+/** רושם ניסיון שנכשל בתרומה הממתינה; לא מסמן שולם לעולם. כשל רישום נרשם בלוג ואינו משנה את התשובה */
+async function handleErrorUpdate(update: ErrorUpdate) {
+  // בלי שמות, טלפונים, מיילים או מספרי זהות: רק מה שנדרש לאבחון
+  console.warn(LOG_TAG, {
+    event: "error_update",
+    kind: "error_update",
+    message: update.message,
+    source: update.source,
+    errorCode: update.errorCode,
+    param2: update.param2,
+  });
+  if (!update.param2) return;
+  try {
+    const { error } = await createAdminClient().rpc("record_donation_error", {
+      p_param2: update.param2,
+      p_message: describeError(update),
+    });
+    if (error) {
+      console.error(LOG_TAG, {
+        event: "error_update_record_failed",
+        error: describeSupabaseError(error),
+      });
+    }
+  } catch (error) {
+    console.error(LOG_TAG, { event: "error_update_record_failed", error });
+  }
+}
 
 function reject(status: number, error: string) {
   return NextResponse.json({ error }, { status });
@@ -60,10 +103,31 @@ export async function POST(request: NextRequest) {
     console.warn(LOG_TAG, { event: "unknown_ip_valid_signature", ip });
   }
 
-  const callback = parseNedarimCallback(rawBody);
-  if (!callback) {
+  const body = classifyNedarimBody(rawBody);
+  if (body.type === "invalid_json") {
+    console.warn(LOG_TAG, { event: "invalid_json", ip });
+    return reject(400, "Invalid JSON");
+  }
+  if (body.type === "error_update") {
+    await handleErrorUpdate(body.update);
+    return acknowledge();
+  }
+  if (body.type === "unrecognized") {
     console.warn(LOG_TAG, { event: "unrecognized_body", ip });
-    return reject(400, "Unrecognized payload");
+    return acknowledge();
+  }
+  const { callback } = body;
+
+  if (callback.amount === null || callback.currency === null) {
+    // אין כיסוי בתיעוד לכך שהשדות תמיד נשלחים: מתקבל על סמך חתימה ו-Param2, וזה לא נבדק מול התרומה
+    console.warn(LOG_TAG, {
+      event: "amount_not_cross_checked",
+      hasAmount: callback.amount !== null,
+      hasCurrency: callback.currency !== null,
+      transactionId: callback.transactionId,
+      kevaId: callback.kevaId,
+      param2: callback.param2,
+    });
   }
 
   try {

@@ -55,6 +55,8 @@ async function donationOf(id: string) {
     paid_at: string | null;
     provider_keva_id: string | null;
     ref: number;
+    last_error: string | null;
+    last_error_at: string | null;
   };
 }
 
@@ -246,7 +248,7 @@ test.describe("סטטוס תרומה", () => {
 test.describe("webhook: קליטה (דורש NEDARIM_WEBHOOK_SECRET בשרת)", () => {
   test.beforeAll(async ({ playwright, baseURL }) => {
     const request = await playwright.request.newContext({ baseURL });
-    // גוף חתום תקין אך לא מזוהה: 400 = הסוד מוכר לשרת, 401 = לא מוגדר
+    // גוף חתום תקין אך לא מזוהה: 200 = הסוד מוכר לשרת, 401 = לא מוגדר
     const probe = await postCallback(request, { RunTag: RUN });
     await request.dispose();
     test.skip(
@@ -598,10 +600,227 @@ test.describe("webhook: קליטה (דורש NEDARIM_WEBHOOK_SECRET בשרת)", 
     expect(temporary[0].provider_transaction_id).toBe(chargeId);
   });
 
-  test("גוף חתום שאינו JSON או לא מזוהה: 400 ולא נרשם", async ({ request }) => {
+  test("גוף חתום שאינו JSON: 400 ולא נרשם", async ({ request }) => {
+    const before = await paymentsCount();
     const notJson = await postCallback(request, {}, { rawBody: "not json" });
     expect(notJson.status()).toBe(400);
-    const unrecognized = await postCallback(request, { Amount: "1" });
-    expect(unrecognized.status()).toBe(400);
+    expect(await paymentsCount()).toBe(before);
+  });
+
+  test("JSON חתום שלא מזוהים (אובייקט, מערך, מספר): 200 {} ולא נרשם", async ({
+    request,
+  }) => {
+    const before = await paymentsCount();
+    for (const rawBody of ['{"Amount":"1"}', "{}", "[]", "5", "null"]) {
+      const response = await postCallback(request, {}, { rawBody });
+      expect(response.status(), rawBody).toBe(200);
+      expect(await response.json()).toEqual({});
+    }
+    expect(await paymentsCount()).toBe(before);
+  });
+
+  test("עדכון שגיאה בדיוק כפי שהספק שלח (NEED ZEOUT): 200 {} ושום דבר לא נרשם כשולם", async ({
+    request,
+  }) => {
+    const before = await paymentsCount();
+    const response = await postCallback(
+      request,
+      {},
+      { rawBody: '{ "Status" : "Error" , "Message" : "NEED ZEOUT" }' },
+    );
+    expect(response.status()).toBe(200);
+    expect(await response.json()).toEqual({});
+    expect(await paymentsCount()).toBe(before);
+  });
+
+  test("עדכון שגיאה עם Param2 מוכר: נרשם ניסיון כושל, נשארת pending, ותשלום מאוחר מסמן paid", async ({
+    request,
+  }) => {
+    const donation = await seedDonation();
+    const errorBody = `{ "Status" : "Error" , "Message" : "NEED ZEOUT" , "Source" : "Transaction" , "Param2" : "${donation.id}" , "ClientName" : "ישראל ישראלי" }`;
+    const response = await postCallback(request, {}, { rawBody: errorBody });
+    expect(response.status()).toBe(200);
+    expect(await response.json()).toEqual({});
+
+    const failed = await donationOf(donation.id);
+    expect(failed.status).toBe("pending");
+    expect(failed.paid_at).toBeNull();
+    expect(failed.last_error).toBe("NEED ZEOUT");
+    expect(failed.last_error_at).not.toBeNull();
+    expect(await paymentsOf(donation.id)).toHaveLength(0);
+
+    // Status=Error עם TransactionId אינו עדכון שגיאה: ממשיך במסלול העסקאות
+    const success = await postCallback(
+      request,
+      transactionBody({ Param2: donation.id }),
+    );
+    expect(await success.json()).toEqual({ WEBDocID: donation.ref });
+    const paid = await donationOf(donation.id);
+    expect(paid.status).toBe("paid");
+    expect(paid.paid_at).not.toBeNull();
+
+    // שגיאה מאוחרת לתרומה ששולמה אינה משנה אותה
+    await postCallback(request, {}, { rawBody: errorBody });
+    const after = await donationOf(donation.id);
+    expect(after.status).toBe("paid");
+    expect(after.last_error).toBe("NEED ZEOUT");
+    expect(after.paid_at).toBe(paid.paid_at);
+  });
+
+  test("דוגמת השגיאה מהתיעוד (verbatim): 200, ואחרי מילוי Param2 נרשמים הודעה וקוד שגיאה", async ({
+    request,
+  }) => {
+    const documented =
+      '{"Status":"Error","Message":"סירוב - פנה לחברת האשראי","ErrorCode":"033","Param1":"","Param2":""}';
+    const verbatim = await postCallback(request, {}, { rawBody: documented });
+    expect(verbatim.status()).toBe(200);
+    expect(await verbatim.json()).toEqual({});
+
+    const donation = await seedDonation();
+    const filled = documented.replace(
+      '"Param2":""',
+      `"Param2":"${donation.id}"`,
+    );
+    expect(
+      (await postCallback(request, {}, { rawBody: filled })).status(),
+    ).toBe(200);
+    const row = await donationOf(donation.id);
+    expect(row.status).toBe("pending");
+    expect(row.last_error).toBe("סירוב - פנה לחברת האשראי (033)");
+    expect(await paymentsOf(donation.id)).toHaveLength(0);
+  });
+
+  test("הצלחה בצורת ה-CallBack של העסקה (ID בלי TransactionId, כמו בתיעוד): מותאמת לפי Param2 ו-paid", async ({
+    request,
+  }) => {
+    const donation = await seedDonation();
+    const response = await postCallback(request, {
+      Status: "OK",
+      ID: tx(randomUUID()),
+      Confirmation: "0012345",
+      Amount: "180",
+      Currency: "1",
+      TransactionTime: "19/08/2026 10:12:45",
+      LastNum: "1234",
+      Tokef: "0528",
+      Tashloumim: "1",
+      Groupe: "",
+      Comments: "",
+      ClientName: "ישראל ישראלי",
+      MosadNumber: "7001234",
+      Param2: donation.id,
+      RunTag: RUN,
+    });
+    expect(await response.json()).toEqual({ WEBDocID: donation.ref });
+    expect((await donationOf(donation.id)).status).toBe("paid");
+    const [payment] = await paymentsOf(donation.id);
+    expect(payment).toMatchObject({ kind: "transaction", is_temporary: false });
+  });
+
+  test('הקמת הו"ק דרך ה-iframe: KevaId נשמר, נשארת pending ולא זמנית; החיוב הראשון (Webhook ברמת מוסד, בלי Param2) מסמן paid', async ({
+    request,
+  }) => {
+    const donation = await seedDonation({ amount: 360, frequency: "monthly" });
+    const kevaId = tx("keva-iframe");
+    const created = await postCallback(request, {
+      Status: "OK",
+      ID: kevaId,
+      NextDate: "05/11/2026",
+      AuthorisationNumber: "7654321",
+      LastNum: "1234",
+      Amount: "360",
+      Currency: "1",
+      Param2: donation.id,
+      RunTag: RUN,
+    });
+    expect(created.status()).toBe(200);
+    expect(await created.json()).toEqual({ WEBDocID: donation.ref });
+
+    const pending = await donationOf(donation.id);
+    expect(pending.status).toBe("pending");
+    expect(pending.paid_at).toBeNull();
+    expect(pending.provider_keva_id).toBe(kevaId);
+    const [creation] = await paymentsOf(donation.id);
+    expect(creation).toMatchObject({
+      kind: "keva_created",
+      matched: true,
+      is_temporary: false,
+    });
+
+    const charge = await postCallback(
+      request,
+      transactionBody({ KevaId: kevaId, Amount: "360" }),
+    );
+    expect(await charge.json()).toEqual({ WEBDocID: donation.ref });
+    expect((await donationOf(donation.id)).status).toBe("paid");
+  });
+
+  test("ביט (PaymentMethod, PreTransactionId, בלי Confirmation וללא Solek): paid", async ({
+    request,
+  }) => {
+    const donation = await seedDonation();
+    const response = await postCallback(request, {
+      Status: "OK",
+      ID: tx(randomUUID()),
+      PreTransactionId: "98765",
+      MosadName: "מוסד",
+      PaymentMethod: "Bit",
+      Amount: "180",
+      Param2: donation.id,
+      RunTag: RUN,
+    });
+    expect(await response.json()).toEqual({ WEBDocID: donation.ref });
+    expect((await donationOf(donation.id)).status).toBe("paid");
+    const [payment] = await paymentsOf(donation.id);
+    expect(payment).toMatchObject({ is_temporary: false, matched: true });
+  });
+
+  test("בלי Amount ובלי Currency: מתקבל ו-paid עם סכום null; סכום שקיים חייב להתאים", async ({
+    request,
+  }) => {
+    const donation = await seedDonation();
+    const response = await postCallback(
+      request,
+      transactionBody({
+        Param2: donation.id,
+        Amount: undefined,
+        Currency: undefined,
+      }),
+    );
+    expect(await response.json()).toEqual({ WEBDocID: donation.ref });
+    expect((await donationOf(donation.id)).status).toBe("paid");
+    const [payment] = await paymentsOf(donation.id);
+    expect(payment.amount).toBeNull();
+    expect(payment.currency).toBeNull();
+    expect(payment.matched).toBe(true);
+
+    const wrong = await seedDonation();
+    await postCallback(
+      request,
+      transactionBody({ Param2: wrong.id, Amount: "5", Currency: undefined }),
+    );
+    expect((await donationOf(wrong.id)).status).toBe("mismatch");
+  });
+
+  test("עדכון שגיאה: Status בכל רישיות, Param2 לא מוכר או לא uuid אינם משנים דבר", async ({
+    request,
+  }) => {
+    const donation = await seedDonation();
+    for (const body of [
+      { Status: "ERROR", Message: "x", Param2: randomUUID() },
+      { status: "error", Message: "x", Param2: "not-a-uuid" },
+      { Status: "Error", Param2: 5 },
+    ]) {
+      const response = await postCallback(request, body);
+      expect(response.status(), JSON.stringify(body)).toBe(200);
+    }
+    expect((await donationOf(donation.id)).last_error).toBeNull();
   });
 });
+
+async function paymentsCount() {
+  const { count } = await db
+    .from("donation_payments")
+    .select("id", { count: "exact", head: true });
+  return count ?? 0;
+}

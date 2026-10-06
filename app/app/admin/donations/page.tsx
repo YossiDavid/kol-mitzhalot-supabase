@@ -97,11 +97,29 @@ const COLUMNS: DataTableColumn<DonationRow>[] = [
     size: "min",
     mobile: "aside",
     cell: (row) => (
-      <Badge variant={DONATION_STATUS_BADGE_VARIANT[row.status]}>
-        {row.status === "pending" && row.hasTemporaryPayment
-          ? AWAITING_CLEARANCE_LABEL
-          : DONATION_STATUS_LABELS[row.status]}
-      </Badge>
+      <span className="flex flex-col items-start gap-1">
+        <Badge variant={DONATION_STATUS_BADGE_VARIANT[row.status]}>
+          {row.status === "pending" && row.hasTemporaryPayment
+            ? AWAITING_CLEARANCE_LABEL
+            : DONATION_STATUS_LABELS[row.status]}
+        </Badge>
+        {row.isAwaitingFirstCharge && (
+          <span
+            data-testid="donation-awaiting-first-charge"
+            className="max-w-56 text-caption break-words whitespace-normal text-muted-foreground"
+          >
+            הוראת קבע הוקמה, ממתין לחיוב ראשון
+          </span>
+        )}
+        {row.status === "pending" && row.lastError && (
+          <span
+            data-testid="donation-last-error"
+            className="max-w-56 text-caption break-words whitespace-normal text-muted-foreground"
+          >
+            ניסיון תשלום נכשל: <bdi>{row.lastError}</bdi>
+          </span>
+        )}
+      </span>
     ),
   },
   {

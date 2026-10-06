@@ -32,6 +32,10 @@ export type DonationRow = {
   chargeCount: number;
   /** יש עסקה זמנית (בלי מספר אישור מ-Shva): הכסף עדיין לא אושר */
   hasTemporaryPayment: boolean;
+  /** הודעת השגיאה האחרונה מהספק (ניסיון תשלום שנכשל); רלוונטית רק כשממתין */
+  lastError: string | null;
+  /** הוראת קבע חודשית שהוקמה אצל הספק ועדיין ממתינה לחיוב הראשון */
+  isAwaitingFirstCharge: boolean;
 };
 
 export type UnmatchedPaymentRow = {
@@ -131,7 +135,7 @@ export async function loadDonationsReport(
   let builder = supabase
     .from("donations")
     .select(
-      "id, created_at, amount, frequency, status, dedication_text, donor_first_name, donor_last_name, donor_phone, donor_email",
+      "id, created_at, amount, frequency, status, dedication_text, donor_first_name, donor_last_name, donor_phone, donor_email, last_error, provider_keva_id",
       { count: "exact" },
     );
   if (query.status) builder = builder.eq("status", query.status);
@@ -162,6 +166,12 @@ export async function loadDonationsReport(
       providerTransactionId: charge?.first ?? null,
       chargeCount: charge?.count ?? 0,
       hasTemporaryPayment: charge?.hasTemporary ?? false,
+      lastError: donation.last_error,
+      isAwaitingFirstCharge:
+        donation.status === "pending" &&
+        donation.frequency === "monthly" &&
+        donation.provider_keva_id !== null &&
+        (charge?.count ?? 0) === 0,
     };
   });
 

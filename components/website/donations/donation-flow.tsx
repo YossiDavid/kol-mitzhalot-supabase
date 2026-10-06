@@ -2,6 +2,10 @@
 
 import { useRef, useState } from "react";
 import type { StartPaymentValue } from "@/features/donations/lib/start-payment";
+import {
+  resolveProviderError,
+  type ProviderFieldError,
+} from "@/features/donations/lib/provider-errors";
 import { DonationForm } from "./donation-form";
 import { DonationThanks } from "./donation-thanks";
 import { PaymentFrame } from "./payment-frame";
@@ -28,6 +32,10 @@ export function DonationFlow({ mosadId, apiValid }: DonationFlowProps) {
   const confirmation = useDonationConfirmation(
     step === "thanks" ? donationId : null,
   );
+  // סירוב מהספק שממופה לשדה בטופס (למשל NEED ZEOUT); נוצר מחדש בכל סירוב
+  const [providerError, setProviderError] = useState<ProviderFieldError | null>(
+    null,
+  );
   // נעילה סינכרונית נגד שליחה כפולה עד שמגיעה תוצאה או Back
   const isSendingRef = useRef(false);
 
@@ -39,6 +47,13 @@ export function DonationFlow({ mosadId, apiValid }: DonationFlowProps) {
   const frame = useNedarimFrame({
     onBack: returnToForm,
     onTransactionOk: () => setStep("thanks"),
+    // סירוב מוכר: חוזרים לטופס כמו ב-Back. כל סירוב אחר מוצג ב-iframe עצמו
+    onTransactionError: (message) => {
+      const mapped = resolveProviderError(message);
+      if (!mapped) return;
+      setProviderError({ ...mapped });
+      returnToForm();
+    },
   });
 
   function handleContinue(value: StartPaymentValue, intentId: string) {
@@ -61,6 +76,7 @@ export function DonationFlow({ mosadId, apiValid }: DonationFlowProps) {
           mosadId={mosadId}
           apiValid={apiValid}
           onContinue={handleContinue}
+          providerError={providerError}
         />
       </div>
       <PaymentFrame
