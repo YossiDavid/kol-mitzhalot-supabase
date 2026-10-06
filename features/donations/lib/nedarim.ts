@@ -26,8 +26,12 @@ export const EMAIL_MAX_LENGTH = 100;
  * המספר נשלח רק ל-iframe ב-postMessage, ולעולם לא לשרת שלנו.
  */
 export const DONOR_ID_REQUIRED = false;
-/** לפי הספק: הוראת קבע באשראי מדף התשלום דורשת תעודת זהות תמיד */
-export const DONOR_ID_REQUIRED_FOR_MONTHLY = true;
+/**
+ * הספק מציין שהוראת קבע באשראי מדף התשלום שלו דורשת תעודת זהות, אבל לתורם מחו"ל אין
+ * מספר כזה. לכן הטופס שלנו לא חוסם: אם חברת הסליקה תדרוש זהות היא תחזיר "NEED ZEOUT"
+ * והתורם יוחזר לטופס (provider-errors.ts). כדי לדרוש מראש בהוראת קבע: true.
+ */
+export const DONOR_ID_REQUIRED_FOR_MONTHLY = false;
 /** לפי הספק: 4 עד 9 ספרות */
 export const DONOR_ID_MIN_DIGITS = 4;
 export const DONOR_ID_MAX_DIGITS = 9;

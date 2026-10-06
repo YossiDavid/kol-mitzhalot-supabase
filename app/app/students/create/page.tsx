@@ -18,6 +18,7 @@ import {
   uploadMedicalDocuments,
   uploadStudentFile,
 } from "@/features/students/lib/student-uploads";
+import { describeStudentSaveError } from "@/features/students/lib/save-error-message";
 
 const supabase = createClient();
 
@@ -63,7 +64,9 @@ export default function CreateStudentPage() {
 
       if (createError) {
         console.error("Failed creating student:", createError);
-        toast.error(`שגיאה בשמירת הקו״ח: ${createError.message}`);
+        toast.error(
+          `שגיאה בשמירת הקו״ח: ${describeStudentSaveError(createError.message)}`,
+        );
         return;
       }
 

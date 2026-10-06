@@ -17,7 +17,6 @@ import {
 } from "@/features/donations/lib/nedarim";
 import {
   DONOR_ID_INVALID_MESSAGE,
-  DONOR_ID_REQUIRED_MESSAGE,
   validateDonationFormClient,
   NO_DEDICATION,
   type DonationFormValues,
@@ -146,11 +145,16 @@ test.describe("buildStartPaymentValue", () => {
     }
   });
 
-  test("הוראת קבע בלי מספר זהות תקין מחזירה null; עם מספר שולחת Zeout", () => {
+  test("הוראת קבע בלי מספר זהות נשלחת בלי Zeout (תורמים מחו״ל); עם מספר שולחת Zeout", () => {
     const monthly = { ...base, frequency: "monthly" as const };
-    for (const donorId of [undefined, "", " - ", "123"]) {
-      expect(buildStartPaymentValue({ ...monthly, donorId })).toBeNull();
+    for (const donorId of [undefined, "", " - "]) {
+      const value = buildStartPaymentValue({ ...monthly, donorId });
+      expect(value, String(donorId)).not.toBeNull();
+      expect(value, String(donorId)).not.toHaveProperty("Zeout");
+      expect(value?.PaymentType).toBe("HK");
     }
+    // ערך שהוקלד ואינו תקין לעולם לא נשלח לספק
+    expect(buildStartPaymentValue({ ...monthly, donorId: "123" })).toBeNull();
     expect(buildStartPaymentValue(monthly)?.Zeout).toBe(DONOR_ID);
   });
 
@@ -258,10 +262,10 @@ test.describe("וולידציה והודעות", () => {
     }
   });
 
-  test("הוראת קבע דורשת מספר זהות (לפי הספק); חד-פעמית לא", () => {
+  test("מספר זהות אינו חובה גם בהוראת קבע; ערך שהוקלד עדיין נבדק", () => {
     expect(
       validateDonationFormClient({ ...values, donorId: "" }, "monthly"),
-    ).toEqual({ donorId: DONOR_ID_REQUIRED_MESSAGE });
+    ).toEqual({});
     expect(
       validateDonationFormClient({ ...values, donorId: "12" }, "monthly")
         .donorId,
@@ -677,35 +681,24 @@ test.describe("עמוד תרומות והנצחות", () => {
     await expect(page.getByText(/דורשת מספר טלפון/)).toBeVisible();
   });
 
-  test("הוראת קבע דורשת מספר זהות בטופס, ושדה הזהות מציג רמז מתאים", async ({
+  test("הוראת קבע אינה דורשת מספר זהות בטופס, ושדה הזהות מציג רמז מתאים", async ({
     page,
   }) => {
     await openDonationPage(page);
-    await expect(page.getByText(/לבעלי כרטיס אשראי ישראלי/)).toBeVisible();
+    await expect(page.getByText(/חברת הסליקה עשויה לדרוש זאת/)).toBeVisible();
     await expect(page.getByText(/לתורמים מחו״ל/)).toHaveCount(2);
 
     await page.getByText("הוראת קבע חודשית", { exact: true }).click();
     await expect(
-      page.getByText("הוראת קבע באשראי דורשת מספר תעודת זהות", {
-        exact: true,
-      }),
+      page.getByText(/בהוראת קבע חברת הסליקה דורשת זאת בדרך כלל/),
     ).toBeVisible();
-    await page.getByRole("button", { name: CONTINUE_BUTTON }).click();
-    await expect(
-      page.getByText("הוראת קבע באשראי דורשת מספר תעודת זהות.", {
-        exact: true,
-      }),
-    ).toBeVisible();
-    await expect(page.getByLabel("תעודת זהות")).toBeFocused();
-    expect(await received(page)).toHaveLength(0);
 
-    await fillDonorId(page);
+    // תורם בלי תעודת זהות ישראלית ממשיך; אם הסליקה תדרוש, יחזור עם NEED ZEOUT
     await page.getByRole("button", { name: CONTINUE_BUTTON }).click();
     await expect.poll(async () => (await received(page)).length).toBe(1);
-    expect((await received(page))[0].data.Value).toMatchObject({
-      PaymentType: "HK",
-      Zeout: "123456782",
-    });
+    const value = (await received(page))[0].data.Value;
+    expect(value).toMatchObject({ PaymentType: "HK" });
+    expect(value).not.toHaveProperty("Zeout");
   });
 
   test("שגיאה אחרת מהספק: נשארים ב-iframe ולא חוזרים לטופס", async ({

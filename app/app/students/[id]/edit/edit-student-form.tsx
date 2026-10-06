@@ -22,6 +22,7 @@ import {
   uploadStudentFile,
   type SaveStudentPhotosResult,
 } from "@/features/students/lib/student-uploads";
+import { describeStudentSaveError } from "@/features/students/lib/save-error-message";
 
 const supabase = createClient();
 
@@ -139,7 +140,9 @@ export default function EditStudentForm({
 
       if (updateError) {
         console.error("Failed updating student:", updateError);
-        toast.error(`שגיאה בעדכון הקו״ח: ${updateError.message}`);
+        toast.error(
+          `שגיאה בעדכון הקו״ח: ${describeStudentSaveError(updateError.message)}`,
+        );
         return false;
       }
 
