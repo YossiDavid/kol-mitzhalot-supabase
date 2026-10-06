@@ -29,8 +29,8 @@ export default function PremiumPage() {
           <Crown aria-hidden className="size-10 fill-current text-favorite" />
           <EmptyTitle>מנוי הפרימיום ייפתח בקרוב</EmptyTitle>
           <EmptyDescription>
-            אנחנו עובדים על מנוי שיבליט את כרטיס המיועד/ת ברשימות השדכנים.
-            נעדכן כאן ברגע שההצטרפות תיפתח.
+            אנחנו עובדים על מנוי שיבליט את כרטיס המיועד/ת ברשימות השדכנים. נעדכן
+            כאן ברגע שההצטרפות תיפתח.
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
