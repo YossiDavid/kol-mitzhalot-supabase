@@ -215,13 +215,24 @@ export default function SendProposalModal({
                   setShareGroomPhoto(checked === true)
                 }
                 disabled={loading}
+                aria-describedby="share-groom-photo-hint"
               />
-              <Label
-                htmlFor="share-groom-photo"
-                className="text-body-sm leading-snug font-normal"
-              >
-                לשלוח את תמונת הבחור
-              </Label>
+              <div className="space-y-1">
+                <Label
+                  htmlFor="share-groom-photo"
+                  className="text-body-sm leading-snug font-normal"
+                >
+                  לשלוח את תמונת הבחור
+                </Label>
+                {/* הבחירה נאכפת רק לצופה מחובר: הכרטיס הציבורי מציג תמונות בנים תמיד */}
+                <p
+                  id="share-groom-photo-hint"
+                  className="text-caption text-muted-foreground"
+                >
+                  חל על צפייה מתוך המערכת בלבד. בקישור השיתוף של הכרטיס התמונות
+                  מוצגות תמיד.
+                </p>
+              </div>
             </div>
           </div>
 
