@@ -79,7 +79,6 @@ export default async function AppLayout({
           {children}
         </main>
         <Footer />
-        <Analytics />
       </div>
     );
   }

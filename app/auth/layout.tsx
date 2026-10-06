@@ -41,7 +41,6 @@ export default function AuthLayout({
           חזרה לאתר
         </Link>
       </footer>
-      <Analytics />
     </div>
   );
 }

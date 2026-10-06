@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import { ThemeProvider } from "next-themes";
 import { getAppOrigin } from "@/lib/app-url";
 import "./globals.css";
+import Analytics from "@/components/website/google-analytics";
 
 const ploni = localFont({
   src: [
@@ -43,6 +44,7 @@ export default function RootLayout({
         >
           {children}
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
