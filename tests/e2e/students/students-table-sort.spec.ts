@@ -6,6 +6,8 @@ import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
  * מיון בטבלת המיועדים: בדסקטופ לחיצה על כותרת ממיינת עולה, יורד וחוזרת
  * לסדר המקורי (aria-sort מתעדכן), ערכים ריקים תמיד בסוף, וגיל "עולה" הוא
  * מהצעיר למבוגר. במובייל פקד מיון מעל הכרטיסים משנה את סדרם.
+ * המיון נעשה בשאילתה בשרת (הרשימה מעומדת); מיון על פני כמה עמודים נבדק
+ * ב-students-pagination.spec.ts.
  */
 const TABLE_CAPTION = "רשימת המיועדים";
 const FIRST_NAME = "מיון";

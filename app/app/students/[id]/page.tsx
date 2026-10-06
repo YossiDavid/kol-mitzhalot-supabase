@@ -2,10 +2,12 @@ import { Suspense } from "react";
 import { unstable_noStore as noStore } from "next/cache";
 import { after } from "next/server";
 
+import type { User } from "@supabase/supabase-js";
+
 import { createClient } from "@/lib/supabase/server";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { hasRole } from "@/lib/user";
+import { getUser, hasRole } from "@/lib/user";
 import { StudentCardActions } from "@/features/students/components/card/student-card-actions";
 import { PublicStudentCard } from "@/features/students/components/card/public-student-card";
 import { StudentCard } from "@/features/students/components/card/student-card";
@@ -65,6 +67,41 @@ function CardNotice({
   );
 }
 
+/**
+ * מצב התמונות של הצופה המחובר בכרטיס. הסדר בתוך הפונקציה נשמר בכוונה:
+ * ההסתרה לצד הכלה והרשאת הצפייה נקבעות *לפני* שמישהו קורא את התמונות.
+ */
+async function loadViewerPhotos(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  user: User,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  student: any,
+  isProposalView: boolean,
+) {
+  // בחור שנחשף לצד הכלה דרך הצעה ששדכן סימן בה "בלי תמונה": אין תמונות
+  // כלל - לא גלריה ולא מונה למנעול. image_url (האווטאר בכותרת) אינו נשלף
+  // בתצוגת הצעה בשום מצב (ראו student-proposal-card.ts ובדיקתו). ההכרעה
+  // נעשית פה, בשרת, לפני שהשורה מגיעה לרינדור.
+  const isGroomPhotoHidden =
+    isProposalView && student.gender === "male"
+      ? await isGroomPhotoWithheld(supabase, student.id)
+      : false;
+
+  // תמונה של בת נחשפת למנהל, לבעל הכרטיס, ולשדכן שקיבל אישור צפייה
+  // מפורש. ההכרעה נעשית ב-can_view_student_photo ולא כאן, כדי שאותו
+  // כלל יחול גם על כל קורא אחר של הטבלה.
+  // (אותה בדיקה משמשת את התמונות הממוזערות בטבלת המיועדים)
+  const photoPrivate =
+    !isGroomPhotoHidden &&
+    !(await canViewStudentPhoto(supabase, user.id, student));
+  // בלי הרשאה נטען רק מספר התמונות (למנעול) - אף קישור חתום לא נוצר.
+  // בחור שהתמונות שלו הוסתרו לא נקרא מהמסד בכלל.
+  const studentPhotos = isGroomPhotoHidden
+    ? { count: 0, paths: [], photos: [] }
+    : await loadStudentPhotos(student.id, { canView: !photoPrivate });
+  return { photoPrivate, studentPhotos };
+}
+
 export default function StudentPage({
   params,
 }: {
@@ -86,11 +123,9 @@ async function StudentPageContent({
 }) {
   noStore();
   const { id } = await params;
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getUser הממוזכר (lib/user) - המעטפת כבר קראה אותו באותה בקשה, ולכן אין
+  // כאן עוד פנייה לשרת האימות. ה-client נוצר במקביל.
+  const [supabase, user] = await Promise.all([createClient(), getUser()]);
 
   // חייב להיקבע לפני שליפת המידע - קובע אילו עמודות/embeds מותר בכלל
   // לשלוף (ראה ההערה על AnonymousStudentRow ב-student-card-data.ts). זה לא
@@ -101,9 +136,7 @@ async function StudentPageContent({
   // רמת הגישה נקבעת לפני השליפה, כי היא בוחרת את ה-select. מנהל כרטיס
   // שקיבל הצעת שידוך מקבל "proposal": הכרטיס במלואו, בלי פרטי התקשרות
   // ובלי הצהרה רפואית - אלא אם השדכן פתח אותם להצעה הזו.
-  const access = isAnonymous
-    ? null
-    : await getStudentCardAccess(supabase, id);
+  const access = isAnonymous ? null : await getStudentCardAccess(supabase, id);
   const isProposalView = access?.level === "proposal";
 
   // "אין גישה" זהה למה שה-RLS היה חוסם, ולכן עוצרים כאן עם הודעה במקום
@@ -117,8 +150,11 @@ async function StudentPageContent({
     );
   }
 
-  const { data, error } = isAnonymous
-    ? await createAdminClient()
+  // השורה ופידבק הצוות אינם תלויים זה בזה (מזהה הכרטיס כבר ידוע מהכתובת),
+  // ולכן יוצאים יחד. הפידבק נצרך רק אחרי שהשורה עברה את כל הבדיקות למטה;
+  // כרטיס שאינו זמין לצופה מחזיר הודעה, והפידבק שנשלף נזרק בלי להיחשף.
+  const rowQuery = isAnonymous
+    ? createAdminClient()
         .from("students")
         .select(ANONYMOUS_STUDENT_SELECT)
         .eq("id", id)
@@ -126,7 +162,7 @@ async function StudentPageContent({
         // deleted_at חייב לקרות כאן במפורש, אחרת כרטיס שנמחק "רך" יחשף.
         .is("deleted_at", null)
         .single()
-    : await supabase
+    : supabase
         .from("students")
         .select(
           isProposalView && access
@@ -135,6 +171,10 @@ async function StudentPageContent({
         )
         .eq("id", id)
         .single();
+  const [{ data, error }, staffFeedback] = await Promise.all([
+    rowQuery,
+    loadStaffFeedback(supabase, id),
+  ]);
 
   const isShadchan = hasRole(user, "shadchan") || hasRole(user, "admin");
   const isAdmin = hasRole(user, "admin");
@@ -182,8 +222,8 @@ async function StudentPageContent({
     after(recordStudentCardView(supabase, student.id));
   }
 
-  // פידבק אנשי צוות גלוי לכל צופה בכרטיס - גם בענף הציבורי (קישור השיתוף)
-  const staffFeedback = await loadStaffFeedback(supabase, student.id);
+  // פידבק אנשי צוות (staffFeedback, נשלף למעלה) גלוי לכל צופה בכרטיס -
+  // גם בענף הציבורי (קישור השיתוף)
 
   // --- ענף ציבורי (משתמש לא מחובר) --------------------------------------
   if (isAnonymous) {
@@ -206,37 +246,27 @@ async function StudentPageContent({
     );
   }
 
-  // בחור שנחשף לצד הכלה דרך הצעה ששדכן סימן בה "בלי תמונה": אין תמונות
-  // כלל - לא גלריה ולא מונה למנעול. image_url (האווטאר בכותרת) אינו נשלף
-  // בתצוגת הצעה בשום מצב (ראו student-proposal-card.ts ובדיקתו). ההכרעה
-  // נעשית פה, בשרת, לפני שהשורה מגיעה לרינדור.
-  const isGroomPhotoHidden =
-    isProposalView && student.gender === "male"
-      ? await isGroomPhotoWithheld(supabase, student.id)
-      : false;
-
-  // תמונה של בת נחשפת למנהל, לבעל הכרטיס, ולשדכן שקיבל אישור צפייה
-  // מפורש. ההכרעה נעשית ב-can_view_student_photo ולא כאן, כדי שאותו
-  // כלל יחול גם על כל קורא אחר של הטבלה.
-  // (אותה בדיקה משמשת את התמונות הממוזערות בטבלת המיועדים)
-  const photoPrivate =
-    !isGroomPhotoHidden &&
-    !(await canViewStudentPhoto(supabase, user?.id ?? null, student));
-  // בלי הרשאה נטען רק מספר התמונות (למנעול) - אף קישור חתום לא נוצר.
-  // בחור שהתמונות שלו הוסתרו לא נקרא מהמסד בכלל.
-  const studentPhotos = isGroomPhotoHidden
-    ? { count: 0, paths: [], photos: [] }
-    : await loadStudentPhotos(student.id, { canView: !photoPrivate });
-
+  // התמונות, הערות השדכן ופרטי מנהל הכרטיס אינם תלויים זה בזה (כולם
+  // תלויים רק בשורה ובהרשאות שכבר נקבעו), ולכן נטענים יחד. בתוך התמונות
+  // הסדר נשמר: ההסתרה והרשאת הצפייה נקבעות לפני טעינת התמונות.
+  //
   // הערות שדכן פרטיות לכותב (RLS); פידבק אנשי צוות נשלף למעלה לכל צופה.
   // איש צוות רשאי לכתוב פידבק - שיוכו למוסד של המיועד נאכף ב-RLS. מי
   // שרואה את הכרטיס רק בזכות הצעת שידוך אינו כותב עליו, גם אם הוא איש
   // צוות במוסד אחר - הכתיבה הייתה נכשלת ב-RLS ורק מציגה לו שגיאה.
   const canWriteStaffFeedback = hasRole(user, "staff") && !isProposalView;
-  const shadchanNotes =
-    isShadchan && user
-      ? await loadMyShadchanNotes(supabase, student.id, user.id)
-      : [];
+  // פרטי מנהל הכרטיס (אימייל + קישור) נשלפים רק למנהל מערכת, ורק בכרטיס
+  // המלא - לא בענף הציבורי ולא בתצוגת הצעה, ולכן לא מגיעים אליהם גם כ-props.
+  const [{ photoPrivate, studentPhotos }, shadchanNotes, owner] =
+    await Promise.all([
+      loadViewerPhotos(supabase, user, student, isProposalView),
+      isShadchan
+        ? loadMyShadchanNotes(supabase, student.id, user.id)
+        : Promise.resolve([]),
+      isAdmin && !isProposalView && student.user_id
+        ? loadCardOwnerInfo(student.user_id)
+        : Promise.resolve(null),
+    ]);
   const currentUserName = [
     user?.user_metadata?.firstName,
     user?.user_metadata?.lastName,
@@ -247,13 +277,6 @@ async function StudentPageContent({
   // חייב לשקף בדיוק את ההרשאה של update_full_student_profile (בעלים / שדכן /
   // מנהל), אחרת כפתור "עריכה" יוביל למסך שהשמירה בו תיפול על not_allowed.
   const canEdit = student.user_id === user?.id || isShadchan || isAdmin;
-
-  // פרטי מנהל הכרטיס (אימייל + קישור) נשלפים רק למנהל מערכת, ורק בכרטיס
-  // המלא - לא בענף הציבורי ולא בתצוגת הצעה, ולכן לא מגיעים אליהם גם כ-props.
-  const owner =
-    isAdmin && !isProposalView && student.user_id
-      ? await loadCardOwnerInfo(student.user_id)
-      : null;
 
   return (
     <StudentCard

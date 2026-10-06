@@ -4,7 +4,7 @@ import { HeartHandshake } from "lucide-react";
 import { AuthButton } from "@/components/auth-button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/server";
-import { hasRole } from "@/lib/user";
+import { getUser, hasRole } from "@/lib/user";
 import { getRoleLabel, getRoles } from "@/lib/user-role";
 import { formatFullName, resolveDisplayName } from "@/lib/user-display-name";
 import HeaderIcons from "./icons";
@@ -16,27 +16,32 @@ import Logo from "@/assets/images/logo-text.svg";
 import { WebMobileNav } from "./mobile-nav";
 import { ENDORSEMENTS_HREF } from "@/components/website/endorsements-anchor";
 
+/** השם מתוך user_profiles, לברכה בהדר. כשל בשליפה אינו חוסם את ההדר */
+async function loadHeaderProfile(userId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("user_profiles")
+    .select("first_name, last_name")
+    .eq("id", userId)
+    .maybeSingle();
+  return data;
+}
+
 export default async function Header({
   variant,
 }: {
   variant: "app" | "website";
 }) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getUser הממוזכר (lib/user): המעטפת והדפים כבר קראו אותו באותה בקשה, ולכן
+  // ההדר אינו פונה שוב לשרת האימות.
+  const user = await getUser();
 
   // ההדר קרא בעבר רק את user_metadata.firstName/lastName ב-camelCase, ולכן
   // הציג ברכה ריקה כשהשם שמור ב-snake_case או רק ב-user_profiles.
   // resolveDisplayName מכסה את כל המקורות, כמו בשאר האפליקציה.
-  const { data: profile } = user
-    ? await supabase
-        .from("user_profiles")
-        .select("first_name, last_name")
-        .eq("id", user.id)
-        .maybeSingle()
-    : { data: null };
+  // הברכה מוצגת רק בהדר של /app - בהדר האתר אין שם, ולכן אין שאילתה.
+  const profile =
+    user && variant === "app" ? await loadHeaderProfile(user.id) : null;
 
   const { firstName, lastName } = user
     ? resolveDisplayName(user, profile)
@@ -95,7 +100,10 @@ export default async function Header({
               className="hidden border-brand-gold text-foreground hover:bg-brand-gold-muted active:bg-brand-gold-muted sm:inline-flex dark:border-brand-gold dark:hover:bg-brand-gold-muted dark:hover:text-brand-gold-foreground"
             >
               <Link href="/donations">
-                <HeartHandshake className="text-brand-gold" aria-hidden="true" />
+                <HeartHandshake
+                  className="text-brand-gold"
+                  aria-hidden="true"
+                />
                 לתרומות
               </Link>
             </Button>

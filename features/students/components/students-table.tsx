@@ -102,6 +102,11 @@ type StudentsTableProps = {
   /** מיון נשלט, כשהוא צריך לשרוד טעינה מחדש (הרשימה). אחרת - פנימי */
   sort?: DataTableSort | null;
   onSortChange?: (sort: DataTableSort | null) => void;
+  /**
+   * השורות כבר ממוינות בשרת (הרשימה הראשית): הטבלה מציגה את פקדי המיון
+   * בלי למיין מחדש. ברירת מחדל: מיון בלקוח, כמו ברשימות הקטנות.
+   */
+  isSortedExternally?: boolean;
 } & (ListPreset | FavoritesPreset | ChildrenPreset);
 
 const ENGAGED_ROW_CLASS = "bg-warning-muted hover:bg-warning/30";
@@ -459,8 +464,15 @@ function buildColumns(
  * המלא; העמודה הראשונה ורמת ההדגשה משתנות לפי ההקשר (preset).
  */
 export function StudentsTable(props: StudentsTableProps) {
-  const { students, caption, emptyState, className, sort, onSortChange } =
-    props;
+  const {
+    students,
+    caption,
+    emptyState,
+    className,
+    sort,
+    onSortChange,
+    isSortedExternally,
+  } = props;
   // רק לכרטיסים שיש להם תמונות - שאר השורות מוצגות מיד בלי בקשה
   const idsWithPhotos = useMemo(
     () =>
@@ -488,6 +500,7 @@ export function StudentsTable(props: StudentsTableProps) {
       rows={students}
       sort={sort}
       onSortChange={onSortChange}
+      isSortedExternally={isSortedExternally}
       getRowKey={(student) => student.id}
       getRowLink={(student) => ({
         href: studentCardHref(student.id),

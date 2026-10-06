@@ -17,6 +17,7 @@ export function SortableDataTable<T>(props: DataTableProps<T>) {
     initialSort = null,
     sort: controlledSort,
     onSortChange,
+    isSortedExternally = false,
   } = props;
   const [uncontrolledSort, setUncontrolledSort] =
     useState<DataTableSort | null>(initialSort);
@@ -31,7 +32,7 @@ export function SortableDataTable<T>(props: DataTableProps<T>) {
   return (
     <DataTableView
       {...props}
-      rows={sortRows(rows, columns, sort)}
+      rows={isSortedExternally ? rows : sortRows(rows, columns, sort)}
       sorting={{ sort, onSortChange: handleSortChange }}
     />
   );
