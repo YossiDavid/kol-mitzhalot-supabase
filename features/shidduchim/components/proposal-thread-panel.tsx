@@ -106,7 +106,7 @@ export default function ProposalThreadPanel({
     <section
       id={proposalThreadAnchor(otherUserId)}
       aria-label={title}
-      className="scroll-mt-20 space-y-3 border-t pt-4"
+      className="scroll-mt-20 space-y-3 border-t pt-4 first:border-t-0 first:pt-0"
     >
       <div className="flex items-center gap-2">
         <MessagesSquare

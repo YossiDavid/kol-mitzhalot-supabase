@@ -184,7 +184,10 @@ export default function ParentProposalView({
       {canMessageShadchan && (
         <>
           {/* השרשור המלא מול השדכן; הכפתור שומר על פנייה מהירה בלי לגלול */}
-          <div id={PROPOSAL_THREAD_ANCHOR} className="scroll-mt-20">
+          <div
+            id={PROPOSAL_THREAD_ANCHOR}
+            className="scroll-mt-20 border-t pt-4"
+          >
             <ProposalThreadPanel
               shidduchId={proposal.shidduchId}
               otherUserId={proposal.shadchanId}
