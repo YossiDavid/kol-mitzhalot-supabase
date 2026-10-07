@@ -16,7 +16,7 @@ import { EducationSection, EmploymentSection } from "./education-section";
 import { FamilySection } from "./family-section";
 import { PersonalDetailsSection } from "./personal-details-section";
 import { ReferencesSection } from "./references-section";
-import { StudentCardBackLink, StudentCardHero } from "./student-card-hero";
+import { StudentCardHero } from "./student-card-hero";
 import { PublicStudentCardPhoto } from "./student-card-photo";
 
 /**
@@ -24,7 +24,9 @@ import { PublicStudentCardPhoto } from "./student-card-photo";
  * אין שורת פעולות, אין הערות שדכן, ואין מקטעי "מה אני מחפש"/"הצהרה רפואית"/
  * "נישואין קודמים" - הטבלאות שמזינות אותם לא נשלפות כלל
  * (`ANONYMOUS_STUDENT_SELECT`). הממליצים כן מוצגים במלואם (סוג, שם, טלפון,
- * אימייל) - החלטת הלקוח. פידבק אנשי צוות מוצג גם הוא, לקריאה בלבד.
+ * אימייל) - החלטת הלקוח.
+ * פידבק אנשי צוות מוצג גם הוא, לקריאה בלבד. אין קישור חזרה: כל יעד באפליקציה
+ * דורש התחברות.
  * תאריך הלידה אינו מגיע לכאן בכלל, ולכן אין בתצוגה הזו גם לחיצה על הגיל.
  */
 export function PublicStudentCard({
@@ -66,7 +68,6 @@ export function PublicStudentCard({
           />
         }
         tag={thirdParty ? <ThirdPartyCardTag card={thirdParty} /> : null}
-        backLink={<StudentCardBackLink />}
       />
 
       {/* ללא ת.ז./טלפון/סוג מכשיר/רחוב/בית - הם לא נשלפו בכלל */}

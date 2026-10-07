@@ -13,7 +13,7 @@ import type { Route } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
 import { createClient } from "@/lib/supabase/server";
-import { ISRAEL_TIME_ZONE } from "@/features/students/lib/new-card-window";
+import { ISRAEL_TIME_ZONE } from "@/lib/time-zone";
 
 import { israelDayStartIso } from "./proposals-report";
 import { THIRD_PARTY_PENDING_FILTER } from "./third-party-cards";

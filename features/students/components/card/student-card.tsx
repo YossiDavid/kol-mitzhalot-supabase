@@ -10,6 +10,7 @@ import {
 import calculateAge from "@/lib/calculateAge";
 import { hebrewBirthDate } from "@/features/students/lib/birth-date-hebrew";
 import { getTotalChildrenCount } from "@/features/students/lib/previous-partner-children";
+import type { CardBackLink } from "@/features/students/lib/card-back-link";
 import { genderToHebrew } from "@/features/students/lib/student-card-data";
 import type {
   PrivateNote,
@@ -58,6 +59,7 @@ export function StudentCard({
   owner = null,
   isBasicOnly = false,
   adminControls = null,
+  backLink,
   actions,
 }: {
   student: StudentRow;
@@ -83,6 +85,8 @@ export function StudentCard({
   isBasicOnly?: boolean;
   /** בקרות האישור - למנהל מערכת בלבד, בכרטיס צד שלישי */
   adminControls?: React.ReactNode;
+  /** יעד החזרה לפי הצופה (נקבע בעמוד); בלעדיו לא מוצג קישור */
+  backLink?: CardBackLink;
   actions: React.ReactNode;
 }) {
   // נחשב בשרת: ללקוח עובר רק המחרוזת העברית, לא תאריך הלידה
@@ -114,7 +118,7 @@ export function StudentCard({
           />
         }
         tag={<ThirdPartyCardTag card={student} />}
-        backLink={<StudentCardBackLink />}
+        backLink={backLink ? <StudentCardBackLink {...backLink} /> : undefined}
         actions={actions}
       />
 

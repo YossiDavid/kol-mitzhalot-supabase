@@ -203,10 +203,9 @@ test.describe("סרגל צד — תפריט ניהול", () => {
 
   test("האזור הנוכחי פתוח בתוך הסרגל, ותת-העמוד מודגש", async ({ page }) => {
     // Act
-    await gotoAdmin(
-      page,
-      "/app/admin/users/00000000-0000-4000-8000-000000000000",
-    );
+    // תת-עמוד שקיים באמת: מזהה משתמש בדוי מחזיר 404, שמחליף את כל המסך
+    // כולל הסרגל
+    await gotoAdmin(page, "/app/admin/users/create");
 
     // Assert
     const sub = nav(page).locator('[data-sidebar="menu-sub"]');

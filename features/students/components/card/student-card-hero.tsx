@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { PageTitle } from "@/components/layout";
 import { CONTROL_HEIGHT } from "@/components/ui/control-size";
+import type { CardBackLink } from "@/features/students/lib/card-back-link";
 import { formatChildrenCount } from "@/features/students/lib/previous-partner-children";
 import {
   formatFirstNameWithNickname,
@@ -17,15 +18,15 @@ import { AgeBirthDate } from "./age-birth-date";
  */
 const BACK_LINK_CLASS = `inline-flex ${CONTROL_HEIGHT.sm} shrink-0 items-center gap-1 rounded-md px-2 text-body-sm text-muted-foreground`;
 
-/** "חזרה לרשימה" - הפריט הראשון בשורת הפעולות של ההדר */
-export function StudentCardBackLink() {
+/** קישור החזרה - הפריט הראשון בשורת הפעולות של ההדר. היעד נקבע בשרת לפי הצופה */
+export function StudentCardBackLink({ href, label }: CardBackLink) {
   return (
     <Link
-      href="/app/students"
+      href={href as never}
       className={`${BACK_LINK_CLASS} transition-colors hover:text-foreground`}
     >
       <ChevronRight className="h-4 w-4" />
-      חזרה לרשימה
+      {label}
     </Link>
   );
 }

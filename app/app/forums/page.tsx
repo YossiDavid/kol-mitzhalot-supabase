@@ -24,7 +24,7 @@ import ForumAccessNotice from "@/features/forums/components/access-notice";
 import ForumDeleteButton from "@/features/forums/components/forum-delete-button";
 import ForumLikeButton from "@/features/forums/components/like-button";
 import { getForumAccess } from "@/features/forums/lib/access";
-import { formatForumDate } from "@/features/forums/lib/format";
+import { formatForumDate, postPreview } from "@/features/forums/lib/format";
 import {
   listForumCategories,
   listForumPosts,
@@ -35,16 +35,7 @@ import CreatePostDialog from "./create-post-dialog";
 /** כמה שלדי פוסטים להציג בזמן הטעינה. */
 const SKELETON_POST_COUNT = 3;
 
-/** אורך התקציר של פוסט ברשימה, בתווים */
-const POST_PREVIEW_CHARS = 280;
-
 type ForumSearchParams = Promise<{ cat?: string }>;
-
-function postPreview(content: string): string {
-  return content.length > POST_PREVIEW_CHARS
-    ? `${content.slice(0, POST_PREVIEW_CHARS).trimEnd()}...`
-    : content;
-}
 
 /** כפתור הפרסום מופיע רק למי שמורשה לכתוב בפורום */
 async function ForumActions() {

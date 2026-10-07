@@ -35,6 +35,7 @@ import {
   canViewStudentPhoto,
   isGroomPhotoWithheld,
 } from "@/features/students/lib/student-photo-access";
+import { getCardBackLink } from "@/features/students/lib/card-back-link";
 import { getStudentCardAccess } from "@/features/students/lib/student-card-access";
 import {
   buildProposalStudentSelect,
@@ -337,6 +338,7 @@ async function StudentPageContent({
 
   return (
     <StudentCard
+      backLink={getCardBackLink(user)}
       student={student}
       photos={studentPhotos.photos}
       photoCount={studentPhotos.count}

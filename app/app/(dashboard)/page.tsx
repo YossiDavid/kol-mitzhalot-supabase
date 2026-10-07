@@ -95,7 +95,7 @@ async function DashboardSections() {
     activeShidduchimData,
     activeShidduchimCountRaw,
     openProposals,
-    forumPostsData,
+    forumResult,
     chats,
     shadchanApplicationStatus,
   ] = await Promise.all([
@@ -115,7 +115,9 @@ async function DashboardSections() {
         })
       : [],
     // פוסטים אחרונים בפורום השדכנים
-    isShadchanView ? getLatestForumPosts(supabase) : [],
+    isShadchanView
+      ? getLatestForumPosts(supabase)
+      : { posts: [], failed: false },
     // חדרי הצ'אט של המשתמש עם ההודעה האחרונה בכל חדר, מפוצלים לשיחות כשדכן
     // ולשיחות כבעל כרטיס (לשדכן/מנהל); למשתמש רגיל הכול באזור אחד
     user?.id
@@ -180,7 +182,8 @@ async function DashboardSections() {
             favoritesPreview as unknown as ShadchanAreaProps["favorites"]
           }
           chats={shadchanChats}
-          forumPosts={forumPostsData}
+          forumPosts={forumResult.posts}
+          forumFailed={forumResult.failed}
         />
       )}
 

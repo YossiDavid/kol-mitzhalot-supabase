@@ -15,7 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { AddCvDialog } from "@/features/students/components/add-cv-dialog";
 import DeleteStudentButton from "@/features/students/components/delete-student-button";
 import { StudentRowPhoto } from "@/features/students/components/student-row-photo";
-import { ISRAEL_TIME_ZONE } from "@/features/students/lib/new-card-window";
+import { ISRAEL_TIME_ZONE } from "@/lib/time-zone";
 import { useStudentThumbnails } from "@/features/students/lib/use-student-thumbnails";
 import {
   formatFirstNameWithNickname,

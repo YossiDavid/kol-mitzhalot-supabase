@@ -1,5 +1,4 @@
-/** אזור הזמן שקובע את גבול "היום": ישראל, ולא הדפדפן או השרת */
-export const ISRAEL_TIME_ZONE = "Asia/Jerusalem";
+import { ISRAEL_TIME_ZONE } from "@/lib/time-zone";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_DAYS = 7;

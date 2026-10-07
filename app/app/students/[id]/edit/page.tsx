@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/server";
 import { hasRole } from "@/lib/user";
+import {
+  getCardBackLink,
+  type CardBackLink,
+} from "@/features/students/lib/card-back-link";
 import { isDisplayRestricted } from "@/features/students/lib/third-party-card";
 import { loadThirdPartyApproval } from "@/features/students/lib/third-party-approval";
 import {
@@ -21,15 +25,26 @@ import EditStudentForm from "./edit-student-form";
 // אין כאן export const dynamic — הוא אסור תחת Cache Components (ראה ההערה
 // בדף הכרטיס). noStore מספיק כדי שהטופס ייטען תמיד מהמצב העדכני.
 
-function EditNotice({ title, body }: { title: string; body: string }) {
+function EditNotice({
+  title,
+  body,
+  backLink,
+}: {
+  title: string;
+  body: string;
+  /** נקבע לפי הצופה; בלעדיו (לא מחובר) אין קישור חזרה */
+  backLink?: CardBackLink;
+}) {
   return (
     <div className="flex min-h-[50vh] items-center justify-center">
       <div className="space-y-3 text-center">
         <p className="font-semibold text-foreground">{title}</p>
         <p className="text-body-sm text-muted-foreground">{body}</p>
-        <Button asChild variant="outline">
-          <Link href="/app/students">חזרה לרשימה</Link>
-        </Button>
+        {backLink && (
+          <Button asChild variant="outline">
+            <Link href={backLink.href as never}>{backLink.label}</Link>
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -117,6 +132,8 @@ async function EditStudentPageContent({
     );
   }
 
+  const backLink = getCardBackLink(user);
+
   // כרטיס צד שלישי שלא אושר להצגה מלאה: מסך העריכה מציג את כל הנתונים, ולכן
   // שדכן שאינו הממלא אינו נכנס אליו (אותו כלל כמו בדף הכרטיס)
   const approval = await loadThirdPartyApproval(supabase, id);
@@ -131,6 +148,7 @@ async function EditStudentPageContent({
       <EditNotice
         title="הכרטיס ממתין לאישור הנהלת המערכת"
         body="כרטיס שמולא על ידי צד שלישי נפתח לעריכה על ידי הממלא ועל ידי הנהלת המערכת בלבד, עד לאישורו."
+        backLink={backLink}
       />
     );
   }
@@ -155,6 +173,7 @@ async function EditStudentPageContent({
       <EditNotice
         title="מיועד לא נמצא"
         body={error?.message ?? "הרשומה שחיפשת אינה קיימת במערכת"}
+        backLink={backLink}
       />
     );
   }
@@ -173,6 +192,7 @@ async function EditStudentPageContent({
       <EditNotice
         title="אין לך הרשאה לערוך כרטיס זה"
         body="עריכת כרטיס פתוחה לבעל הכרטיס, לשדכנים ולמנהלים בלבד."
+        backLink={backLink}
       />
     );
   }

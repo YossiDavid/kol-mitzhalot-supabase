@@ -19,14 +19,10 @@ export default function HeaderIcons({
 }: HeaderIconsProps) {
   return (
     <div className="flex items-center gap-1">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => {
-          console.log("Clicked favorite button");
-        }}
-      >
-        <Crown className="fill-current text-favorite" />
+      <Button variant="ghost" size="icon" asChild>
+        <Link href="/app/premium" aria-label="פרימיום" title="פרימיום">
+          <Crown className="fill-current text-favorite" />
+        </Link>
       </Button>
 
       <Button
@@ -35,7 +31,7 @@ export default function HeaderIcons({
         asChild
         className="hidden md:inline-flex"
       >
-        <Link href={"/app"}>
+        <Link href={"/app"} aria-label="עמוד ראשי" title="עמוד ראשי">
           <Home />
         </Link>
       </Button>

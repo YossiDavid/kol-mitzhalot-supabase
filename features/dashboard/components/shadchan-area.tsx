@@ -14,6 +14,7 @@ export type ShadchanAreaProps = {
   favorites: React.ComponentProps<typeof Favorites>["favorites"];
   chats: DashboardChat[];
   forumPosts: React.ComponentProps<typeof Forum>["posts"];
+  forumFailed: boolean;
 };
 
 /** "כלי שדכן": ההצעות שלי, המועדפים, שיחות כשדכן והפורומים */
@@ -23,6 +24,7 @@ export function ShadchanArea({
   favorites,
   chats,
   forumPosts,
+  forumFailed,
 }: ShadchanAreaProps) {
   return (
     <DashboardArea id="dashboard-area-shadchan" title={SHADCHAN_TOOLS_LABEL}>
@@ -75,7 +77,7 @@ export function ShadchanArea({
           </Button>
         }
       >
-        <Forum posts={forumPosts} />
+        <Forum posts={forumPosts} failed={forumFailed} />
       </DashboardSection>
     </DashboardArea>
   );

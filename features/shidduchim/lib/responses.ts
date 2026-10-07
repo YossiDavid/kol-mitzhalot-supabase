@@ -1,5 +1,6 @@
 import type { BadgeVariant } from "@/components/ui/badge";
 import type { ShidduchStatus } from "@/features/shidduchim/lib/status";
+import { ISRAEL_TIME_ZONE } from "@/lib/time-zone";
 
 /**
  * תגובות הורים להצעת שידוך. הערכים והכללים כאן חייבים להישאר מסונכרנים
@@ -78,20 +79,17 @@ export function canRespondToProposal(
   return true;
 }
 
-/** אזור הזמן קבוע כדי שרינדור בשרת (UTC) לא יזיז את השעה המוצגת */
-const DISPLAY_TIME_ZONE = "Asia/Jerusalem";
-
 export function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString("he-IL", {
     dateStyle: "short",
     timeStyle: "short",
-    timeZone: DISPLAY_TIME_ZONE,
+    timeZone: ISRAEL_TIME_ZONE,
   });
 }
 
 export function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("he-IL", {
-    timeZone: DISPLAY_TIME_ZONE,
+    timeZone: ISRAEL_TIME_ZONE,
   });
 }
 

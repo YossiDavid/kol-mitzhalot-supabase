@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
+import { ISRAEL_TIME_ZONE } from "@/lib/time-zone";
 import {
   PROPOSALS_PAGE_SIZE,
   isUuid,
@@ -12,7 +13,6 @@ import {
  * על shidduch_events מחזירה שורות למנהל בלבד.
  */
 
-const ISRAEL_TIME_ZONE = "Asia/Jerusalem";
 const MS_PER_MINUTE = 60_000;
 const MS_PER_DAY = 24 * 60 * MS_PER_MINUTE;
 

@@ -4,6 +4,7 @@ import {
 } from "@/features/chats/lib/room-context";
 import { getDisplayName } from "@/features/chats/lib/user-display";
 import type { ApplicationStatus } from "@/lib/application-status";
+import { describeSupabaseError } from "@/lib/supabase/describe-error";
 import type { createClient } from "@/lib/supabase/server";
 import { shidduchIdsOf, splitChatsBySide } from "./chat-sides";
 
@@ -152,15 +153,22 @@ export async function getSentShidduchimCount(
 
 const FORUM_POSTS_LIMIT = 3;
 
-/** פוסטים אחרונים בפורום השדכנים */
+/**
+ * פוסטים אחרונים בפורום השדכנים. failed נפרד מרשימה ריקה: שליפה שנכשלה
+ * מציגה "לא הצלחנו לטעון" ולא "עדיין אין הודעות"
+ */
 export async function getLatestForumPosts(supabase: ServerSupabase) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("forum_posts")
-    .select("id, title, body, created_at")
+    .select("id, title, content, created_at")
     .order("created_at", { ascending: false })
     .limit(FORUM_POSTS_LIMIT);
 
-  return data ?? [];
+  if (error) {
+    console.error("[dashboard/forum-posts]", describeSupabaseError(error));
+    return { posts: [], failed: true };
+  }
+  return { posts: data ?? [], failed: false };
 }
 
 /** חדרי הצ'אט של המשתמש, החדש קודם. שגיאה מחזירה null (כמו "אין חדרים") */
