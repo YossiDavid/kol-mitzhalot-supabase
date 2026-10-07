@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -54,14 +54,25 @@ export function EmailCodeForm({
   });
 
   const { isSubmitting, errors } = form.formState;
+  // כשהכתובת כבר ידועה (הוקלדה רגע קודם בטופס) אין טעם לבקש אותה שוב: מוצגת שורה
+  // "הקוד נשלח אל …" עם אפשרות לשנות. השדה עצמו מופיע רק כשהכתובת לא ידועה.
+  const [isEmailEditable, setIsEmailEditable] = useState(!initialEmail);
+  const knownEmail = form.watch("email");
 
   // האימייל האחרון נקרא אחרי ההידרציה: localStorage לא קיים בשרת, וקריאה
   // מוקדמת הייתה יוצרת פער בין ה-HTML לצד הלקוח
   useEffect(() => {
     if (form.getValues("email")) return;
     const stored = readLastEmail();
-    if (stored) form.setValue("email", stored);
+    if (!stored) return;
+    form.setValue("email", stored);
+    setIsEmailEditable(false);
   }, [form]);
+
+  // שגיאה בכתובת השמורה לא יכולה להישאר מוסתרת: פותחים את השדה כדי שתוצג ותתוקן
+  useEffect(() => {
+    if (errors.email) setIsEmailEditable(true);
+  }, [errors.email]);
 
   const onSubmit = async ({ email, code }: CodeValues) => {
     form.clearErrors("root");
@@ -88,22 +99,43 @@ export function EmailCodeForm({
         {/* noValidate: ההודעות בעברית מגיעות מהסכמה ולא מהדפדפן */}
         <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
           <FormFields>
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormFieldShell label="אימייל" required>
-                  <Input
-                    {...field}
-                    type="email"
-                    autoComplete="email"
-                    dir="ltr"
-                    className="text-start"
-                    disabled={isSubmitting}
-                  />
-                </FormFieldShell>
-              )}
-            />
+            {isEmailEditable ? (
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormFieldShell label="אימייל" required>
+                    <Input
+                      {...field}
+                      type="email"
+                      autoComplete="email"
+                      dir="ltr"
+                      className="text-start"
+                      disabled={isSubmitting}
+                    />
+                  </FormFieldShell>
+                )}
+              />
+            ) : (
+              <p
+                className="text-body-sm text-muted-foreground"
+                data-testid="email-code-known-email"
+              >
+                הקוד נשלח אל{" "}
+                <bdi dir="ltr" className="font-medium text-foreground">
+                  {knownEmail}
+                </bdi>
+                .{" "}
+                <button
+                  type="button"
+                  className="underline underline-offset-4"
+                  onClick={() => setIsEmailEditable(true)}
+                  disabled={isSubmitting}
+                >
+                  לא הכתובת הזו?
+                </button>
+              </p>
+            )}
             <FormField
               control={form.control}
               name="code"

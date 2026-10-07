@@ -51,12 +51,34 @@ test.describe("כניסה עם קוד מהמייל", () => {
     await expect(codeField).toBeVisible();
     // (דף ההתחברות נשאר מוסתר ב-DOM, ולכן מצמצמים לאזור הקוד)
     const codeRegion = page.getByRole("region", { name: "הזנת קוד מהמייל" });
-    await expect(codeRegion.getByLabel("אימייל")).toHaveValue(user.email);
+    // הכתובת כבר ידועה (הוקלדה בטופס ההתחברות): היא מוצגת כטקסט ולא כשדה למילוי
+    await expect(
+      codeRegion.getByTestId("email-code-known-email"),
+    ).toContainText(user.email);
+    await expect(codeRegion.getByLabel("אימייל")).toHaveCount(0);
     await codeField.fill(code);
     await page.getByRole("button", { name: "כניסה עם הקוד" }).click();
 
     // Assert
     await expectLandedOn(page, "/app");
+  });
+
+  test("במסך הקוד אפשר להחליף את הכתובת הידועה", async ({ page }) => {
+    // Arrange
+    await page.goto("/auth/login");
+    await page.getByLabel("אימייל").fill(user.email);
+    await page.getByRole("button", { name: "שלח קישור התחברות" }).click();
+    await expect(page).toHaveURL(/\/auth\/check-email/);
+    const codeRegion = page.getByRole("region", { name: "הזנת קוד מהמייל" });
+    await expect(
+      codeRegion.getByTestId("email-code-known-email"),
+    ).toBeVisible();
+
+    // Act
+    await codeRegion.getByRole("button", { name: "לא הכתובת הזו?" }).click();
+
+    // Assert - השדה נפתח עם הכתובת הקיימת, וניתן לעריכה
+    await expect(codeRegion.getByLabel("אימייל")).toHaveValue(user.email);
   });
 
   test("קישור המייל בצורה הישנה (כתובת האימות של Supabase) עדיין נכנס, ורק בלחיצה", async ({
