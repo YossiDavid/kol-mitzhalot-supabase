@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CirclePlus, FileCheck, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { ThirdPartyCardTag } from "@/features/students/components/third-party-card-tag";
 
 type Student = {
   id: string;
@@ -22,6 +23,10 @@ type Student = {
     };
   };
   employment_history?: Array<{ category: string }>;
+  /** כרטיס צד שלישי ואישורי ההנהלה שלו (null = טרם אושר) */
+  card_for?: string | null;
+  third_party_full_display_approved_at?: string | null;
+  third_party_proposals_approved_at?: string | null;
 };
 
 type StudentBoxContextValue = { item?: Student };
@@ -129,6 +134,12 @@ function StudentBox({
         <div className="font-semibold">
           {`${firstName ?? ""} ${lastName ?? ""}`.trim()}
         </div>
+
+        {item && (
+          <div className="mt-1">
+            <ThirdPartyCardTag card={item} />
+          </div>
+        )}
 
         {subtitleParts.length > 0 && (
           <div className="mt-0.5 text-body-sm text-muted-foreground">

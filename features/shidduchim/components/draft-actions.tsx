@@ -18,7 +18,10 @@ export default function DraftActions({
   brideId,
   noteForGroom,
   noteForBride,
+  blockedReason = null,
 }: {
+  /** כרטיס צד שלישי שלא אושר לקבלת הצעות: השליחה חסומה, והסיבה מוצגת בחלון */
+  blockedReason?: string | null;
   groomId: string;
   brideId: string;
   noteForGroom: string | null;
@@ -91,6 +94,7 @@ export default function DraftActions({
         loading={loading}
         initialNoteGroom={noteForGroom ?? ""}
         initialNoteBride={noteForBride ?? ""}
+        blockedReason={blockedReason}
       />
     </>
   );

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import ForumAccessNotice from "@/features/forums/components/access-notice";
+import ForumDeleteButton from "@/features/forums/components/forum-delete-button";
 import ForumLikeButton from "@/features/forums/components/like-button";
 import { getForumAccess } from "@/features/forums/lib/access";
 import { formatForumDate } from "@/features/forums/lib/format";
@@ -97,7 +98,13 @@ async function CategoryFilters({
   );
 }
 
-function PostCard({ post }: { post: ForumPostSummary }) {
+function PostCard({
+  post,
+  canDelete,
+}: {
+  post: ForumPostSummary;
+  canDelete: boolean;
+}) {
   return (
     <Card asChild>
       <article data-testid="forum-post">
@@ -142,6 +149,15 @@ function PostCard({ post }: { post: ForumPostSummary }) {
                 {post.replyCount} תגובות
               </Link>
             </Button>
+            {canDelete && (
+              <ForumDeleteButton
+                target={{
+                  kind: "post",
+                  id: post.id,
+                  replyCount: post.replyCount,
+                }}
+              />
+            )}
           </div>
         </CardContent>
       </article>
@@ -192,7 +208,11 @@ async function ForumPosts({
   return (
     <>
       {posts.map((post) => (
-        <PostCard key={post.id} post={post} />
+        <PostCard
+          key={post.id}
+          post={post}
+          canDelete={access.isAdmin || post.authorId === access.userId}
+        />
       ))}
     </>
   );

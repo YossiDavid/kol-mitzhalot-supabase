@@ -23,7 +23,7 @@
  * `image_url`, `institution_id` ושדות הניהול הפנימיים - הכרטיס לא מציג
  * אותם, ואין סיבה שיישלפו.
  */
-const PROPOSAL_STUDENT_COLUMNS = `id, first_name, last_name, nickname, gender, personal_status, birth_date, height, country, city, community, shtible, plan_for_life, head_cover_type, about, in_shidduchim, parents_info, family_info, author_info`;
+const PROPOSAL_STUDENT_COLUMNS = `id, first_name, last_name, nickname, gender, personal_status, birth_date, height, country, city, community, shtible, plan_for_life, head_cover_type, about, in_shidduchim, parents_info, family_info, author_info, card_for, third_party_full_display_approved_at, third_party_proposals_approved_at`;
 
 /** נוספות רק כשהשדכן פתח את פרטי ההתקשרות להצעה */
 const PROPOSAL_CONTACT_COLUMNS = `phone, street, house, cellphone_type, cv_url`;

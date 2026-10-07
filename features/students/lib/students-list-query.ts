@@ -7,6 +7,7 @@ import {
   newCardsSince,
   parseNewCardsFilter,
 } from "@/features/students/lib/new-card-window";
+import { parseCardFilledByFilter } from "@/features/students/lib/card-filled-by-filter";
 import { buildStudentsOrder } from "@/features/students/lib/students-list-sort";
 
 /** כמה כרטיסים בעמוד אחד ברשימת המיועדים */
@@ -25,7 +26,7 @@ const STUDENT_ROW_COLUMNS = [
   "first_name",
   "last_name",
   "nickname",
-  "parents_info",
+  "parents_info:parents_info_for_viewer",
   "city",
   "community",
   "birth_date",
@@ -36,6 +37,10 @@ const STUDENT_ROW_COLUMNS = [
   "in_shidduchim",
   // לתג "חדש" ולמיון לפי תאריך הוספה
   "created_at",
+  // תג "מולא ע״י צד שלישי" ואישורי ההנהלה
+  "card_for",
+  "third_party_full_display_approved_at",
+  "third_party_proposals_approved_at",
 ];
 
 type SupabaseBrowserClient = ReturnType<typeof createClient>;
@@ -157,6 +162,12 @@ function applyFieldFilters(
   }
   if (query.is_yeshiva === "true" || query.is_yeshiva === "false") {
     next = next.eq("is_yeshiva", query.is_yeshiva === "true");
+  }
+  // card_for ריק (כרטיס ישן) נחשב מנוהל ישירות
+  const cardFilledBy = parseCardFilledByFilter(query.cardFilledBy);
+  if (cardFilledBy === "third_party") next = next.eq("card_for", "other");
+  if (cardFilledBy === "direct") {
+    next = next.or("card_for.is.null,card_for.neq.other");
   }
   const newCards = parseNewCardsFilter(query.newCards);
   if (newCards)

@@ -8,6 +8,7 @@ import {
   Image as ImageIcon,
   Link2,
   ListChecks,
+  ShieldQuestion,
   UserCheck,
   UserPlus,
   Users,
@@ -46,6 +47,12 @@ export default function AdminPage() {
           icon={ListChecks}
           title="דוח הצעות"
           description="מי הציע לאיזה כרטיס, מתי, ומה מצב ההצעה כיום"
+        />
+        <LinkCard
+          href="/app/admin/third-party-cards"
+          icon={ShieldQuestion}
+          title="כרטיסי צד שלישי"
+          description="אישור הצגת נתונים מלאים ושליחת הצעות לכרטיסים שמולאו על ידי אחר"
         />
         <LinkCard
           href="/app/admin/users"

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
 import { getForumAccess } from "./access";
@@ -60,4 +61,35 @@ export function forumWriteError(
     );
   }
   return NextResponse.json({ error: "הפעולה נכשלה, נסו שוב" }, { status: 500 });
+}
+
+/** מזהה בנתיב ה-API: אותה בדיקה לפוסט ולתגובה */
+export const forumIdSchema = z.guid();
+
+/**
+ * מחיקת שורה מהפורום בלקוח של המשתמש. מדיניות ה-RLS (כותב התוכן או מנהל)
+ * היא שמחליטה; אפס שורות = לא קיים או שאין הרשאה, ואין מבחינים ביניהם כדי
+ * לא לחשוף קיום של תוכן. מחיקת פוסט מוחקת ב-cascade גם תגובות ולייקים.
+ */
+export async function deleteForumRow(
+  table: "forum_posts" | "forum_replies",
+  id: string,
+): Promise<NextResponse> {
+  const writer = await requireForumWriter();
+  if (!writer.ok) return writer.response;
+
+  const { data, error } = await writer.supabase
+    .from(table)
+    .delete()
+    .eq("id", id)
+    .select("id");
+  if (error) return forumWriteError(`delete-${table}`, error);
+
+  if (!data || data.length === 0) {
+    return NextResponse.json(
+      { error: "הפריט לא נמצא, או שאין לך הרשאה למחוק אותו" },
+      { status: 404 },
+    );
+  }
+  return NextResponse.json({ ok: true });
 }

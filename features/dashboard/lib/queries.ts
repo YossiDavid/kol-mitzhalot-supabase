@@ -21,7 +21,8 @@ const STUDENT_TABLE_COLUMNS = [
   "first_name",
   "last_name",
   "nickname",
-  "parents_info",
+  // שמות הורים בלבד בכרטיס צד שלישי שלא אושר להצגה מלאה (מסד: parents_info_for_viewer)
+  "parents_info:parents_info_for_viewer",
   "city",
   "community",
   "birth_date",
@@ -32,6 +33,8 @@ const STUDENT_TABLE_COLUMNS = [
   "in_shidduchim",
   // עבור מי מולא הכרטיס: קובע את הכותרת ("הכרטיס שלי" / "המיועדים שלך") ותג בשורה
   "card_for",
+  "third_party_full_display_approved_at",
+  "third_party_proposals_approved_at",
   // נדרשות לבקרות של מנהל הכרטיס בטבלה: מכסת ההצעות ונעילת ההשהיה של ההנהלה
   "proposal_limit_count",
   "proposal_limit_period",
@@ -91,7 +94,7 @@ const SHIDDUCH_SIDE_COLUMNS = `
   birth_date,
   city,
   cv_url,
-  parents_info,
+  parents_info:parents_info_for_viewer,
   education_history(name),
   employment_history(category,role)
 `;

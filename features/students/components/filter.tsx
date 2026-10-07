@@ -19,6 +19,7 @@ import {
 import { CommunityFilterField } from "@/features/students/components/community-filter";
 import { useCommunityOptions } from "@/features/students/lib/use-community-options";
 import type { CommunityFilter } from "@/features/students/lib/community-filter";
+import { CARD_FILLED_BY_FILTER_OPTIONS } from "@/features/students/lib/card-filled-by-filter";
 import { NEW_CARDS_FILTER_OPTIONS } from "@/features/students/lib/new-card-window";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +54,11 @@ const EMPLOYMENT_OPTIONS: Option[] = [
 
 /** "חדשים": כרטיסים שנוספו היום או השבוע (הסינון בשרת, לפי שעון ישראל) */
 const NEW_CARDS_OPTIONS: Option[] = NEW_CARDS_FILTER_OPTIONS.map(
+  ({ value, label }) => ({ value, label }),
+);
+
+/** "מילוי הכרטיס": מועמדים והורים, מול צד שלישי (הסינון בשרת, לפי card_for) */
+const CARD_FILLED_BY_OPTIONS: Option[] = CARD_FILLED_BY_FILTER_OPTIONS.map(
   ({ value, label }) => ({ value, label }),
 );
 
@@ -188,6 +194,13 @@ function BasicFields({
         name="newCards"
         label="חדשים"
         options={NEW_CARDS_OPTIONS}
+        className="md:col-span-2"
+      />
+      <SelectFilter
+        {...props}
+        name="cardFilledBy"
+        label="מילוי הכרטיס"
+        options={CARD_FILLED_BY_OPTIONS}
         className="md:col-span-2"
       />
       <TextFilter

@@ -85,6 +85,7 @@ export function StudentCardHero({
   city,
   height,
   photo,
+  tag,
   backLink,
   actions,
 }: {
@@ -103,6 +104,8 @@ export function StudentCardHero({
   city: string | null | undefined;
   height: number | null | undefined;
   photo: React.ReactNode;
+  /** תגים מתחת לשורת המטא (למשל "מולא ע״י צד שלישי") */
+  tag?: React.ReactNode;
   backLink?: React.ReactNode;
   actions?: React.ReactNode;
 }) {
@@ -133,6 +136,7 @@ export function StudentCardHero({
           {city && <MetaItem>{city}</MetaItem>}
           {height && <MetaItem>{height} ס"מ</MetaItem>}
         </p>
+        {tag && <div className="mt-2 flex flex-wrap gap-2">{tag}</div>}
       </div>
 
       {backLink || actions ? (

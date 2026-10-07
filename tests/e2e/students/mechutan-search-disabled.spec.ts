@@ -1,3 +1,4 @@
+import { chooseChildCard } from "./card-for-fixtures";
 import { test, expect } from "@playwright/test";
 
 /**
@@ -16,7 +17,7 @@ test("שורת מחותן: בלי חיפוש במאגר, והשדות פתוחי
     }
   });
   await page.goto("/app/students/create");
-  await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
+  await chooseChildCard(page);
   await page.getByRole("radio", { name: "מיועד", exact: true }).check();
   await page
     .getByRole("navigation", { name: "שלבי הטופס" })

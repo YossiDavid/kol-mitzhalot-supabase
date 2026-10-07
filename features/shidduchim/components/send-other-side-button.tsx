@@ -22,7 +22,10 @@ export default function SendOtherSideButton({
   shidduchId,
   recipientScope,
   canEdit,
+  blockedReason = null,
 }: {
+  /** כרטיס צד שלישי שלא אושר לקבלת הצעות: השליחה חסומה, והסיבה מוצגת */
+  blockedReason?: string | null;
   shidduchId: string;
   recipientScope: RecipientScope;
   canEdit: boolean;
@@ -72,11 +75,19 @@ export default function SendOtherSideButton({
       <div>
         <Button
           onClick={() => setOpen(true)}
-          disabled={loading}
+          disabled={loading || Boolean(blockedReason)}
           variant="outline"
         >
           {loading ? "שולח..." : `שליחה גם ${targetLabel}`}
         </Button>
+        {blockedReason && (
+          <p
+            className="mt-2 text-body-sm text-warning-muted-foreground"
+            data-testid="send-other-side-blocked"
+          >
+            {blockedReason}
+          </p>
+        )}
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

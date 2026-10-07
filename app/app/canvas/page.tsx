@@ -1,5 +1,6 @@
 import { Page, PageHeader } from "@/components/layout";
 import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
+import { DESK_STUDENT_SELECT } from "@/features/shidduchim/lib/desk-student-select";
 import ShiduchDesk from "@/features/shidduchim/components/shiduch-desk";
 import { createClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/user";
@@ -8,29 +9,6 @@ import { Suspense } from "react";
 
 /** כמה כרטיסי מועדפים מסומנים בשלד שולחן העבודה. */
 const SKELETON_FAVORITE_COUNT = 4;
-
-/**
- * מה שהלוח קורא מכרטיס מועדף: התצוגה (שם, גיל, עיר, הורים, תעסוקה) ובדיקות
- * ההתאמה ב-compatibility.ts (מדינה, סטטוס, גובה, כיוון חיים, כיסוי ראש,
- * סוג טלפון והעדפות הצד השני). בלי עמודות הכרטיס הכבדות.
- */
-const DESK_STUDENT_SELECT = `
-  id,
-  gender,
-  first_name,
-  last_name,
-  birth_date,
-  city,
-  country,
-  personal_status,
-  height,
-  plan_for_life,
-  head_cover_type,
-  cellphone_type,
-  parents_info,
-  employment_history(category),
-  partner_preferences(age_min, age_max, preferred_countries, work_status, head_cover_type, plan_for_life, cellphone_type)
-` as const;
 
 async function ShiduchDeskContent() {
   noStore();

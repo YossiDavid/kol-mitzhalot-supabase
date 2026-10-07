@@ -12,6 +12,7 @@ export type ForumCategory = {
 
 export type ForumPostSummary = {
   id: string;
+  authorId: string;
   title: string;
   content: string;
   createdAt: string;
@@ -25,6 +26,7 @@ export type ForumPostSummary = {
 
 export type ForumReply = {
   id: string;
+  authorId: string;
   content: string;
   createdAt: string;
   authorName: string;

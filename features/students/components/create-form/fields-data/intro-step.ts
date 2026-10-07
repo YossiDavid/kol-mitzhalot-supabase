@@ -1,7 +1,10 @@
+import { CARD_GUIDANCE_HTML, authorFields } from "./author-fields";
 import type { FormSteps } from "./types";
 
 const WELCOME_HTML =
   "<h3>ברוכים הבאים למערכת השידוכים שלנו</h3><p>תודה על הצטרפותכם.</p><p>על מנת שנוכל להכיר אתכם לעומק ולהציע הצעות שידוך מותאמות ומדויקות – יש למלא את הטופס שלפניכם במלואו ובאופן מדויק.</p><p><b>המידע שתמלאו ישמר בפרטיות מוחלטת וישמש אך ורק לצורכי תהליך ההתאמה.</b></p><p>נודה על שיתוף פעולה מלא ומוקפד – זהו שלב חיוני להצלחת התהליך.</p><hr/>";
+
+const INTRO_HTML = WELCOME_HTML.replace("<hr/>", `${CARD_GUIDANCE_HTML}<hr/>`);
 
 export const introStep: FormSteps = {
   name: "intro",
@@ -14,18 +17,25 @@ export const introStep: FormSteps = {
         {
           name: "cardFor",
           width: "full",
-          label: "אני ממלא/ת את הכרטיס:",
+          label: "מי ממלא את הכרטיס?",
           type: "radio",
+          description:
+            "הצעות שידוך נשלחות לכרטיסים שמולאו על ידי המועמד/ת או הוריו/ה.",
+          vertical: true,
           options: [
-            { value: "self", label: "עבור עצמי" },
-            { value: "child", label: "עבור בני או בתי" },
-            { value: "other", label: "עבור אדם אחר" },
+            { value: "self", label: "המועמד/ת בעצמו/ה" },
+            { value: "child", label: "אב או אם של המועמד/ת" },
+            {
+              value: "other",
+              label: "אדם אחר (שדכן/ית, קרוב/ת משפחה, מכר/ה)",
+            },
           ],
           required: true,
           // התווית היא משפט שלם, ולכן הודעה מפורשת
-          requiredMessage: "נא לבחור עבור מי ממלאים את הכרטיס",
-          beforeField: WELCOME_HTML,
+          requiredMessage: "נא לבחור מי ממלא את הכרטיס",
+          beforeField: INTRO_HTML,
         },
+        ...authorFields,
         {
           name: "gender",
           width: "full",

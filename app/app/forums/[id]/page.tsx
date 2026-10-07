@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { CardGridSkeleton } from "@/components/ui/card-skeleton";
 import ForumAccessNotice from "@/features/forums/components/access-notice";
+import ForumDeleteButton from "@/features/forums/components/forum-delete-button";
 import ForumLikeButton from "@/features/forums/components/like-button";
 import ReplyForm from "@/features/forums/components/reply-form";
 import { getForumAccess } from "@/features/forums/lib/access";
@@ -16,7 +17,13 @@ import { getForumPost } from "@/features/forums/lib/queries";
 import type { ForumReply } from "@/features/forums/lib/types";
 import { z } from "zod";
 
-function ReplyItem({ reply }: { reply: ForumReply }) {
+function ReplyItem({
+  reply,
+  canDelete,
+}: {
+  reply: ForumReply;
+  canDelete: boolean;
+}) {
   return (
     <Card size="sm" asChild>
       <article data-testid="forum-reply">
@@ -26,12 +33,15 @@ function ReplyItem({ reply }: { reply: ForumReply }) {
         <p className="text-body-sm leading-relaxed whitespace-pre-wrap">
           {reply.content}
         </p>
-        <div>
+        <div className="flex items-center gap-1">
           <ForumLikeButton
             target={{ replyId: reply.id }}
             initialCount={reply.likeCount}
             initialLiked={reply.isLikedByMe}
           />
+          {canDelete && (
+            <ForumDeleteButton target={{ kind: "reply", id: reply.id }} />
+          )}
         </div>
       </article>
     </Card>
@@ -55,6 +65,10 @@ async function ForumPostContent({
   const post = await getForumPost(access.userId, id);
   if (!post) notFound();
 
+  /** הכפתור רק לכותב התוכן או למנהל; ה-RLS אוכף זאת גם בשרת */
+  const canDelete = (authorId: string) =>
+    access.isAdmin || authorId === access.userId;
+
   return (
     <div className="space-y-6">
       <Card asChild>
@@ -71,12 +85,22 @@ async function ForumPostContent({
           <p className="text-body leading-relaxed whitespace-pre-wrap">
             {post.content}
           </p>
-          <div>
+          <div className="flex items-center gap-1">
             <ForumLikeButton
               target={{ postId: post.id }}
               initialCount={post.likeCount}
               initialLiked={post.isLikedByMe}
             />
+            {canDelete(post.authorId) && (
+              <ForumDeleteButton
+                target={{
+                  kind: "post",
+                  id: post.id,
+                  replyCount: post.replies.length,
+                }}
+                redirectTo="/app/forums"
+              />
+            )}
           </div>
         </article>
       </Card>
@@ -86,7 +110,11 @@ async function ForumPostContent({
           תגובות ({post.replies.length})
         </h2>
         {post.replies.map((reply) => (
-          <ReplyItem key={reply.id} reply={reply} />
+          <ReplyItem
+            key={reply.id}
+            reply={reply}
+            canDelete={canDelete(reply.authorId)}
+          />
         ))}
         <Card size="sm">
           <ReplyForm postId={post.id} />

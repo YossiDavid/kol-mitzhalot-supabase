@@ -32,6 +32,8 @@ type Props = {
   loading?: boolean;
   initialNoteGroom?: string;
   initialNoteBride?: string;
+  /** סיבה שבגללה אי אפשר לשלוח (כרטיס צד שלישי שלא אושר): מוצגת, והשליחה חסומה */
+  blockedReason?: string | null;
 };
 
 const TAB_ITEMS: { scope: RecipientScope; label: string }[] = [
@@ -47,6 +49,7 @@ export default function SendProposalModal({
   loading,
   initialNoteGroom = "",
   initialNoteBride = "",
+  blockedReason = null,
 }: Props) {
   const [scope, setScope] = useState<RecipientScope>("both");
   const [noteGroom, setNoteGroom] = useState(initialNoteGroom);
@@ -236,6 +239,16 @@ export default function SendProposalModal({
             </div>
           </div>
 
+          {blockedReason && (
+            <p
+              role="alert"
+              data-testid="send-proposal-blocked"
+              className="rounded-md border border-warning bg-warning-muted p-3 text-body-sm text-warning-muted-foreground"
+            >
+              {blockedReason}
+            </p>
+          )}
+
           {refusal && (
             <p
               role="alert"
@@ -256,7 +269,11 @@ export default function SendProposalModal({
           >
             ביטול
           </Button>
-          <Button type="button" onClick={handleSubmit} disabled={loading}>
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={loading || Boolean(blockedReason)}
+          >
             {loading ? "שולח…" : "שלח הצעה"}
           </Button>
         </DialogFooter>

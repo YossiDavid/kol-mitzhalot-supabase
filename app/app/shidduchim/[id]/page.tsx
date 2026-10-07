@@ -17,6 +17,10 @@ import ParentProposalView from "@/features/shidduchim/components/parent-proposal
 import ClosedNoticesList from "@/features/shidduchim/components/closed-notices-list";
 import DeleteShidduchButton from "@/features/shidduchim/components/delete-shidduch-button";
 import InformOtherSideButton from "@/features/shidduchim/components/inform-other-side-button";
+import {
+  THIRD_PARTY_PROPOSAL_MESSAGE,
+  isProposalsPending,
+} from "@/features/students/lib/third-party-card";
 import SendOtherSideButton from "@/features/shidduchim/components/send-other-side-button";
 import ProposalThreadPanel from "@/features/shidduchim/components/proposal-thread-panel";
 import SideResponsesPanel from "@/features/shidduchim/components/side-responses-panel";
@@ -131,13 +135,17 @@ async function ShidduchCardContent({
     await Promise.all([
       admin
         .from("students")
-        .select("first_name, last_name, user_id")
+        .select(
+          "first_name, last_name, user_id, card_for, third_party_proposals_approved_at",
+        )
         .eq("id", shidduch.groom_id)
         .is("deleted_at", null)
         .maybeSingle(),
       admin
         .from("students")
-        .select("first_name, last_name, user_id")
+        .select(
+          "first_name, last_name, user_id, card_for, third_party_proposals_approved_at",
+        )
         .eq("id", shidduch.bride_id)
         .is("deleted_at", null)
         .maybeSingle(),
@@ -235,6 +243,12 @@ async function ShidduchCardContent({
           shidduchId={shidduch.id}
           recipientScope={shidduch.recipient_scope}
           canEdit
+          blockedReason={
+            isProposalsPending(groomRow ?? {}) ||
+            isProposalsPending(brideRow ?? {})
+              ? THIRD_PARTY_PROPOSAL_MESSAGE
+              : null
+          }
         />
 
         {canInformOtherSide && (

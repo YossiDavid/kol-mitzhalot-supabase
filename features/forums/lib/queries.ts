@@ -147,6 +147,7 @@ export async function listForumPosts(
 
   return rows.map((row) => ({
     id: row.id,
+    authorId: row.author_id,
     title: row.title,
     content: row.content,
     createdAt: row.created_at,
@@ -204,6 +205,7 @@ export async function getForumPost(
 
   const replies: ForumReply[] = replyRows.map((row) => ({
     id: row.id,
+    authorId: row.author_id,
     content: row.content,
     createdAt: row.created_at,
     authorName: names.get(row.author_id) ?? FALLBACK_AUTHOR_NAME,
@@ -213,6 +215,7 @@ export async function getForumPost(
 
   return {
     id: post.id,
+    authorId: post.author_id,
     title: post.title,
     content: post.content,
     createdAt: post.created_at,

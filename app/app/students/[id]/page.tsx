@@ -13,11 +13,19 @@ import { PublicStudentCard } from "@/features/students/components/card/public-st
 import { StudentCard } from "@/features/students/components/card/student-card";
 import { StudentCardSkeleton } from "@/features/students/components/card/student-card-skeleton";
 import {
+  ANONYMOUS_BASIC_STUDENT_SELECT,
   ANONYMOUS_STUDENT_SELECT,
+  BASIC_STUDENT_SELECT,
   FULL_STUDENT_SELECT,
   buildPublicStudent,
+  parentsInfoFromNames,
+  toAnonymousRowFromBasic,
   type AnonymousStudentRow,
 } from "@/features/students/lib/student-card-data";
+import { withoutFillReason } from "@/features/students/lib/author-info";
+import { isDisplayRestricted } from "@/features/students/lib/third-party-card";
+import { loadThirdPartyApproval } from "@/features/students/lib/third-party-approval";
+import { ThirdPartyApprovalControls } from "@/features/admin/components/third-party-approval-controls";
 import {
   loadMyShadchanNotes,
   loadStaffFeedback,
@@ -33,7 +41,10 @@ import {
   redactProposalStudent,
 } from "@/features/students/lib/student-proposal-card";
 import { recordStudentCardView } from "@/features/students/lib/record-card-view";
-import { loadCardOwnerInfo } from "@/features/students/lib/card-owner";
+import {
+  loadAdminDisplayName,
+  loadCardOwnerInfo,
+} from "@/features/students/lib/card-owner";
 
 // הערה: אין כאן export const dynamic — הוא אסור תחת Cache Components
 // (next.config: cacheComponents) והבנייה נכשלת עליו. גם אין בו צורך:
@@ -132,6 +143,22 @@ async function StudentPageContent({
   // רק "מה מוצג ב-JSX": Server Component מסדרר (serialize) כל מה שנשלף
   // להטבעה ב-HTML, ולכן הגבלת מידע חייבת לקרות כבר ברמת ה-query.
   const isAnonymous = !user;
+  const isAdmin = hasRole(user, "admin");
+  const isShadchan = hasRole(user, "shadchan") || isAdmin;
+
+  // כרטיס צד שלישי שלא אושר להצגה מלאה: הצופה (חוץ מבעל הכרטיס ומנהל) מקבל
+  // select בסיסי בלבד, ולכן שאר הנתונים לא נשלפים ולא מגיעים ללקוח כלל.
+  // נקבע לפני השליפה, כמו רמת הגישה.
+  const approval = await loadThirdPartyApproval(
+    isAnonymous ? createAdminClient() : supabase,
+    id,
+  );
+  const isBasicOnly =
+    approval !== null &&
+    isDisplayRestricted(approval, {
+      isOwner: approval.user_id === user?.id,
+      isAdmin,
+    });
 
   // רמת הגישה נקבעת לפני השליפה, כי היא בוחרת את ה-select. מנהל כרטיס
   // שקיבל הצעת שידוך מקבל "proposal": הכרטיס במלואו, בלי פרטי התקשרות
@@ -156,7 +183,11 @@ async function StudentPageContent({
   const rowQuery = isAnonymous
     ? createAdminClient()
         .from("students")
-        .select(ANONYMOUS_STUDENT_SELECT)
+        .select(
+          isBasicOnly
+            ? ANONYMOUS_BASIC_STUDENT_SELECT
+            : ANONYMOUS_STUDENT_SELECT,
+        )
         .eq("id", id)
         // אין RLS למשתמש anon (זה client עם service role) - הסינון על
         // deleted_at חייב לקרות כאן במפורש, אחרת כרטיס שנמחק "רך" יחשף.
@@ -165,9 +196,11 @@ async function StudentPageContent({
     : supabase
         .from("students")
         .select(
-          isProposalView && access
-            ? buildProposalStudentSelect(access)
-            : FULL_STUDENT_SELECT,
+          isBasicOnly
+            ? BASIC_STUDENT_SELECT
+            : isProposalView && access
+              ? buildProposalStudentSelect(access)
+              : FULL_STUDENT_SELECT,
         )
         .eq("id", id)
         .single();
@@ -175,9 +208,6 @@ async function StudentPageContent({
     rowQuery,
     loadStaffFeedback(supabase, id),
   ]);
-
-  const isShadchan = hasRole(user, "shadchan") || hasRole(user, "admin");
-  const isAdmin = hasRole(user, "admin");
 
   if (error) {
     // הודעת Postgres נשארת בשרת: גולש אנונימי אינו אמור לראות שמות
@@ -202,10 +232,21 @@ async function StudentPageContent({
   // השורה רופפת בכוונה, כמו StudentRow ב-student-card.tsx: ה-select נבנה
   // בזמן ריצה לפי רמת הגישה, ולכן PostgREST אינו יכול להסיק ממנו טיפוס.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const student: any =
-    isProposalView && access && data
-      ? redactProposalStudent(data as Record<string, unknown>, access)
+  const shapedRow: any =
+    isBasicOnly && data && !isAnonymous
+      ? parentsInfoFromNames(data as never)
       : data;
+  // ההסבר "מדוע מילאתי" מוצג למנהלים ולממלא בלבד
+  const canSeeFillReason =
+    isAdmin || Boolean(shapedRow?.user_id && shapedRow.user_id === user?.id);
+  const unreasonedRow: any =
+    shapedRow && !canSeeFillReason && shapedRow.author_info
+      ? { ...shapedRow, author_info: withoutFillReason(shapedRow.author_info) }
+      : shapedRow;
+  const student: any =
+    isProposalView && access && unreasonedRow
+      ? redactProposalStudent(unreasonedRow as Record<string, unknown>, access)
+      : unreasonedRow;
   if (!student) {
     return (
       <CardNotice
@@ -227,7 +268,11 @@ async function StudentPageContent({
 
   // --- ענף ציבורי (משתמש לא מחובר) --------------------------------------
   if (isAnonymous) {
-    const publicStudent = buildPublicStudent(student as AnonymousStudentRow);
+    const publicStudent = buildPublicStudent(
+      isBasicOnly
+        ? toAnonymousRowFromBasic(student)
+        : (student as AnonymousStudentRow),
+    );
 
     // כלל מוחלט: אצל בת לעולם לא מוצגת תמונה בדף הציבורי - הגלריה נטענת
     // ונחתמת רק לבן, ולבת לא נוצר אף קישור.
@@ -242,6 +287,8 @@ async function StudentPageContent({
         student={publicStudent}
         photos={publicPhotos}
         staffFeedback={staffFeedback}
+        thirdParty={approval ?? undefined}
+        isBasicOnly={isBasicOnly}
       />
     );
   }
@@ -276,7 +323,17 @@ async function StudentPageContent({
 
   // חייב לשקף בדיוק את ההרשאה של update_full_student_profile (בעלים / שדכן /
   // מנהל), אחרת כפתור "עריכה" יוביל למסך שהשמירה בו תיפול על not_allowed.
-  const canEdit = student.user_id === user?.id || isShadchan || isAdmin;
+  // כרטיס צד שלישי שלא אושר: שדכן שאינו הממלא אינו רואה את הכרטיס המלא, ולכן
+  // גם לא עורך אותו (מסך העריכה מציג את כל הנתונים)
+  const canEdit =
+    !isBasicOnly && (student.user_id === user?.id || isShadchan || isAdmin);
+  const approvingAdminNames =
+    isAdmin && approval?.card_for === "other"
+      ? await Promise.all([
+          loadAdminDisplayName(approval.third_party_full_display_approved_by),
+          loadAdminDisplayName(approval.third_party_proposals_approved_by),
+        ])
+      : null;
 
   return (
     <StudentCard
@@ -292,6 +349,22 @@ async function StudentPageContent({
       isProposalView={isProposalView}
       showMedical={!isProposalView || !!access?.shareMedical}
       owner={owner}
+      isBasicOnly={isBasicOnly}
+      adminControls={
+        approval && approvingAdminNames ? (
+          <ThirdPartyApprovalControls
+            studentId={student.id}
+            fullDisplay={{
+              approvedAt: approval.third_party_full_display_approved_at,
+              approvedByName: approvingAdminNames[0],
+            }}
+            proposals={{
+              approvedAt: approval.third_party_proposals_approved_at,
+              approvedByName: approvingAdminNames[1],
+            }}
+          />
+        ) : null
+      }
       actions={
         // ההרשאות נקבעות כאן, בשרת, ונמסרות כדגלים: קו״ח רק כשקיים, עריכה
         // לבעלים/שדכן/מנהל, שיתוף לכל מי שרואה את הכרטיס, פנייה ועדכון

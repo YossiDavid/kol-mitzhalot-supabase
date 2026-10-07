@@ -1,3 +1,4 @@
+import { chooseChildCard } from "./card-for-fixtures";
 import { test, expect } from "@playwright/test";
 
 /**
@@ -14,7 +15,9 @@ test.describe("הרשאות שדכן — גישה לרשימת מועמדים", 
     await expect(page).not.toHaveURL(/\/auth\/sign-in/);
 
     // כותרת הדף צריכה להיות נראית (מחפש h1/h2/h3 visible — לא כולל אלמנטים מוסתרים)
-    await expect(page.locator("h1, h2, h3").filter({ visible: true }).first()).toBeVisible({ timeout: 10_000 });
+    await expect(
+      page.locator("h1, h2, h3").filter({ visible: true }).first(),
+    ).toBeVisible({ timeout: 10_000 });
   });
 
   test("שדכן לא מופנה לדף 403 או שגיאה", async ({ page }) => {
@@ -38,25 +41,31 @@ test.describe("הרשאות שדכן — גישה לרשימת מועמדים", 
 test.describe("תאריך לידה — חישוב גיל תקין", () => {
   test("טופס יצירת תלמיד מאפשר בחירת תאריך לידה", async ({ page }) => {
     await page.goto("/app/students/create");
-    await expect(page.locator("h1, h2, h3").first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("h1, h2, h3").first()).toBeVisible({
+      timeout: 10_000,
+    });
 
     // בחר מגדר
-    await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
+    await chooseChildCard(page);
     await page.getByRole("radio", { name: "מיועד", exact: true }).click();
     await page.locator("button:has-text('הבא')").click();
 
     // שלב 1 — שדה תאריך לידה צריך להיות קיים
-    await expect(page.locator('input[placeholder="בחר תאריך עברי"]')).toBeVisible({ timeout: 5_000 });
+    await expect(
+      page.locator('input[placeholder="בחר תאריך עברי"]'),
+    ).toBeVisible({ timeout: 5_000 });
   });
 });
 
 test.describe("מספר טלפון — קבלת פורמטים שונים", () => {
   test("שדה הטלפון בטופס יצירה מקבל מספר בינלאומי", async ({ page }) => {
     await page.goto("/app/students/create");
-    await expect(page.locator("h1, h2, h3").first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("h1, h2, h3").first()).toBeVisible({
+      timeout: 10_000,
+    });
 
     // נווט לשלב 1
-    await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
+    await chooseChildCard(page);
     await page.getByRole("radio", { name: "מיועד", exact: true }).click();
     await page.locator("button:has-text('הבא')").click();
 

@@ -172,6 +172,9 @@ export const emptyStudentFormValues: StudentFormValues = {
     name: "",
     phone: "",
     relation: "",
+    relationType: "",
+    knowsWell: "",
+    fillReason: "",
   },
 };
 
@@ -232,10 +235,6 @@ const genderLabelOverrides: Record<string, { male: string; female: string }> = {
   "partner.aboutThePartner": {
     male: "כמה מילים על אופי וסגנון המיועדת",
     female: "כמה מילים על אופי וסגנון המיועד",
-  },
-  "author.relation": {
-    male: "קשר למועמד",
-    female: "קשר למועמדת",
   },
   // Family
   "family.currentChildPlace": {

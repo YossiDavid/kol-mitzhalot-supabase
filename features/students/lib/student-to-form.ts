@@ -1,5 +1,9 @@
 import type { StudentFormValues } from "@/features/students/components/create-form/schema";
 import {
+  readAuthorInfo,
+  toAuthorFormValues,
+} from "@/features/students/lib/author-info";
+import {
   LEGACY_CHILDREN_COUNT_KEY,
   getChildrenCount,
   parseStoredChildren,
@@ -236,7 +240,6 @@ export function studentToFormValues(
 ): StudentFormValues {
   const parentsInfo = record(student.parents_info);
   const familyInfo = record(student.family_info);
-  const authorInfo = record(student.author_info);
   const father = record(parentsInfo.father);
   const mother = record(parentsInfo.mother);
   const educationRows = list(student.education_history);
@@ -335,11 +338,9 @@ export function studentToFormValues(
     medical: toMedical(single(student.medical_records)),
     partner: toPartner(single(student.partner_preferences)),
 
-    author: {
-      name: text(authorInfo.name),
-      phone: text(authorInfo.phone),
-      relation: text(authorInfo.relation),
-    },
+    author: toAuthorFormValues(
+      readAuthorInfo(student.author_info, text(student.card_for)),
+    ),
   };
 }
 

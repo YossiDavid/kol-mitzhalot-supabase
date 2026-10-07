@@ -1,5 +1,10 @@
 import { MessageSquareText } from "lucide-react";
 
+import { ThirdPartyCardTag } from "@/features/students/components/third-party-card-tag";
+import {
+  THIRD_PARTY_HIDDEN_PARTS_NOTE,
+  type ThirdPartyApprovalColumns,
+} from "@/features/students/lib/third-party-card";
 import { StaffFeedbackList } from "@/features/students/components/student-notes";
 import type { PublicStudent } from "@/features/students/lib/student-card-data";
 import { genderToHebrew } from "@/features/students/lib/student-card-data";
@@ -27,7 +32,12 @@ export function PublicStudentCard({
   student,
   photos,
   staffFeedback,
+  thirdParty,
+  isBasicOnly = false,
 }: {
+  thirdParty?: ThirdPartyApprovalColumns;
+  /** כרטיס צד שלישי שלא אושר: נתונים בסיסיים בלבד (BASIC) */
+  isBasicOnly?: boolean;
   studentId: string;
   student: PublicStudent;
   photos: StudentPhotoView[];
@@ -55,6 +65,7 @@ export function PublicStudentCard({
             photos={photos}
           />
         }
+        tag={thirdParty ? <ThirdPartyCardTag card={thirdParty} /> : null}
         backLink={<StudentCardBackLink />}
       />
 
@@ -64,6 +75,15 @@ export function PublicStudentCard({
         genderLabel={genderLabel}
         ageValue={student.age !== null ? `${student.age} שנים` : null}
       />
+
+      {isBasicOnly && (
+        <p
+          className="rounded-lg border border-border bg-muted/50 px-4 py-3 text-body-sm text-muted-foreground"
+          data-testid="third-party-hidden-note"
+        >
+          {THIRD_PARTY_HIDDEN_PARTS_NOTE}
+        </p>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         <div className="space-y-6 lg:col-span-3">
@@ -76,7 +96,9 @@ export function PublicStudentCard({
         <div className="space-y-6">
           <EducationSection education={student.education_history} />
           <EmploymentSection employment={student.employment_history} />
-          <ReferencesSection references={student.references} />
+          {!isBasicOnly && (
+            <ReferencesSection references={student.references} />
+          )}
           {staffFeedback.length > 0 && (
             <CardSection title="פידבק אנשי צוות" icon={MessageSquareText}>
               <StaffFeedbackList

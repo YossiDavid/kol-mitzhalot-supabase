@@ -102,3 +102,63 @@ export function genderToHebrew(gender: string | null | undefined) {
   if (gender === "female") return "נקבה";
   return null;
 }
+
+/**
+ * כרטיס צד שלישי שלא אושר להצגה מלאה, לצופה שאינו בעל הכרטיס או מנהל:
+ * הנתונים הבסיסיים בלבד (third-party-card.ts). ההגבלה נעשית ב-select ולא ב-JSX,
+ * כמו בשאר וריאנטי הכרטיס: מה שלא נשלף לא יכול להגיע ללקוח.
+ *
+ * כלול: שמות, כינוי, מגדר, גיל, עיר, קהילה, סטטוס אישי, גובה, סוג טלפון,
+ * קו״ח, לימודים ותעסוקה, שמות ההורים (דרך נתיב JSON, בלי שאר parents_info)
+ * ופרטי הממלא (author_info; ללא ההסבר - ראו withoutFillReason).
+ * לא כלול: about, family_info, כיוון חיים, כיסוי ראש, טלפון וכתובת,
+ * ואף טבלה רגישה (partner_preferences, previous_partners, references,
+ * medical_records).
+ */
+const PARENT_NAME_PATHS = `parents_father:parents_info->father->self, parents_mother:parents_info->mother->self`;
+
+export const BASIC_STUDENT_SELECT = `id, user_id, first_name, last_name, nickname, gender, personal_status, birth_date, height, country, city, community, shtible, cellphone_type, cv_url, in_shidduchim, card_for, author_info, third_party_full_display_approved_at, third_party_proposals_approved_at, ${PARENT_NAME_PATHS},
+		education_history(*),
+		employment_history(*)`;
+
+/** הגרסה של הגולש הלא מחובר: בלי user_id, cv_url והטלפון */
+export const ANONYMOUS_BASIC_STUDENT_SELECT = `id, first_name, last_name, nickname, gender, personal_status, city, height, community, shtible, author_info, image_url, birth_date, deleted_at, ${PARENT_NAME_PATHS},
+			education_history(*),
+			employment_history(*)`;
+
+type ParentNameJson = Record<string, unknown> | null | undefined;
+
+/** מרכיב parents_info (שמות בלבד) משני נתיבי ה-JSON של ה-select הבסיסי */
+export function parentsInfoFromNames<
+  T extends {
+    parents_father?: ParentNameJson;
+    parents_mother?: ParentNameJson;
+  },
+>(
+  row: T,
+): Omit<T, "parents_father" | "parents_mother"> & {
+  parents_info: Record<string, unknown>;
+} {
+  const { parents_father, parents_mother, ...rest } = row;
+  return {
+    ...rest,
+    parents_info: {
+      father: { self: parents_father ?? null },
+      mother: { self: parents_mother ?? null },
+    },
+  };
+}
+
+/** השדות שהשורה הציבורית דורשת וה-select הבסיסי אינו שולף - ריקים */
+export function toAnonymousRowFromBasic(
+  row: Record<string, unknown>,
+): AnonymousStudentRow {
+  return {
+    plan_for_life: null,
+    head_cover_type: null,
+    about: null,
+    family_info: null,
+    references: null,
+    ...parentsInfoFromNames(row),
+  } as unknown as AnonymousStudentRow;
+}

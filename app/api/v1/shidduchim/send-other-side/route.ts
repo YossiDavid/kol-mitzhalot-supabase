@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   dbBlockFromError,
   findProposalBlocks,
+  findThirdPartyBlocks,
   proposalBlocksBody,
   type ProposalBlock,
 } from "@/features/shidduchim/lib/proposal-gate";
@@ -117,11 +118,19 @@ export async function POST(req: NextRequest) {
   // המייל; הטריגר במסד אוכף זאת גם בכתיבה עצמה.
   let blocks: ProposalBlock[];
   try {
-    blocks = await findProposalBlocks(admin, [
-      missingScope === "groom_only"
-        ? { side: "groom", studentId: groom.id }
-        : { side: "bride", studentId: bride.id },
-    ]);
+    const thirdPartyBlocks = await findThirdPartyBlocks(
+      admin,
+      groom.id,
+      bride.id,
+    );
+    blocks =
+      thirdPartyBlocks.length > 0
+        ? thirdPartyBlocks
+        : await findProposalBlocks(admin, [
+            missingScope === "groom_only"
+              ? { side: "groom", studentId: groom.id }
+              : { side: "bride", studentId: bride.id },
+          ]);
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "שגיאת מסד" }, { status: 500 });

@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/server";
 import { hasRole } from "@/lib/user";
+import { isDisplayRestricted } from "@/features/students/lib/third-party-card";
+import { loadThirdPartyApproval } from "@/features/students/lib/third-party-approval";
 import {
   existingMedicalDocuments,
   studentToFormValues,
@@ -111,6 +113,24 @@ async function EditStudentPageContent({
       <EditNotice
         title="נדרשת התחברות"
         body="כדי לערוך כרטיס יש להתחבר למערכת."
+      />
+    );
+  }
+
+  // כרטיס צד שלישי שלא אושר להצגה מלאה: מסך העריכה מציג את כל הנתונים, ולכן
+  // שדכן שאינו הממלא אינו נכנס אליו (אותו כלל כמו בדף הכרטיס)
+  const approval = await loadThirdPartyApproval(supabase, id);
+  if (
+    approval &&
+    isDisplayRestricted(approval, {
+      isOwner: approval.user_id === user.id,
+      isAdmin: hasRole(user, "admin"),
+    })
+  ) {
+    return (
+      <EditNotice
+        title="הכרטיס ממתין לאישור הנהלת המערכת"
+        body="כרטיס שמולא על ידי צד שלישי נפתח לעריכה על ידי הממלא ועל ידי הנהלת המערכת בלבד, עד לאישורו."
       />
     );
   }

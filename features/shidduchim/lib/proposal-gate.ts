@@ -3,6 +3,11 @@ import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
+import {
+  THIRD_PARTY_BLOCK_CODE,
+  THIRD_PARTY_PROPOSAL_MESSAGE,
+  isProposalsPending,
+} from "@/features/students/lib/third-party-card";
 
 /**
  * האם כרטיס רשאי לקבל הצעה חדשה: לא מושהה, ולא מיצה את המכסה שקבע מנהל
@@ -15,7 +20,10 @@ import { describeSupabaseError } from "@/lib/supabase/describe-error";
 
 export type ProposalSide = "groom" | "bride";
 
-export type ProposalBlockCode = "card_paused" | "proposal_limit_reached";
+export type ProposalBlockCode =
+  | "card_paused"
+  | "proposal_limit_reached"
+  | typeof THIRD_PARTY_BLOCK_CODE;
 
 export type ProposalBlock = {
   code: ProposalBlockCode;
@@ -108,6 +116,44 @@ async function blockForCard(
   return null;
 }
 
+/**
+ * כרטיס שמולא על ידי צד שלישי וטרם אושר לקבלת הצעות. נבדקים שני הכרטיסים של
+ * ההצעה, בלי קשר להיקף השליחה: אם אחד מהם חסום, כל השליחה נדחית (כמו הטריגר).
+ */
+export async function findThirdPartyBlocks(
+  admin: SupabaseClient,
+  groomId: string,
+  brideId: string,
+): Promise<ProposalBlock[]> {
+  const { data, error } = await admin
+    .from("students")
+    .select("id, card_for, third_party_proposals_approved_at")
+    .in("id", [groomId, brideId]);
+
+  if (error) {
+    console.error(
+      "[shidduchim/gate] third-party lookup failed",
+      describeSupabaseError(error),
+    );
+    throw new Error("בדיקת סוג הכרטיס נכשלה");
+  }
+
+  const pending = new Set(
+    (data ?? []).filter((card) => isProposalsPending(card)).map((c) => c.id),
+  );
+  const sides: Array<[ProposalSide, string]> = [
+    ["groom", groomId],
+    ["bride", brideId],
+  ];
+  return sides
+    .filter(([, id]) => pending.has(id))
+    .map(([side]) => ({
+      code: THIRD_PARTY_BLOCK_CODE,
+      side,
+      message: THIRD_PARTY_PROPOSAL_MESSAGE,
+    }));
+}
+
 /** הצדדים שעתידים לקבל הצעה חדשה - ההפרעות שנמצאו, לפי סדר חתן-כלה */
 export async function findProposalBlocks(
   admin: SupabaseClient,
@@ -122,7 +168,7 @@ export async function findProposalBlocks(
 /** גוף תשובת הסירוב: ההודעות של כל הצדדים החסומים יחד, והקוד הראשון */
 export function proposalBlocksBody(blocks: readonly ProposalBlock[]) {
   return {
-    error: blocks.map((block) => block.message).join(" "),
+    error: Array.from(new Set(blocks.map((block) => block.message))).join(" "),
     code: blocks[0].code,
     sides: blocks.map((block) => block.side),
   };
@@ -138,6 +184,13 @@ export function dbBlockFromError(
   const message = error?.message ?? "";
   const side: ProposalSide = error?.details === "bride" ? "bride" : "groom";
 
+  if (message.includes(THIRD_PARTY_BLOCK_CODE)) {
+    return {
+      code: THIRD_PARTY_BLOCK_CODE,
+      side,
+      message: THIRD_PARTY_PROPOSAL_MESSAGE,
+    };
+  }
   if (message.includes("card_paused")) {
     return { code: "card_paused", side, message: pausedMessage(side) };
   }

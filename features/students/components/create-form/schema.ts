@@ -2,6 +2,12 @@
 
 import { z } from "zod";
 
+import { isValidPhone, PHONE_INVALID_MESSAGE } from "@/lib/phone";
+import {
+  FILL_REASON_MAX_LENGTH,
+  FILL_REASON_MIN_LENGTH,
+  isThirdPartyCardFor,
+} from "@/features/students/lib/third-party-card";
 import type { StudentPhotoItem } from "@/features/students/lib/student-photo-rules";
 import { studentFields } from "./fields-data";
 import { collectRequiredIssues } from "./required-fields";
@@ -149,7 +155,13 @@ const studentFormBaseSchema = z.object({
   author: z.object({
     name: opt,
     phone: opt,
+    // טקסט חופשי: רק כשהקשר הוא "אחר" (author-info.ts)
     relation: opt,
+    relationType: opt,
+    // "true" / "false" / "" (לא נענה)
+    knowsWell: opt,
+    // מדוע צד שלישי מילא את הכרטיס (author-info.ts)
+    fillReason: opt,
   }),
 });
 
@@ -161,9 +173,41 @@ function toIssuePath(path: string): Array<string | number> {
     );
 }
 
+/** תוכן שדות ממלא הכרטיס (שדה חובה ריק נתפס ב-collectRequiredIssues) */
+function collectAuthorContentIssues(
+  values: z.infer<typeof studentFormBaseSchema>,
+): Array<{ path: string; message: string }> {
+  const hasAuthor =
+    values.cardFor === "child" || isThirdPartyCardFor(values.cardFor);
+  if (!hasAuthor) return [];
+
+  const issues: Array<{ path: string; message: string }> = [];
+  const phone = values.author.phone.trim();
+  if (phone && !isValidPhone(phone)) {
+    issues.push({ path: "author.phone", message: PHONE_INVALID_MESSAGE });
+  }
+  const reason = values.author.fillReason.trim();
+  if (
+    isThirdPartyCardFor(values.cardFor) &&
+    reason &&
+    (reason.length < FILL_REASON_MIN_LENGTH ||
+      reason.length > FILL_REASON_MAX_LENGTH)
+  ) {
+    issues.push({
+      path: "author.fillReason",
+      message: `ההסבר צריך להיות באורך ${FILL_REASON_MIN_LENGTH}–${FILL_REASON_MAX_LENGTH} תווים`,
+    });
+  }
+  return issues;
+}
+
 export const studentFormSchema = studentFormBaseSchema.superRefine(
   (values, ctx) => {
-    for (const issue of collectRequiredIssues(studentFields, values)) {
+    const issues = [
+      ...collectRequiredIssues(studentFields, values),
+      ...collectAuthorContentIssues(values),
+    ];
+    for (const issue of issues) {
       ctx.addIssue({
         code: "custom",
         path: toIssuePath(issue.path),

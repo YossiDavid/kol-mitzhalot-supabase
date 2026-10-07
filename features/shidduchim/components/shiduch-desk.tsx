@@ -19,6 +19,11 @@ import { Save, Send, User as UserIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { getCompatibilityNotes } from "@/features/shidduchim/lib/compatibility";
 import { hasRole } from "@/lib/user-role";
+import {
+  THIRD_PARTY_PROPOSAL_MESSAGE,
+  isProposalsPending,
+} from "@/features/students/lib/third-party-card";
+import { DESK_STUDENT_SELECT } from "@/features/shidduchim/lib/desk-student-select";
 
 type Gender = "male" | "female";
 
@@ -121,7 +126,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
 
     const { data, error } = await supabase
       .from("students")
-      .select(`*,employment_history(*),partner_preferences(*)`)
+      .select(DESK_STUDENT_SELECT)
       .in("id", favIds);
 
     if (!error) setFavorites(data || []);
@@ -372,6 +377,12 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
 
   const pairReady = !!newShiduch && !pairLoading && pairRows !== null;
 
+  // כרטיס צד שלישי שלא אושר לקבלת הצעות: השליחה חסומה כבר כאן, לא אחרי הלחיצה
+  // (טיוטה נשמרת: ההגבלה חלה על שליחה בלבד, כמו השהיית כרטיס)
+  const thirdPartyBlockedReason =
+    (male && isProposalsPending(male)) || (female && isProposalsPending(female))
+      ? THIRD_PARTY_PROPOSAL_MESSAGE
+      : null;
   const actionsDisabled = hasBlockingPair || !canOffer;
 
   return (
@@ -541,7 +552,12 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
               <div className="mt-4 flex flex-wrap justify-center gap-4">
                 <Button
                   onClick={() => setSendModalOpen(true)}
-                  disabled={actionsDisabled || sendLoading || draftLoading}
+                  disabled={
+                    actionsDisabled ||
+                    sendLoading ||
+                    draftLoading ||
+                    Boolean(thirdPartyBlockedReason)
+                  }
                 >
                   שלח הצעה
                   <Send className="size-4" />
@@ -555,6 +571,15 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
                   <Save className="size-4" />
                 </Button>
               </div>
+
+              {thirdPartyBlockedReason && (
+                <p
+                  className="mt-3 text-center text-body-sm text-warning-muted-foreground"
+                  data-testid="third-party-send-blocked"
+                >
+                  {thirdPartyBlockedReason}
+                </p>
+              )}
 
               {hasBlockingPair && (
                 <p className="mt-3 text-center text-body-sm text-muted-foreground">
@@ -579,6 +604,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
         loading={sendLoading}
         initialNoteGroom={maleNote}
         initialNoteBride={femaleNote}
+        blockedReason={thirdPartyBlockedReason}
       />
 
       <FavoritesGrid

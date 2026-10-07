@@ -27,6 +27,7 @@ import {
 } from "@/features/students/lib/student-status";
 import { NewCardBadge } from "@/features/students/components/new-card-badge";
 import { SelfCardTag } from "@/features/students/components/self-card-tag";
+import { ThirdPartyCardTag } from "@/features/students/components/third-party-card-tag";
 import type { CardFor } from "@/features/students/lib/own-cards-heading";
 import { summarizeChildren } from "@/features/students/lib/children-summary";
 import calculateAge from "@/lib/calculateAge";
@@ -60,6 +61,9 @@ export type StudentTableRow = {
   created_at?: string | null;
   /** עבור מי מולא הכרטיס. null בכרטיסים ישנים */
   card_for?: CardFor;
+  /** אישורי הנהלה לכרטיס צד שלישי (null = טרם אושר) */
+  third_party_full_display_approved_at?: string | null;
+  third_party_proposals_approved_at?: string | null;
   in_shidduchim?: boolean | null;
   /** הנהלת המערכת השהתה את הכרטיס - מנהל הכרטיס אינו יכול לבטל */
   admin_paused_at?: string | null;
@@ -210,7 +214,10 @@ function StatusCell({ student }: { student: StudentTableRow }) {
   );
 }
 
-/** תגיות ליד השם: "חדש" ברשימה, ו"הכרטיס שלי" בכרטיסים של המשתמש עצמו */
+/**
+ * תגיות ליד השם: "חדש" ברשימה, "הכרטיס שלי" בכרטיסים של המשתמש עצמו, ובכל
+ * הטבלאות - "מולא ע״י צד שלישי" כשהכרטיס כזה
+ */
 function NameBadges({
   student,
   preset,
@@ -220,11 +227,15 @@ function NameBadges({
   preset: StudentsTablePreset;
   now: Date;
 }) {
-  if (preset === "list") {
-    return <NewCardBadge createdAt={student.created_at} now={now} />;
-  }
-  if (preset === "children") return <SelfCardTag cardFor={student.card_for} />;
-  return null;
+  return (
+    <>
+      {preset === "list" && (
+        <NewCardBadge createdAt={student.created_at} now={now} />
+      )}
+      {preset === "children" && <SelfCardTag cardFor={student.card_for} />}
+      <ThirdPartyCardTag card={student} />
+    </>
+  );
 }
 
 /** תאריך ההוספה לתצוגה, לפי יום ישראלי */

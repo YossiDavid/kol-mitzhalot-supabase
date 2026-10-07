@@ -1,4 +1,5 @@
 import type { StudentFormValues } from "@/features/students/components/create-form/schema";
+import { buildAuthorInfo } from "@/features/students/lib/author-info";
 import { isParentDeceased } from "@/features/students/lib/deceased-parents";
 import {
   LEGACY_CHILDREN_COUNT_KEY,
@@ -375,13 +376,9 @@ function buildParentsInfo(values: StudentFormValues) {
 }
 
 // מילוי עבור עצמי: אין "ממלא טופס" נפרד, ולכן לא נשמר מה שנשאר בשדות
-function buildAuthorInfo(values: StudentFormValues) {
-  if (values.cardFor === "self") return { name: "", phone: "", relation: "" };
-  return {
-    name: values.author?.name || "",
-    phone: values.author?.phone || "",
-    relation: values.author?.relation || "",
-  };
+// (author-info.ts)
+function buildAuthorInfoPayload(values: StudentFormValues) {
+  return buildAuthorInfo(values.cardFor, values.author);
 }
 
 function buildFamilyInfo(values: StudentFormValues) {
@@ -456,7 +453,7 @@ export function buildStudentPayload(
     about: values.about || null,
     parents_info: buildParentsInfo(values),
     family_info: buildFamilyInfo(values),
-    author_info: buildAuthorInfo(values),
+    author_info: buildAuthorInfoPayload(values),
     education_history: buildEducationHistory(values),
     employment_history: buildEmploymentHistory(values),
     medical_records: buildMedicalRecords(values, medicalDocuments),

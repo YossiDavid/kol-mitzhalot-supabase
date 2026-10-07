@@ -1,3 +1,4 @@
+import { chooseChildCard } from "./card-for-fixtures";
 import { test, expect, type Page } from "@playwright/test";
 
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
@@ -29,7 +30,7 @@ async function openStep(page: Page, title: string) {
 /** פותחים טופס חדש, עוברים את ההקדמה ובוחרים אלמנ/ה והורה שנפטר */
 async function startWidowedForm(page: Page, deadParentLabel: string) {
   await page.goto("/app/students/create");
-  await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
+  await chooseChildCard(page);
   await page.getByRole("radio", { name: "מיועד", exact: true }).check();
   await openStep(page, PARENTS_STEP);
   await page.getByRole("radio", { name: "אלמנ/ה" }).check();

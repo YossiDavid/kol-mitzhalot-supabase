@@ -1,3 +1,4 @@
+import { CARD_GUIDANCE_SHORT } from "@/features/students/lib/third-party-card";
 import { DashboardSection, Page, PageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import {
@@ -211,6 +212,12 @@ async function DashboardSections() {
               </Button>
             }
           >
+            <p
+              className="mb-3 text-body-sm text-muted-foreground"
+              data-testid="card-guidance-note"
+            >
+              {CARD_GUIDANCE_SHORT}
+            </p>
             <Children
               childs={childrenData as any}
               caption={ownCardsHeading(ownCards)}

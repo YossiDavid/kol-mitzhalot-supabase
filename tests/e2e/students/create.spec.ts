@@ -1,3 +1,9 @@
+import {
+  CARD_FOR_LABELS,
+  chooseChildCard,
+  chooseThirdPartyCard,
+  relationSelect,
+} from "./card-for-fixtures";
 import { test, expect, Page } from "@playwright/test";
 
 import { createServiceClient } from "../shidduchim/fixtures";
@@ -61,7 +67,7 @@ test.describe("יצירת תלמיד חדש", () => {
 
   test("ניווט בין שלבים עובד", async ({ page }) => {
     // Step 0 — select gender
-    await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
+    await chooseChildCard(page);
     await page.getByRole("radio", { name: "מיועד", exact: true }).click();
     await page.locator("button:has-text('הבא')").click();
 
@@ -84,7 +90,7 @@ test.describe("יצירת תלמיד חדש", () => {
     });
 
     // ── Step 0: Gender ─────────────────────────────────────────────
-    await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
+    await chooseChildCard(page);
     await page.getByRole("radio", { name: "מיועד", exact: true }).click();
     await page.locator("button:has-text('הבא')").click();
 
@@ -156,7 +162,7 @@ test.describe("יצירת תלמיד חדש", () => {
     });
     await page.locator("button:has-text('הבא')").click();
 
-    // ── Step 6: Partner + Author ────────────────────────────────────
+    // ── Step 6: Partner ─────────────────────────────────────────
     await expect(page.locator("button[type='submit']")).toBeVisible({
       timeout: 5_000,
     });
@@ -166,11 +172,7 @@ test.describe("יצירת תלמיד חדש", () => {
       "partner.additionalInformation",
       "מחפשים בן תורה עם מידות טובות",
     );
-    await fill(page, "author.name", "יוסף ישראלי");
-    await fill(page, "author.phone", "0521234567");
-    // שדה חובה בסכמה. בלי מילויו zodResolver חוסם את השליחה בלי טוסט ובלי
-    // שגיאת קונסול, והטופס פשוט נשאר במקומו.
-    await fill(page, "author.relation", "אב");
+    // פרטי הממלא נמלאו בשלב ההקדמה (chooseChildCard)
 
     // Submit
     const submitBtn = page.locator("button[type='submit']");
@@ -202,37 +204,126 @@ test.describe("יצירת תלמיד חדש", () => {
     expect(created).toEqual({ card_for: "child", identity_number: null });
   });
 
-  test("עבור עצמי: מקטע ממלא הטופס מוסתר ואינו חובה", async ({ page }) => {
-    // Arrange: השלב האחרון נפתח בקפיצה דרך ניווט השלבים
-    await page.getByRole("radio", { name: "עבור עצמי" }).check();
-    await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
-
-    // Act
-    await page
-      .getByRole("navigation", { name: "שלבי הטופס" })
-      .getByRole("button", { name: "קצת על המיועד שאתם מחפשים", exact: true })
-      .click();
+  test("המועמד/ת בעצמו/ה: פרטי ממלא הכרטיס מוסתרים ואינם חובה", async ({
+    page,
+  }) => {
+    // Arrange + Act
+    await page.getByRole("radio", { name: CARD_FOR_LABELS.self }).check();
 
     // Assert
-    await expect(page.locator("#partner-additionalInformation")).toBeVisible();
     await expect(page.locator("#author-name")).toHaveCount(0);
     await expect(page.locator("#author-phone")).toHaveCount(0);
-    await expect(page.locator("#author-relation")).toHaveCount(0);
+    await expect(relationSelect(page)).toHaveCount(0);
+    await expect(page.locator("#author-fillReason")).toHaveCount(0);
   });
 
-  test("עבור בני או בתי: מקטע ממלא הטופס מוצג", async ({ page }) => {
-    // Arrange
-    await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
-    await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
-
-    // Act
-    await page
-      .getByRole("navigation", { name: "שלבי הטופס" })
-      .getByRole("button", { name: "קצת על המיועד שאתם מחפשים", exact: true })
-      .click();
+  test("אב או אם: פרטי הממלא מוצגים בהקדמה, ובלי פרטי צד שלישי", async ({
+    page,
+  }) => {
+    // Arrange + Act
+    await page.getByRole("radio", { name: CARD_FOR_LABELS.child }).check();
 
     // Assert
     await expect(page.locator("#author-name")).toBeVisible();
+    await expect(page.locator("#author-phone")).toBeVisible();
+    await expect(
+      relationSelect(page).locator("option:not([disabled])"),
+    ).toHaveText(["אב", "אם"]);
+    await expect(page.locator("#author-fillReason")).toHaveCount(0);
+  });
+
+  test("אדם אחר: קשר, שם, טלפון, מכיר היטב והסבר - חובה בהקדמה", async ({
+    page,
+  }) => {
+    // Arrange
+    await page.getByRole("radio", { name: CARD_FOR_LABELS.other }).check();
+    await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
+
+    // Act
+    await page.getByRole("button", { name: "המשך לשלב הבא" }).click();
+
+    // Assert
+    await expect(page.getByText("נא לבחור מה הקשר שלך למועמד/ת")).toBeVisible();
+    await expect(
+      page.getByText("נא לציין האם את/ה מכיר/ה היטב את המועמד/ת"),
+    ).toBeVisible();
+    await expect(
+      page.getByText("נא להסביר מדוע הכרטיס ממולא על ידך"),
+    ).toBeVisible();
+    await expect(
+      relationSelect(page).locator("option:not([disabled])"),
+    ).toHaveText([
+      "שדכן/ית",
+      "קרוב/ת משפחה",
+      "חבר/ה או מכר/ה",
+      "איש/אשת צוות במוסד",
+      "אחר",
+    ]);
+  });
+
+  test("אדם אחר: ההשלכה מוצגת מיד, וקשר 'אחר' דורש פירוט", async ({ page }) => {
+    // Arrange + Act
+    await page.getByRole("radio", { name: CARD_FOR_LABELS.other }).check();
+
+    // Assert
+    await expect(
+      page.getByText("מילוי כרטיס עבור אדם אחר", { exact: true }),
+    ).toBeVisible();
+    await expect(page.locator("#author-relation")).toHaveCount(0);
+    await relationSelect(page).selectOption("other");
+    await expect(page.locator("#author-relation")).toBeVisible();
+  });
+
+  test("ההנחיה לציבור מוצגת בראש הטופס", async ({ page }) => {
+    // Assert
+    await expect(
+      page.getByText("המערכת נועדה בעיקר למועמדים עצמם ולהוריהם", {
+        exact: false,
+      }),
+    ).toBeVisible();
+  });
+
+  test("טלפון ממלא לא תקין נחסם", async ({ page }) => {
+    // Arrange
+    await chooseChildCard(page);
+    await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
+    await page.locator("#author-phone").fill("abc");
+
+    // Act
+    await page.getByRole("button", { name: "המשך לשלב הבא" }).click();
+
+    // Assert
+    await expect(
+      page.getByText("מספר טלפון לא תקין", { exact: false }),
+    ).toBeVisible();
+  });
+
+  test("אדם אחר ממלא את הטופס המלא: כל השלבים, ממליצים והעדפות זמינים", async ({
+    page,
+  }) => {
+    // Arrange
+    await chooseThirdPartyCard(page);
+    await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
+    const stepsNav = page.getByRole("navigation", { name: "שלבי הטופס" });
+
+    // Act - מעבר לשלב "פרטים נוספים"
+    await stepsNav
+      .getByRole("button", { name: "פרטים נוספים", exact: true })
+      .click();
+
+    // Assert - אין הגבלת קלט: ממליצים זמינים, וגם שאר השלבים קיימים
+    await expect(
+      page.getByRole("heading", { name: "רבנים מכירים" }),
+    ).toBeVisible();
+    for (const title of [
+      "על המשפחה",
+      "פרטים רפואיים",
+      "קצת על המיועד שאתם מחפשים",
+    ]) {
+      await expect(
+        stepsNav.getByRole("button", { name: title, exact: true }),
+      ).toBeVisible();
+    }
   });
 
   test("אי אפשר להמשיך מההקדמה בלי לבחור עבור מי הכרטיס", async ({ page }) => {
@@ -243,9 +334,7 @@ test.describe("יצירת תלמיד חדש", () => {
     await page.getByRole("button", { name: "המשך לשלב הבא" }).click();
 
     // Assert
-    await expect(
-      page.getByText("נא לבחור עבור מי ממלאים את הכרטיס"),
-    ).toBeVisible();
+    await expect(page.getByText("נא לבחור מי ממלא את הכרטיס")).toBeVisible();
     await expect(page.locator("text=ברוכים הבאים")).toBeVisible();
   });
 });

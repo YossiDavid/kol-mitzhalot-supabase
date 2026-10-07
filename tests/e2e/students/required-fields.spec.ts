@@ -1,3 +1,4 @@
+import { CARD_FOR_LABELS, chooseChildCard } from "./card-for-fixtures";
 import { test, expect, type Page } from "@playwright/test";
 
 import {
@@ -42,9 +43,6 @@ const EXPECTED_REQUIRED_PATHS = [
   "family.currentChildPlace",
   "family.about",
   "partner.additionalInformation",
-  "author.name",
-  "author.phone",
-  "author.relation",
 ];
 
 const PERSONAL_STEP_REQUIRED = [
@@ -292,18 +290,34 @@ test.describe("כללי שדה חובה נגזרים ממערך השדות", () 
     ]);
   });
 
-  test("עבור עצמי: ממלא הטופס לא חובה; עבור אחרים - חובה", () => {
+  test("מי ממלא: עצמי - בלי פרטי ממלא; הורה ואדם אחר - חובה", () => {
     // Arrange
-    const authorPaths = ["author.name", "author.phone", "author.relation"];
-    const pathsFor = (cardFor: string) =>
-      issuePaths(studentFields, { gender: "male", cardFor }).filter((path) =>
-        path.startsWith("author."),
+    const pathsFor = (cardFor: string, author: Record<string, string> = {}) =>
+      issuePaths(studentFields, { gender: "male", cardFor, author }).filter(
+        (path) => path.startsWith("author."),
       );
 
     // Act + Assert
     expect(pathsFor("self")).toEqual([]);
-    expect(pathsFor("child")).toEqual(authorPaths);
-    expect(pathsFor("other")).toEqual(authorPaths);
+    expect(pathsFor("child")).toEqual([
+      "author.name",
+      "author.phone",
+      "author.relationType",
+    ]);
+    expect(pathsFor("other")).toEqual([
+      "author.fillReason",
+      "author.knowsWell",
+      "author.name",
+      "author.phone",
+      "author.relationType",
+    ]);
+    // "אחר" דורש גם פירוט חופשי
+    expect(pathsFor("other", { relationType: "other" })).toContain(
+      "author.relation",
+    );
+    expect(pathsFor("other", { relationType: "shadchan" })).not.toContain(
+      "author.relation",
+    );
   });
 
   test("הורה שנפטר: טלפון, עיסוק ואימייל לא חובה ולא מוצגים; השם כן", () => {
@@ -442,7 +456,7 @@ test.describe("כוכבית ואכיפה בטופס", () => {
   }) => {
     // Arrange
     await page.goto("/app/students/create");
-    await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
+    await chooseChildCard(page);
     await page.getByRole("radio", { name: "מיועד", exact: true }).check();
     const nextButton = page.getByRole("button", { name: "המשך לשלב הבא" });
     await nextButton.click();
@@ -466,7 +480,7 @@ test.describe("כוכבית ואכיפה בטופס", () => {
   test("על המשפחה, כולל שורת מחותן: כוכבית = שגיאה", async ({ page }) => {
     // Arrange
     await page.goto("/app/students/create");
-    await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
+    await chooseChildCard(page);
     await page.getByRole("radio", { name: "מיועד", exact: true }).check();
     await page
       .getByRole("navigation", { name: "שלבי הטופס" })
@@ -508,16 +522,16 @@ test.describe("כוכבית ואכיפה בטופס", () => {
     // Assert
     await expect(genderCell.getByText("נא לבחור מיועד/מיועדת")).toBeVisible();
     // השגיאה הראשונה לפי סדר התצוגה היא "עבור מי הכרטיס"
+    await expect(page.getByText("נא לבחור מי ממלא את הכרטיס")).toBeVisible();
     await expect(
-      page.getByText("נא לבחור עבור מי ממלאים את הכרטיס"),
-    ).toBeVisible();
-    await expect(page.getByRole("radio", { name: "עבור עצמי" })).toBeFocused();
+      page.getByRole("radio", { name: CARD_FOR_LABELS.self }),
+    ).toBeFocused();
   });
 
   test("תאריך לידה: גובה ומסגרת שגיאה כמו שדה טקסט", async ({ page }) => {
     // Arrange
     await page.goto("/app/students/create");
-    await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
+    await chooseChildCard(page);
     await page.getByRole("radio", { name: "מיועד", exact: true }).check();
     const nextButton = page.getByRole("button", { name: "המשך לשלב הבא" });
     await nextButton.click();

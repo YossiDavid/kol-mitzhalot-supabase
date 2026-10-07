@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import type { createClient } from "@/lib/supabase/server";
+import { isProposalsPending } from "@/features/students/lib/third-party-card";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
 import type { ShidduchSide } from "@/features/shidduchim/lib/responses";
 import {
@@ -23,6 +24,8 @@ export interface ProposalPerson {
   lastName: string | null;
   birthDate: string | null;
   city: string | null;
+  /** כרטיס צד שלישי שלא אושר לקבלת הצעות: אי אפשר לשלוח אליו */
+  isProposalsPending: boolean;
 }
 
 export interface ShadchanProposal {
@@ -60,6 +63,8 @@ const personRowSchema = z.object({
   last_name: nullableText,
   birth_date: nullableText.optional(),
   city: nullableText,
+  card_for: nullableText.optional(),
+  third_party_proposals_approved_at: nullableText.optional(),
 });
 
 const proposalRowSchema = z.object({
@@ -88,7 +93,7 @@ const SHADCHAN_PROPOSAL_SELECT = `
   bride_id,
   note_for_groom,
   note_for_bride,
-  groom:students!shidduchim_groom_id_fkey(first_name,last_name,birth_date,city),
+  groom:students!shidduchim_groom_id_fkey(first_name,last_name,birth_date,city,card_for,third_party_proposals_approved_at),
   bride:students!shidduchim_bride_id_fkey(first_name,last_name,birth_date,city)
 `;
 
@@ -101,6 +106,7 @@ function toPerson(
     lastName: row.last_name,
     birthDate: row.birth_date ?? null,
     city: row.city,
+    isProposalsPending: isProposalsPending(row),
   };
 }
 

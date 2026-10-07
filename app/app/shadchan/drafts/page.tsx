@@ -23,6 +23,7 @@ import {
   getShadchanProposals,
   type ShadchanProposal,
 } from "@/features/shidduchim/components/shadchan-proposals-data";
+import { THIRD_PARTY_PROPOSAL_MESSAGE } from "@/features/students/lib/third-party-card";
 import { displayName } from "@/features/shidduchim/lib/responses";
 
 const DRAFTS_URL = "/app/shadchan/drafts";
@@ -56,6 +57,12 @@ function DraftCardActions({ proposal }: { proposal: ShadchanProposal }) {
         brideId={proposal.brideId}
         noteForGroom={proposal.noteForGroom}
         noteForBride={proposal.noteForBride}
+        blockedReason={
+          proposal.groom?.isProposalsPending ||
+          proposal.bride?.isProposalsPending
+            ? THIRD_PARTY_PROPOSAL_MESSAGE
+            : null
+        }
       />
     </>
   );

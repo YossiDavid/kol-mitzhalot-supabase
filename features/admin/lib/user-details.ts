@@ -27,6 +27,10 @@ export type UserDetails = {
     inShidduchim: boolean | null;
     /** הנהלת המערכת השהתה את הכרטיס (נעול למנהל הכרטיס) */
     isAdminPaused: boolean;
+    /** עבור מי מולא הכרטיס, ואישורי ההנהלה לכרטיס צד שלישי (null = טרם אושר) */
+    cardFor: string | null;
+    fullDisplayApprovedAt: string | null;
+    proposalsApprovedAt: string | null;
   }>;
   shidduchimStats: {
     totalOffered: number;
@@ -129,7 +133,7 @@ export async function getUserDetails(
   const { data: children, error: childrenError } = await supabase
     .from("students")
     .select(
-      "id, first_name, last_name, gender, birth_date, city, in_shidduchim, admin_paused_at",
+      "id, first_name, last_name, gender, birth_date, city, in_shidduchim, admin_paused_at, card_for, third_party_full_display_approved_at, third_party_proposals_approved_at",
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
@@ -221,6 +225,9 @@ export async function getUserDetails(
       city: c.city,
       inShidduchim: c.in_shidduchim,
       isAdminPaused: c.admin_paused_at !== null,
+      cardFor: c.card_for,
+      fullDisplayApprovedAt: c.third_party_full_display_approved_at,
+      proposalsApprovedAt: c.third_party_proposals_approved_at,
     })),
     shidduchimStats,
   };

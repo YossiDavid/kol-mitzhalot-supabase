@@ -1,3 +1,4 @@
+import { chooseChildCard } from "./card-for-fixtures";
 import {
   test,
   expect,
@@ -49,7 +50,7 @@ const next = (page: Page) => page.locator("button:has-text('הבא')").click();
 /** ממלא את אשף היצירה עד השלב האחרון, בלי ללחוץ על השליחה */
 async function fillCreateWizard(page: Page, lastName: string) {
   await page.goto("/app/students/create");
-  await page.getByRole("radio", { name: "עבור בני או בתי" }).check();
+  await chooseChildCard(page);
   await page.getByRole("radio", { name: "מיועד", exact: true }).click();
   await next(page);
 
@@ -94,9 +95,6 @@ async function fillCreateWizard(page: Page, lastName: string) {
 
   await expect(page.locator("button[type='submit']")).toBeVisible();
   await fill(page, "partner.additionalInformation", "מחפשים בן תורה");
-  await fill(page, "author.name", "כותב");
-  await fill(page, "author.phone", "0521234567");
-  await fill(page, "author.relation", "אב");
 }
 
 async function findStudentsByLastName(lastName: string) {

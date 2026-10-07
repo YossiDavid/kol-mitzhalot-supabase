@@ -4,6 +4,7 @@ import Link from "next/link";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import calculateAge from "@/lib/calculateAge";
+import { ThirdPartyCardTag } from "@/features/students/components/third-party-card-tag";
 import { AdminPauseButton } from "@/features/admin/components/admin-pause-button";
 import { proposalsReportHref } from "@/features/admin/lib/proposals-report-query";
 import type {
@@ -30,6 +31,20 @@ function childColumns(
         >
           {child.firstName} {child.lastName}
         </Link>
+      ),
+    },
+    {
+      key: "card-tag",
+      header: "מילוי הכרטיס",
+      size: "min",
+      cell: (child) => (
+        <ThirdPartyCardTag
+          card={{
+            card_for: child.cardFor,
+            third_party_full_display_approved_at: child.fullDisplayApprovedAt,
+            third_party_proposals_approved_at: child.proposalsApprovedAt,
+          }}
+        />
       ),
     },
     {

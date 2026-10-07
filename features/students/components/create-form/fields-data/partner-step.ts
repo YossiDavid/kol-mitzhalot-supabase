@@ -131,37 +131,5 @@ export const partnerStep: FormSteps = {
         },
       ],
     },
-    {
-      name: "author",
-      title: "ממלא הטופס",
-      // מילוי עבור עצמי: אין ממלא נפרד, והשדות מוסתרים ואינם חובה
-      condition: [{ parameter: "cardFor", operator: "!==", value: "self" }],
-      fields: [
-        {
-          name: "author.name",
-          width: "sm",
-          label: 'שם ממלא/ת הקו"ח',
-          type: "text",
-          description: "נא למלא את שם ממלא הקו״ח כדי שנדע לאן לפנות",
-          required: true,
-        },
-        {
-          name: "author.phone",
-          width: "sm",
-          label: 'טלפון ממלא/ת הקו"ח',
-          type: "text",
-          required: true,
-        },
-        {
-          // הניסוח המגדרי נקבע ב-genderLabelOverrides (author.relation)
-          name: "author.relation",
-          width: "lg",
-          label: "קשר למועמד/ת",
-          type: "text",
-          description: "לדוגמה: אב, אם, אח, קרוב משפחה, שדכן",
-          required: true,
-        },
-      ],
-    },
   ],
 };

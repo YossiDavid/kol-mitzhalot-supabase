@@ -1,4 +1,7 @@
-import { MessageSquareText, NotebookPen } from "lucide-react";
+import { Lock, MessageSquareText, NotebookPen } from "lucide-react";
+
+import { ThirdPartyCardTag } from "@/features/students/components/third-party-card-tag";
+import { THIRD_PARTY_HIDDEN_PARTS_NOTE } from "@/features/students/lib/third-party-card";
 
 import {
   ShadchanNotes,
@@ -53,6 +56,8 @@ export function StudentCard({
   isProposalView = false,
   showMedical = true,
   owner = null,
+  isBasicOnly = false,
+  adminControls = null,
   actions,
 }: {
   student: StudentRow;
@@ -70,6 +75,14 @@ export function StudentCard({
   showMedical?: boolean;
   /** מנהל הכרטיס - נמסר מהעמוד למנהל מערכת בלבד, ואחרת לא נמסר כלל */
   owner?: CardOwnerInfo | null;
+  /**
+   * כרטיס צד שלישי שלא אושר להצגה מלאה, והצופה אינו בעל הכרטיס או מנהל: השרת
+   * שלף רק נתונים בסיסיים (BASIC_STUDENT_SELECT), וכאן מוצגת הודעה במקום
+   * המקטעים שלא נשלפו
+   */
+  isBasicOnly?: boolean;
+  /** בקרות האישור - למנהל מערכת בלבד, בכרטיס צד שלישי */
+  adminControls?: React.ReactNode;
   actions: React.ReactNode;
 }) {
   // נחשב בשרת: ללקוח עובר רק המחרוזת העברית, לא תאריך הלידה
@@ -100,9 +113,12 @@ export function StudentCard({
             photos={photos}
           />
         }
+        tag={<ThirdPartyCardTag card={student} />}
         backLink={<StudentCardBackLink />}
         actions={actions}
       />
+
+      {adminControls}
 
       {/* הצופה הגיע לכאן מהצעת שידוך. ההודעה מסבירה מה חסר ולמה, כדי
           שהיעדר טלפון או הצהרה רפואית לא ייראה כתקלה או ככרטיס ריק */}
@@ -152,28 +168,50 @@ export function StudentCard({
         </CardSection>
       )}
 
+      {isBasicOnly && (
+        <p
+          className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-4 py-3 text-body-sm text-muted-foreground"
+          data-testid="third-party-hidden-note"
+        >
+          <Lock className="size-4 shrink-0" aria-hidden />
+          {THIRD_PARTY_HIDDEN_PARTS_NOTE}
+        </p>
+      )}
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         <div className="space-y-6 lg:col-span-3">
           <FamilySection
             parentsInfo={student.parents_info}
             familyInfo={student.family_info}
           />
-          <PreviousMarriagesSection
-            partners={student.previous_partners}
-            gender={student.gender}
-          />
-          <PartnerPreferencesSection
-            preferences={student.partner_preferences}
-            gender={student.gender}
-          />
+          {!isBasicOnly && (
+            <>
+              <PreviousMarriagesSection
+                partners={student.previous_partners}
+                gender={student.gender}
+              />
+              <PartnerPreferencesSection
+                preferences={student.partner_preferences}
+                gender={student.gender}
+              />
+            </>
+          )}
         </div>
 
         <div className="space-y-6">
           <EducationSection education={student.education_history} />
           <EmploymentSection employment={student.employment_history} />
-          <ReferencesSection references={student.references} />
-          {showMedical && <MedicalSection medical={student.medical_records} />}
-          <AuthorInfoCard authorInfo={student.author_info} />
+          {!isBasicOnly && (
+            <ReferencesSection references={student.references} />
+          )}
+          {showMedical && !isBasicOnly && (
+            <MedicalSection medical={student.medical_records} />
+          )}
+          <AuthorInfoCard
+            authorInfo={student.author_info}
+            cardFor={student.card_for}
+            canSeeKnowsWell={isShadchan}
+          />
         </div>
       </div>
     </div>
