@@ -173,6 +173,13 @@ async function ShidduchCardContent({
     recipientSides.length > 0 &&
     (declinedSides.length > 0 || currentStatus === "rejected");
 
+  // צד שהמנהל שלו הוא המשתמש עצמו (שדכן שמנהל כרטיס בהצעה שלו) מטופל
+  // למטה כתצוגת הורה, בלי שרשור כאן
+  const threadSides = recipientSides.flatMap((side) => {
+    const ownerId = side === "groom" ? groomRow?.user_id : brideRow?.user_id;
+    return ownerId && ownerId !== user.id ? [{ side, ownerId }] : [];
+  });
+
   const scopeLabel =
     shidduch.recipient_scope === "both"
       ? "נשלח לשני הצדדים"
@@ -193,138 +200,147 @@ async function ShidduchCardContent({
         }
       />
 
-      <Box className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <p className="text-body-sm font-medium text-muted-foreground">
-              מיועד
-            </p>
-            <p className="text-subtitle font-semibold">{groomName}</p>
+      <div
+        className={
+          threadSides.length > 0
+            ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start"
+            : undefined
+        }
+      >
+        <Box className="space-y-6">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <p className="text-body-sm font-medium text-muted-foreground">
+                מיועד
+              </p>
+              <p className="text-subtitle font-semibold">{groomName}</p>
+            </div>
+            <div>
+              <p className="text-body-sm font-medium text-muted-foreground">
+                מיועדת
+              </p>
+              <p className="text-subtitle font-semibold">{brideName}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-body-sm font-medium text-muted-foreground">
-              מיועדת
-            </p>
-            <p className="text-subtitle font-semibold">{brideName}</p>
-          </div>
-        </div>
 
-        <StatusSelector
-          shidduchId={shidduch.id}
-          initialStatus={currentStatus}
-          canEdit
-        />
-
-        <SideResponsesPanel
-          responses={sideResponses}
-          recipientScope={shidduch.recipient_scope}
-          threadOwnerIds={{
-            // צד שהמנהל שלו הוא המשתמש עצמו מטופל בתצוגת ההורה, בלי פאנל כאן
-            groom:
-              groomRow?.user_id && groomRow.user_id !== user.id
-                ? groomRow.user_id
-                : undefined,
-            bride:
-              brideRow?.user_id && brideRow.user_id !== user.id
-                ? brideRow.user_id
-                : undefined,
-          }}
-        />
-
-        {scopeLabel && (
-          <div>
-            <p className="text-body-sm font-medium text-muted-foreground">
-              היקף שליחה
-            </p>
-            <p className="text-body-sm">{scopeLabel}</p>
-          </div>
-        )}
-        <SendOtherSideButton
-          shidduchId={shidduch.id}
-          recipientScope={shidduch.recipient_scope}
-          canEdit
-          blockedReason={
-            isProposalsPending(groomRow ?? {}) ||
-            isProposalsPending(brideRow ?? {})
-              ? THIRD_PARTY_PROPOSAL_MESSAGE
-              : null
-          }
-        />
-
-        {canInformOtherSide && (
-          <InformOtherSideButton
+          <StatusSelector
             shidduchId={shidduch.id}
-            recipientSides={recipientSides}
-            defaultSide={defaultNoticeSide(recipientSides, declinedSides)}
+            initialStatus={currentStatus}
+            canEdit
           />
-        )}
-        <ClosedNoticesList notices={closedNotices} />
 
-        {/* מחיקה מותרת רק לשדכן שיצר את ההצעה — כך גם מדיניות ה-RLS,
+          <SideResponsesPanel
+            responses={sideResponses}
+            recipientScope={shidduch.recipient_scope}
+            threadOwnerIds={{
+              // צד שהמנהל שלו הוא המשתמש עצמו מטופל בתצוגת ההורה, בלי פאנל כאן
+              groom:
+                groomRow?.user_id && groomRow.user_id !== user.id
+                  ? groomRow.user_id
+                  : undefined,
+              bride:
+                brideRow?.user_id && brideRow.user_id !== user.id
+                  ? brideRow.user_id
+                  : undefined,
+            }}
+          />
+
+          {scopeLabel && (
+            <div>
+              <p className="text-body-sm font-medium text-muted-foreground">
+                היקף שליחה
+              </p>
+              <p className="text-body-sm">{scopeLabel}</p>
+            </div>
+          )}
+          <SendOtherSideButton
+            shidduchId={shidduch.id}
+            recipientScope={shidduch.recipient_scope}
+            canEdit
+            blockedReason={
+              isProposalsPending(groomRow ?? {}) ||
+              isProposalsPending(brideRow ?? {})
+                ? THIRD_PARTY_PROPOSAL_MESSAGE
+                : null
+            }
+          />
+
+          {canInformOtherSide && (
+            <InformOtherSideButton
+              shidduchId={shidduch.id}
+              recipientSides={recipientSides}
+              defaultSide={defaultNoticeSide(recipientSides, declinedSides)}
+            />
+          )}
+          <ClosedNoticesList notices={closedNotices} />
+
+          {/* מחיקה מותרת רק לשדכן שיצר את ההצעה — כך גם מדיניות ה-RLS,
             ולכן אין להציג את הכפתור למנהל שצופה בהצעה של אחר */}
-        {shidduch.shadchan_id === user.id && (
-          <DeleteShidduchButton
-            shidduchId={shidduch.id}
-            pairLabel={`${groomName} - ${brideName}`}
-            wasSent={!!shidduch.sent_at}
-          />
-        )}
+          {shidduch.shadchan_id === user.id && (
+            <DeleteShidduchButton
+              shidduchId={shidduch.id}
+              pairLabel={`${groomName} - ${brideName}`}
+              wasSent={!!shidduch.sent_at}
+            />
+          )}
 
-        {shidduch.sent_at && (
-          <div>
-            <p className="text-body-sm font-medium text-muted-foreground">
-              נשלח למייל
-            </p>
-            <p className="text-body-sm">{formatDateTime(shidduch.sent_at)}</p>
-          </div>
-        )}
-
-        {shidduch.note_for_groom?.trim() && (
-          <div>
-            <p className="mb-1 text-body-sm font-medium text-muted-foreground">
-              הערות לצד המיועד
-            </p>
-            <div className="rounded-lg border bg-muted/50 p-3 text-body-sm whitespace-pre-wrap">
-              {shidduch.note_for_groom}
+          {shidduch.sent_at && (
+            <div>
+              <p className="text-body-sm font-medium text-muted-foreground">
+                נשלח למייל
+              </p>
+              <p className="text-body-sm">{formatDateTime(shidduch.sent_at)}</p>
             </div>
-          </div>
-        )}
+          )}
 
-        {shidduch.note_for_bride?.trim() && (
-          <div>
-            <p className="mb-1 text-body-sm font-medium text-muted-foreground">
-              הערות לצד המיועדת
-            </p>
-            <div className="rounded-lg border bg-muted/50 p-3 text-body-sm whitespace-pre-wrap">
-              {shidduch.note_for_bride}
+          {shidduch.note_for_groom?.trim() && (
+            <div>
+              <p className="mb-1 text-body-sm font-medium text-muted-foreground">
+                הערות לצד המיועד
+              </p>
+              <div className="rounded-lg border bg-muted/50 p-3 text-body-sm whitespace-pre-wrap">
+                {shidduch.note_for_groom}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <p className="text-caption text-muted-foreground">
-          נוצר: {formatDateTime(shidduch.created_at)}
-        </p>
-      </Box>
+          {shidduch.note_for_bride?.trim() && (
+            <div>
+              <p className="mb-1 text-body-sm font-medium text-muted-foreground">
+                הערות לצד המיועדת
+              </p>
+              <div className="rounded-lg border bg-muted/50 p-3 text-body-sm whitespace-pre-wrap">
+                {shidduch.note_for_bride}
+              </div>
+            </div>
+          )}
 
-      {/* שרשור מלא מול כל צד שההצעה נשלחה אליו. צד שהמנהל שלו הוא המשתמש
-          עצמו (שדכן שמנהל כרטיס בהצעה שלו) מטופל למטה כתצוגת הורה */}
-      {recipientSides.length > 0 && (
-        <Box id="proposal-thread" className="scroll-mt-20 space-y-2">
-          {recipientSides.map((side) => {
-            const ownerId =
-              side === "groom" ? groomRow?.user_id : brideRow?.user_id;
-            if (!ownerId || ownerId === user.id) return null;
-            return (
-              <ProposalThreadPanel
-                key={side}
-                shidduchId={shidduch.id}
-                otherUserId={ownerId}
-                withLabel={side === "groom" ? "צד החתן" : "צד הכלה"}
-              />
-            );
-          })}
+          <p className="text-caption text-muted-foreground">
+            נוצר: {formatDateTime(shidduch.created_at)}
+          </p>
         </Box>
-      )}
+
+        {/* שרשור מלא מול כל צד שההצעה נשלחה אליו, בעמודת צד דביקה במסך רחב
+            (ומתחת לפרטים במובייל), כדי שהשיחות ייראו בלי גלילה */}
+        {threadSides.length > 0 && (
+          <aside
+            id="proposal-thread"
+            aria-label="שיחות על ההצעה"
+            className="scroll-mt-20 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto"
+          >
+            <Box className="space-y-2">
+              {threadSides.map(({ side, ownerId }) => (
+                <ProposalThreadPanel
+                  key={side}
+                  shidduchId={shidduch.id}
+                  otherUserId={ownerId}
+                  withLabel={side === "groom" ? "צד החתן" : "צד הכלה"}
+                />
+              ))}
+            </Box>
+          </aside>
+        )}
+      </div>
 
       {/* שדכן/מנהל שהוא גם מנהל כרטיס באחד הצדדים מגיב כאן כהורה */}
       {parentProposals.map((proposal) => (
