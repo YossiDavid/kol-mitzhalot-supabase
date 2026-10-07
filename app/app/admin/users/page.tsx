@@ -185,15 +185,7 @@ async function UsersContent({ searchParams }: UsersPageProps) {
 
     return (
       <Page>
-        <PageHeader
-          title="שגיאה"
-          description="אירעה שגיאה בטעינת המשתמשים"
-          actions={
-            <Button asChild>
-              <Link href="/app/admin">חזרה לדף הבית</Link>
-            </Button>
-          }
-        />
+        <PageHeader title="שגיאה" description="אירעה שגיאה בטעינת המשתמשים" />
         <div className="rounded-lg border border-destructive bg-destructive/10 p-6">
           <h3 className="mb-2 text-subtitle font-semibold text-destructive">
             שגיאה בהגדרת האדמין
@@ -266,9 +258,6 @@ async function UsersContent({ searchParams }: UsersPageProps) {
         description="רשימת משתמשים עם עימוד, סינון ומיון"
         actions={
           <div className="flex items-center gap-2">
-            <Button asChild variant="outline">
-              <Link href="/app/admin">חזרה לדף הבית</Link>
-            </Button>
             <Button asChild>
               <Link href="/app/admin/users/create">יצירת משתמש חדש</Link>
             </Button>
@@ -345,9 +334,6 @@ function UsersPageFallback() {
         description="רשימת משתמשים עם עימוד, סינון ומיון"
         actions={
           <div className="flex items-center gap-2">
-            <Button asChild variant="outline">
-              <Link href="/app/admin">חזרה לדף הבית</Link>
-            </Button>
             <Button asChild>
               <Link href="/app/admin/users/create">יצירת משתמש חדש</Link>
             </Button>

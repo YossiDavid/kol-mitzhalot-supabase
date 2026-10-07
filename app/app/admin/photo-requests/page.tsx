@@ -7,7 +7,6 @@ import {
   DataTableSkeleton,
   type DataTableColumn,
 } from "@/components/data-table";
-import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PhotoRequestActions } from "@/features/photo-requests/components/photo-request-actions";
@@ -185,11 +184,6 @@ async function PhotoRequestsContent() {
         <PageHeader
           title="בקשות צפייה בתמונה"
           description="אירעה שגיאה בטעינת הבקשות"
-          actions={
-            <Button asChild>
-              <Link href="/app/admin">חזרה לדף הבית</Link>
-            </Button>
-          }
         />
         <div className="rounded-lg border border-destructive bg-destructive/10 p-6">
           <h3 className="mb-2 text-subtitle font-semibold text-destructive">
@@ -207,11 +201,6 @@ async function PhotoRequestsContent() {
         title="בקשות צפייה בתמונה"
         count={requests.length}
         description="שדכנים שביקשו הרשאה לצפות בתמונת מיועדת. אישור חושף את התמונה למבקש בכרטיס אחד בלבד."
-        actions={
-          <Button asChild>
-            <Link href="/app/admin">חזרה לדף הבית</Link>
-          </Button>
-        }
       />
       <Box className="space-y-4">
         <DataTable
@@ -242,11 +231,6 @@ function PhotoRequestsFallback() {
       <PageHeader
         title="בקשות צפייה בתמונה"
         description="שדכנים שביקשו הרשאה לצפות בתמונת מיועדת. אישור חושף את התמונה למבקש בכרטיס אחד בלבד."
-        actions={
-          <Button asChild>
-            <Link href="/app/admin">חזרה לדף הבית</Link>
-          </Button>
-        }
       />
       <Box>
         <DataTableSkeleton

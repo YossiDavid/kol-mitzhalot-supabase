@@ -3,15 +3,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { Page, PageHeader } from "@/components/layout";
 import { Card } from "@/components/ui/card";
 import { CardGridSkeleton } from "@/components/ui/card-skeleton";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Badge } from "@/components/ui/badge";
 import { APPLICATION_STATUS_BADGE_VARIANT } from "@/lib/application-status";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { ShadchanRequestActions } from "@/features/admin/components/request-actions";
 import { Suspense } from "react";
@@ -45,7 +39,7 @@ type ShadchanRequest = {
 async function getPendingRequests(): Promise<ShadchanRequest[]> {
   const supabase = await createClient();
   let adminClient;
-  
+
   try {
     adminClient = createAdminClient();
   } catch (error) {
@@ -128,21 +122,13 @@ async function ShadchanRequestsContent() {
   if (error) {
     return (
       <Page>
-        <PageHeader
-          title="שגיאה"
-          description="אירעה שגיאה בטעינת הבקשות"
-          actions={
-            <Button asChild>
-              <Link href="/app/admin">חזרה לדף הבית</Link>
-            </Button>
-          }
-        />
-          <div className="border-destructive bg-destructive/10 rounded-lg border p-6">
-            <h3 className="text-destructive mb-2 text-subtitle font-semibold">
-              שגיאה בטעינת הבקשות
-            </h3>
-            <p className="text-body-sm">{error.message}</p>
-          </div>
+        <PageHeader title="שגיאה" description="אירעה שגיאה בטעינת הבקשות" />
+        <div className="rounded-lg border border-destructive bg-destructive/10 p-6">
+          <h3 className="mb-2 text-subtitle font-semibold text-destructive">
+            שגיאה בטעינת הבקשות
+          </h3>
+          <p className="text-body-sm">{error.message}</p>
+        </div>
       </Page>
     );
   }
@@ -152,164 +138,159 @@ async function ShadchanRequestsContent() {
       <PageHeader
         title="בקשות הצטרפות כשדכן"
         count={requests.length}
-        description={`${requests.filter(r => r.application_status === "pending").length} ממתינות · ${requests.filter(r => r.application_status === "approved").length} מאושרות · ${requests.filter(r => r.application_status === "rejected").length} נדחות`}
-        actions={
-          <div className="flex items-center gap-2">
-            <Button asChild variant="outline">
-              <Link href="/app/admin/shadchanim">כל השדכנים</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/app/admin">חזרה לדף הבית</Link>
-            </Button>
-          </div>
-        }
+        description={`${requests.filter((r) => r.application_status === "pending").length} ממתינות · ${requests.filter((r) => r.application_status === "approved").length} מאושרות · ${requests.filter((r) => r.application_status === "rejected").length} נדחות`}
       />
-        {requests.length === 0 ? (
-          <Empty>
-            <EmptyHeader>
-              <EmptyTitle>אין בקשות ממתינות לאישור</EmptyTitle>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <div className="space-y-6">
-            {requests.map((request) => (
-              <Card key={request.id}>
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-subtitle font-semibold">
-                          {request.user_first_name || request.user_last_name
-                            ? `${request.user_first_name || ""} ${request.user_last_name || ""}`.trim()
-                            : `בקשה #${request.id.substring(0, 8)}`}
-                        </h3>
-                        <Badge
-                          variant={
-                            APPLICATION_STATUS_BADGE_VARIANT[
-                              request.application_status ?? "pending"
-                            ]
-                          }
-                        >
-                          {request.application_status === "approved"
-                            ? "מאושר"
-                            : request.application_status === "rejected"
+      {requests.length === 0 ? (
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle>אין בקשות ממתינות לאישור</EmptyTitle>
+          </EmptyHeader>
+        </Empty>
+      ) : (
+        <div className="space-y-6">
+          {requests.map((request) => (
+            <Card key={request.id}>
+              <div className="space-y-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-subtitle font-semibold">
+                        {request.user_first_name || request.user_last_name
+                          ? `${request.user_first_name || ""} ${request.user_last_name || ""}`.trim()
+                          : `בקשה #${request.id.substring(0, 8)}`}
+                      </h3>
+                      <Badge
+                        variant={
+                          APPLICATION_STATUS_BADGE_VARIANT[
+                            request.application_status ?? "pending"
+                          ]
+                        }
+                      >
+                        {request.application_status === "approved"
+                          ? "מאושר"
+                          : request.application_status === "rejected"
                             ? "נדחה"
                             : "ממתין לאישור"}
-                        </Badge>
-                      </div>
-                      {request.user_email && (
-                        <p className="text-body-sm text-muted-foreground">
-                          אימייל: {request.user_email}
-                        </p>
-                      )}
+                      </Badge>
+                    </div>
+                    {request.user_email && (
                       <p className="text-body-sm text-muted-foreground">
-                        תאריך הגשה: {formatDate(request.submitted_at)}
+                        אימייל: {request.user_email}
                       </p>
-                      {request.application_status === "approved" && request.approved_at && (
+                    )}
+                    <p className="text-body-sm text-muted-foreground">
+                      תאריך הגשה: {formatDate(request.submitted_at)}
+                    </p>
+                    {request.application_status === "approved" &&
+                      request.approved_at && (
                         <p className="text-body-sm text-success-muted-foreground">
                           אושר ב: {formatDate(request.approved_at)}
                         </p>
                       )}
-                      {request.application_status === "rejected" && (
-                        <>
-                          {request.rejected_at && (
-                            <p className="text-body-sm text-destructive">
-                              נדחה ב: {formatDate(request.rejected_at)}
-                            </p>
-                          )}
-                          {request.rejected_reason && (
-                            <p className="text-body-sm text-destructive">
-                              סיבה: {request.rejected_reason}
-                            </p>
-                          )}
-                        </>
-                      )}
-                    </div>
-                    {request.application_status === "pending" && (
-                      <ShadchanRequestActions requestId={request.user_id} />
+                    {request.application_status === "rejected" && (
+                      <>
+                        {request.rejected_at && (
+                          <p className="text-body-sm text-destructive">
+                            נדחה ב: {formatDate(request.rejected_at)}
+                          </p>
+                        )}
+                        {request.rejected_reason && (
+                          <p className="text-body-sm text-destructive">
+                            סיבה: {request.rejected_reason}
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
+                  {request.application_status === "pending" && (
+                    <ShadchanRequestActions requestId={request.user_id} />
+                  )}
+                </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {request.bio && (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {request.bio && (
+                    <div>
+                      <h4 className="mb-1 font-semibold">ביוגרפיה:</h4>
+                      <p className="text-body-sm">{request.bio}</p>
+                    </div>
+                  )}
+                  {request.experience_years !== null && (
+                    <div>
+                      <h4 className="mb-1 font-semibold">שנות ניסיון:</h4>
+                      <p className="text-body-sm">{request.experience_years}</p>
+                    </div>
+                  )}
+                  {request.specializations &&
+                    request.specializations.length > 0 && (
                       <div>
-                        <h4 className="font-semibold mb-1">ביוגרפיה:</h4>
-                        <p className="text-body-sm">{request.bio}</p>
-                      </div>
-                    )}
-                    {request.experience_years !== null && (
-                      <div>
-                        <h4 className="font-semibold mb-1">שנות ניסיון:</h4>
-                        <p className="text-body-sm">{request.experience_years}</p>
-                      </div>
-                    )}
-                    {request.specializations && request.specializations.length > 0 && (
-                      <div>
-                        <h4 className="font-semibold mb-1">התמחויות:</h4>
+                        <h4 className="mb-1 font-semibold">התמחויות:</h4>
                         <p className="text-body-sm">
                           {request.specializations.join(", ")}
                         </p>
                       </div>
                     )}
-                    {request.contact_phone && (
+                  {request.contact_phone && (
+                    <div>
+                      <h4 className="mb-1 font-semibold">טלפון:</h4>
+                      <p className="text-body-sm">{request.contact_phone}</p>
+                    </div>
+                  )}
+                  {request.contact_email && (
+                    <div>
+                      <h4 className="mb-1 font-semibold">אימייל:</h4>
+                      <p className="text-body-sm">{request.contact_email}</p>
+                    </div>
+                  )}
+                  {request.community && (
+                    <div>
+                      <h4 className="mb-1 font-semibold">קהילה / חסידות:</h4>
+                      <p className="text-body-sm">{request.community}</p>
+                    </div>
+                  )}
+                  {request.location && (
+                    <div>
+                      <h4 className="mb-1 font-semibold">מיקום:</h4>
+                      <p className="text-body-sm">{request.location}</p>
+                    </div>
+                  )}
+                  {request.languages && request.languages.length > 0 && (
+                    <div>
+                      <h4 className="mb-1 font-semibold">שפות:</h4>
+                      <p className="text-body-sm">
+                        {request.languages.join(", ")}
+                      </p>
+                    </div>
+                  )}
+                  {request.certifications &&
+                    request.certifications.length > 0 && (
                       <div>
-                        <h4 className="font-semibold mb-1">טלפון:</h4>
-                        <p className="text-body-sm">{request.contact_phone}</p>
-                      </div>
-                    )}
-                    {request.contact_email && (
-                      <div>
-                        <h4 className="font-semibold mb-1">אימייל:</h4>
-                        <p className="text-body-sm">{request.contact_email}</p>
-                      </div>
-                    )}
-                    {request.community && (
-                      <div>
-                        <h4 className="font-semibold mb-1">קהילה / חסידות:</h4>
-                        <p className="text-body-sm">{request.community}</p>
-                      </div>
-                    )}
-                    {request.location && (
-                      <div>
-                        <h4 className="font-semibold mb-1">מיקום:</h4>
-                        <p className="text-body-sm">{request.location}</p>
-                      </div>
-                    )}
-                    {request.languages && request.languages.length > 0 && (
-                      <div>
-                        <h4 className="font-semibold mb-1">שפות:</h4>
-                        <p className="text-body-sm">{request.languages.join(", ")}</p>
-                      </div>
-                    )}
-                    {request.certifications && request.certifications.length > 0 && (
-                      <div>
-                        <h4 className="font-semibold mb-1">תעודות:</h4>
+                        <h4 className="mb-1 font-semibold">תעודות:</h4>
                         <p className="text-body-sm">
                           {request.certifications.join(", ")}
                         </p>
                       </div>
                     )}
-                    {request.website_url && (
-                      <div>
-                        <h4 className="font-semibold mb-1">אתר:</h4>
-                        <p className="text-body-sm">
-                          <a
-                            href={request.website_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary underline"
-                          >
-                            {request.website_url}
-                          </a>
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                  {request.website_url && (
+                    <div>
+                      <h4 className="mb-1 font-semibold">אתר:</h4>
+                      <p className="text-body-sm">
+                        <a
+                          href={request.website_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary underline"
+                        >
+                          {request.website_url}
+                        </a>
+                      </p>
+                    </div>
+                  )}
                 </div>
-              </Card>
-            ))}
-          </div>
-        )}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
     </Page>
   );
 }
@@ -317,21 +298,12 @@ async function ShadchanRequestsContent() {
 function ShadchanRequestsFallback() {
   return (
     <Page>
-      <PageHeader
-        title="בקשות הצטרפות כשדכן"
-        description="טוען בקשות…"
-        actions={
-          <div className="flex items-center gap-2">
-            <Button asChild variant="outline">
-              <Link href="/app/admin/shadchanim">כל השדכנים</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/app/admin">חזרה לדף הבית</Link>
-            </Button>
-          </div>
-        }
+      <PageHeader title="בקשות הצטרפות כשדכן" description="טוען בקשות…" />
+      <CardGridSkeleton
+        count={FALLBACK_CARD_COUNT}
+        lines={2}
+        className="gap-6"
       />
-        <CardGridSkeleton count={FALLBACK_CARD_COUNT} lines={2} className="gap-6" />
     </Page>
   );
 }

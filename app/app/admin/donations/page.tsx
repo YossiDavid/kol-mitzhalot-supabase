@@ -188,14 +188,6 @@ const UNMATCHED_COLUMNS: DataTableColumn<UnmatchedPaymentRow>[] = [
   },
 ];
 
-function BackToAdmin() {
-  return (
-    <Button asChild variant="outline">
-      <Link href="/app/admin">חזרה לדף הבית</Link>
-    </Button>
-  );
-}
-
 function StatusFilter({ query }: { query: DonationsQuery }) {
   const options = [null, ...DONATION_STATUSES] as const;
   return (
@@ -287,11 +279,7 @@ async function DonationsContent({ searchParams }: DonationsPageProps) {
     console.error("[admin/donations]", err);
     return (
       <Page>
-        <PageHeader
-          title="תרומות"
-          description="אירעה שגיאה בטעינת התרומות"
-          actions={<BackToAdmin />}
-        />
+        <PageHeader title="תרומות" description="אירעה שגיאה בטעינת התרומות" />
         <div className="rounded-lg border border-destructive bg-destructive/10 p-6">
           <p className="text-body-sm">הטעינה נכשלה. נסו לרענן את הדף.</p>
         </div>
@@ -305,12 +293,7 @@ async function DonationsContent({ searchParams }: DonationsPageProps) {
 
   return (
     <Page>
-      <PageHeader
-        title="תרומות"
-        count={total}
-        description={DESCRIPTION}
-        actions={<BackToAdmin />}
-      />
+      <PageHeader title="תרומות" count={total} description={DESCRIPTION} />
       <StatusFilter query={query} />
       {rows.length === 0 ? (
         <Empty>
@@ -352,11 +335,7 @@ async function DonationsContent({ searchParams }: DonationsPageProps) {
 function DonationsFallback() {
   return (
     <Page>
-      <PageHeader
-        title="תרומות"
-        description={DESCRIPTION}
-        actions={<BackToAdmin />}
-      />
+      <PageHeader title="תרומות" description={DESCRIPTION} />
       <DataTableSkeleton
         breakpoint="xl"
         rows={FALLBACK_ROW_COUNT}

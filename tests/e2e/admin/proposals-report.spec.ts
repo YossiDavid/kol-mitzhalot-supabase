@@ -195,10 +195,14 @@ test.describe("דוח הצעות (ניהול)", () => {
     );
   });
 
-  test("הדוח מקושר מדף הניהול", async ({ page }) => {
+  test("הדוח מקושר מתפריט הניהול", async ({ page }) => {
     // Act
     await page.goto("/app/admin");
-    await page.getByRole("link", { name: /דוח הצעות/ }).click();
+    await page.getByTestId("admin-nav-section-cards").hover();
+    await page
+      .getByTestId("admin-flyout-cards")
+      .getByRole("link", { name: "דוח הצעות" })
+      .click();
 
     // Assert
     await expect(page).toHaveURL(new RegExp(`${REPORT_PATH}$`));

@@ -1,7 +1,6 @@
 "use client";
 
 import { Plus, X } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -87,9 +86,6 @@ export default function EndorsementsAdminPage() {
         description="הסכמות ומלצות רבני הקהילה"
         actions={
           <div className="flex gap-2">
-            <Button asChild variant="outline">
-              <Link href={"/app/admin/content" as any}>חזרה</Link>
-            </Button>
             <Button
               onClick={() => {
                 const next = !showForm;

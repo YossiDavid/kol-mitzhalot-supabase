@@ -178,9 +178,6 @@ export default function ArticlesAdminPage() {
         description="ניהול מאמרי מרכז הידע"
         actions={
           <div className="flex gap-2">
-            <Button asChild variant="outline">
-              <Link href={"/app/admin/content" as any}>חזרה</Link>
-            </Button>
             <Button asChild>
               <Link href={"/app/admin/content/articles/new" as any}>
                 <Plus className="me-1 h-4 w-4" /> מאמר חדש

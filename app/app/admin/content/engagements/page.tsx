@@ -300,9 +300,6 @@ export default function EngagementsAdminPage() {
         description="אישור ופרסום שידוכים שנסגרו. מודעות שנוצרות אוטומטית משידוך שהושלם במערכת ממתינות כאן לאישורכם"
         actions={
           <div className="flex gap-2">
-            <Button asChild variant="outline">
-              <Link href={"/app/admin/content" as any}>חזרה</Link>
-            </Button>
             <Button onClick={() => setShowForm(!showForm)}>
               {showForm ? (
                 <X className="me-1 h-4 w-4" />

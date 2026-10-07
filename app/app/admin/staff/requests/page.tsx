@@ -6,8 +6,6 @@ import { CardGridSkeleton } from "@/components/ui/card-skeleton";
 import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Badge } from "@/components/ui/badge";
 import { APPLICATION_STATUS_BADGE_VARIANT } from "@/lib/application-status";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { StaffRequestActions } from "@/features/admin/components/staff-request-actions";
 import {
@@ -132,15 +130,7 @@ async function StaffRequestsContent() {
   if (error) {
     return (
       <Page>
-        <PageHeader
-          title="שגיאה"
-          description="אירעה שגיאה בטעינת הבקשות"
-          actions={
-            <Button asChild>
-              <Link href="/app/admin">חזרה לדף הבית</Link>
-            </Button>
-          }
-        />
+        <PageHeader title="שגיאה" description="אירעה שגיאה בטעינת הבקשות" />
         <div className="rounded-lg border border-destructive bg-destructive/10 p-6">
           <h3 className="mb-2 text-subtitle font-semibold text-destructive">
             שגיאה בטעינת הבקשות
@@ -157,11 +147,6 @@ async function StaffRequestsContent() {
         title="בקשות הצטרפות כאיש צוות"
         count={requests.length}
         description={`${requests.filter((r) => r.application_status === "pending").length} ממתינות · ${requests.filter((r) => r.application_status === "approved").length} מאושרות · ${requests.filter((r) => r.application_status === "rejected").length} נדחות`}
-        actions={
-          <Button asChild>
-            <Link href="/app/admin">חזרה לדף הבית</Link>
-          </Button>
-        }
       />
       {requests.length === 0 ? (
         <Empty>
@@ -264,15 +249,7 @@ async function StaffRequestsContent() {
 function StaffRequestsFallback() {
   return (
     <Page>
-      <PageHeader
-        title="בקשות הצטרפות כאיש צוות"
-        description="טוען בקשות…"
-        actions={
-          <Button asChild>
-            <Link href="/app/admin">חזרה לדף הבית</Link>
-          </Button>
-        }
-      />
+      <PageHeader title="בקשות הצטרפות כאיש צוות" description="טוען בקשות…" />
       <CardGridSkeleton
         count={FALLBACK_CARD_COUNT}
         lines={2}

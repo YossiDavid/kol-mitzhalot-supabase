@@ -132,14 +132,6 @@ const COLUMNS: DataTableColumn<ProposalEventRow>[] = [
   },
 ];
 
-function BackToAdmin() {
-  return (
-    <Button asChild variant="outline">
-      <Link href="/app/admin">חזרה לדף הבית</Link>
-    </Button>
-  );
-}
-
 function Filters({ query }: { query: ProposalsReportQuery }) {
   return (
     <form
@@ -232,11 +224,7 @@ async function ProposalsContent({ searchParams }: ReportPageProps) {
     console.error("[admin/proposals]", err);
     return (
       <Page>
-        <PageHeader
-          title="דוח הצעות"
-          description="אירעה שגיאה בטעינת הדוח"
-          actions={<BackToAdmin />}
-        />
+        <PageHeader title="דוח הצעות" description="אירעה שגיאה בטעינת הדוח" />
         <div className="rounded-lg border border-destructive bg-destructive/10 p-6">
           <p className="text-body-sm">טעינת הדוח נכשלה. נסו לרענן את הדף.</p>
         </div>
@@ -254,7 +242,6 @@ async function ProposalsContent({ searchParams }: ReportPageProps) {
         title="דוח הצעות"
         count={total}
         description="כל פעם שכרטיס קיבל הצעה, מי שלח אותה ומה מצבה כיום"
-        actions={<BackToAdmin />}
       />
       <Filters query={query} />
       {rows.length === 0 ? (
@@ -297,7 +284,6 @@ function ProposalsFallback() {
       <PageHeader
         title="דוח הצעות"
         description="כל פעם שכרטיס קיבל הצעה, מי שלח אותה ומה מצבה כיום"
-        actions={<BackToAdmin />}
       />
       <DataTableSkeleton
         breakpoint="xl"

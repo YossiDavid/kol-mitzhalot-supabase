@@ -206,11 +206,6 @@ async function ThirdPartyCardsContent({ searchParams }: PageProps) {
         title={PAGE_TITLE}
         count={total}
         description={PAGE_DESCRIPTION}
-        actions={
-          <Button asChild>
-            <Link href="/app/admin">חזרה לדף הבית</Link>
-          </Button>
-        }
       />
       <FilterLinks query={query} />
       <DataTable

@@ -27,6 +27,8 @@ import type { Role } from "@/lib/user-role";
 import { useUnreadChats } from "@/features/chats/lib/unread-chats-context";
 import { SidebarNavGroup } from "./sidebar/nav-group";
 import { navGroupsFor } from "./sidebar/nav-items";
+import { AdminSidebarNav } from "./sidebar/admin-nav";
+import { isAdminPath } from "./sidebar/admin-nav-items";
 
 export function AppSidebar({
   roles,
@@ -36,8 +38,9 @@ export function AppSidebar({
   /** נרשם כדי להיות שדכן: "הצטרפות כשדכן" מודגש וקרוב לניווט הראשי */
   highlightShadchanJoin?: boolean;
 }) {
-  const { state } = useSidebar();
-  const isCollapsed = state === "collapsed";
+  const { state, isMobile, setOpenMobile } = useSidebar();
+  // ב-Sheet של המובייל תמיד מוצגים תוויות מלאות, גם כשהסרגל בדסקטופ מכווץ
+  const isCollapsed = state === "collapsed" && !isMobile;
   const pathname = usePathname();
   const router = useRouter();
   const { count: unreadChatsCount } = useUnreadChats();
@@ -71,6 +74,9 @@ export function AppSidebar({
     );
 
   const navGroups = navGroupsFor(effectiveRoles);
+  // בתוך /app/admin מוצג תפריט הניהול במקום הניווט הרגיל - רק למנהל
+  // (שער הנתיב ב-admin/layout.tsx נשאר ההגנה האמיתית).
+  const isAdminMode = isAdminPath(pathname) && effectiveRoles.includes("admin");
 
   return (
     <Sidebar
@@ -82,37 +88,48 @@ export function AppSidebar({
       <SidebarLogo />
 
       <SidebarContent>
-        {navGroups.map((group) => (
-          <SidebarNavGroup
-            key={group.key}
-            group={group}
+        {isAdminMode ? (
+          <AdminSidebarNav
             pathname={pathname}
             isCollapsed={isCollapsed}
-            unreadChatsCount={unreadChatsCount}
+            isMobile={isMobile}
+            onNavigate={() => setOpenMobile(false)}
           />
-        ))}
+        ) : (
+          <>
+            {navGroups.map((group) => (
+              <SidebarNavGroup
+                key={group.key}
+                group={group}
+                pathname={pathname}
+                isCollapsed={isCollapsed}
+                unreadChatsCount={unreadChatsCount}
+              />
+            ))}
 
-        {/* תוכן האתר הכללי - אחרת משתמש מחובר מגיע אליו רק דרך הפוטר */}
-        <SidebarGroup>
-          <SidebarGroupLabel>מידע ותוכן</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {SITE_CONTENT_LINKS.map(({ title, href, icon: Icon }) => (
-                <SidebarMenuItem key={href}>
-                  {withTooltip(
-                    <SidebarMenuButton asChild>
-                      <Link href={href} prefetch={false}>
-                        <Icon />
-                        <span>{title}</span>
-                      </Link>
-                    </SidebarMenuButton>,
-                    title,
-                  )}
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+            {/* תוכן האתר הכללי - אחרת משתמש מחובר מגיע אליו רק דרך הפוטר */}
+            <SidebarGroup>
+              <SidebarGroupLabel>מידע ותוכן</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {SITE_CONTENT_LINKS.map(({ title, href, icon: Icon }) => (
+                    <SidebarMenuItem key={href}>
+                      {withTooltip(
+                        <SidebarMenuButton asChild>
+                          <Link href={href} prefetch={false}>
+                            <Icon />
+                            <span>{title}</span>
+                          </Link>
+                        </SidebarMenuButton>,
+                        title,
+                      )}
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
       </SidebarContent>
 
       <SidebarFooter>

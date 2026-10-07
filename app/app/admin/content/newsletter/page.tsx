@@ -8,14 +8,9 @@
  */
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Box, Page, PageHeader } from "@/components/layout";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { ListSkeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -66,48 +61,43 @@ export default function NewsletterAdminPage() {
       <PageHeader
         title="רשימת תפוצה"
         description="נרשמים מהפוטר — עד חיבור למסוף ניוזלטרים"
-        actions={
-          <Button asChild variant="outline">
-            <Link href={"/app/admin/content" as any}>חזרה</Link>
-          </Button>
-        }
       />
-        <Box>
-          {loading ? (
-            <ListSkeleton />
-          ) : items.length === 0 ? (
-            <Empty size="compact" surface={false}>
-              <EmptyHeader>
-                <EmptyTitle>אין נרשמים עדיין</EmptyTitle>
-              </EmptyHeader>
-            </Empty>
-          ) : (
-            <div className="divide-y">
-              {items.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between gap-4 py-3"
-                >
-                  <div>
-                    <p className="font-semibold">{item.email}</p>
-                    <p className="text-caption text-muted-foreground">
-                      {item.source} ·{" "}
-                      {new Date(item.created_at).toLocaleString("he-IL")}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => remove(item.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+      <Box>
+        {loading ? (
+          <ListSkeleton />
+        ) : items.length === 0 ? (
+          <Empty size="compact" surface={false}>
+            <EmptyHeader>
+              <EmptyTitle>אין נרשמים עדיין</EmptyTitle>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <div className="divide-y">
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center justify-between gap-4 py-3"
+              >
+                <div>
+                  <p className="font-semibold">{item.email}</p>
+                  <p className="text-caption text-muted-foreground">
+                    {item.source} ·{" "}
+                    {new Date(item.created_at).toLocaleString("he-IL")}
+                  </p>
                 </div>
-              ))}
-            </div>
-          )}
-        </Box>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => remove(item.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </Box>
     </Page>
   );
 }

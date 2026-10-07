@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+import { cn } from "@/lib/utils";
+
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -25,13 +27,19 @@ type NavItemLinkProps = {
   isActive: boolean;
   isCollapsed: boolean;
   unreadChatsCount: number;
+  testId?: string;
+  className?: string;
+  onNavigate?: () => void;
 };
 
-function NavItemLink({
+export function NavItemLink({
   item,
   isActive,
   isCollapsed,
   unreadChatsCount,
+  testId,
+  className,
+  onNavigate,
 }: NavItemLinkProps) {
   const Icon = item.icon;
   const isChats = item.url === CHATS_URL;
@@ -43,11 +51,13 @@ function NavItemLink({
     <SidebarMenuButton
       asChild
       isActive={isActive}
-      className={isChats ? "relative" : undefined}
+      className={cn(isChats && "relative", className)}
     >
       <Link
         href={item.url}
         prefetch={false}
+        data-testid={testId}
+        onClick={onNavigate}
         aria-label={unreadCount > 0 ? label : undefined}
       >
         <Icon />

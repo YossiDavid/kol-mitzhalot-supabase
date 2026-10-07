@@ -4,7 +4,6 @@
 // Schema: public.contact_submissions. User: "3. לחבר את הטפסים למערכת הניהול ולDB."
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Box, Page, PageHeader } from "@/components/layout";
 import { Badge, type BadgeVariant } from "@/components/ui/badge";
@@ -191,11 +190,6 @@ export default function SubmissionsAdminPage() {
       <PageHeader
         title="פניות מהאתר"
         description="טפסי צור קשר ורעיונות לשידוך"
-        actions={
-          <Button asChild variant="outline">
-            <Link href={"/app/admin/content" as any}>חזרה</Link>
-          </Button>
-        }
       />
       <div className="flex flex-wrap gap-2">
         {(["all", "new", "read", "archived"] as const).map((key) => (

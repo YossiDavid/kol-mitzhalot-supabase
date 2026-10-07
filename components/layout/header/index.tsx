@@ -14,6 +14,7 @@ import { Separator } from "../../ui/separator";
 import Image from "next/image";
 import Logo from "@/assets/images/logo-text.svg";
 import { WebMobileNav } from "./mobile-nav";
+import { AdminMobileMenuTrigger } from "./admin-mobile-menu";
 import { readSignupPurpose } from "@/features/auth/lib/signup-purpose";
 import { ENDORSEMENTS_HREF } from "@/components/website/endorsements-anchor";
 
@@ -138,6 +139,8 @@ export default async function Header({
     <header className="sticky top-0 z-30 container flex h-16 items-center justify-between gap-5 border-b border-b-foreground/10 bg-background/95 font-semibold backdrop-blur-sm supports-[backdrop-filter]:bg-background/80">
       <div className="flex items-center gap-2">
         <>
+          {/* מובייל, מנהל בתוך /app/admin: תפריט הניהול */}
+          {hasRole(user, "admin") && <AdminMobileMenuTrigger />}
           {/* מובייל: לוגו */}
           <Link href="/app" className="md:hidden">
             <Image

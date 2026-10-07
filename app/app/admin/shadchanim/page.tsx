@@ -52,33 +52,25 @@ async function ShadchanimContent({ searchParams }: ShadchanimPageProps) {
 
     return (
       <Page>
-        <PageHeader
-          title="שגיאה"
-          description="אירעה שגיאה בטעינת השדכנים"
-          actions={
-            <Button asChild>
-              <Link href="/app/admin">חזרה לדף הבית</Link>
-            </Button>
-          }
-        />
-          <div className="border-destructive bg-destructive/10 rounded-lg border p-6">
-            <h3 className="text-destructive mb-2 text-subtitle font-semibold">
-              שגיאה בהגדרת האדמין
-            </h3>
-            {isServiceRoleKeyError ? (
-              <div className="space-y-4">
-                <p className="text-body-sm">
-                  המשתנה{" "}
-                  <code className="bg-muted rounded px-2 py-1">
-                    SUPABASE_SERVICE_ROLE_KEY
-                  </code>{" "}
-                  לא מוגדר.
-                </p>
-              </div>
-            ) : (
-              <p className="text-body-sm">{error.message}</p>
-            )}
-          </div>
+        <PageHeader title="שגיאה" description="אירעה שגיאה בטעינת השדכנים" />
+        <div className="rounded-lg border border-destructive bg-destructive/10 p-6">
+          <h3 className="mb-2 text-subtitle font-semibold text-destructive">
+            שגיאה בהגדרת האדמין
+          </h3>
+          {isServiceRoleKeyError ? (
+            <div className="space-y-4">
+              <p className="text-body-sm">
+                המשתנה{" "}
+                <code className="rounded bg-muted px-2 py-1">
+                  SUPABASE_SERVICE_ROLE_KEY
+                </code>{" "}
+                לא מוגדר.
+              </p>
+            </div>
+          ) : (
+            <p className="text-body-sm">{error.message}</p>
+          )}
+        </div>
       </Page>
     );
   }
@@ -103,17 +95,14 @@ async function ShadchanimContent({ searchParams }: ShadchanimPageProps) {
                 <Link href="/app/admin/shadchanim/requests">בקשות ממתינות</Link>
               </Button>
             )}
-            <Button asChild>
-              <Link href="/app/admin">חזרה לדף הבית</Link>
-            </Button>
           </div>
         }
       />
-        <div>
-          <Suspense key={listKey} fallback={<ShadchanimListFallback />}>
-            <ShadchanimList query={query} />
-          </Suspense>
-        </div>
+      <div>
+        <Suspense key={listKey} fallback={<ShadchanimListFallback />}>
+          <ShadchanimList query={query} />
+        </Suspense>
+      </div>
     </Page>
   );
 }
@@ -128,13 +117,10 @@ function ShadchanimPageFallback() {
             <Button asChild variant="outline">
               <Link href="/app/admin/shadchanim/requests">בקשות ממתינות</Link>
             </Button>
-            <Button asChild>
-              <Link href="/app/admin">חזרה לדף הבית</Link>
-            </Button>
           </div>
         }
       />
-        <ShadchanimListFallback />
+      <ShadchanimListFallback />
     </Page>
   );
 }

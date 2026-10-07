@@ -171,9 +171,13 @@ test.describe("תרומות (ניהול)", () => {
     ).toBeVisible();
   });
 
-  test("הקישור מדף הניהול", async ({ page }) => {
+  test("הקישור מתפריט הניהול", async ({ page }) => {
     await page.goto("/app/admin");
-    await page.locator(`a[href="${PATH}"]`).click();
+    await page.getByTestId("admin-nav-section-finance").hover();
+    await page
+      .getByTestId("admin-flyout-finance")
+      .locator(`a[href="${PATH}"]`)
+      .click();
     await expect(page).toHaveURL(new RegExp(PATH));
   });
 });

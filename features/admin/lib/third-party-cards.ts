@@ -23,6 +23,10 @@ export type ThirdPartyCardsQuery = {
   filter: ThirdPartyCardsFilter;
 };
 
+/** "ממתין": חסר אישור הצגת נתונים מלאים או אישור שליחת הצעות. משותף ללוח הבקרה */
+export const THIRD_PARTY_PENDING_FILTER =
+  "third_party_full_display_approved_at.is.null,third_party_proposals_approved_at.is.null";
+
 const pageSchema = z.coerce.number().int().min(1).catch(1);
 
 function firstValue(value: string | string[] | undefined): string | undefined {
@@ -105,9 +109,7 @@ export async function loadThirdPartyCards(
     .eq("card_for", "other")
     .is("deleted_at", null);
   if (query.filter === "pending") {
-    builder = builder.or(
-      "third_party_full_display_approved_at.is.null,third_party_proposals_approved_at.is.null",
-    );
+    builder = builder.or(THIRD_PARTY_PENDING_FILTER);
   }
 
   const { data, error, count } = await builder
