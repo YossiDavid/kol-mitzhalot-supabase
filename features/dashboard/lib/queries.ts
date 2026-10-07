@@ -5,6 +5,7 @@ import {
 import { getDisplayName } from "@/features/chats/lib/user-display";
 import type { ApplicationStatus } from "@/lib/application-status";
 import type { createClient } from "@/lib/supabase/server";
+import { shidduchIdsOf, splitChatsBySide } from "./chat-sides";
 
 type ServerSupabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -285,10 +286,51 @@ export async function getChatsWithLastMessage(
         // שיחה כללית נראית כמו תמיד; רק כרטיס/הצעה מקבלים שורת הקשר
         contextTitle:
           context.kind === "general" ? null : roomContextTitle(context),
+        // לסיווג השיחה לאזור בדשבורד (שדכן / אישי)
+        context,
         lastMessage: lastMsg?.content ?? null,
         lastMessageTime: lastMsg?.created_at ?? null,
         lastMessageSender: null,
       },
     ];
   });
+}
+
+/**
+ * מתוך ההצעות הנתונות: אלה שהצופה הוא השדכן שלהן. שאילתה אחת דרך הלקוח של
+ * המשתמש; הצעה ש-RLS מסתירה ממנו פשוט חסרה, והוא אינו השדכן שלה.
+ */
+async function getShadchanShidduchIds(
+  supabase: ServerSupabase,
+  userId: string,
+  shidduchIds: string[],
+): Promise<Set<string>> {
+  if (shidduchIds.length === 0) return new Set();
+
+  const { data, error } = await supabase
+    .from("shidduchim")
+    .select("id")
+    .eq("shadchan_id", userId)
+    .in("id", shidduchIds);
+
+  if (error) console.error(error);
+  return new Set((data ?? []).map((row) => row.id));
+}
+
+/**
+ * שיחות הדשבורד של שדכן/מנהל, מפוצלות לשיחות כשדכן ולשיחות כבעל כרטיס.
+ * הפיצול נעשה על כל החדרים, כך שאף אזור אינו מורעב על ידי האחר.
+ */
+export async function getChatsBySide(
+  supabase: ServerSupabase,
+  userId: string,
+  ownStudentIds: ReadonlySet<string>,
+) {
+  const chats = await getChatsWithLastMessage(supabase, userId);
+  const shadchanShidduchIds = await getShadchanShidduchIds(
+    supabase,
+    userId,
+    shidduchIdsOf(chats),
+  );
+  return splitChatsBySide(chats, ownStudentIds, shadchanShidduchIds);
 }

@@ -15,7 +15,9 @@ test.describe("ניהול שדכנים — בדיקות admin", () => {
   test("עמוד השדכנים נטען בצורה תקינה", async ({ page }) => {
     await expect(page).toHaveURL(/\/app\/admin\/shadchanim/);
     // הדף צריך להראות את הכותרת של עמוד הניהול
-    await expect(page.locator("text=שדכנים").first()).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 1, name: "כל השדכנים" }),
+    ).toBeVisible();
   });
 
   test("לא מוצג 'לא זמין' לשדכן עם שם תקין", async ({ page }) => {

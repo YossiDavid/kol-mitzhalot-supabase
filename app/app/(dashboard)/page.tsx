@@ -1,20 +1,13 @@
-import { CARD_GUIDANCE_SHORT } from "@/features/students/lib/third-party-card";
-import { DashboardSection, Page, PageHeader } from "@/components/layout";
-import { Button } from "@/components/ui/button";
+import { Page, PageHeader } from "@/components/layout";
 import {
-  ActiveShidduchim,
-  Favorites,
-  Chat,
-  Forum,
-} from "@/features/dashboard/components/shadchan";
-import {
-  ActiveShidduchim as UserActiveShidduchim,
-  ShadchanimList,
-  Children,
-  Chat as UserChat,
-} from "@/features/dashboard/components/user";
+  ShadchanArea,
+  type ShadchanAreaProps,
+} from "@/features/dashboard/components/shadchan-area";
+import { PersonalArea } from "@/features/dashboard/components/personal-area";
+import { getShadchanimWhoActedForMe } from "@/features/shadchanim/lib/queries";
 import { createClient } from "@/lib/supabase/server";
 import {
+  getChatsBySide,
   getChatsWithLastMessage,
   getFavoriteStudents,
   getShadchanApplicationStatus,
@@ -28,17 +21,40 @@ import type { StudentTableRow } from "@/features/students/components/students-ta
 import { ShadchanJoinBanner } from "@/features/dashboard/components/user/shadchan-join-banner";
 import { shadchanJoinPrompt } from "@/features/dashboard/lib/shadchan-join-prompt";
 import { readSignupPurpose } from "@/features/auth/lib/signup-purpose";
-import {
-  ownCardsHeading,
-  ownCardsShadchanimSubtitle,
-} from "@/features/students/lib/own-cards-heading";
 import { getUser, hasRole } from "@/lib/user";
 import DashboardSkeleton from "@/features/dashboard/components/dashboard-skeleton";
 import { unstable_noStore as noStore } from "next/cache";
-import Link from "next/link";
 import { Suspense } from "react";
 
 const OPEN_PROPOSALS_LIMIT = 5;
+
+type DashboardChats = Awaited<ReturnType<typeof getChatsBySide>>;
+type ServerSupabase = Awaited<ReturnType<typeof createClient>>;
+
+const EMPTY_CHATS: DashboardChats = { shadchan: [], personal: [] };
+
+/** שדכן/מנהל מקבלים פיצול לשני אזורים; משתמש רגיל - כל השיחות באזור האישי */
+async function loadChats(
+  supabase: ServerSupabase,
+  userId: string,
+  isShadchanView: boolean,
+  ownStudentsPromise: Promise<unknown[]>,
+): Promise<DashboardChats> {
+  if (!isShadchanView) {
+    return {
+      shadchan: [],
+      personal: await getChatsWithLastMessage(supabase, userId),
+    };
+  }
+  const ownStudents = await ownStudentsPromise;
+  const ownStudentIds = new Set(
+    ownStudents.flatMap((student) => {
+      const id = (student as { id?: unknown }).id;
+      return typeof id === "string" ? [id] : [];
+    }),
+  );
+  return getChatsBySide(supabase, userId, ownStudentIds);
+}
 
 async function DashboardSections() {
   noStore();
@@ -62,6 +78,12 @@ async function DashboardSections() {
       applicationStatus: null,
     }) !== "none";
 
+  // הכרטיסים של המשתמש נשלפים פעם אחת: הם גם מציגים את מקטע הכרטיסים וגם
+  // מסווגים את השיחות (כרטיס שלי = שיחה אישית)
+  const ownStudentsPromise = user?.id
+    ? getOwnStudents(supabase, user.id)
+    : Promise.resolve([]);
+
   // כל הסקשנים בלתי תלויים זה בזה, ולכן נשלפים במקביל. כל שליפה מטפלת
   // בשגיאה שלה (רישום + ערך ריק), כך שתקלה בסקשן אחד לא מפילה את האחרים.
   const [
@@ -71,13 +93,13 @@ async function DashboardSections() {
     activeShidduchimCountRaw,
     openProposals,
     forumPostsData,
-    chatsWithLastMessage,
+    chats,
     shadchanApplicationStatus,
   ] = await Promise.all([
     // מיועדים שעניינו אותך והוספת ללוח העבודה - מוצגים לשדכן ולמנהל בלבד
     isShadchanView ? getFavoriteStudents(supabase, favorites) : [],
     // הכרטיסים שבבעלות המשתמש
-    user?.id ? getOwnStudents(supabase, user.id) : [],
+    ownStudentsPromise,
     // השידוכים שהשדכן המחובר הציע
     user?.id && isShadchanView ? getRecentShidduchim(supabase, user.id) : [],
     // המספר בכותרת הוא כלל ההצעות שנשלחו, ולא רק האחרונות שמוצגות
@@ -91,8 +113,11 @@ async function DashboardSections() {
       : [],
     // פוסטים אחרונים בפורום השדכנים
     isShadchanView ? getLatestForumPosts(supabase) : [],
-    // חדרי הצ'אט של המשתמש עם ההודעה האחרונה בכל חדר
-    user?.id ? getChatsWithLastMessage(supabase, user.id) : [],
+    // חדרי הצ'אט של המשתמש עם ההודעה האחרונה בכל חדר, מפוצלים לשיחות כשדכן
+    // ולשיחות כבעל כרטיס (לשדכן/מנהל); למשתמש רגיל הכול באזור אחד
+    user?.id
+      ? loadChats(supabase, user.id, isShadchanView, ownStudentsPromise)
+      : EMPTY_CHATS,
     // רק מי שנרשם כדי להיות שדכן ועדיין אינו שדכן צריך את סטטוס הבקשה
     user?.id && needsShadchanApplicationStatus
       ? getShadchanApplicationStatus(supabase, user.id)
@@ -101,6 +126,15 @@ async function DashboardSections() {
 
   // select עם רשימת עמודות מפורשת מבלבל את הסקת הטיפוסים של supabase-js
   const ownCards = childrenData as unknown as StudentTableRow[];
+
+  const { shadchan: shadchanChats, personal: personalChats } = chats;
+
+  // שדכן/מנהל בלי כרטיסים: האם יש בכלל שדכנים שפעלו בשבילו. רק אז נדרשת
+  // השליפה, והיא מסתירה את המקטע רק כשחזרה רשימה ריקה (שגיאה - לא מסתירים)
+  const hasNoShadchanim =
+    isShadchanView && ownCards.length === 0
+      ? (await getShadchanimWhoActedForMe(1))?.length === 0
+      : false;
 
   const joinPrompt = shadchanJoinPrompt({
     signupPurpose,
@@ -126,115 +160,29 @@ async function DashboardSections() {
 
       {joinPrompt !== "none" && <ShadchanJoinBanner prompt={joinPrompt} />}
 
-      {(isShadchan || isAdmin) && (
-        <>
-          <DashboardSection
-            title="שידוכים באויר"
-            titleNumber={activeShidduchimCount.toString()}
-            subTitle="ההצעות האחרונות שלך"
-            button={
-              <Button asChild>
-                <Link href={"/app/shadchan/proposals" as any}>
-                  לכל ההצעות שלך
-                </Link>
-              </Button>
-            }
-          >
-            <ActiveShidduchim shiduchim={activeShidduchimData as any} />
-          </DashboardSection>
-          <DashboardSection
-            title="המועדפים שלך"
-            subTitle="מיועדים שעניינו אותך והוספת ללוח העבודה"
-            button={
-              <Button asChild>
-                <Link href="/app/canvas">ללוח העבודה</Link>
-              </Button>
-            }
-          >
-            <Favorites favorites={favoritesStudentsData as any} />
-          </DashboardSection>
-          <DashboardSection
-            title="הצ'אטים שלך"
-            subTitle="הצ'אטים האחרונים שלך"
-            button={
-              <Button asChild>
-                <Link href="/app/chats">לכל הצ'אטים שלך</Link>
-              </Button>
-            }
-          >
-            <Chat chats={chatsWithLastMessage as any} />
-          </DashboardSection>
-          <DashboardSection
-            title="הפורומים שלך"
-            subTitle="הפורומים האחרונים שלך"
-            button={
-              <Button asChild>
-                <Link href={"/app/forums" as any}>לכל הפורומים שלך</Link>
-              </Button>
-            }
-          >
-            <Forum posts={forumPostsData} />
-          </DashboardSection>
-        </>
+      {isShadchanView && (
+        <ShadchanArea
+          activeShidduchim={
+            activeShidduchimData as unknown as ShadchanAreaProps["activeShidduchim"]
+          }
+          activeShidduchimCount={activeShidduchimCount}
+          favorites={
+            favoritesStudentsData as unknown as ShadchanAreaProps["favorites"]
+          }
+          chats={shadchanChats}
+          forumPosts={forumPostsData}
+        />
       )}
 
-      {/* סקשנים למשתמש רגיל – מוצגים לכל משתמש מחובר (כולל כשהתפקיד לא מוגדר) */}
+      {/* מקטעי הורה/בעל כרטיס – לכל משתמש מחובר (כולל כשהתפקיד לא מוגדר) */}
       {user && (
-        <>
-          <DashboardSection
-            title="הצעות פתוחות"
-            subTitle="הצעות חדשות או מתקדמות שממתינות לטיפולך"
-            button={
-              <Button asChild>
-                <Link href={"/app/proposals" as any}>לכל ההצעות</Link>
-              </Button>
-            }
-          >
-            <UserActiveShidduchim shiduchim={openProposals} />
-          </DashboardSection>
-          <DashboardSection
-            title="הודעות אחרונות"
-            subTitle="שאלות ותשובות חדשות שקיבלת משדכנים בצ'אט"
-            button={
-              <Button asChild>
-                <Link href="/app/chats">למעבר לצ׳אט</Link>
-              </Button>
-            }
-          >
-            <UserChat chats={chatsWithLastMessage as any} />
-          </DashboardSection>
-          <DashboardSection
-            title={ownCardsHeading(ownCards)}
-            subTitle="מגיל 17 ועד החתונה בעז”ה"
-            button={
-              <Button asChild>
-                <Link href="/app/students/create">להוספת מיועד/ת</Link>
-              </Button>
-            }
-          >
-            <p
-              className="mb-3 text-body-sm text-muted-foreground"
-              data-testid="card-guidance-note"
-            >
-              {CARD_GUIDANCE_SHORT}
-            </p>
-            <Children
-              childs={childrenData as any}
-              caption={ownCardsHeading(ownCards)}
-            />
-          </DashboardSection>
-          <DashboardSection
-            title="שדכנים שפעלו בשבילך"
-            subTitle={ownCardsShadchanimSubtitle(ownCards)}
-            button={
-              <Button asChild>
-                <Link href="/app/shadchanim">לכל השדכנים</Link>
-              </Button>
-            }
-          >
-            <ShadchanimList />
-          </DashboardSection>
-        </>
+        <PersonalArea
+          isInsideArea={isShadchanView}
+          openProposals={openProposals}
+          chats={personalChats}
+          ownCards={ownCards}
+          hasNoShadchanim={hasNoShadchanim}
+        />
       )}
     </>
   );

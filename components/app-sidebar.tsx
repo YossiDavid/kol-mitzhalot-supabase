@@ -1,23 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  BookmarkCheck,
-  ClipboardList,
-  GraduationCap,
-  HeartHandshake,
-  Globe,
-  Home,
-  Inbox,
-  LogOut,
-  MessageCircle,
-  MessagesSquare,
-  Network,
-  Plus,
-  Settings,
-  UserSearch,
-  Users,
-} from "lucide-react";
+import { GraduationCap, HeartHandshake, Globe, LogOut } from "lucide-react";
 
 import {
   Sidebar,
@@ -40,43 +24,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Role } from "@/lib/user-role";
-import { UnreadChatsBadge } from "@/features/chats/components/unread-chats-badge";
 import { useUnreadChats } from "@/features/chats/lib/unread-chats-context";
-import { unreadChatsLabel } from "@/features/chats/lib/unread-rooms";
-
-const CHATS_URL = "/app/chats";
-
-const allItems = [
-  { title: "ראשי", url: "/app", icon: Home },
-  { title: "מיועדים", url: "/app/students", icon: Users },
-  { title: "הוספת מיועד", url: "/app/students/create", icon: Plus },
-  { title: "צ'אטים", url: "/app/chats", icon: MessageCircle },
-  // הצעות שנשלחו לילדי המשתמש - לכל משתמש, גם שדכן יכול להיות הורה
-  { title: "הצעות שקיבלתי", url: "/app/proposals", icon: Inbox },
-  { title: "לוח העבודה", url: "/app/canvas", icon: Network },
-  {
-    title: "כל השידוכים שלי",
-    url: "/app/shadchan/proposals",
-    icon: ClipboardList,
-  },
-  // טיוטות שנשמרו בלוח העבודה וטרם נשלחו
-  { title: "הצעות שמורות", url: "/app/shadchan/drafts", icon: BookmarkCheck },
-  // רשימת השדכנים פתוחה לכל משתמש מחובר; הפורום לשדכנים (ולמנהלים) בלבד
-  { title: "שדכנים", url: "/app/shadchanim", icon: UserSearch },
-  { title: "פורום שדכנים", url: "/app/forums", icon: MessagesSquare },
-  { title: "הגדרות", url: "/app/settings", icon: Settings },
-] as const;
-
-// לוח ההתאמות, רשימת השידוכים וההצעות השמורות הם כלי עבודה של שדכן/מנהל בלבד.
-const shadchanOnlyUrls = [
-  "/app/canvas",
-  "/app/shadchan/proposals",
-  "/app/shadchan/drafts",
-  "/app/forums",
-];
-// רשימת המיועדים חושפת מיועדים של אחרים, ולכן סגורה להורה. "הוספת
-// מיועד" נשארת פתוחה לכולם — הורה מוסיף את ילדיו.
-const staffVisibleUrls = ["/app/students"];
+import { SidebarNavGroup } from "./sidebar/nav-group";
+import { navGroupsFor } from "./sidebar/nav-items";
 
 export function AppSidebar({
   roles,
@@ -120,12 +70,8 @@ export function AppSidebar({
       node
     );
 
-  const items = allItems.filter((item) => {
-    if (shadchanOnlyUrls.includes(item.url)) return isShadchanOrAdmin;
-    if (staffVisibleUrls.includes(item.url))
-      return isShadchanOrAdmin || effectiveRoles.includes("staff");
-    return true;
-  });
+  const navGroups = navGroupsFor(effectiveRoles);
+
   return (
     <Sidebar
       variant="floating"
@@ -136,59 +82,15 @@ export function AppSidebar({
       <SidebarLogo />
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>
-            {isShadchanOrAdmin ? "שדכנים" : "ניווט"}
-          </SidebarGroupLabel>
-
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => {
-                const Icon = item.icon;
-                const isChats = item.url === CHATS_URL;
-                const unreadCount = isChats ? unreadChatsCount : 0;
-                // התג עצמו aria-hidden; המספר נמסר בשם הנגיש ובטולטיפ
-                const label = unreadChatsLabel(item.title, unreadCount);
-
-                const button = (
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === item.url}
-                    className={isChats ? "relative" : undefined}
-                  >
-                    <Link
-                      href={item.url}
-                      prefetch={false}
-                      aria-label={unreadCount > 0 ? label : undefined}
-                    >
-                      <Icon />
-                      <span>{item.title}</span>
-                      {isChats && (
-                        <UnreadChatsBadge
-                          count={unreadCount}
-                          placement="sidebar"
-                        />
-                      )}
-                    </Link>
-                  </SidebarMenuButton>
-                );
-
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    {isCollapsed ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>{button}</TooltipTrigger>
-                        <TooltipContent side="right">{label}</TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      button
-                    )}
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {navGroups.map((group) => (
+          <SidebarNavGroup
+            key={group.key}
+            group={group}
+            pathname={pathname}
+            isCollapsed={isCollapsed}
+            unreadChatsCount={unreadChatsCount}
+          />
+        ))}
 
         {/* תוכן האתר הכללי - אחרת משתמש מחובר מגיע אליו רק דרך הפוטר */}
         <SidebarGroup>

@@ -3,6 +3,8 @@ import { cn } from "@/lib/utils";
 type DashboardSectionProps = {
   children: React.ReactNode;
   title: string;
+  /** h3 כשהמקטע בתוך אזור שכותרתו h2 */
+  headingLevel?: "h2" | "h3";
   titleNumber?: string | number;
   subTitle?: string;
   button?: React.ReactElement;
@@ -13,6 +15,7 @@ type DashboardSectionProps = {
 
 export default function DashboardSection({
   children,
+  headingLevel: Heading = "h2",
   ...props
 }: DashboardSectionProps) {
   return (
@@ -24,16 +27,16 @@ export default function DashboardSection({
         )}
       >
         <div>
-          <h2 className="text-subtitle md:text-title">
+          <Heading className="text-subtitle md:text-title">
             {props.title}
             {props.titleNumber && Number(props.titleNumber) > 0 && (
               <span className="ms-1.5 font-normal">
                 {`(${props.titleNumber})`}
               </span>
             )}
-          </h2>
+          </Heading>
           {props.subTitle && (
-            <p className="text-muted-foreground mt-0.5 text-body-sm">
+            <p className="mt-0.5 text-body-sm text-muted-foreground">
               {props.subTitle}
             </p>
           )}
