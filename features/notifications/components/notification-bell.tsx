@@ -51,8 +51,8 @@ export function NotificationBell({ userId }: { userId: string }) {
 
   const unreadCount = items.filter((n) => !n.read_at).length;
 
-  // טעינה ראשונית. RLS כבר מצמצם לשורות של המשתמש, ולכן אין צורך
-  // בסינון על user_id בשאילתה.
+  // טעינה ראשונית. הסינון על user_id חובה: מדיניות ה-RLS מתירה למנהל לקרוא
+  // התראות של כל המשתמשים, ובלי הסינון הפעמון של מנהל הציג התראות של אחרים.
   React.useEffect(() => {
     let isMounted = true;
 
@@ -60,6 +60,7 @@ export function NotificationBell({ userId }: { userId: string }) {
       const { data, error } = await supabase
         .from("notifications")
         .select("id, type, title, body, link, created_at, read_at")
+        .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(FETCH_LIMIT);
 
