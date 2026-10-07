@@ -18,7 +18,7 @@ import {
   uploadMedicalDocuments,
   uploadStudentFile,
 } from "@/features/students/lib/student-uploads";
-import { describeStudentSaveError } from "@/features/students/lib/save-error-message";
+import { createStudentProfile } from "@/features/students/lib/save-student-profile";
 
 const supabase = createClient();
 
@@ -27,17 +27,6 @@ export default function CreateStudentPage() {
 
   const handleSubmit: StudentFormWizardProps["onSubmit"] = async (values) => {
     try {
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
-
-      if (authError || !user) {
-        console.error("User not authenticated", authError);
-        toast.error("שגיאה: יש להתחבר למערכת");
-        return;
-      }
-
       const missingFields = missingRequiredStudentFields(values);
 
       if (missingFields.length > 0) {
@@ -54,19 +43,14 @@ export default function CreateStudentPage() {
 
       // הכרטיס נוצר קודם ללא כתובות קבצים, כי נתיב האחסון נגזר מה-student_id
       // שנוצר רק כאן.
-      const payload = buildStudentPayload(values, { userId: user.id });
+      const payload = buildStudentPayload(values);
 
-      const { data: studentId, error: createError } = await supabase.rpc(
-        "create_full_student_profile",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        { payload: payload as any },
-      );
+      const { data: studentId, error: createError } =
+        await createStudentProfile(payload);
 
       if (createError) {
         console.error("Failed creating student:", createError);
-        toast.error(
-          `שגיאה בשמירת הקו״ח: ${describeStudentSaveError(createError.message)}`,
-        );
+        toast.error(`שגיאה בשמירת הקו״ח: ${createError.message}`);
         return;
       }
 

@@ -22,7 +22,7 @@ import {
   uploadStudentFile,
   type SaveStudentPhotosResult,
 } from "@/features/students/lib/student-uploads";
-import { describeStudentSaveError } from "@/features/students/lib/save-error-message";
+import { updateStudentProfile } from "@/features/students/lib/save-student-profile";
 
 const supabase = createClient();
 
@@ -129,20 +129,14 @@ export default function EditStudentForm({
         ],
       });
 
-      const { error: updateError } = await supabase.rpc(
-        "update_full_student_profile",
-        {
-          p_student_id: studentId,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          payload: payload as any,
-        },
+      const { error: updateError } = await updateStudentProfile(
+        studentId,
+        payload,
       );
 
       if (updateError) {
         console.error("Failed updating student:", updateError);
-        toast.error(
-          `שגיאה בעדכון הקו״ח: ${describeStudentSaveError(updateError.message)}`,
-        );
+        toast.error(`שגיאה בעדכון הקו״ח: ${updateError.message}`);
         return false;
       }
 
