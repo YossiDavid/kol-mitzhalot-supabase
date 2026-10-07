@@ -5,7 +5,9 @@ import {
   deleteTestUserByEmail,
   expectLandedOn,
   generateEmailCredentials,
+  readLatestEmailCode,
   readLatestEmailLink,
+  toLegacyVerifyLink,
   type TestUser,
   waitForEmail,
 } from "./auth-test-helpers";
@@ -65,7 +67,7 @@ test.describe("כניסה עם קוד מהמייל", () => {
     await page.getByLabel("אימייל").fill(user.email);
     await page.getByRole("button", { name: "שלח קישור התחברות" }).click();
     await expect(page).toHaveURL(/\/auth\/check-email/);
-    const link = await readLatestEmailLink(user.email);
+    const link = toLegacyVerifyLink(await readLatestEmailLink(user.email));
 
     // Act - אותו דפדפן שביקש את הקישור (PKCE); Supabase מפנה אלינו עם code
     await page.goto(link);
@@ -97,7 +99,11 @@ test.describe("כניסה עם קוד מהמייל", () => {
     // Act
     await page.getByRole("button", { name: "הירשם" }).click();
     await expect(page).toHaveURL(/\/auth\/check-email/, { timeout: 15_000 });
-    await page.goto(await readLatestEmailLink(email));
+    // המייל האמיתי (התבנית שלנו) נושא גם קוד בן 6 ספרות וגם קישור לדף האישור
+    expect(await readLatestEmailCode(email)).toMatch(/^\d{6}$/);
+    const emailLink = await readLatestEmailLink(email);
+    expect(new URL(emailLink).pathname).toBe("/auth/confirm");
+    await page.goto(emailLink);
     await page
       .getByRole("button", { name: "אישור וכניסה" })
       .or(page.getByRole("button", { name: "לחצו כדי להיכנס למערכת" }))

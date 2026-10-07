@@ -110,8 +110,12 @@ async function readLatestEmailBody(
       const response = await fetch(
         `${MAILPIT_URL}/api/v1/message/${latest.ID}`,
       );
-      const message = (await response.json()) as { Text?: string };
-      return message.Text ?? "";
+      const message = (await response.json()) as {
+        Text?: string;
+        HTML?: string;
+      };
+      // התבנית שלנו היא HTML; הטקסט הנגזר ממנה לא תמיד כולל את כתובת הקישור
+      return `${message.HTML ?? ""}\n${message.Text ?? ""}`;
     }
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
@@ -119,15 +123,44 @@ async function readLatestEmailBody(
 }
 
 /**
- * הקישור במייל כפי שהתבנית המקומית (ברירת המחדל של Supabase) שולחת אותו:
- * `{{ .ConfirmationURL }}` — כתובת האימות של Supabase עצמה. זו בדיוק הצורה
- * שמיילים בפרודקשן שולחים כשהתבנית שם לא הוחלפה.
+ * הקישור במייל כפי שהתבנית שלנו שולחת אותו (email-templates/supabase, מחוברת גם
+ * ל-Supabase המקומי ב-config.toml): קישור לדף האישור שלנו עם token_hash.
  */
 export async function readLatestEmailLink(email: string): Promise<string> {
   const body = await readLatestEmailBody(email);
-  const match = /https?:\/\/[^\s)]+\/auth\/v1\/verify\?[^\s)]+/.exec(body);
+  const match =
+    /https?:\/\/[^\s"<)]+\/auth\/confirm[^\s"<)]*token_hash=[^\s"<)]+/.exec(
+      body,
+    );
   if (!match) throw new Error(`no sign-in link in the email for ${email}`);
-  return match[0];
+  return match[0].replace(/&amp;/g, "&");
+}
+
+/** הקוד בן 6 הספרות שמופיע במייל ({{ .Token }}) */
+export async function readLatestEmailCode(email: string): Promise<string> {
+  const body = await readLatestEmailBody(email);
+  const match = />\s*(\d{6})\s*</.exec(body);
+  if (!match) throw new Error(`no 6-digit code in the email for ${email}`);
+  return match[1];
+}
+
+/**
+ * אותו אסימון בצורת הקישור הישנה: כתובת האימות של Supabase עצמה ({{ .ConfirmationURL }}),
+ * כפי שנשלחה לפני שהתבניות הוחלפו. Supabase מאמת ומפנה אלינו עם `?code=` (PKCE).
+ */
+export function toLegacyVerifyLink(emailLink: string): string {
+  const url = new URL(emailLink);
+  const tokenHash = url.searchParams.get("token_hash");
+  const type = url.searchParams.get("type") ?? "magiclink";
+  if (!tokenHash) throw new Error("the email link has no token_hash");
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!supabaseUrl) throw new Error("NEXT_PUBLIC_SUPABASE_URL is not set");
+  const params = new URLSearchParams({
+    token: tokenHash,
+    type,
+    redirect_to: `${url.origin}${url.pathname}`,
+  });
+  return `${supabaseUrl}/auth/v1/verify?${params.toString()}`;
 }
 
 /** ממתין שמייל יגיע, בלי לקרוא ממנו כלום */

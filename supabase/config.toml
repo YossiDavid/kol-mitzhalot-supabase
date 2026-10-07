@@ -248,6 +248,16 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+# תבניות המייל של ההתחברות וההרשמה - אותם קבצים שמודבקים בלוח הבקרה של Supabase בפרודקשן,
+# כדי שאפשר יהיה לבדוק מקומית (Mailpit) את הקישור לדף האישור ואת הקוד בן 6 הספרות.
+[auth.email.template.magic_link]
+subject = "קישור התחברות למערכת"
+content_path = "./email-templates/supabase/magic-link.html"
+
+[auth.email.template.confirmation]
+subject = "אישור הרשמה למערכת"
+content_path = "./email-templates/supabase/confirm-signup.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"
