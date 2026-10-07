@@ -31,6 +31,9 @@ const OPEN_PROPOSALS_LIMIT = 5;
 type DashboardChats = Awaited<ReturnType<typeof getChatsBySide>>;
 type ServerSupabase = Awaited<ReturnType<typeof createClient>>;
 
+/** כמה פריטים מוצגים בכל מקטע תמצית (צ'אטים, מועדפים) */
+const DASHBOARD_PREVIEW_LIMIT = 5;
+
 const EMPTY_CHATS: DashboardChats = { shadchan: [], personal: [] };
 
 /** שדכן/מנהל מקבלים פיצול לשני אזורים; משתמש רגיל - כל השיחות באזור האישי */
@@ -127,7 +130,14 @@ async function DashboardSections() {
   // select עם רשימת עמודות מפורשת מבלבל את הסקת הטיפוסים של supabase-js
   const ownCards = childrenData as unknown as StudentTableRow[];
 
-  const { shadchan: shadchanChats, personal: personalChats } = chats;
+  // הדשבורד מציג תמצית: האחרונים בלבד, והכפתור בכל מקטע מוביל לעמוד המלא.
+  // החדרים כבר ממוינים מהחדש לישן, והחיתוך נעשה אחרי הפיצול לאזורים
+  const shadchanChats = chats.shadchan.slice(0, DASHBOARD_PREVIEW_LIMIT);
+  const personalChats = chats.personal.slice(0, DASHBOARD_PREVIEW_LIMIT);
+  const favoritesPreview = favoritesStudentsData.slice(
+    0,
+    DASHBOARD_PREVIEW_LIMIT,
+  );
 
   // שדכן/מנהל בלי כרטיסים: האם יש בכלל שדכנים שפעלו בשבילו. רק אז נדרשת
   // השליפה, והיא מסתירה את המקטע רק כשחזרה רשימה ריקה (שגיאה - לא מסתירים)
@@ -167,7 +177,7 @@ async function DashboardSections() {
           }
           activeShidduchimCount={activeShidduchimCount}
           favorites={
-            favoritesStudentsData as unknown as ShadchanAreaProps["favorites"]
+            favoritesPreview as unknown as ShadchanAreaProps["favorites"]
           }
           chats={shadchanChats}
           forumPosts={forumPostsData}
