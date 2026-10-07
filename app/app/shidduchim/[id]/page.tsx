@@ -14,6 +14,12 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 import ParentProposalView from "@/features/shidduchim/components/parent-proposal-view";
+import CandidateSummaryCard from "@/features/shidduchim/components/candidate-summary";
+import {
+  CANDIDATE_SUMMARY_SELECT,
+  buildCandidateSummary,
+  type CandidateSummaryRow,
+} from "@/features/shidduchim/lib/candidate-summary";
 import ClosedNoticesList from "@/features/shidduchim/components/closed-notices-list";
 import DeleteShidduchButton from "@/features/shidduchim/components/delete-shidduch-button";
 import InformOtherSideButton from "@/features/shidduchim/components/inform-other-side-button";
@@ -37,14 +43,24 @@ import {
   type ShidduchSide,
 } from "@/features/shidduchim/lib/responses";
 
-function fullName(
-  row: { first_name: string | null; last_name: string | null } | null,
-  fallback: string,
-) {
-  if (!row) return fallback;
-  const s = `${row.first_name || ""} ${row.last_name || ""}`.trim();
-  return s || fallback;
-}
+/** מועמד שהכרטיס שלו נמחק: הסיכום מציג רק את השם החלופי */
+const EMPTY_CANDIDATE: CandidateSummaryRow = {
+  first_name: null,
+  last_name: null,
+  nickname: null,
+  gender: null,
+  birth_date: null,
+  personal_status: null,
+  country: null,
+  city: null,
+  community: null,
+  shtible: null,
+  user_id: null,
+  parents_father: null,
+  parents_mother: null,
+  parents_status: null,
+  parents_dead: null,
+};
 
 // z.guid ולא z.uuid: החל מ-zod 4 המאמת של uuid בודק גם את ביטי הגרסה לפי
 // RFC 4122, ומזהים תקינים לחלוטין במסד היו נופלים כאן ל-404.
@@ -52,7 +68,7 @@ const idSchema = z.guid();
 
 /**
  * כרטיס שידוך. שתי תצוגות:
- * - שדכן בעל השידוך / מנהל: כלי ניהול (סטטוס, שליחה לצד השני, שתי ההערות)
+ * - שדכן בעל השידוך / מנהל: כלי ניהול (סטטוס, שליחה לצד השני), סיכום שני המועמדים
  *   ותגובות שני הצדדים.
  * - מנהל כרטיס (הורה) שההצעה נשלחה לצד שלו: ההצעה עם ההערה לצד שלו בלבד,
  *   ותגובה לשדכן. זה גם היעד של הקישור במייל ההצעה.
@@ -135,17 +151,13 @@ async function ShidduchCardContent({
     await Promise.all([
       admin
         .from("students")
-        .select(
-          "first_name, last_name, user_id, card_for, third_party_proposals_approved_at",
-        )
+        .select(CANDIDATE_SUMMARY_SELECT)
         .eq("id", shidduch.groom_id)
         .is("deleted_at", null)
         .maybeSingle(),
       admin
         .from("students")
-        .select(
-          "first_name, last_name, user_id, card_for, third_party_proposals_approved_at",
-        )
+        .select(CANDIDATE_SUMMARY_SELECT)
         .eq("id", shidduch.bride_id)
         .is("deleted_at", null)
         .maybeSingle(),
@@ -153,8 +165,19 @@ async function ShidduchCardContent({
       getClosedNotices(supabase, shidduch.id),
     ]);
 
-  const groomName = fullName(groomRow, "המיועד");
-  const brideName = fullName(brideRow, "המיועדת");
+  const viewer = { id: user.id, isAdmin };
+  const groomSummary = buildCandidateSummary(
+    groomRow ?? EMPTY_CANDIDATE,
+    "המיועד",
+    viewer,
+  );
+  const brideSummary = buildCandidateSummary(
+    brideRow ?? EMPTY_CANDIDATE,
+    "המיועדת",
+    viewer,
+  );
+  const groomName = groomSummary.fullName;
+  const brideName = brideSummary.fullName;
   const currentStatus: ShidduchStatus = isShidduchStatus(shidduch.status)
     ? shidduch.status
     : "draft";
@@ -179,6 +202,12 @@ async function ShidduchCardContent({
     const ownerId = side === "groom" ? groomRow?.user_id : brideRow?.user_id;
     return ownerId && ownerId !== user.id ? [{ side, ownerId }] : [];
   });
+
+  const threadSideSet = new Set<ShidduchSide>(threadSides.map((t) => t.side));
+  const sideNotes: Record<ShidduchSide, string | null> = {
+    groom: shidduch.note_for_groom?.trim() ? shidduch.note_for_groom : null,
+    bride: shidduch.note_for_bride?.trim() ? shidduch.note_for_bride : null,
+  };
 
   const scopeLabel =
     shidduch.recipient_scope === "both"
@@ -209,18 +238,16 @@ async function ShidduchCardContent({
       >
         <Box className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <p className="text-body-sm font-medium text-muted-foreground">
-                מיועד
-              </p>
-              <p className="text-subtitle font-semibold">{groomName}</p>
-            </div>
-            <div>
-              <p className="text-body-sm font-medium text-muted-foreground">
-                מיועדת
-              </p>
-              <p className="text-subtitle font-semibold">{brideName}</p>
-            </div>
+            <CandidateSummaryCard
+              roleLabel="מיועד"
+              studentId={groomRow ? shidduch.groom_id : null}
+              summary={groomSummary}
+            />
+            <CandidateSummaryCard
+              roleLabel="מיועדת"
+              studentId={brideRow ? shidduch.bride_id : null}
+              summary={brideSummary}
+            />
           </div>
 
           <StatusSelector
@@ -293,26 +320,21 @@ async function ShidduchCardContent({
             </div>
           )}
 
-          {shidduch.note_for_groom?.trim() && (
-            <div>
-              <p className="mb-1 text-body-sm font-medium text-muted-foreground">
-                הערות לצד המיועד
-              </p>
-              <div className="rounded-lg border bg-muted/50 p-3 text-body-sm whitespace-pre-wrap">
-                {shidduch.note_for_groom}
-              </div>
-            </div>
-          )}
-
-          {shidduch.note_for_bride?.trim() && (
-            <div>
-              <p className="mb-1 text-body-sm font-medium text-muted-foreground">
-                הערות לצד המיועדת
-              </p>
-              <div className="rounded-lg border bg-muted/50 p-3 text-body-sm whitespace-pre-wrap">
-                {shidduch.note_for_bride}
-              </div>
-            </div>
+          {/* הערה לצד שאין לו שרשור כאן נשארת בכרטיס, כדי שלא תיעלם */}
+          {SHIDDUCH_SIDES.filter((side) => !threadSideSet.has(side)).map(
+            (side) =>
+              sideNotes[side] && (
+                <div key={side}>
+                  <p className="mb-1 text-body-sm font-medium text-muted-foreground">
+                    {side === "groom"
+                      ? "הערות לצד המיועד"
+                      : "הערות לצד המיועדת"}
+                  </p>
+                  <div className="rounded-lg border bg-muted/50 p-3 text-body-sm whitespace-pre-wrap">
+                    {sideNotes[side]}
+                  </div>
+                </div>
+              ),
           )}
 
           <p className="text-caption text-muted-foreground">
@@ -335,6 +357,15 @@ async function ShidduchCardContent({
                   shidduchId={shidduch.id}
                   otherUserId={ownerId}
                   withLabel={side === "groom" ? "צד החתן" : "צד הכלה"}
+                  openingNote={
+                    sideNotes[side]
+                      ? {
+                          text: sideNotes[side],
+                          sentAt: shidduch.sent_at,
+                          fromLabel: "השדכן",
+                        }
+                      : undefined
+                  }
                 />
               ))}
             </Box>
@@ -354,7 +385,7 @@ async function ShidduchCardContent({
   );
 }
 
-/** שלד כרטיס השידוך: כותרת, שמות שני הצדדים, ואזורי הסטטוס וההערות. */
+/** שלד כרטיס השידוך: כותרת, סיכום שני המועמדים, ואזורי הסטטוס וההערות. */
 function ShidduchCardSkeleton() {
   return (
     <SkeletonRegion className="space-y-6">
@@ -362,14 +393,15 @@ function ShidduchCardSkeleton() {
 
       <Box aria-hidden className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-6 w-40" />
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-6 w-40" />
-          </div>
+          {[0, 1].map((index) => (
+            <div key={index} className="space-y-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-6 w-40" />
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-4 w-36" />
+              <Skeleton className="h-4 w-44" />
+            </div>
+          ))}
         </div>
 
         <Skeleton className="h-10 w-56" />

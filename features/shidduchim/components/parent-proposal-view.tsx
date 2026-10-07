@@ -74,6 +74,7 @@ export default function ParentProposalView({
   ].filter(Boolean);
   const canRespond = canRespondToProposal(proposal.status, proposal.myResponse);
   const canMessageShadchan = proposal.shadchanId !== viewerId;
+  const note = proposal.note?.trim() ? proposal.note : null;
 
   return (
     <Box className="space-y-6">
@@ -130,10 +131,12 @@ export default function ParentProposalView({
         </Field>
       </div>
 
-      {proposal.note?.trim() && (
+      {/* ההערה נפתחת בראש השרשור מול השדכן; רק כשאין שרשור (השדכן הוא הצופה
+          עצמו) היא נשארת כאן, כדי שלא תיעלם */}
+      {note && !canMessageShadchan && (
         <Field label="דברי השדכן">
           <div className="mt-1 rounded-lg border bg-muted/50 p-3 text-body-sm whitespace-pre-wrap">
-            {proposal.note}
+            {note}
           </div>
         </Field>
       )}
@@ -186,6 +189,15 @@ export default function ParentProposalView({
               shidduchId={proposal.shidduchId}
               otherUserId={proposal.shadchanId}
               withLabel="השדכן"
+              openingNote={
+                note
+                  ? {
+                      text: note,
+                      sentAt: proposal.sentAt,
+                      fromLabel: "השדכן",
+                    }
+                  : undefined
+              }
             />
           </div>
           <MessageShadchanButton

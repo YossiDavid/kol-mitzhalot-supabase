@@ -16,3 +16,25 @@ export function isParentDeceased(
   if (parents?.status !== WIDOWED_STATUS) return false;
   return parents.deadParent === role || parents.deadParent === BOTH_DEAD;
 }
+
+type ParentNameParts = {
+  prefix?: string | null;
+  name?: string | null;
+  suffix?: string | null;
+};
+
+/**
+ * שם ההורה כפי שהכרטיס מציג אותו (תואר, שם, סיומת), עם ז״ל להורה שנפטר.
+ * ריק כשאין שם - כדי שהקורא ישמיט את השורה ולא ידפיס ז״ל לבדו.
+ */
+export function formatParentName(
+  parent: ParentNameParts | null | undefined,
+  isDeceased: boolean,
+): string {
+  const name = [parent?.prefix, parent?.name, parent?.suffix]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  if (!name) return "";
+  return isDeceased ? `${name} ז״ל` : name;
+}
