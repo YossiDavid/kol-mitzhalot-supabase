@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -22,6 +23,8 @@ import {
   buildConfirmPath,
   getAuthRedirectUrl,
 } from "@/features/auth/lib/redirect-url";
+import { readLastEmail, saveLastEmail } from "@/features/auth/lib/last-email";
+import { withNextParam } from "@/features/auth/lib/next-path";
 import { requiredEmail } from "@/lib/forms/schema";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -62,8 +65,17 @@ export function LoginForm({
 
   const { isSubmitting, errors } = form.formState;
 
+  // "בקשת קישור חדש" מדף השגיאה: ממלאים את האימייל שהוקלד בפעם הקודמת.
+  // נקרא אחרי ההידרציה כי localStorage לא קיים בשרת.
+  useEffect(() => {
+    if (form.getValues("email")) return;
+    const stored = readLastEmail();
+    if (stored) form.setValue("email", stored);
+  }, [form]);
+
   const onSubmit = async ({ email }: LoginValues) => {
     form.clearErrors("root");
+    saveLastEmail(email);
     const supabase = createClient();
 
     try {
@@ -77,7 +89,7 @@ export function LoginForm({
         },
       });
       if (error) throw error;
-      router.push("/auth/check-email");
+      router.push(withNextParam("/auth/check-email", next));
     } catch (err: unknown) {
       form.setError("root", { message: resolveLoginError(err) });
     }

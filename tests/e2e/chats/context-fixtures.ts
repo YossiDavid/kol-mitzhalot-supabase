@@ -170,6 +170,9 @@ export async function pageAs(
   await page.goto(
     `${base}/auth/confirm?token_hash=${tokenHash}&type=magiclink&next=${encodeURIComponent(next)}`,
   );
+  // ה-GET מציג מסך אישור (סורקי קישורים לא צורכים את האסימון); הלחיצה מכניסה
+  await page.getByRole("button", { name: "לחצו כדי להיכנס למערכת" }).click();
+  await page.waitForURL((url) => url.pathname.startsWith("/app"));
   return page;
 }
 

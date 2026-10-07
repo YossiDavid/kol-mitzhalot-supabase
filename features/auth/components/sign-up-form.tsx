@@ -31,6 +31,7 @@ import {
   AUTH_CONFIRM_PATH,
   getAuthRedirectUrl,
 } from "@/features/auth/lib/redirect-url";
+import { saveLastEmail } from "@/features/auth/lib/last-email";
 import {
   requiredChoice,
   requiredEmail,
@@ -80,6 +81,7 @@ export function SignUpForm({
 
   const onSubmit = async (values: SignUpValues) => {
     form.clearErrors("root");
+    saveLastEmail(values.email);
     const supabase = createClient();
 
     try {

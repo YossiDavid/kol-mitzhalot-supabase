@@ -2,6 +2,21 @@
 
 ---
 
+## הקישור במייל וסורקי קישורים (חשוב)
+
+מסנני אינטרנט (נטפרי, רימון, אתרוג...) והגנות מייל (Gmail ועוד) **פותחים מראש** כל קישור במייל. קישור כניסה הוא חד-פעמי, ולכן אם הסורק פתח אותו קודם, המשתמשת מקבלת "Email link is invalid or has expired".
+
+איך זה מטופל:
+
+1. **הקישור מוביל לדומיין שלנו** — `{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=magiclink` (או `type=signup` בתבנית אישור ההרשמה) — ולא ל-`{{ .ConfirmationURL }}`, שמצביע על כתובת האימות של Supabase וצרוך בכל GET.
+2. **ה-GET על `/auth/confirm` רק מציג כפתור** ("לחצו כדי להיכנס למערכת"). האסימון נצרך רק בלחיצה (server action `confirmEmailLinkAction`), לכן סורק שפתח את הכתובת לא צרך אותו.
+3. **קוד גיבוי**: המייל מציג גם `{{ .Token }}` (6 ספרות). אפשר להקליד אותו במסך "בדוק את האימייל שלך" ובדף השגיאה (`verifyEmailCodeAction`, `verifyOtp({ email, token, type: 'email' })`). קוד אינו כתובת, ולכן סורק לא יכול לצרוך אותו.
+4. הקישור עובד גם בדפדפן/מכשיר אחר מזה שביקש אותו (`verifyOtp` עם `token_hash`, ללא code verifier). רק קישורים בצורה הישנה (`?code=`, PKCE) עדיין דורשים אותו דפדפן — ולהם יש את קוד הגיבוי.
+
+**חובה בפרודקשן:** את התבניות `email-templates/supabase/magic-link.html` ו-`email-templates/supabase/confirm-signup.html` יש להדביק ב-Dashboard → Authentication → Email Templates (Magic Link, ו-Confirm signup — משתמש חדש שנרשם מקבל את השנייה). עד אז המיילים ממשיכים להישלח בצורה הישנה: הקוד שבמייל לא יופיע, והקישור עדיין חשוף לסורקים.
+
+---
+
 ## אם הכפתור במייל מפנה ל‑localhost כשנכנסים מ‑production
 
 זה קורה כאשר **Site URL** ב‑Supabase מוגדר ל‑`http://localhost:3000`. הקישור במייל נבנה מ‑`{{ .SiteURL }}` בתבנית, ולכן **חייבים** לעדכן את ההגדרה ב‑Supabase:

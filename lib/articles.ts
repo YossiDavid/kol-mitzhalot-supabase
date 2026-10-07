@@ -157,11 +157,32 @@ export async function listRelatedArticles(
 
 const ALLOWED_PROTOCOLS = ["http", "https", "mailto", "tel"];
 
+/** נתיב התמונות הציבוריות של ה-bucket `content` ב-Supabase Storage */
+const CONTENT_IMAGE_PATH_PREFIX = "/storage/v1/object/public/content/";
+
+/**
+ * תמונה במאמר מותרת רק מה-bucket `content` של הפרויקט (אותו origin כמו
+ * Supabase), כדי שתוכן לא יוכל לטעון תמונות מאתרים חיצוניים.
+ */
+function isContentImageSrc(src: string | undefined): boolean {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!src || !base) return false;
+  try {
+    const url = new URL(src);
+    return (
+      url.origin === new URL(base).origin &&
+      url.pathname.startsWith(CONTENT_IMAGE_PATH_PREFIX)
+    );
+  } catch {
+    return false;
+  }
+}
+
 /**
  * ניקוי ה-HTML של עורך הטקסט העשיר (TipTap) לפני הצגתו בעמוד ציבורי.
  * רשימה לבנה בלבד: אין script/style/iframe ואין מאפייני אירועים. כותרת
  * ה-h1 של המאמר היא כותרת העמוד, ולכן h1 בתוכן מונמך ל-h2 כדי לשמור על
- * היררכיית כותרות תקינה. קישורים חיצוניים נפתחים עם noopener.
+ * היררכיית כותרות תקינה. קישורים חיצוניים נפתחים עם noopener, ותמונות מותרות רק מה-bucket `content` של הפרויקט.
  */
 export function sanitizeArticleHtml(html: string): string {
   return sanitizeHtml(html, {
@@ -194,8 +215,14 @@ export function sanitizeArticleHtml(html: string): string {
     allowedSchemes: ALLOWED_PROTOCOLS,
     allowedSchemesByTag: { img: ["http", "https"] },
     allowProtocolRelative: false,
+    // תמונה שהמקור שלה לא אושר מוסרת כולה, ולא נשארת תג ריק
+    exclusiveFilter: (frame) => frame.tag === "img" && !frame.attribs.src,
     transformTags: {
       h1: "h2",
+      img: (tagName, attribs) => ({
+        tagName,
+        attribs: isContentImageSrc(attribs.src) ? attribs : {},
+      }),
       a: (tagName, attribs) => {
         const isExternal = /^https?:/i.test(attribs.href ?? "");
         return {

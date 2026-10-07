@@ -2,7 +2,10 @@
   ספק: Supabase Auth (לא SendGrid)
   מיקום ב-Dashboard: Authentication → Email Templates → Magic Link
   נושא מוצע: לינק התחברות זמנית למערכת קול מצהלות
-  משתנים: {{ .RedirectTo }}, {{ .TokenHash }}
+  משתנים: {{ .RedirectTo }}, {{ .TokenHash }}, {{ .Token }} (הקוד בן 6 הספרות)
+  הקישור מוביל לדף האישור שלנו (/auth/confirm) שמציג כפתור — האסימון נצרך רק בלחיצה עליו,
+  כך שסורק קישורים שפותח את הכתובת מראש לא מבזבז אותו. הקוד {{ .Token }} הוא הגיבוי: הוא מוקלד
+  ידנית בדף "בדוק את האימייל שלך" או בדף השגיאה.
   חשוב: משתמשים ב-{{ .RedirectTo }} ולא ב-{{ .SiteURL }} — כך הקישור חוזר לדומיין שממנו
   הגולש נכנס בפועל (פרודקשן / preview ב-Vercel / localhost) ולא לדומיין קבוע אחד.
   {{ .RedirectTo }} מכיל את הערך המלא שנשלח כ-emailRedirectTo, כלומר כבר כולל את /auth/confirm
@@ -33,6 +36,9 @@
               <p style="margin: 0 0 24px;">
                 <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=magiclink" style="display: inline-block; padding: 14px 32px; background: #3899a3; color: #ffffff; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 16px;">התחברות</a>
               </p>
+              <!-- קוד חלופי: סורקי קישורים (מסנני אינטרנט, הגנת מייל) פותחים את הקישור מראש וצורכים אותו; את הקוד אי אפשר לצרוך כך -->
+              <p style="margin: 0 0 8px; font-size: 14px; color: #4b5563;">הקישור לא עובד? הזינו באתר את הקוד הבא:</p>
+              <p style="margin: 0 0 24px; font-size: 28px; font-weight: 700; letter-spacing: 6px; color: #254c49; direction: ltr;">{{ .Token }}</p>
               <p style="margin: 0; font-size: 14px; color: #6b7280;">אם לא ביקשת קישור זה, אפשר להתעלם מהמייל. הקישור בתוקף לשעה.</p>
             </td>
           </tr>

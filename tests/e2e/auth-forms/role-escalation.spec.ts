@@ -180,7 +180,11 @@ test.describe("העלאת הרשאות דרך user_metadata (נסגרה)", () =>
     await page.goto(
       `/auth/confirm?token_hash=${tokenHash}&type=magiclink&next=/app`,
     );
-    await expect(page).toHaveURL(/\/app/, { timeout: 15_000 });
+    // ה-GET מציג מסך אישור; הכניסה קורית בלחיצה
+    await page.getByRole("button", { name: "לחצו כדי להיכנס למערכת" }).click();
+    await expect(page).toHaveURL((url) => url.pathname.startsWith("/app"), {
+      timeout: 15_000,
+    });
 
     // Act
     const rolesResponse = await page.request.patch(

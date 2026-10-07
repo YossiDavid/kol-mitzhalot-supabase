@@ -69,7 +69,11 @@ setup("authenticate admin test user", async ({ page }) => {
   await page.goto(
     `/auth/confirm?token_hash=${tokenHash}&type=magiclink&next=/app`,
   );
-  await expect(page).toHaveURL(/\/app/, { timeout: 15_000 });
+  // ה-GET מציג רק מסך אישור (סורקי קישורים לא צורכים את האסימון); הלחיצה צורכת
+  await page.getByRole("button", { name: "לחצו כדי להיכנס למערכת" }).click();
+  await expect(page).toHaveURL((url) => url.pathname.startsWith("/app"), {
+    timeout: 15_000,
+  });
 
   await page.context().storageState({ path: ADMIN_AUTH_FILE });
 });

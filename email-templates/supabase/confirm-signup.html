@@ -2,7 +2,13 @@
   ספק: Supabase Auth (לא SendGrid)
   מיקום ב-Dashboard: Authentication → Email Templates → Confirm signup / Confirm Your Signup
   נושא מוצע: אישור הרשמה למערכת
-  משתנים: {{ .ConfirmationURL }}
+  משתנים: {{ .RedirectTo }}, {{ .TokenHash }}, {{ .Token }} (הקוד בן 6 הספרות)
+
+  חשוב: לא משתמשים ב-ConfirmationURL. הוא מצביע על כתובת האימות של Supabase עצמה, שנצרכת
+  בכל בקשת GET — גם של סורק קישורים (מסנן אינטרנט, הגנת Gmail) — ואז הלחיצה של המשתמש נכשלת
+  ב"Email link is invalid or has expired". הקישור כאן מוביל לדף האישור שלנו, שצורך את האסימון
+  רק בלחיצה על כפתור. הקוד {{ .Token }} הוא גיבוי שאי אפשר לצרוך מראש.
+  משתמש חדש שנרשם דרך טופס ההרשמה (signInWithOtp) מקבל את התבנית הזו ולא את Magic Link.
 -->
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#ecf0f2;">
   <tr>
@@ -38,7 +44,7 @@
             </p>
 
             <p style="margin:0 0 18px;">
-              <a href="{{ .ConfirmationURL }}"
+              <a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=signup"
                  style="display:inline-block;padding:14px 32px;background:#3899a3;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:700;font-size:16px;">
                 אישור כתובת מייל
               </a>
@@ -50,6 +56,14 @@
           </td>
         </tr>
 
+        <!-- קוד חלופי: סורקי קישורים צורכים את הקישור מראש; את הקוד אי אפשר לצרוך כך -->
+        <tr>
+          <td style="padding:0 32px 20px;text-align:center;">
+            <p style="margin:0 0 8px;color:#4b5563;font-size:14px;">הקישור לא עובד? הזינו באתר את הקוד הבא:</p>
+            <p style="margin:0;font-size:28px;font-weight:700;letter-spacing:6px;color:#254c49;direction:ltr;">{{ .Token }}</p>
+          </td>
+        </tr>
+
         <!-- לינק חלופי -->
         <tr>
           <td style="padding:0 32px 28px;text-align:center;">
@@ -58,7 +72,7 @@
             </p>
 
             <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px;text-align:left;direction:ltr;word-break:break-all;font-size:12px;line-height:1.6;color:#111827;">
-              {{ .ConfirmationURL }}
+              {{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=signup
             </div>
           </td>
         </tr>
