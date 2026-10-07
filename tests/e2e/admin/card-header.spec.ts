@@ -11,7 +11,8 @@ import {
  * tests/e2e/students/card-header.spec.ts, שרץ עם משתמש שדכן.
  */
 const ACTIONS_BAR = '[data-slot="student-card-actions"]';
-const MAX_HEADER_CONTROLS = 3;
+// עריכה, "צ'אט" (כפתור גלוי אחרי השינוי), תפריט "עוד פעולות" + קישור חזרה
+const MAX_HEADER_CONTROLS = 4;
 
 test.describe("הדר כרטיס המיועד — מנהל", () => {
   const admin = createServiceClient();

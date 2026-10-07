@@ -1,21 +1,15 @@
 "use client";
 
-import { useId, useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { openContextRoom } from "@/features/chats/lib/open-room";
+  openContextRoom,
+  openRoomErrorMessage,
+} from "@/features/chats/lib/open-room";
 import { createClient } from "@/lib/supabase/client";
 
 export async function getOrCreateDmRoom(otherUserId: string) {
@@ -52,99 +46,56 @@ export async function sendChatMessage(roomId: string, content: string) {
   if (error) throw error;
 }
 
-/** פנייה לבעל הכרטיס נפתחת כשרשור של אותו כרטיס, לא בשיחה הכללית. */
-export async function messageCardAuthor(params: {
-  authorId: string;
-  studentId: string;
-  content: string;
-}) {
-  const roomId = await openContextRoom(params.authorId, {
-    kind: "student",
-    studentId: params.studentId,
-  });
-  await sendChatMessage(roomId, params.content);
-  return roomId;
-}
+/** פרמטר הכתובת שמבקש מחלון הצ'אט להעביר פוקוס לשדה הכתיבה. */
+export const COMPOSE_QUERY = "compose=1";
+
+const DISABLED_REASON = "הכרטיס הוצא משידוכים, ולכן אי אפשר לפנות בצ'אט";
 
 /**
- * דיאלוג "פניה למנהל הכרטיס". נשלט מבחוץ (`open`/`onOpenChange`) כי מי שפותח
- * אותו הוא פריט בתפריט הפעולות של הכרטיס - פריט תפריט נסגר עם הבחירה, ולכן
- * אינו יכול להחזיק את הדיאלוג בעצמו.
+ * כפתור "צ'אט" בהדר הכרטיס: פתיחה (או שליפה) של שרשור הכרטיס מול מנהל
+ * הכרטיס ומעבר ישיר אליו, בלי הודעה ראשונה. ההרשאה ומכסת הפניות היומית
+ * נאכפות בשרת (get_or_create_context_room); כאן רק מציגים את השגיאה.
  */
-export function StudentMessageDialog({
+export function StudentChatButton({
   authorId,
   studentId,
-  open,
-  onOpenChange,
+  isDisabled = false,
 }: {
   authorId: string;
   studentId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  /** הכרטיס הוצא משידוכים */
+  isDisabled?: boolean;
 }) {
   const router = useRouter();
-  const messageId = useId();
-  const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const content = message.trim();
-    if (!content) {
-      toast.error("יש לכתוב הודעה");
-      return;
-    }
-
+  const handleClick = () => {
     startTransition(async () => {
       try {
-        const roomId = await messageCardAuthor({
-          authorId,
+        const roomId = await openContextRoom(authorId, {
+          kind: "student",
           studentId,
-          content,
         });
-        setMessage("");
-        onOpenChange(false);
-        router.push(`/app/chats/${roomId}`);
+        router.push(`/app/chats/${roomId}?${COMPOSE_QUERY}`);
       } catch (error) {
         console.error(error);
-        toast.error("שליחת הפנייה נכשלה, נסו שוב");
+        toast.error(openRoomErrorMessage(error));
       }
     });
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <form onSubmit={handleSubmit} className="grid gap-4">
-          <DialogHeader>
-            <DialogTitle>שליחת פנייה</DialogTitle>
-            <DialogDescription>שליחת פנייה למנהל הכרטיס.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-2">
-            <Label htmlFor={messageId}>הודעה</Label>
-            <Textarea
-              id={messageId}
-              name="message"
-              placeholder="הודעה"
-              value={message}
-              onChange={(event) => setMessage(event.target.value)}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isPending}
-            >
-              ביטול
-            </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "שולח..." : "שליחה"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      onClick={handleClick}
+      disabled={isDisabled || isPending}
+      title={isDisabled ? DISABLED_REASON : undefined}
+      aria-label={isDisabled ? `צ'אט - ${DISABLED_REASON}` : "צ'אט"}
+    >
+      <MessageSquare className="h-4 w-4" />
+      {isPending ? "פותח..." : "צ'אט"}
+    </Button>
   );
 }

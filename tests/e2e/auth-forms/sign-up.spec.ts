@@ -73,4 +73,34 @@ test.describe("טופס הרשמה", () => {
     // Assert
     await expect(page.getByText("נא למלא שם פרטי")).toBeVisible();
   });
+
+  test("בחירת 'להצטרף כשדכן' מציגה הסבר על טופס ההצטרפות בהגדרות", async ({
+    page,
+  }) => {
+    // Arrange
+    await page.goto("/auth/sign-up");
+    const note = page.getByTestId("shadchan-purpose-note");
+    await expect(note).toHaveCount(0);
+
+    // Act - הבחירה נחזרת אם נעשתה לפני שההידרציה הסתיימה, ולכן חוזרים עליה
+    await expect(async () => {
+      await page
+        .getByLabel("מטרת ההרשמה")
+        .selectOption({ label: "אני רוצה להצטרף כשדכן/ית" });
+      await expect(note).toBeVisible({ timeout: 1000 });
+    }).toPass();
+
+    // Assert
+    await expect(note).toBeVisible();
+    await expect(note).toContainText("הגדרות");
+    await expect(note).toContainText("הצטרפות כשדכן");
+
+    // Act - מטרה אחרת מסתירה את ההסבר
+    await page
+      .getByLabel("מטרת ההרשמה")
+      .selectOption({ label: "אני מחפש/ת שידוך לעצמי" });
+
+    // Assert
+    await expect(note).toHaveCount(0);
+  });
 });

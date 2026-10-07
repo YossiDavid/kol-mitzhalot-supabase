@@ -19,6 +19,7 @@ import {
 import { CommunityFilterField } from "@/features/students/components/community-filter";
 import { useCommunityOptions } from "@/features/students/lib/use-community-options";
 import type { CommunityFilter } from "@/features/students/lib/community-filter";
+import { NEW_CARDS_FILTER_OPTIONS } from "@/features/students/lib/new-card-window";
 import { cn } from "@/lib/utils";
 
 /** הכל מוחל תוך כדי הקלדה; ההשהיה חוסכת שאילתה על כל תו ועדיין מרגישה מיידית. */
@@ -49,6 +50,11 @@ const EMPLOYMENT_OPTIONS: Option[] = [
   { value: "working", label: "עובד/ת" },
   { value: "at_home", label: "בבית" },
 ];
+
+/** "חדשים": כרטיסים שנוספו היום או השבוע (הסינון בשרת, לפי שעון ישראל) */
+const NEW_CARDS_OPTIONS: Option[] = NEW_CARDS_FILTER_OPTIONS.map(
+  ({ value, label }) => ({ value, label }),
+);
 
 const YES_NO_OPTIONS: Option[] = [
   { value: "true", label: "כן" },
@@ -175,6 +181,13 @@ function BasicFields({
         name="personal_status"
         label="סטטוס"
         options={STATUS_OPTIONS}
+        className="md:col-span-2"
+      />
+      <SelectFilter
+        {...props}
+        name="newCards"
+        label="חדשים"
+        options={NEW_CARDS_OPTIONS}
         className="md:col-span-2"
       />
       <TextFilter

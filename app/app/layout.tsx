@@ -11,6 +11,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { redirect } from "next/navigation";
 import { withNextParam } from "@/features/auth/lib/next-path";
 import { getRoles, getUser } from "@/lib/user";
+import { readSignupPurpose } from "@/features/auth/lib/signup-purpose";
 import { getPhoneVerificationEnabled } from "@/lib/system-settings";
 import { UnreadChatsProvider } from "@/features/chats/lib/unread-chats-context";
 import Analytics from "@/components/website/google-analytics";
@@ -87,7 +88,12 @@ export default async function AppLayout({
     <SidebarProvider defaultOpen={defaultOpen}>
       {/* ספירת הצ'אטים שלא נקראו משותפת לסיידבר ולסרגל התחתון — ערוץ אחד */}
       <UnreadChatsProvider userId={user?.id ?? null}>
-        <AppSidebar roles={roles} />
+        <AppSidebar
+          roles={roles}
+          highlightShadchanJoin={
+            !!user && readSignupPurpose(user) === "shadchan"
+          }
+        />
         <SidebarInset>
           <ImpersonationBanner />
           <div className="flex flex-1 flex-col">

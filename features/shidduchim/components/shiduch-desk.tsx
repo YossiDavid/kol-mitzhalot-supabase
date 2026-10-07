@@ -13,6 +13,7 @@ import FavoritesGrid from "./favorites-grid";
 
 import { Spinner } from "@/components/ui/spinner";
 import calculateAge from "@/lib/calculateAge";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Save, Send, User as UserIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -20,6 +21,14 @@ import { getCompatibilityNotes } from "@/features/shidduchim/lib/compatibility";
 import { hasRole } from "@/lib/user-role";
 
 type Gender = "male" | "female";
+
+/** כמה זמן המשבצת שהכרטיס שובץ בה מודגשת */
+const PLACED_HIGHLIGHT_MS = 2000;
+
+const SLOT_LABEL: Record<Gender, string> = {
+  male: "המיועד",
+  female: "המיועדת",
+};
 
 type PairRow = {
   id: string;
@@ -66,6 +75,11 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
   const [pairRows, setPairRows] = useState<PairRow[] | null>(null);
   const [pairLoading, setPairLoading] = useState(false);
   const [draggingGender, setDraggingGender] = useState<Gender | null>(null);
+  // המשבצת שהכרטיס שובץ בה זה עתה (לחיצה כפולה/כפתור), להדגשה קצרה
+  const [placedSlot, setPlacedSlot] = useState<Gender | null>(null);
+  const placedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const maleSlotRef = useRef<HTMLDivElement>(null);
+  const femaleSlotRef = useRef<HTMLDivElement>(null);
 
   const [favorites, setFavorites] = useState<any[]>(initialFavorites || []);
   const [sendModalOpen, setSendModalOpen] = useState(false);
@@ -184,6 +198,47 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
     });
   }, [male, female, hasBlockingPair]);
 
+  useEffect(
+    () => () => {
+      if (placedTimer.current) clearTimeout(placedTimer.current);
+    },
+    [],
+  );
+
+  /**
+   * שיבוץ מועדף במשבצת לפי מגדר (המיועד/המיועדת), במקום מה שהיה בה. משמש
+   * גם את השיבוץ בלי גרירה (לחיצה כפולה, Enter, כפתור "שיבוץ"). ההערה
+   * שנכתבה לכרטיס הקודם לא עוברת לכרטיס החדש.
+   */
+  const placeOnDesk = (student: Student, shouldAnnounce: boolean) => {
+    const gender = student.gender;
+    const current = gender === "male" ? male : female;
+    if (current?.id !== student.id) {
+      if (gender === "male") {
+        setMale(student);
+        setMaleNote("");
+      } else {
+        setFemale(student);
+        setFemaleNote("");
+      }
+    }
+    if (!shouldAnnounce) return;
+
+    const name = `${student.first_name} ${student.last_name}`.trim();
+    toast.success(`${name} שובץ/ה במשבצת ${SLOT_LABEL[gender]}`);
+    setPlacedSlot(gender);
+    if (placedTimer.current) clearTimeout(placedTimer.current);
+    placedTimer.current = setTimeout(
+      () => setPlacedSlot(null),
+      PLACED_HIGHLIGHT_MS,
+    );
+    // המשבצות בראש העמוד והמועדפים למטה: מראים לאן הכרטיס הגיע
+    (gender === "male" ? maleSlotRef : femaleSlotRef).current?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
+  };
+
   const handleDragEnterTicket = (ev: React.DragEvent) => {
     ev.preventDefault();
   };
@@ -206,9 +261,9 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
       const isMaleZone = target.dataset.male !== undefined;
 
       if (isMaleZone && parsed.gender === "male") {
-        setMale(parsed);
+        placeOnDesk(parsed, false);
       } else if (!isMaleZone && parsed.gender === "female") {
-        setFemale(parsed);
+        placeOnDesk(parsed, false);
       } else {
         console.warn("ניסיון לגרור לאזור לא תואם מגדר");
       }
@@ -322,10 +377,22 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
   return (
     <>
       {/* w-full: בתוך Page (flex-col) mx-auto לבדו מכווץ את הגריד לרוחב התוכן */}
-      <div className="mx-auto mt-4 grid w-full max-w-full grid-cols-1 gap-4 md:mt-10 md:max-w-[800px] md:grid-cols-2">
+      {/* בזמן גרירה המשבצות נדבקות לראש החלון: כרטיס מהשורה השנייה או השלישית
+          של המועדפים רחוק מהן יותר ממסך, וגרירה לא גוללת את העמוד בדרך. sticky
+          לא משנה את מקום המשבצות בזרימה, ולכן אין קפיצה באמצע הגרירה. */}
+      <div
+        className={cn(
+          "mx-auto mt-4 grid w-full max-w-full grid-cols-1 gap-4 md:mt-10 md:max-w-[800px] md:grid-cols-2",
+          draggingGender && "sticky top-2 z-20",
+        )}
+      >
         {/* Male drop zone */}
         <div
-          className="relative min-h-50 rounded-xl border border-dashed border-primary bg-sky-50 p-2"
+          ref={maleSlotRef}
+          className={cn(
+            "relative min-h-50 rounded-xl border border-dashed border-primary bg-sky-50 p-2",
+            placedSlot === "male" && "ring-2 ring-primary",
+          )}
           onDragEnter={handleDragEnterTicket}
           onDragLeave={handleDragLeaveTicket}
           onDragOver={handleDragOverTicket}
@@ -380,14 +447,18 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-body-sm text-muted-foreground">
               <UserIcon className="size-8 opacity-30" />
-              <span>גרור מיועד לכאן</span>
+              <span>גרור מיועד לכאן, או לחיצה כפולה על כרטיס</span>
             </div>
           )}
         </div>
 
         {/* Female drop zone */}
         <div
-          className="relative min-h-50 rounded-xl border border-dashed border-primary bg-rose-50 p-2"
+          ref={femaleSlotRef}
+          className={cn(
+            "relative min-h-50 rounded-xl border border-dashed border-primary bg-rose-50 p-2",
+            placedSlot === "female" && "ring-2 ring-primary",
+          )}
           onDragEnter={handleDragEnterTicket}
           onDragLeave={handleDragLeaveTicket}
           onDragOver={handleDragOverTicket}
@@ -442,7 +513,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-body-sm text-muted-foreground">
               <UserIcon className="size-8 opacity-30" />
-              <span>גרור מיועדת לכאן</span>
+              <span>גרור מיועדת לכאן, או לחיצה כפולה על כרטיס</span>
             </div>
           )}
         </div>
@@ -512,8 +583,8 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
 
       <FavoritesGrid
         initialFavorites={favorites}
-        onAddMale={setMale}
-        onAddFemale={setFemale}
+        onAddMale={(student) => placeOnDesk(student, true)}
+        onAddFemale={(student) => placeOnDesk(student, true)}
         onDragGenderChange={setDraggingGender}
         onFavoritesChanged={handleFavoritesChanged}
       />

@@ -3,6 +3,10 @@ import type { createClient } from "@/lib/supabase/client";
 import { buildCommunityFilterExpression } from "@/features/students/lib/community-filter";
 import { isOutOfShidduchimStatus } from "@/features/students/lib/student-status";
 import type { StudentQuery } from "@/features/students/lib/student-query-context";
+import {
+  newCardsSince,
+  parseNewCardsFilter,
+} from "@/features/students/lib/new-card-window";
 import { buildStudentsOrder } from "@/features/students/lib/students-list-sort";
 
 /** כמה כרטיסים בעמוד אחד ברשימת המיועדים */
@@ -30,6 +34,8 @@ const STUDENT_ROW_COLUMNS = [
   "photo_count",
   "status_changed_at",
   "in_shidduchim",
+  // לתג "חדש" ולמיון לפי תאריך הוספה
+  "created_at",
 ];
 
 type SupabaseBrowserClient = ReturnType<typeof createClient>;
@@ -152,6 +158,9 @@ function applyFieldFilters(
   if (query.is_yeshiva === "true" || query.is_yeshiva === "false") {
     next = next.eq("is_yeshiva", query.is_yeshiva === "true");
   }
+  const newCards = parseNewCardsFilter(query.newCards);
+  if (newCards)
+    next = next.gte("created_at", newCardsSince(newCards, new Date()));
   return next;
 }
 

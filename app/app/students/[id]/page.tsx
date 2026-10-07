@@ -299,7 +299,12 @@ async function StudentPageContent({
         <StudentCardActions
           studentId={student.id}
           studentName={`${student.first_name} ${student.last_name}`}
-          authorId={student.user_id ?? null}
+          // כרטיס שלי: אין עם מי לפתוח צ'אט
+          authorId={
+            student.user_id && student.user_id !== user?.id
+              ? student.user_id
+              : null
+          }
           cvUrl={student.cv_url ?? null}
           personalStatus={student.personal_status}
           gender={student.gender}

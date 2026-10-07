@@ -18,6 +18,7 @@ import {
   StudentsTable,
   type StudentTableRow,
 } from "@/features/students/components/students-table";
+import { ClearFavoritesButton } from "@/features/students/components/clear-favorites-button";
 import { createClient } from "@/lib/supabase/client";
 
 export default function Favorites({
@@ -67,36 +68,46 @@ export default function Favorites({
   };
 
   return (
-    <StudentsTable
-      preset="favorites"
-      className="pt-4"
-      caption="המועדפים שלך"
-      students={localFavorites}
-      onRemoveFavorite={handleFavoriteRemove}
-      onCvAdded={(id, cvUrl) =>
-        setLocalFavorites((prev) =>
-          prev.map((fav) => (fav.id === id ? { ...fav, cv_url: cvUrl } : fav)),
-        )
-      }
-      emptyState={
-        <Empty size="compact">
-          <EmptyHeader>
-            <EmptyTitle>עוד לא הוספת שמות מועדפים ללוח העבודה</EmptyTitle>
-            <EmptyDescription>
-              שמות שמסמנים בכוכב יופיעו פה ובלוח העבודה ואפשר ליצור מהם הצעה
-              לשידוך.
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button asChild>
-              <Link href="/app/students">
-                <LucideUser />
-                לרשימת המיועדים
-              </Link>
-            </Button>
-          </EmptyContent>
-        </Empty>
-      }
-    />
+    <>
+      <div className="flex justify-end pt-2">
+        <ClearFavoritesButton
+          count={localFavorites.length}
+          onCleared={() => setLocalFavorites([])}
+        />
+      </div>
+      <StudentsTable
+        preset="favorites"
+        className="pt-4"
+        caption="המועדפים שלך"
+        students={localFavorites}
+        onRemoveFavorite={handleFavoriteRemove}
+        onCvAdded={(id, cvUrl) =>
+          setLocalFavorites((prev) =>
+            prev.map((fav) =>
+              fav.id === id ? { ...fav, cv_url: cvUrl } : fav,
+            ),
+          )
+        }
+        emptyState={
+          <Empty size="compact">
+            <EmptyHeader>
+              <EmptyTitle>עוד לא הוספת שמות מועדפים ללוח העבודה</EmptyTitle>
+              <EmptyDescription>
+                שמות שמסמנים בכוכב יופיעו פה ובלוח העבודה ואפשר ליצור מהם הצעה
+                לשידוך.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button asChild>
+                <Link href="/app/students">
+                  <LucideUser />
+                  לרשימת המיועדים
+                </Link>
+              </Button>
+            </EmptyContent>
+          </Empty>
+        }
+      />
+    </>
   );
 }

@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { readSignupPurpose } from "@/features/auth/lib/signup-purpose";
 import { getEffectiveRole, getRoles, type Role } from "@/lib/user";
+import { resolveUserPhone } from "@/lib/phone";
 
 export type UserDetails = {
   id: string;
@@ -203,7 +204,8 @@ export async function getUserDetails(
     firstName: user.user_metadata?.firstName || null,
     lastName: user.user_metadata?.lastName || null,
     email: user.email || null,
-    phone: user.phone || null,
+    // הטלפון מההרשמה נשמר ב-user_metadata, ורק לעיתים בעמודה של auth
+    phone: resolveUserPhone(user),
     signupPurpose: readSignupPurpose(user),
     role: getEffectiveRole(user),
     roles: getRoles(user),

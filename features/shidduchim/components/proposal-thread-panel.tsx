@@ -1,39 +1,49 @@
 "use client";
 
 import * as React from "react";
-import { MessageSquarePlus } from "lucide-react";
+import { MessagesSquare, SendHorizontal } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { EmbeddedChat } from "@/features/chats/components/embedded-chat";
 import {
   openContextRoom,
   openRoomErrorMessage,
 } from "@/features/chats/lib/open-room";
+import { sendChatMessage } from "@/features/students/components/message-button";
 import { createClient } from "@/lib/supabase/client";
+
+import { proposalThreadAnchor } from "@/features/shidduchim/lib/proposal-thread-anchor";
+
+const FIRST_MESSAGE_MAX_LENGTH = 4000;
 
 type ProposalThreadPanelProps = {
   shidduchId: string;
   /** מי בצד השני של השרשור: מנהל הכרטיס של הצד (לשדכן) או השדכן (להורה) */
   otherUserId: string;
-  /** כותרת הפאנל, למשל "שיחה עם צד החתן" */
-  title: string;
+  /** מול מי השיחה, למשל "צד החתן" או "השדכן" */
+  withLabel: string;
 };
 
 /**
- * השרשור המלא של ההצעה מול צד אחד, מוטמע בעמוד ההצעה. מציג את אותו חדר
- * שנפתח בצ'אטים (הקשר shidduch). אין חדר עדיין -> כפתור פתיחה; החדר נוצר
- * רק בלחיצה, כך שעצם הצפייה בהצעה אינה יוצרת שיחות.
+ * השרשור המלא של ההצעה מול צד אחד, מוטמע תמיד פתוח בעמוד ההצעה: כותרת
+ * "שיחה על ההצעה", כל ההיסטוריה ושדה כתיבה. מציג את אותו חדר שנפתח
+ * בצ'אטים (הקשר shidduch). אין חדר עדיין -> שדה כתיבה שההודעה הראשונה בו
+ * יוצרת את החדר, כך שעצם הצפייה בהצעה אינה יוצרת שיחות.
+ *
+ * ה-id של האזור הוא עוגן: קישור ההתראה והרשימות מגיעים אליו ב-hash.
  */
 export default function ProposalThreadPanel({
   shidduchId,
   otherUserId,
-  title,
+  withLabel,
 }: ProposalThreadPanelProps) {
   const supabase = React.useMemo(() => createClient(), []);
   const [roomId, setRoomId] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
-  const [isOpening, setIsOpening] = React.useState(false);
+  const [isSending, setIsSending] = React.useState(false);
+  const [draft, setDraft] = React.useState("");
 
   React.useEffect(() => {
     let isMounted = true;
@@ -56,34 +66,71 @@ export default function ProposalThreadPanel({
     };
   }, [shidduchId, otherUserId, supabase]);
 
-  async function openThread() {
-    setIsOpening(true);
+  async function startThread() {
+    const body = draft.trim();
+    if (!body) {
+      toast.error("יש לכתוב הודעה");
+      return;
+    }
+    setIsSending(true);
     try {
-      setRoomId(
-        await openContextRoom(otherUserId, { kind: "shidduch", shidduchId }),
-      );
+      const newRoomId = await openContextRoom(otherUserId, {
+        kind: "shidduch",
+        shidduchId,
+      });
+      await sendChatMessage(newRoomId, body);
+      setDraft("");
+      setRoomId(newRoomId);
     } catch (error) {
       toast.error(openRoomErrorMessage(error));
     } finally {
-      setIsOpening(false);
+      setIsSending(false);
     }
   }
 
+  const title = `שיחה על ההצעה - עם ${withLabel}`;
+
   return (
-    <section aria-label={title} className="space-y-3 border-t pt-4">
-      <h3 className="text-body font-semibold">{title}</h3>
+    <section
+      id={proposalThreadAnchor(otherUserId)}
+      aria-label={title}
+      className="scroll-mt-20 space-y-3 border-t pt-4"
+    >
+      <div className="flex items-center gap-2">
+        <MessagesSquare
+          aria-hidden="true"
+          className="size-5 text-muted-foreground"
+        />
+        <div>
+          <h3 className="text-body font-semibold">שיחה על ההצעה</h3>
+          <p className="text-body-sm text-muted-foreground">
+            עם {withLabel}. אפשר להמשיך לעדכן כאן גם אחרי שההצעה נענתה.
+          </p>
+        </div>
+      </div>
+
       {roomId ? (
         <EmbeddedChat roomId={roomId} />
       ) : (
-        <Button
-          type="button"
-          variant="outline"
-          disabled={isLoading || isOpening}
-          onClick={() => void openThread()}
-        >
-          <MessageSquarePlus />
-          {isOpening ? "פותח שיחה..." : "התחלת שיחה"}
-        </Button>
+        <div className="space-y-2">
+          <Textarea
+            rows={3}
+            maxLength={FIRST_MESSAGE_MAX_LENGTH}
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder="כתבו הודעה…"
+            aria-label="הודעה חדשה"
+            disabled={isLoading || isSending}
+          />
+          <Button
+            type="button"
+            disabled={isLoading || isSending || draft.trim().length === 0}
+            onClick={() => void startThread()}
+          >
+            <SendHorizontal className="-scale-x-100" />
+            {isSending ? "שולח..." : "שליחת הודעה"}
+          </Button>
+        </div>
       )}
     </section>
   );

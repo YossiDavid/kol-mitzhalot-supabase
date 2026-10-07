@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   CircleUser,
+  Globe,
   GraduationCap,
   HeartHandshake,
   LogOut,
@@ -24,11 +25,14 @@ import { SITE_CONTENT_LINKS } from "@/components/layout/site-content-links";
 interface UserMenuProps {
   showShadchanJoin?: boolean;
   showStaffJoin?: boolean;
+  /** נרשם כדי להיות שדכן: הכניסה לטופס ההצטרפות מודגשת ועולה לראש התפריט */
+  highlightShadchanJoin?: boolean;
 }
 
 export function UserMenu({
   showShadchanJoin = false,
   showStaffJoin = false,
+  highlightShadchanJoin = false,
 }: UserMenuProps) {
   const router = useRouter();
 
@@ -46,6 +50,18 @@ export function UserMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        {/* במובייל אין סרגל צד ואין מקום בהדר - זו הדרך לאתר הציבורי */}
+        <DropdownMenuItem asChild>
+          <Link
+            href="/"
+            className="flex items-center gap-2 font-medium"
+            data-testid="user-menu-site-link"
+          >
+            <Globe className="h-4 w-4" />
+            לאתר קול מצהלות
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/app/settings" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
@@ -53,13 +69,21 @@ export function UserMenu({
           </Link>
         </DropdownMenuItem>
         {showShadchanJoin && (
-          <DropdownMenuItem asChild>
+          <DropdownMenuItem
+            asChild
+            className={
+              highlightShadchanJoin
+                ? "bg-primary/10 font-bold text-primary"
+                : undefined
+            }
+          >
             <Link
               href="/app/settings/shadchan"
               className="flex items-center gap-2"
+              data-testid="user-menu-shadchan-join"
             >
               <HeartHandshake className="h-4 w-4" />
-              הצטרפות כשדכן
+              {highlightShadchanJoin ? "השלמת הצטרפות כשדכן" : "הצטרפות כשדכן"}
             </Link>
           </DropdownMenuItem>
         )}

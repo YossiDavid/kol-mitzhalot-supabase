@@ -3,10 +3,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
   CARD_MANAGER_EMAIL,
+  clientAs,
   createCard,
   deleteRoomsAmong,
   ensureSecondParentId,
   insertProposal,
+  openRoomAs,
   pageAs,
   sendAs,
 } from "../chats/context-fixtures";
@@ -90,26 +92,39 @@ test.describe("שרשור הצעה בעמוד ההצעה", () => {
   }) => {
     await page.goto(`/app/shidduchim/${proposalId}`);
 
-    const groomPanel = page.getByRole("region", { name: "שיחה עם צד החתן" });
+    const groomPanel = page.getByRole("region", {
+      name: "שיחה על ההצעה - עם צד החתן",
+    });
     await expect(groomPanel.getByText("שאלה מצד החתן לשדכן")).toBeVisible();
     await expect(
       groomPanel.getByRole("link", { name: "פתיחה בצ'אט המלא" }),
     ).toHaveAttribute("href", `/app/chats/${groomRoom}`);
 
-    const bridePanel = page.getByRole("region", { name: "שיחה עם צד הכלה" });
+    // השדכן רואה את הכותרת הברורה, ובצד שעוד אין בו שיחה - שדה כתיבה גלוי
     await expect(
-      bridePanel.getByRole("button", { name: "התחלת שיחה" }),
+      groomPanel.getByRole("heading", { name: "שיחה על ההצעה" }),
     ).toBeVisible();
+    const bridePanel = page.getByRole("region", {
+      name: "שיחה על ההצעה - עם צד הכלה",
+    });
+    await expect(bridePanel.getByLabel("הודעה חדשה")).toBeVisible();
   });
 
-  test("לשדכן: התחלת שיחה מול צד הכלה ושליחת הודעה בפאנל", async ({ page }) => {
+  test("לשדכן: הודעה ראשונה מול צד הכלה יוצרת את השרשור ומופיעה בפאנל", async ({
+    page,
+  }) => {
     await page.goto(`/app/shidduchim/${proposalId}`);
 
-    const bridePanel = page.getByRole("region", { name: "שיחה עם צד הכלה" });
-    await bridePanel.getByRole("button", { name: "התחלת שיחה" }).click();
-
+    const bridePanel = page.getByRole("region", {
+      name: "שיחה על ההצעה - עם צד הכלה",
+    });
     await bridePanel.getByLabel("הודעה חדשה").fill("שלום, נשמח לדבר על ההצעה");
     await bridePanel.getByRole("button", { name: "שליחת הודעה" }).click();
+    // הטקסט נמצא גם בשדה הכתיבה (React מעדכן את תוכנו), ולכן ממתינים לקישור
+    // לצ'אט המלא: הוא מופיע רק אחרי שהחדר נוצר וההודעה נשלחה
+    await expect(
+      bridePanel.getByRole("link", { name: "פתיחה בצ'אט המלא" }),
+    ).toBeVisible();
     await expect(
       bridePanel.getByText("שלום, נשמח לדבר על ההצעה"),
     ).toBeVisible();
@@ -133,7 +148,7 @@ test.describe("שרשור הצעה בעמוד ההצעה", () => {
       `/app/shidduchim/${proposalId}`,
     );
     await expect(
-      bridePage.getByRole("region", { name: "שיחה עם השדכן" }),
+      bridePage.getByRole("region", { name: "שיחה על ההצעה - עם השדכן" }),
     ).toBeVisible();
     await expect(bridePage.getByText("שאלה מצד החתן לשדכן")).toHaveCount(0);
     await bridePage.context().close();
@@ -149,7 +164,9 @@ test.describe("שרשור הצעה בעמוד ההצעה", () => {
       `/app/shidduchim/${proposalId}`,
     );
 
-    const panel = parentPage.getByRole("region", { name: "שיחה עם השדכן" });
+    const panel = parentPage.getByRole("region", {
+      name: "שיחה על ההצעה - עם השדכן",
+    });
     await expect(panel.getByText("שאלה מצד החתן לשדכן")).toBeVisible();
     await expect(
       panel.getByRole("link", { name: "פתיחה בצ'אט המלא" }),
@@ -171,5 +188,104 @@ test.describe("שרשור הצעה בעמוד ההצעה", () => {
       .eq("content", "שאלה נוספת");
     expect(messages).toHaveLength(1);
     await parentPage.context().close();
+  });
+  test("הודעה בשרשור מובילה בהתראה לעמוד ההצעה, בשני הכיוונים", async () => {
+    // Act - ההורה כותב לשדכן, ואז השדכן עונה
+    await sendAs(admin, groomRoom, parentA, "עדכון מההורה על ההצעה");
+    await sendAs(admin, groomRoom, shadchanId, "תשובה מהשדכן על ההצעה");
+
+    // Assert
+    const { data: forShadchan } = await admin
+      .from("notifications")
+      .select("link, title")
+      .eq("user_id", shadchanId)
+      .eq("related_id", groomRoom)
+      .eq("type", "chat_message")
+      .single();
+    expect(forShadchan?.link).toBe(
+      `/app/shidduchim/${proposalId}#proposal-thread-${parentA}`,
+    );
+    expect(forShadchan?.title).toContain("הצעה");
+
+    const { data: forParent } = await admin
+      .from("notifications")
+      .select("link, title")
+      .eq("user_id", parentA)
+      .eq("related_id", groomRoom)
+      .eq("type", "chat_message")
+      .single();
+    expect(forParent?.link).toBe(
+      `/app/shidduchim/${proposalId}#proposal-thread-${shadchanId}`,
+    );
+    expect(forParent?.title).toContain("הצעה");
+  });
+
+  test("רשימת ההצעות של ההורה: קישור לשיחה על ההצעה עם סימון לא נקרא", async ({
+    browser,
+  }) => {
+    // Arrange - הודעה חדשה מהשדכן שההורה עוד לא קרא
+    await sendAs(admin, groomRoom, shadchanId, "הודעה שלא נקראה");
+    const parentPage = await pageAs(
+      browser,
+      admin,
+      CARD_MANAGER_EMAIL,
+      "/app/proposals",
+    );
+
+    // Act
+    const link = parentPage.locator(
+      `a[href^="/app/shidduchim/${proposalId}#"]`,
+    );
+
+    // Assert
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute("data-unread", "true");
+    await link.click();
+    await expect(parentPage).toHaveURL(
+      new RegExp(`/app/shidduchim/${proposalId}#proposal-thread-${shadchanId}`),
+    );
+    await expect(
+      parentPage.getByRole("region", { name: "שיחה על ההצעה - עם השדכן" }),
+    ).toBeInViewport();
+    await parentPage.context().close();
+  });
+
+  test("אחרי שהצד השיב או שההצעה נדחתה השרשור נשאר פתוח לשני הכיוונים", async ({
+    browser,
+  }) => {
+    // Arrange - תגובה "לא מעוניינים" וסטטוס נדחה
+    await admin
+      .from("shidduchim")
+      .update({ status: "rejected" })
+      .eq("id", proposalId);
+    try {
+      const parentClient = await clientAs(admin, CARD_MANAGER_EMAIL);
+
+      // Act - פתיחת החדר מחדש מצד ההורה עדיין מותרת (הכללים אינם תלויים בסטטוס)
+      const { roomId, error } = await openRoomAs(parentClient, shadchanId, {
+        kind: "shidduch",
+        shidduchId: proposalId,
+      });
+      expect(error).toBeNull();
+      expect(roomId).toBe(groomRoom);
+
+      // Assert - ושדה הכתיבה עדיין מוצג להורה
+      const parentPage = await pageAs(
+        browser,
+        admin,
+        CARD_MANAGER_EMAIL,
+        `/app/shidduchim/${proposalId}`,
+      );
+      const panel = parentPage.getByRole("region", {
+        name: "שיחה על ההצעה - עם השדכן",
+      });
+      await expect(panel.getByLabel("הודעה חדשה")).toBeVisible();
+      await parentPage.context().close();
+    } finally {
+      await admin
+        .from("shidduchim")
+        .update({ status: "sent" })
+        .eq("id", proposalId);
+    }
   });
 });

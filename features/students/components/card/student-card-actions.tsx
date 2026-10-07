@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   Ellipsis,
   FileText,
-  MessageSquare,
   Pencil,
   Share2,
   Trash2,
@@ -22,16 +21,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { StudentDeleteDialog } from "@/features/students/components/delete-student-button";
-import { StudentMessageDialog } from "@/features/students/components/message-button";
+import { StudentChatButton } from "@/features/students/components/message-button";
 import { shareStudentCard } from "@/features/students/lib/share-student-card";
 
 import { StudentStatusMenu, type PersonalStatus } from "./student-status-menu";
 
-type OpenDialog = "message" | "delete" | null;
+type OpenDialog = "delete" | null;
 
 /**
- * שורת הפעולות של הכרטיס: פעולה ראשית אחת ("עריכה") ותפריט "עוד פעולות".
- * כל השאר יושב בתפריט, כדי שההדר לא יתמלא בכפתורים.
+ * שורת הפעולות של הכרטיס: פעולה ראשית אחת ("עריכה"), כפתור "צ'אט" גלוי ותפריט
+ * "עוד פעולות". כל השאר יושב בתפריט, כדי שההדר לא יתמלא בכפתורים.
  *
  * ההרשאות מגיעות מהשרת ואינן נקבעות כאן: `canEdit` (בעלים/שדכן/מנהל),
  * `canManage` (שדכן/מנהל - פנייה ועדכון סטטוס), `canDelete` (מנהל בלבד).
@@ -91,6 +90,14 @@ export function StudentCardActions({
         </Button>
       )}
 
+      {canMessage && authorId && (
+        <StudentChatButton
+          authorId={authorId}
+          studentId={studentId}
+          isDisabled={!isInShidduchim}
+        />
+      )}
+
       {cvUrl && (
         <Button asChild variant="outline" size="sm">
           <a href={cvUrl} target="_blank" rel="noopener noreferrer">
@@ -120,16 +127,6 @@ export function StudentCardActions({
             <Share2 />
             שיתוף הכרטיס
           </DropdownMenuItem>
-
-          {canMessage && (
-            <DropdownMenuItem
-              disabled={!isInShidduchim}
-              onSelect={() => setOpenDialog("message")}
-            >
-              <MessageSquare />
-              פניה למנהל הכרטיס
-            </DropdownMenuItem>
-          )}
 
           {ownerUserId && (
             <DropdownMenuItem asChild>
@@ -162,15 +159,6 @@ export function StudentCardActions({
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-
-      {canMessage && authorId && (
-        <StudentMessageDialog
-          authorId={authorId}
-          studentId={studentId}
-          open={openDialog === "message"}
-          onOpenChange={(open) => setOpenDialog(open ? "message" : null)}
-        />
-      )}
 
       {canDelete && (
         <StudentDeleteDialog

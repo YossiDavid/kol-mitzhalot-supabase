@@ -19,6 +19,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { createClient } from "@/lib/supabase/client";
+import { refreshArticlesCache } from "@/app/app/admin/content/articles/actions";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
 
@@ -72,6 +73,9 @@ export default function ArticlesAdminPage() {
       .eq("id", article.id);
     if (error) toast.error("שגיאה בעדכון סטטוס");
     else {
+      await refreshArticlesCache().catch(() =>
+        toast.warning("נשמר, אך האתר יתעדכן רק בעוד כמה דקות"),
+      );
       toast.success(newVal ? "פורסם" : "הוסר מפרסום");
       load();
     }
@@ -82,6 +86,9 @@ export default function ArticlesAdminPage() {
     const { error } = await supabase.from("articles").delete().eq("id", id);
     if (error) toast.error("שגיאה במחיקה");
     else {
+      await refreshArticlesCache().catch(() =>
+        toast.warning("נשמר, אך האתר יתעדכן רק בעוד כמה דקות"),
+      );
       toast.success("המאמר נמחק");
       load();
     }

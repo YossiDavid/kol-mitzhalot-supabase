@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MessagesSquare } from "lucide-react";
 
 import { Box } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +7,10 @@ import { Button } from "@/components/ui/button";
 import calculateAge from "@/lib/calculateAge";
 import MessageShadchanButton from "@/features/shidduchim/components/message-shadchan-button";
 import ProposalThreadPanel from "@/features/shidduchim/components/proposal-thread-panel";
+import {
+  PROPOSAL_THREAD_ANCHOR,
+  proposalThreadAnchor,
+} from "@/features/shidduchim/lib/proposal-thread-anchor";
 import ProposalResponseForm from "@/features/shidduchim/components/proposal-response-form";
 import type { ParentProposal } from "@/features/shidduchim/lib/proposals-data";
 import {
@@ -74,9 +79,19 @@ export default function ParentProposalView({
     <Box className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-subtitle font-semibold">הצעה עבור {myName}</h2>
-        <Badge variant={SHIDDUCH_STATUS_BADGE_VARIANT[proposal.status]}>
-          {SHIDDUCH_STATUS_LABELS[proposal.status]}
-        </Badge>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant={SHIDDUCH_STATUS_BADGE_VARIANT[proposal.status]}>
+            {SHIDDUCH_STATUS_LABELS[proposal.status]}
+          </Badge>
+          {canMessageShadchan && (
+            <Button asChild variant="outline" size="sm">
+              <a href={`#${proposalThreadAnchor(proposal.shadchanId)}`}>
+                <MessagesSquare aria-hidden="true" />
+                לשיחה על ההצעה
+              </a>
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -166,11 +181,13 @@ export default function ParentProposalView({
       {canMessageShadchan && (
         <>
           {/* השרשור המלא מול השדכן; הכפתור שומר על פנייה מהירה בלי לגלול */}
-          <ProposalThreadPanel
-            shidduchId={proposal.shidduchId}
-            otherUserId={proposal.shadchanId}
-            title="שיחה עם השדכן"
-          />
+          <div id={PROPOSAL_THREAD_ANCHOR} className="scroll-mt-20">
+            <ProposalThreadPanel
+              shidduchId={proposal.shidduchId}
+              otherUserId={proposal.shadchanId}
+              withLabel="השדכן"
+            />
+          </div>
           <MessageShadchanButton
             shadchanId={proposal.shadchanId}
             shidduchId={proposal.shidduchId}

@@ -28,6 +28,7 @@ import {
   requiredWholeNumber,
 } from "@/lib/forms/schema";
 import { createClient } from "@/lib/supabase/client";
+import { refreshArticlesCache } from "@/app/app/admin/content/articles/actions";
 
 const CATEGORIES = [
   { value: "parents", label: "להורים" },
@@ -159,6 +160,9 @@ export default function ArticleEditPage({
         toast.error(`שגיאה ביצירת מאמר: ${error.message}`);
         return;
       }
+      await refreshArticlesCache().catch(() =>
+        toast.warning("נשמר, אך האתר יתעדכן רק בעוד כמה דקות"),
+      );
       toast.success("המאמר נוצר בהצלחה");
       router.push(`/app/admin/content/articles/${data.id}` as any);
       return;
@@ -180,6 +184,9 @@ export default function ArticleEditPage({
       return;
     }
 
+    await refreshArticlesCache().catch(() =>
+      toast.warning("נשמר, אך האתר יתעדכן רק בעוד כמה דקות"),
+    );
     form.setValue("is_published", publishVal);
     form.setValue("slug", finalSlug);
     toast.success("נשמר בהצלחה");

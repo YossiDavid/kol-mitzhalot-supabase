@@ -246,21 +246,37 @@ test("תמונות ממוזערות מתבקשות רק לשורות העמוד 
     });
   });
 
-  // Act - עמוד ראשון
+  // Act - עמוד ראשון. הרשימה הלא מסוננת שנטענת לפני החיפוש מבקשת גם היא
+  // תמונות לשורותיה, ובקשות הבאות מדלגות על מזהים שכבר נשאלו - ולכן בודקים
+  // את איחוד הבקשות ולא בקשה בודדת
   await openListFilteredToTestCards(page);
-  await expect.poll(() => requestedBatches.length).toBe(1);
-
-  // Assert - 50 מזהים בלבד, כולם מהעמוד הראשון
   const firstPageIds = indices(1, PAGE_SIZE).map((i) => idByIndex.get(i));
-  expect([...requestedBatches[0]].sort()).toEqual([...firstPageIds].sort());
+  const requestedIds = () => new Set(requestedBatches.flat());
+
+  // Assert - כל שורות העמוד הראשון נשאלו, ואף בקשה לא עולה על גודל עמוד
+  await expect
+    .poll(() => firstPageIds.every((id) => requestedIds().has(id as string)))
+    .toBe(true);
+  expect(requestedBatches.every((batch) => batch.length <= PAGE_SIZE)).toBe(
+    true,
+  );
 
   // Act - עמוד שני
   await goToPage(page, 2);
 
-  // Assert - רק 10 הכרטיסים החדשים
-  await expect.poll(() => requestedBatches.length).toBe(2);
+  // Assert - הבקשה החדשה כוללת רק את 10 הכרטיסים החדשים, בלי עמוד ראשון שוב
   const secondPageIds = indices(PAGE_SIZE + 1, TOTAL).map((i) =>
     idByIndex.get(i),
   );
-  expect([...requestedBatches[1]].sort()).toEqual([...secondPageIds].sort());
+  await expect
+    .poll(() =>
+      requestedBatches.some(
+        (batch) =>
+          [...batch].sort().join() === [...secondPageIds].sort().join(),
+      ),
+    )
+    .toBe(true);
+  expect(requestedBatches.every((batch) => batch.length <= PAGE_SIZE)).toBe(
+    true,
+  );
 });

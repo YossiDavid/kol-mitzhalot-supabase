@@ -157,3 +157,27 @@ export async function getShadchanPublicProfile(
     languages: row.languages ?? [],
   };
 }
+
+/**
+ * Approved shadchanim for the directory page ("שדכנים"), without phone/email
+ * (those are on the full profile and behind the daily-limited contact form).
+ * Returns null on failure so the UI can tell "error" apart from "none yet".
+ */
+export async function listApprovedShadchanim(): Promise<
+  ShadchanPublicCard[] | null
+> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("list_approved_shadchanim");
+  if (error) {
+    console.error("[shadchanim/list]", describeSupabaseError(error));
+    return null;
+  }
+
+  const parsed = z.array(publicCardRowSchema).safeParse(data ?? []);
+  if (!parsed.success) {
+    console.error("[shadchanim/list] unexpected shape", parsed.error);
+    return null;
+  }
+
+  return parsed.data.map(toPublicCard);
+}

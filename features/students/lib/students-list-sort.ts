@@ -18,6 +18,7 @@ const MOTHER_NAME_PATH = "parents_info->mother->self->>name";
  * StudentsTable, והסמנטיקה זהה למיון שהיה בלקוח:
  * - גיל: "עולה" הוא מהצעיר למבוגר, כלומר birth_date בסדר יורד.
  * - שם האב והאם: לפי השם עצמו (בלי תואר), מתוך parents_info.
+ * - תאריך הוספה: הלחיצה הראשונה מציגה את החדשים קודם.
  * - סטטוס: לפי סדר ה-enum (רווק, גרוש, אלמן, מאורס, נשוי) ולא לפי
  *   התווית העברית - אין דרך למיין לפי תווית מחושבת בלי עמודה/פונקציה.
  */
@@ -31,6 +32,8 @@ const SORT_SPECS: Readonly<Record<string, SortSpec>> = {
   community: { column: "community", isNullable: true },
   age: { column: "birth_date", isNullable: false, isReversed: true },
   height: { column: "height", isNullable: true },
+  // "עולה" בטבלה = החדש קודם: תאריך ההוספה בסדר יורד. created_at ריק בשורות ישנות
+  created: { column: "created_at", isNullable: true, isReversed: true },
 };
 
 /** ללא בחירה (או אחרי הלחיצה השלישית על כותרת): א-ב לפי שם משפחה */

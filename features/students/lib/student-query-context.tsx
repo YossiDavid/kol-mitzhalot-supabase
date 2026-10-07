@@ -29,6 +29,8 @@ export interface StudentQuery {
   institution?: string;
   /** "true" / "false", ריק = הכל */
   is_yeshiva?: string;
+  /** "today" / "week": כרטיסים שנוצרו היום (שעון ישראל) או ב-7 הימים האחרונים. ריק = הכל */
+  newCards?: string;
   /** קהילה / חסידות (students.community). undefined = הכל מסומן, בלי סינון */
   communities?: CommunityFilter;
 }

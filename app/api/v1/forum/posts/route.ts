@@ -1,63 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { hasRole } from "@/lib/user";
+import { forumWriteError, requireForumWriter } from "@/features/forums/lib/api";
+import { FORUM_POST_MAX, FORUM_TITLE_MAX } from "@/features/forums/lib/types";
 
-export async function GET() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data, error } = await supabase
-    .from("forum_posts")
-    .select(
-      `id, title, body, created_at,
-       author:user_profiles!forum_posts_author_id_fkey(first_name, last_name)`,
-    )
-    .order("created_at", { ascending: false })
-    .limit(50);
-
-  if (error) {
-    const admin = createAdminClient();
-    const { data: fallback, error: err2 } = await admin
-      .from("forum_posts")
-      .select("id, title, body, created_at, author_id")
-      .order("created_at", { ascending: false })
-      .limit(50);
-
-    if (err2) {
-      return NextResponse.json({ error: err2.message }, { status: 500 });
-    }
-    return NextResponse.json({ posts: fallback ?? [] });
-  }
-
-  return NextResponse.json({ posts: data ?? [] });
-}
-
+/**
+ * פרסום פוסט בפורום השדכנים. הקריאה והרשימה נעשות ישירות מהדפים (שרת),
+ * כך שנשאר כאן רק הפרסום. העמודה בטבלה היא content (לא body).
+ */
 const createSchema = z.object({
-  title: z.string().min(1).max(200),
-  body: z.string().min(1).max(5000),
+  title: z.string().trim().min(1).max(FORUM_TITLE_MAX),
+  content: z.string().trim().min(1).max(FORUM_POST_MAX),
+  categoryId: z.guid().nullish(),
 });
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  if (!hasRole(user, "admin") && !hasRole(user, "shadchan")) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const writer = await requireForumWriter();
+  if (!writer.ok) return writer.response;
 
   let payload: unknown;
   try {
@@ -69,25 +27,22 @@ export async function POST(req: NextRequest) {
   const parsed = createSchema.safeParse(payload);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "Invalid body", details: parsed.error.flatten() },
+      { error: "יש למלא כותרת ותוכן תקינים" },
       { status: 400 },
     );
   }
 
-  const admin = createAdminClient();
-  const { data, error } = await admin
+  const { data, error } = await writer.supabase
     .from("forum_posts")
     .insert({
       title: parsed.data.title,
-      body: parsed.data.body,
-      author_id: user.id,
+      content: parsed.data.content,
+      category_id: parsed.data.categoryId ?? null,
+      author_id: writer.userId,
     })
-    .select("id, title, body, created_at, author_id")
+    .select("id")
     .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
+  if (error) return forumWriteError("post", error);
   return NextResponse.json({ post: data }, { status: 201 });
 }

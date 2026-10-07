@@ -1,24 +1,29 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { WebCta } from "@/components/website/cta";
-import { LogoSvg } from "@/components/website/logo-svg";
-import { ArticleCover } from "@/components/website/product-previews";
+import type { Metadata } from "next";
+import { ArticleCard } from "@/components/website/article-card";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/server";
+import { listPublishedArticles } from "@/lib/articles";
+
+export const metadata: Metadata = {
+  title: "מרכז הידע",
+  description:
+    "מאמרים ומדריכים על שידוכים, בירורים, פגישות ואירוסין: להורים, למיועדים ולשדכנים.",
+  openGraph: {
+    title: "מרכז הידע של קול מצהלות",
+    description:
+      "מאמרים ומדריכים על שידוכים, בירורים, פגישות ואירוסין: להורים, למיועדים ולשדכנים.",
+  },
+};
 
 const CATEGORIES = [
   { label: "הכל", value: "" },
   { label: "להורים", value: "parents" },
   { label: "למיועדים", value: "singles" },
   { label: "לשדכנים", value: "shadchanim" },
+  { label: "כללי", value: "general" },
 ];
-
-const CATEGORY_LABELS: Record<string, string> = {
-  parents: "להורים",
-  singles: "למיועדים",
-  shadchanim: "לשדכנים",
-  general: "כללי",
-};
 
 async function CategoryFilters({
   searchParams,
@@ -27,7 +32,10 @@ async function CategoryFilters({
 }) {
   const { cat: currentCat = "" } = await searchParams;
   return (
-    <div className="flex flex-wrap justify-center gap-2">
+    <nav
+      aria-label="סינון מאמרים לפי קהל יעד"
+      className="flex flex-wrap justify-center gap-2"
+    >
       {CATEGORIES.map((cat) => {
         const isActive = currentCat === cat.value;
         return (
@@ -38,80 +46,19 @@ async function CategoryFilters({
             variant={isActive ? "default" : "outline"}
           >
             <Link
-              href={(cat.value ? `/knowledge?cat=${cat.value}` : "/knowledge") as any}
+              aria-current={isActive ? "page" : undefined}
+              href={
+                (cat.value
+                  ? `/knowledge?cat=${cat.value}`
+                  : "/knowledge") as never
+              }
             >
               {cat.label}
             </Link>
           </Button>
         );
       })}
-    </div>
-  );
-}
-
-function ArticleCard({
-  slug,
-  cat,
-  category,
-  date,
-  read,
-  title,
-  excerpt,
-}: {
-  slug: string;
-  cat: string;
-  category: string;
-  date: string;
-  read: string;
-  title: string;
-  excerpt: string;
-}) {
-  return (
-    <Link
-      href={`/knowledge/${slug}` as any}
-      className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card no-underline transition-transform hover:-translate-y-0.5"
-    >
-      <ArticleCover category={category} badge={cat} />
-      <div className="flex flex-1 flex-col gap-2.5 p-6">
-        <div className="flex items-center gap-2 text-caption text-muted-foreground">
-          <span>{date}</span>
-          <span className="h-[3px] w-[3px] rounded-full bg-border" />
-          <span>{read}</span>
-        </div>
-        <h3 className="text-subtitle leading-[1.35] font-bold text-foreground">
-          {title}
-        </h3>
-        <p className="text-body-sm text-muted-foreground">
-          {excerpt}
-        </p>
-        <div className="mt-auto flex items-center justify-between border-t border-border pt-4">
-          <div className="flex items-center gap-2.5">
-            <span className="flex size-8 items-center justify-center rounded-md bg-primary-muted">
-              <LogoSvg size={15} className="text-primary" />
-            </span>
-            <span className="text-caption font-semibold text-muted-foreground">
-              מערכת קול מצהלות
-            </span>
-          </div>
-          <span className="inline-flex items-center gap-1 text-body-sm font-bold text-primary">
-            לקריאה{" "}
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M19 12H5" />
-              <path d="m12 19-7-7 7-7" />
-            </svg>
-          </span>
-        </div>
-      </div>
-    </Link>
+    </nav>
   );
 }
 
@@ -121,51 +68,51 @@ async function ArticleGrid({
   searchParams: Promise<{ cat?: string }>;
 }) {
   const { cat: currentCat = "" } = await searchParams;
-  const supabase = await createClient();
+  // קטגוריה לא מוכרת בכתובת מטופלת כ"הכל" ולא כרשימה ריקה מטעה
+  const category = CATEGORIES.some((c) => c.value === currentCat)
+    ? currentCat
+    : "";
 
-  let query = supabase
-    .from("articles")
-    .select("id, slug, title, excerpt, category, read_time_minutes, published_at")
-    .eq("is_published", true)
-    .order("published_at", { ascending: false });
-
-  if (currentCat) query = query.eq("category", currentCat);
-
-  const { data: articles } = await query;
-
-  if (!articles?.length) {
+  let articles: Awaited<ReturnType<typeof listPublishedArticles>>;
+  try {
+    articles = await listPublishedArticles(category);
+  } catch {
     return (
-      <div className="py-20 text-center">
+      <div className="py-20 text-center" role="alert">
+        <p className="text-subtitle font-bold text-destructive">
+          לא הצלחנו לטעון את המאמרים
+        </p>
+        <p className="mt-2 text-body text-muted-foreground">
+          אנא רעננו את הדף או נסו שוב בעוד מספר דקות.
+        </p>
+      </div>
+    );
+  }
+
+  if (!articles.length) {
+    return (
+      <div className="mx-auto max-w-xl rounded-2xl border border-dashed border-border bg-card px-6 py-16 text-center">
         <p className="text-subtitle font-bold text-primary">
-          עוד לא פורסמו מאמרים בקטגוריה זו
+          {category
+            ? "עוד לא פורסמו מאמרים בקטגוריה זו"
+            : "מאמרים ראשונים בדרך"}
         </p>
         <p className="mt-2 text-body text-muted-foreground">
           בקרוב יתווספו מאמרים חדשים. חזרו שוב!
         </p>
-        <Button asChild variant="outline" className="mt-6">
-          <Link href={"/knowledge" as any}>לכל המאמרים</Link>
-        </Button>
+        {category ? (
+          <Button asChild variant="outline" className="mt-6">
+            <Link href={"/knowledge" as never}>לכל המאמרים</Link>
+          </Button>
+        ) : null}
       </div>
     );
   }
 
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {articles.map((a) => (
-        <ArticleCard
-          key={a.id}
-          slug={a.slug}
-          cat={CATEGORY_LABELS[a.category] ?? a.category}
-          category={a.category}
-          date={
-            a.published_at
-              ? new Date(a.published_at).toLocaleDateString("he-IL")
-              : ""
-          }
-          read={`${a.read_time_minutes} דק׳ קריאה`}
-          title={a.title}
-          excerpt={a.excerpt}
-        />
+      {articles.map((article) => (
+        <ArticleCard key={article.id} article={article} />
       ))}
     </div>
   );
@@ -180,7 +127,7 @@ export default function KnowledgePage({
     <>
       {/* ── 1. HERO ── */}
       <section className="relative overflow-hidden bg-primary text-primary-foreground">
-        <div className="bg-brand-gold-wash pointer-events-none absolute inset-0" />
+        <div className="pointer-events-none absolute inset-0 bg-brand-gold-wash" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/logo_negative.svg"
@@ -191,8 +138,8 @@ export default function KnowledgePage({
           className="pointer-events-none absolute -top-28 -left-24 opacity-[0.07] select-none"
         />
 
-        <div className="relative shell-site flex flex-col items-center justify-center py-24 text-center md:py-28">
-          <h1 className="max-w-5xl text-hero text-balance text-primary-foreground">
+        <div className="relative shell-site flex flex-col items-center justify-center py-16 text-center md:py-24">
+          <h1 className="text-hero max-w-5xl text-balance text-primary-foreground">
             מרכז הידע של
             <br />
             <span
@@ -238,7 +185,10 @@ export default function KnowledgePage({
             fallback={
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="h-[340px] animate-pulse rounded-2xl bg-border" />
+                  <div
+                    key={i}
+                    className="h-[340px] animate-pulse rounded-2xl bg-border"
+                  />
                 ))}
               </div>
             }

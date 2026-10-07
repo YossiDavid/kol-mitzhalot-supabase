@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/native-select";
 import {
   isSignupPurpose,
+  type SignupPurpose,
   SIGNUP_PURPOSE_METADATA_KEY,
   SIGNUP_PURPOSE_OPTIONS,
 } from "@/features/auth/lib/signup-purpose";
@@ -30,10 +31,17 @@ import {
   AUTH_CONFIRM_PATH,
   getAuthRedirectUrl,
 } from "@/features/auth/lib/redirect-url";
-import { requiredChoice, requiredEmail, requiredText } from "@/lib/forms/schema";
+import {
+  requiredChoice,
+  requiredEmail,
+  requiredText,
+} from "@/lib/forms/schema";
 import { isValidPhone, PHONE_INVALID_MESSAGE } from "@/lib/phone";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+
+/** ערך "אני רוצה להצטרף כשדכן/ית" - מציג הסבר על טופס ההצטרפות */
+const SHADCHAN_PURPOSE_VALUE = "shadchan" satisfies SignupPurpose;
 
 const signUpSchema = z.object({
   firstName: requiredText("שם פרטי"),
@@ -180,7 +188,23 @@ export function SignUpForm({
                   control={form.control}
                   name="signupPurpose"
                   render={({ field }) => (
-                    <FormFieldShell label="מטרת ההרשמה" required>
+                    <FormFieldShell
+                      label="מטרת ההרשמה"
+                      required
+                      description={
+                        field.value === SHADCHAN_PURPOSE_VALUE ? (
+                          <span
+                            data-testid="shadchan-purpose-note"
+                            className="block rounded-md border border-primary/40 bg-primary/5 p-3 text-body-sm text-foreground"
+                          >
+                            שימו לב: ההרשמה לבדה אינה מספיקה כדי להיות שדכן/ית.
+                            אחרי הכניסה למערכת יש להיכנס ל&quot;הגדרות&quot; ←
+                            &quot;הצטרפות כשדכן&quot; ולמלא את טופס ההצטרפות.
+                            הבקשה תיבדק ותאושר על ידי מנהל המערכת.
+                          </span>
+                        ) : undefined
+                      }
+                    >
                       <NativeSelect {...field} disabled={isSubmitting}>
                         <NativeSelectOption value="">בחרו…</NativeSelectOption>
                         {SIGNUP_PURPOSE_OPTIONS.map(({ value, label }) => (

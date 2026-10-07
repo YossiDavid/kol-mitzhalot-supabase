@@ -40,7 +40,14 @@ type StudentBoxProps = React.HTMLAttributes<HTMLDivElement> & {
   item?: Student;
   draggable?: boolean;
   setDraggingGender?: (gender: "male" | "female" | null) => void;
+  /** שיבוץ בלי גרירה: לחיצה כפולה, או Enter/רווח כשהכרטיס עצמו בפוקוס */
+  onActivate?: (student: Student) => void;
 };
+
+/** לחיצה כפולה על כפתור/קישור בתוך הכרטיס היא של הפקד, לא שיבוץ. */
+function isInteractiveTarget(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest("button, a") !== null;
+}
 
 function StudentBox({
   className,
@@ -55,6 +62,7 @@ function StudentBox({
   item,
   draggable,
   setDraggingGender,
+  onActivate,
   children,
   ...divProps
 }: StudentBoxProps) {
@@ -79,13 +87,39 @@ function StudentBox({
     setDraggingGender?.(null);
   };
 
+  const fullName = `${firstName ?? ""} ${lastName ?? ""}`.trim();
+
+  const handleDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    divProps.onDoubleClick?.(e);
+    if (!onActivate || !item || isInteractiveTarget(e.target)) return;
+    onActivate(item);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    divProps.onKeyDown?.(e);
+    // רק כשהפוקוס על הכרטיס עצמו - Enter על כפתור פנימי שייך לכפתור
+    if (!onActivate || !item || e.target !== e.currentTarget) return;
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    onActivate(item);
+  };
+
   return (
     <StudentBoxContext.Provider value={{ item }}>
       <div
         {...divProps}
+        {...(onActivate && {
+          role: "group",
+          tabIndex: 0,
+          "aria-label": `${fullName}. לחיצה כפולה או Enter לשיבוץ בלוח`,
+          onDoubleClick: handleDoubleClick,
+          onKeyDown: handleKeyDown,
+        })}
         className={cn(
           "rounded-md bg-white p-4",
           draggable && "cursor-grab active:cursor-grabbing",
+          onActivate &&
+            "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
           className,
         )}
         draggable={draggable}
@@ -97,12 +131,12 @@ function StudentBox({
         </div>
 
         {subtitleParts.length > 0 && (
-          <div className="text-muted-foreground mt-0.5 text-body-sm">
+          <div className="mt-0.5 text-body-sm text-muted-foreground">
             {subtitleParts.join(" | ")}
           </div>
         )}
 
-        <div className="bg-muted mt-3 rounded-lg p-2 text-body-sm">
+        <div className="mt-3 rounded-lg bg-muted p-2 text-body-sm">
           {father && (
             <div>
               <b>אב: </b>
@@ -133,9 +167,15 @@ StudentBox.AddToDesk = function AddToDesk({
   onClick: (student: Student) => void;
 }) {
   const { item } = React.useContext(StudentBoxContext);
+  const fullName = `${item?.first_name ?? ""} ${item?.last_name ?? ""}`.trim();
+  const slotLabel = item?.gender === "female" ? "המיועדת" : "המיועד";
   return (
-    <Button className="w-full" onClick={() => item && onClick(item)}>
-      הוספת כרטיס לשידוך
+    <Button
+      className="w-full"
+      onClick={() => item && onClick(item)}
+      aria-label={`שיבוץ ${fullName} במשבצת ${slotLabel}`}
+    >
+      שיבוץ
       <CirclePlus className="size-4" />
     </Button>
   );

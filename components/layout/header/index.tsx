@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { HeartHandshake } from "lucide-react";
+import { Globe, HeartHandshake } from "lucide-react";
 import { AuthButton } from "@/components/auth-button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/server";
@@ -14,6 +14,7 @@ import { Separator } from "../../ui/separator";
 import Image from "next/image";
 import Logo from "@/assets/images/logo-text.svg";
 import { WebMobileNav } from "./mobile-nav";
+import { readSignupPurpose } from "@/features/auth/lib/signup-purpose";
 import { ENDORSEMENTS_HREF } from "@/components/website/endorsements-anchor";
 
 /** השם מתוך user_profiles, לברכה בהדר. כשל בשליפה אינו חוסם את ההדר */
@@ -169,13 +170,33 @@ export default async function Header({
         </>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
+        {/* מעבר לאתר הציבורי: בדסקטופ בלבד (במובייל - בתפריט המשתמש). מתחת ל-xl רק אייקון, כדי לא לדחוס את ההדר */}
+        <Button
+          asChild
+          variant="outline"
+          size="sm"
+          className="hidden md:inline-flex"
+        >
+          <Link
+            href="/"
+            aria-label="לאתר קול מצהלות"
+            title="לאתר קול מצהלות"
+            data-testid="header-site-link"
+          >
+            <Globe aria-hidden="true" />
+            <span className="hidden xl:inline">לאתר קול מצהלות</span>
+          </Link>
+        </Button>
         <HeaderIcons hasUserMenu={!!user} userId={user?.id ?? null} />
 
         {user ? (
           <UserMenu
             showShadchanJoin={showShadchanJoin}
             showStaffJoin={showStaffJoin}
+            highlightShadchanJoin={
+              showShadchanJoin && readSignupPurpose(user) === "shadchan"
+            }
           />
         ) : (
           <Suspense>

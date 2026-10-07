@@ -12,14 +12,28 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { PenLine } from "lucide-react";
+import {
+  FORUM_POST_MAX,
+  FORUM_TITLE_MAX,
+  type ForumCategory,
+} from "@/features/forums/lib/types";
 
-export default function CreatePostDialog() {
+export default function CreatePostDialog({
+  categories,
+}: {
+  categories: ForumCategory[];
+}) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -33,7 +47,11 @@ export default function CreatePostDialog() {
       const res = await fetch("/api/v1/forum/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title.trim(), body: body.trim() }),
+        body: JSON.stringify({
+          title: title.trim(),
+          content: body.trim(),
+          categoryId: categoryId || null,
+        }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -44,6 +62,7 @@ export default function CreatePostDialog() {
       setOpen(false);
       setTitle("");
       setBody("");
+      setCategoryId("");
       router.refresh();
     } finally {
       setLoading(false);
@@ -65,6 +84,23 @@ export default function CreatePostDialog() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            {categories.length > 0 && (
+              <div className="space-y-1.5">
+                <Label htmlFor="post-category">נושא</Label>
+                <NativeSelect
+                  id="post-category"
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                >
+                  <NativeSelectOption value="">ללא נושא</NativeSelectOption>
+                  {categories.map((category) => (
+                    <NativeSelectOption key={category.id} value={category.id}>
+                      {category.name}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label htmlFor="post-title">כותרת</Label>
               <Input
@@ -72,7 +108,7 @@ export default function CreatePostDialog() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="נושא הפוסט..."
-                maxLength={200}
+                maxLength={FORUM_TITLE_MAX}
                 dir="rtl"
               />
             </div>
@@ -84,7 +120,7 @@ export default function CreatePostDialog() {
                 onChange={(e) => setBody(e.target.value)}
                 placeholder="כתוב את הפוסט כאן..."
                 rows={6}
-                maxLength={5000}
+                maxLength={FORUM_POST_MAX}
                 dir="rtl"
               />
             </div>

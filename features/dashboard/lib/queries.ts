@@ -3,6 +3,7 @@ import {
   roomContextTitle,
 } from "@/features/chats/lib/room-context";
 import { getDisplayName } from "@/features/chats/lib/user-display";
+import type { ApplicationStatus } from "@/lib/application-status";
 import type { createClient } from "@/lib/supabase/server";
 
 type ServerSupabase = Awaited<ReturnType<typeof createClient>>;
@@ -29,6 +30,8 @@ const STUDENT_TABLE_COLUMNS = [
   "photo_count",
   "status_changed_at",
   "in_shidduchim",
+  // עבור מי מולא הכרטיס: קובע את הכותרת ("הכרטיס שלי" / "המיועדים שלך") ותג בשורה
+  "card_for",
   // נדרשות לבקרות של מנהל הכרטיס בטבלה: מכסת ההצעות ונעילת ההשהיה של ההנהלה
   "proposal_limit_count",
   "proposal_limit_period",
@@ -62,6 +65,24 @@ export async function getOwnStudents(supabase: ServerSupabase, userId: string) {
 
   if (error) console.error(error);
   return data ?? [];
+}
+
+/** סטטוס בקשת ההצטרפות כשדכן של המשתמש; null כשאין שורה, או שהשליפה נכשלה */
+export async function getShadchanApplicationStatus(
+  supabase: ServerSupabase,
+  userId: string,
+): Promise<ApplicationStatus | null> {
+  const { data, error } = await supabase
+    .from("shadchanim_info")
+    .select("application_status")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) console.error(error);
+  const status = data?.application_status;
+  return status === "pending" || status === "approved" || status === "rejected"
+    ? status
+    : null;
 }
 
 const SHIDDUCH_SIDE_COLUMNS = `

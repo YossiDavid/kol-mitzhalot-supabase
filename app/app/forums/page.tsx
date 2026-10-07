@@ -1,4 +1,10 @@
+import { MessageCircle, Pin } from "lucide-react";
+import { unstable_noStore as noStore } from "next/cache";
+import Link from "next/link";
+import { Suspense } from "react";
 import { Page, PageHeader } from "@/components/layout";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -14,74 +20,170 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
-import { createClient } from "@/lib/supabase/server";
-import { hasRole } from "@/lib/user";
-import { unstable_noStore as noStore } from "next/cache";
-import { Suspense } from "react";
+import ForumAccessNotice from "@/features/forums/components/access-notice";
+import ForumLikeButton from "@/features/forums/components/like-button";
+import { getForumAccess } from "@/features/forums/lib/access";
+import { formatForumDate } from "@/features/forums/lib/format";
+import {
+  listForumCategories,
+  listForumPosts,
+} from "@/features/forums/lib/queries";
+import type { ForumPostSummary } from "@/features/forums/lib/types";
 import CreatePostDialog from "./create-post-dialog";
 
 /** כמה שלדי פוסטים להציג בזמן הטעינה. */
 const SKELETON_POST_COUNT = 3;
 
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("he-IL", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+/** אורך התקציר של פוסט ברשימה, בתווים */
+const POST_PREVIEW_CHARS = 280;
+
+type ForumSearchParams = Promise<{ cat?: string }>;
+
+function postPreview(content: string): string {
+  return content.length > POST_PREVIEW_CHARS
+    ? `${content.slice(0, POST_PREVIEW_CHARS).trimEnd()}...`
+    : content;
 }
 
-type ForumPost = {
-  id: string;
-  title: string;
-  body: string;
-  created_at: string;
-  author_id: string | null;
-};
-
-/** כפתור הפרסום תלוי בתפקיד המשתמש, ולכן נקרא מאחורי גבול נפרד. */
+/** כפתור הפרסום מופיע רק למי שמורשה לכתוב בפורום */
 async function ForumActions() {
   noStore();
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const access = await getForumAccess();
+  if (access.status !== "allowed") return null;
 
-  const canPost = hasRole(user, "shadchan") || hasRole(user, "admin");
-
-  return canPost ? <CreatePostDialog /> : null;
+  const categories = await listForumCategories();
+  return <CreatePostDialog categories={categories} />;
 }
 
-async function ForumPosts() {
+async function CategoryFilters({
+  searchParams,
+}: {
+  searchParams: ForumSearchParams;
+}) {
   noStore();
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const access = await getForumAccess();
+  if (access.status !== "allowed") return null;
 
-  const canPost = hasRole(user, "shadchan") || hasRole(user, "admin");
+  const [{ cat: currentCat = "" }, categories] = await Promise.all([
+    searchParams,
+    listForumCategories(),
+  ]);
+  if (categories.length === 0) return null;
 
-  const { data: posts } = await supabase
-    .from("forum_posts")
-    .select("id, title, body, created_at, author_id")
-    .order("created_at", { ascending: false })
-    .limit(50);
+  const filters = [{ id: "all", name: "הכל", slug: "" }, ...categories];
 
-  const postList: ForumPost[] = posts ?? [];
+  return (
+    <nav aria-label="סינון לפי נושא" className="flex flex-wrap gap-2">
+      {filters.map((filter) => (
+        <Button
+          key={filter.id}
+          asChild
+          size="sm"
+          variant={currentCat === filter.slug ? "default" : "outline"}
+        >
+          <Link
+            href={
+              (filter.slug
+                ? `/app/forums?cat=${filter.slug}`
+                : "/app/forums") as never
+            }
+            aria-current={currentCat === filter.slug ? "page" : undefined}
+          >
+            {filter.name}
+          </Link>
+        </Button>
+      ))}
+    </nav>
+  );
+}
 
-  if (postList.length === 0) {
+function PostCard({ post }: { post: ForumPostSummary }) {
+  return (
+    <Card asChild>
+      <article data-testid="forum-post">
+        <CardHeader>
+          <div className="flex flex-wrap items-center gap-2">
+            {post.isPinned && (
+              <Badge variant="info">
+                <Pin aria-hidden /> מוצמד
+              </Badge>
+            )}
+            {post.category && (
+              <Badge variant="neutral">{post.category.name}</Badge>
+            )}
+          </div>
+          <CardTitle asChild>
+            <h2>
+              <Link
+                href={`/app/forums/${post.id}` as never}
+                className="hover:underline"
+              >
+                {post.title}
+              </Link>
+            </h2>
+          </CardTitle>
+          <CardDescription className="text-caption">
+            {post.authorName} · {formatForumDate(post.createdAt)}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-body-sm leading-relaxed whitespace-pre-wrap">
+            {postPreview(post.content)}
+          </p>
+          <div className="flex items-center gap-1">
+            <ForumLikeButton
+              target={{ postId: post.id }}
+              initialCount={post.likeCount}
+              initialLiked={post.isLikedByMe}
+            />
+            <Button asChild variant="ghost" size="sm">
+              <Link href={`/app/forums/${post.id}` as never}>
+                <MessageCircle className="size-4" aria-hidden />
+                {post.replyCount} תגובות
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </article>
+    </Card>
+  );
+}
+
+async function ForumPosts({
+  searchParams,
+}: {
+  searchParams: ForumSearchParams;
+}) {
+  noStore();
+  const access = await getForumAccess();
+  if (access.status !== "allowed") {
+    return <ForumAccessNotice status={access.status} />;
+  }
+
+  const { cat: currentCat = "" } = await searchParams;
+  const posts = await listForumPosts(access.userId, currentCat);
+
+  if (posts === null) {
     return (
       <Empty>
         <EmptyHeader>
-          <EmptyTitle>אין פוסטים עדיין</EmptyTitle>
+          <EmptyTitle>לא הצלחנו לטעון את הפורום</EmptyTitle>
           <EmptyDescription>
-            {canPost
-              ? "היה הראשון לפרסם!"
-              : "הפורום יתמלא בקרוב בתוכן מהשדכנים."}
+            אנא רעננו את הדף או נסו שוב בעוד מספר דקות.
           </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    );
+  }
+
+  if (posts.length === 0) {
+    return (
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>
+            {currentCat ? "אין פוסטים בנושא זה" : "אין פוסטים עדיין"}
+          </EmptyTitle>
+          <EmptyDescription>היו הראשונים לפרסם!</EmptyDescription>
         </EmptyHeader>
       </Empty>
     );
@@ -89,24 +191,8 @@ async function ForumPosts() {
 
   return (
     <>
-      {postList.map((post) => (
-        <Card key={post.id} asChild>
-          <article>
-            <CardHeader>
-              <CardTitle asChild>
-                <h2>{post.title}</h2>
-              </CardTitle>
-              <CardDescription className="text-caption">
-                {formatDate(post.created_at)}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-body-sm leading-relaxed whitespace-pre-wrap">
-                {post.body}
-              </p>
-            </CardContent>
-          </article>
-        </Card>
+      {posts.map((post) => (
+        <PostCard key={post.id} post={post} />
       ))}
     </>
   );
@@ -117,7 +203,11 @@ function ForumPostsSkeleton() {
   return <CardGridSkeleton count={SKELETON_POST_COUNT} lines={2} />;
 }
 
-export default function ForumsPage() {
+export default function ForumsPage({
+  searchParams,
+}: {
+  searchParams: ForumSearchParams;
+}) {
   return (
     <Page>
       <PageHeader
@@ -126,7 +216,11 @@ export default function ForumsPage() {
         actions={
           <Suspense
             fallback={
-              <Skeleton role="status" aria-label="טוען" className="h-11 w-28 md:h-10" />
+              <Skeleton
+                role="status"
+                aria-label="טוען"
+                className="h-11 w-28 md:h-10"
+              />
             }
           >
             <ForumActions />
@@ -134,9 +228,13 @@ export default function ForumsPage() {
         }
       />
 
+      <Suspense fallback={null}>
+        <CategoryFilters searchParams={searchParams} />
+      </Suspense>
+
       <div className="space-y-4">
         <Suspense fallback={<ForumPostsSkeleton />}>
-          <ForumPosts />
+          <ForumPosts searchParams={searchParams} />
         </Suspense>
       </div>
     </Page>

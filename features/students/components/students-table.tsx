@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { AddCvDialog } from "@/features/students/components/add-cv-dialog";
 import DeleteStudentButton from "@/features/students/components/delete-student-button";
 import { StudentRowPhoto } from "@/features/students/components/student-row-photo";
+import { ISRAEL_TIME_ZONE } from "@/features/students/lib/new-card-window";
 import { useStudentThumbnails } from "@/features/students/lib/use-student-thumbnails";
 import {
   formatFirstNameWithNickname,
@@ -24,6 +25,9 @@ import {
   isOutOfShidduchimStatus,
   isRecentlyEngaged,
 } from "@/features/students/lib/student-status";
+import { NewCardBadge } from "@/features/students/components/new-card-badge";
+import { SelfCardTag } from "@/features/students/components/self-card-tag";
+import type { CardFor } from "@/features/students/lib/own-cards-heading";
 import { summarizeChildren } from "@/features/students/lib/children-summary";
 import calculateAge from "@/lib/calculateAge";
 import { cn } from "@/lib/utils";
@@ -52,6 +56,10 @@ export type StudentTableRow = {
   /** מספר התמונות בגלריה - התמונות עצמן אינן נשלפות לרשימה */
   photo_count?: number | null;
   status_changed_at?: string | null;
+  /** מתי נוצר הכרטיס - לתג "חדש" ולעמודת "נוסף" ברשימה */
+  created_at?: string | null;
+  /** עבור מי מולא הכרטיס. null בכרטיסים ישנים */
+  card_for?: CardFor;
   in_shidduchim?: boolean | null;
   /** הנהלת המערכת השהתה את הכרטיס - מנהל הכרטיס אינו יכול לבטל */
   admin_paused_at?: string | null;
@@ -202,12 +210,41 @@ function StatusCell({ student }: { student: StudentTableRow }) {
   );
 }
 
+/** תגיות ליד השם: "חדש" ברשימה, ו"הכרטיס שלי" בכרטיסים של המשתמש עצמו */
+function NameBadges({
+  student,
+  preset,
+  now,
+}: {
+  student: StudentTableRow;
+  preset: StudentsTablePreset;
+  now: Date;
+}) {
+  if (preset === "list") {
+    return <NewCardBadge createdAt={student.created_at} now={now} />;
+  }
+  if (preset === "children") return <SelfCardTag cardFor={student.card_for} />;
+  return null;
+}
+
+/** תאריך ההוספה לתצוגה, לפי יום ישראלי */
+function formatAddedDate(createdAt: string | null | undefined) {
+  if (!createdAt) return "";
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("he-IL", { timeZone: ISRAEL_TIME_ZONE });
+}
+
 function MobileTitle({
   student,
   photo,
+  preset,
+  now,
 }: {
   student: StudentTableRow;
   photo: ReactNode;
+  preset: StudentsTablePreset;
+  now: Date;
 }) {
   return (
     <span className="flex items-center gap-3">
@@ -220,6 +257,7 @@ function MobileTitle({
             🎉 מאורס/ת
           </span>
         )}
+        <NameBadges student={student} preset={preset} now={now} />
       </span>
     </span>
   );
@@ -365,9 +403,28 @@ function proposalLimitColumns(
   ];
 }
 
+/** עמודת "נוסף" (תאריך הוספה, ממוינת בשרת) - ברשימה בלבד */
+function addedColumns(
+  props: StudentsTableProps,
+): DataTableColumn<StudentTableRow>[] {
+  if (props.preset !== "list") return [];
+  return [
+    {
+      key: "created",
+      header: "נוסף",
+      size: "min",
+      mobile: "hidden",
+      cell: (student) => formatAddedDate(student.created_at),
+      sortValue: (student) =>
+        student.created_at ? new Date(student.created_at) : null,
+    },
+  ];
+}
+
 function buildColumns(
   props: StudentsTableProps,
   renderPhoto: RenderPhoto,
+  now: Date,
 ): DataTableColumn<StudentTableRow>[] {
   return [
     leadingColumn(props),
@@ -399,7 +456,12 @@ function buildColumns(
       key: "first-name",
       header: "שם פרטי",
       mobile: "hidden",
-      cell: (student) => firstNameWithNickname(student),
+      cell: (student) => (
+        <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1">
+          {firstNameWithNickname(student)}
+          <NameBadges student={student} preset={props.preset} now={now} />
+        </span>
+      ),
       // המיון לפי השם עצמו: כינוי לא אמור לפזר שמות זהים ברשימה
       sortValue: (student) => student.first_name,
     },
@@ -443,6 +505,7 @@ function buildColumns(
       cell: (student) => student.height,
       sortValue: (student) => student.height,
     },
+    ...addedColumns(props),
     {
       key: "actions",
       header: <span className="sr-only">פעולות</span>,
@@ -482,6 +545,9 @@ export function StudentsTable(props: StudentsTableProps) {
     [students],
   );
   const getPhotoState = useStudentThumbnails(idsWithPhotos);
+  // רגע אחד לכל השורות: התג נקבע מחדש עם כל טעינה של שורות חדשות
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const now = useMemo(() => new Date(), [students]);
   const renderPhoto: RenderPhoto = (student) => (
     <StudentRowPhoto
       studentId={student.id}
@@ -496,7 +562,7 @@ export function StudentsTable(props: StudentsTableProps) {
       className={className}
       caption={caption}
       breakpoint="lg"
-      columns={buildColumns(props, renderPhoto)}
+      columns={buildColumns(props, renderPhoto, now)}
       rows={students}
       sort={sort}
       onSortChange={onSortChange}
@@ -510,7 +576,12 @@ export function StudentsTable(props: StudentsTableProps) {
         isRecentlyEngaged(student) && ENGAGED_ROW_CLASS
       }
       mobileTitle={(student) => (
-        <MobileTitle student={student} photo={renderPhoto(student)} />
+        <MobileTitle
+          student={student}
+          photo={renderPhoto(student)}
+          preset={props.preset}
+          now={now}
+        />
       )}
       emptyState={emptyState}
     />

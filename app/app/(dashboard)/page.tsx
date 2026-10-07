@@ -16,12 +16,21 @@ import { createClient } from "@/lib/supabase/server";
 import {
   getChatsWithLastMessage,
   getFavoriteStudents,
+  getShadchanApplicationStatus,
   getLatestForumPosts,
   getOwnStudents,
   getRecentShidduchim,
   getSentShidduchimCount,
 } from "@/features/dashboard/lib/queries";
 import { getMyProposals } from "@/features/shidduchim/lib/proposals-data";
+import type { StudentTableRow } from "@/features/students/components/students-table";
+import { ShadchanJoinBanner } from "@/features/dashboard/components/user/shadchan-join-banner";
+import { shadchanJoinPrompt } from "@/features/dashboard/lib/shadchan-join-prompt";
+import { readSignupPurpose } from "@/features/auth/lib/signup-purpose";
+import {
+  ownCardsHeading,
+  ownCardsShadchanimSubtitle,
+} from "@/features/students/lib/own-cards-heading";
 import { getUser, hasRole } from "@/lib/user";
 import DashboardSkeleton from "@/features/dashboard/components/dashboard-skeleton";
 import { unstable_noStore as noStore } from "next/cache";
@@ -44,6 +53,14 @@ async function DashboardSections() {
   const isShadchanView = Boolean(user?.id && (isShadchan || isAdmin));
   const favorites: string[] = user?.user_metadata?.favorites || [];
 
+  const signupPurpose = user ? readSignupPurpose(user) : null;
+  const needsShadchanApplicationStatus =
+    shadchanJoinPrompt({
+      signupPurpose,
+      isShadchanOrAdmin: isShadchanView,
+      applicationStatus: null,
+    }) !== "none";
+
   // כל הסקשנים בלתי תלויים זה בזה, ולכן נשלפים במקביל. כל שליפה מטפלת
   // בשגיאה שלה (רישום + ערך ריק), כך שתקלה בסקשן אחד לא מפילה את האחרים.
   const [
@@ -54,16 +71,17 @@ async function DashboardSections() {
     openProposals,
     forumPostsData,
     chatsWithLastMessage,
+    shadchanApplicationStatus,
   ] = await Promise.all([
     // מיועדים שעניינו אותך והוספת ללוח העבודה - מוצגים לשדכן ולמנהל בלבד
     isShadchanView ? getFavoriteStudents(supabase, favorites) : [],
-    // הילדים שלך
+    // הכרטיסים שבבעלות המשתמש
     user?.id ? getOwnStudents(supabase, user.id) : [],
     // השידוכים שהשדכן המחובר הציע
     user?.id && isShadchanView ? getRecentShidduchim(supabase, user.id) : [],
     // המספר בכותרת הוא כלל ההצעות שנשלחו, ולא רק האחרונות שמוצגות
     user?.id && isShadchanView ? getSentShidduchimCount(supabase, user.id) : 0,
-    // הצעות פתוחות שנשלחו לילדי המשתמש (כמנהל כרטיס) - החדשות קודם
+    // הצעות פתוחות שנשלחו למיועדים של המשתמש (כמנהל כרטיס) - החדשות קודם
     user?.id
       ? getMyProposals(supabase, {
           openOnly: true,
@@ -74,7 +92,20 @@ async function DashboardSections() {
     isShadchanView ? getLatestForumPosts(supabase) : [],
     // חדרי הצ'אט של המשתמש עם ההודעה האחרונה בכל חדר
     user?.id ? getChatsWithLastMessage(supabase, user.id) : [],
+    // רק מי שנרשם כדי להיות שדכן ועדיין אינו שדכן צריך את סטטוס הבקשה
+    user?.id && needsShadchanApplicationStatus
+      ? getShadchanApplicationStatus(supabase, user.id)
+      : null,
   ]);
+
+  // select עם רשימת עמודות מפורשת מבלבל את הסקת הטיפוסים של supabase-js
+  const ownCards = childrenData as unknown as StudentTableRow[];
+
+  const joinPrompt = shadchanJoinPrompt({
+    signupPurpose,
+    isShadchanOrAdmin: isShadchanView,
+    applicationStatus: shadchanApplicationStatus,
+  });
 
   const activeShidduchimCount =
     activeShidduchimCountRaw ?? activeShidduchimData.length;
@@ -91,6 +122,8 @@ async function DashboardSections() {
         title={`שלום${firstName ? `, ${firstName}` : ""}`}
         description={`ברוך הבא למערכת קול מצהלות · ${roleLabel}`}
       />
+
+      {joinPrompt !== "none" && <ShadchanJoinBanner prompt={joinPrompt} />}
 
       {(isShadchan || isAdmin) && (
         <>
@@ -170,7 +203,7 @@ async function DashboardSections() {
             <UserChat chats={chatsWithLastMessage as any} />
           </DashboardSection>
           <DashboardSection
-            title="המיועדים שלך"
+            title={ownCardsHeading(ownCards)}
             subTitle="מגיל 17 ועד החתונה בעז”ה"
             button={
               <Button asChild>
@@ -178,11 +211,14 @@ async function DashboardSections() {
               </Button>
             }
           >
-            <Children childs={childrenData as any} />
+            <Children
+              childs={childrenData as any}
+              caption={ownCardsHeading(ownCards)}
+            />
           </DashboardSection>
           <DashboardSection
             title="שדכנים שפעלו בשבילך"
-            subTitle="שדכנים שהציעו שידוכים או צפו בקו”ח של המיועדים שלך"
+            subTitle={ownCardsShadchanimSubtitle(ownCards)}
             button={
               <Button asChild>
                 <Link href="/app/shadchanim">לכל השדכנים</Link>

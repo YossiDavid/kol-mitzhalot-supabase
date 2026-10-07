@@ -12,6 +12,12 @@ const RUN_ID = Date.now();
 const WITH_NICKNAME = { first: "יצחק", last: `כינוי${RUN_ID}` };
 const WITHOUT_NICKNAME = { first: "אהרן", last: `בלי${RUN_ID}` };
 
+/** כרטיס שנוסף הרגע מציג ליד השם גם תג "חדש היום", שהוא חלק משם התא */
+function nameCellPattern(name: string) {
+  const escaped = name.replace(/[()]/g, "\\$&");
+  return new RegExp(`^${escaped}( חדש היום)?$`);
+}
+
 const admin = createServiceClient();
 const ids: string[] = [];
 
@@ -73,8 +79,7 @@ test("הכינוי מוצג בסוגריים אחרי השם הפרטי", async 
   });
   await expect(
     withNickname.getByRole("cell", {
-      name: `${WITH_NICKNAME.first} (${NICKNAME})`,
-      exact: true,
+      name: nameCellPattern(`${WITH_NICKNAME.first} (${NICKNAME})`),
     }),
   ).toBeVisible();
 
@@ -84,8 +89,7 @@ test("הכינוי מוצג בסוגריים אחרי השם הפרטי", async 
   });
   await expect(
     withoutNickname.getByRole("cell", {
-      name: WITHOUT_NICKNAME.first,
-      exact: true,
+      name: nameCellPattern(WITHOUT_NICKNAME.first),
     }),
   ).toBeVisible();
   await expect(withoutNickname.getByText("(")).toHaveCount(0);

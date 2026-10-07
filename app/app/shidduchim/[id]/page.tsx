@@ -210,6 +210,17 @@ async function ShidduchCardContent({
         <SideResponsesPanel
           responses={sideResponses}
           recipientScope={shidduch.recipient_scope}
+          threadOwnerIds={{
+            // צד שהמנהל שלו הוא המשתמש עצמו מטופל בתצוגת ההורה, בלי פאנל כאן
+            groom:
+              groomRow?.user_id && groomRow.user_id !== user.id
+                ? groomRow.user_id
+                : undefined,
+            bride:
+              brideRow?.user_id && brideRow.user_id !== user.id
+                ? brideRow.user_id
+                : undefined,
+          }}
         />
 
         {scopeLabel && (
@@ -284,7 +295,7 @@ async function ShidduchCardContent({
       {/* שרשור מלא מול כל צד שההצעה נשלחה אליו. צד שהמנהל שלו הוא המשתמש
           עצמו (שדכן שמנהל כרטיס בהצעה שלו) מטופל למטה כתצוגת הורה */}
       {recipientSides.length > 0 && (
-        <Box className="space-y-2">
+        <Box id="proposal-thread" className="scroll-mt-20 space-y-2">
           {recipientSides.map((side) => {
             const ownerId =
               side === "groom" ? groomRow?.user_id : brideRow?.user_id;
@@ -294,7 +305,7 @@ async function ShidduchCardContent({
                 key={side}
                 shidduchId={shidduch.id}
                 otherUserId={ownerId}
-                title={side === "groom" ? "שיחה עם צד החתן" : "שיחה עם צד הכלה"}
+                withLabel={side === "groom" ? "צד החתן" : "צד הכלה"}
               />
             );
           })}

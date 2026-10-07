@@ -15,6 +15,7 @@ import {
   EmptyMedia,
 } from "@/components/ui/empty";
 
+import { ClearFavoritesButton } from "@/features/students/components/clear-favorites-button";
 import StudentBox from "./student-box";
 import type { Student } from "./student-box";
 import calculateAge from "@/lib/calculateAge";
@@ -94,10 +95,22 @@ export default function FavoritesGrid({
     onFavoritesChanged?.();
   };
 
+  const handleCleared = () => {
+    setFavorites([]);
+    router.refresh();
+    onFavoritesChanged?.();
+  };
+
   const filtered = favorites.filter((item) => item.gender === activeTab);
 
   return (
     <div className="mt-8">
+      <div className="mb-3 flex justify-end">
+        <ClearFavoritesButton
+          count={favorites.length}
+          onCleared={handleCleared}
+        />
+      </div>
       {/* Tab switcher */}
       <div
         className={cn(
@@ -179,6 +192,7 @@ export default function FavoritesGrid({
               onDragEnter={() => onDragGenderChange(item.gender)}
               onDragEnd={() => onDragGenderChange(null)}
               setDraggingGender={onDragGenderChange}
+              onActivate={handleAddToDesk}
             >
               <StudentBox.AddToDesk onClick={handleAddToDesk} />
               <div className="grid grid-cols-2 gap-2">

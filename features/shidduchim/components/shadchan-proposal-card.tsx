@@ -15,6 +15,7 @@ import {
   SHIDDUCH_STATUS_LABELS,
 } from "@/features/shidduchim/lib/status";
 
+import ProposalThreadLink from "./proposal-thread-link";
 import ShadchanProposalSide, {
   type SideResponseState,
 } from "./shadchan-proposal-side";
@@ -133,6 +134,9 @@ export default function ShadchanProposalCard({
           ) : null}
           <div className="ms-auto flex flex-wrap items-center gap-2">
             {actions}
+            {scopeLabel ? (
+              <ProposalThreadLink shidduchId={proposal.id} />
+            ) : null}
             <Button asChild variant="outline" size="sm">
               <Link
                 href={`/app/shidduchim/${proposal.id}`}

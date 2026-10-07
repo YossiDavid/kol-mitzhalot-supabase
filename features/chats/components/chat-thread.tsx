@@ -24,6 +24,8 @@ type ChatThreadProps = {
   otherName: string | null;
   otherAvatarUrl: string | null;
   className?: string;
+  /** פוקוס על שדה הכתיבה בפתיחה */
+  shouldFocusComposer?: boolean;
 };
 
 /**
@@ -36,6 +38,7 @@ export function ChatThread({
   otherName,
   otherAvatarUrl,
   className,
+  shouldFocusComposer = false,
 }: ChatThreadProps) {
   const supabase = React.useMemo(() => createClient(), []);
 
@@ -313,6 +316,7 @@ export function ChatThread({
         onCancelBanner={cancelBanner}
         isSending={sending}
         banner={banner}
+        shouldAutoFocus={shouldFocusComposer}
       />
     </div>
   );

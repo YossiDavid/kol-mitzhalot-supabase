@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { proposalThreadAnchor } from "@/features/shidduchim/lib/proposal-thread-anchor";
 import type { SideResponse } from "@/features/shidduchim/lib/proposals-data";
 import {
   SHIDDUCH_RESPONSE_BADGE_VARIANT,
@@ -14,6 +15,8 @@ type RecipientScope = "both" | "groom_only" | "bride_only" | null;
 type SideResponsesPanelProps = {
   responses: readonly SideResponse[];
   recipientScope: RecipientScope;
+  /** מנהל הכרטיס של כל צד, לקישור "לשיחה על ההצעה" אל השרשור שלו */
+  threadOwnerIds?: Partial<Record<ShidduchSide, string>>;
 };
 
 function wasSentTo(side: ShidduchSide, scope: RecipientScope): boolean {
@@ -24,6 +27,7 @@ function wasSentTo(side: ShidduchSide, scope: RecipientScope): boolean {
 export default function SideResponsesPanel({
   responses,
   recipientScope,
+  threadOwnerIds,
 }: SideResponsesPanelProps) {
   if (!recipientScope) return null;
 
@@ -36,6 +40,7 @@ export default function SideResponsesPanel({
         {SHIDDUCH_SIDES.map((side) => {
           const response = responses.find((r) => r.side === side) ?? null;
           const isRecipient = wasSentTo(side, recipientScope);
+          const threadOwnerId = threadOwnerIds?.[side];
 
           return (
             <div key={side} className="space-y-2 rounded-lg border p-3">
@@ -46,7 +51,9 @@ export default function SideResponsesPanel({
                 <>
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge
-                      variant={SHIDDUCH_RESPONSE_BADGE_VARIANT[response.response]}
+                      variant={
+                        SHIDDUCH_RESPONSE_BADGE_VARIANT[response.response]
+                      }
                     >
                       {SHIDDUCH_RESPONSE_LABELS[response.response]}
                     </Badge>
@@ -66,6 +73,14 @@ export default function SideResponsesPanel({
                     ? "טרם התקבלה תגובה"
                     : "ההצעה עדיין לא נשלחה לצד זה"}
                 </p>
+              )}
+              {isRecipient && threadOwnerId && (
+                <a
+                  href={`#${proposalThreadAnchor(threadOwnerId)}`}
+                  className="inline-block text-body-sm font-medium text-primary hover:underline"
+                >
+                  לשיחה על ההצעה עם {SHIDDUCH_SIDE_LABELS[side]}
+                </a>
               )}
             </div>
           );

@@ -7,7 +7,14 @@ import { ChatThread } from "./chat-thread";
 import { RoomContextBar } from "./room-context-bar";
 
 /** חלון השיחה המלא: כותרת, הקשר החדר (קישור לכרטיס/הצעה) והשרשור. */
-export function ChatView({ roomId }: { roomId: string }) {
+export function ChatView({
+  roomId,
+  shouldFocusComposer = false,
+}: {
+  roomId: string;
+  /** נפתח מכפתור "צ'אט": הפוקוס עובר ישר לשדה הכתיבה */
+  shouldFocusComposer?: boolean;
+}) {
   const info = useRoomInfo(roomId);
   const isOnline = useRoomPresence(
     roomId,
@@ -40,6 +47,7 @@ export function ChatView({ roomId }: { roomId: string }) {
         otherName={info.title}
         otherAvatarUrl={info.avatarUrl}
         className="min-h-0 flex-1"
+        shouldFocusComposer={shouldFocusComposer}
       />
     </section>
   );

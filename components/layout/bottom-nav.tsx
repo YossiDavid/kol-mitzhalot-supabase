@@ -6,9 +6,11 @@ import {
   Home,
   Inbox,
   MessageCircle,
+  MessagesSquare,
   Network,
   Plus,
   Settings,
+  UserSearch,
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -25,18 +27,20 @@ const allItems = [
   { title: "הצעות", url: "/app/proposals", icon: Inbox },
   { title: "צ'אטים", url: "/app/chats", icon: MessageCircle },
   { title: "לוח עבודה", url: "/app/canvas", icon: Network },
+  { title: "פורום", url: "/app/forums", icon: MessagesSquare },
+  { title: "שדכנים", url: "/app/shadchanim", icon: UserSearch },
   { title: "הגדרות", url: "/app/settings", icon: Settings },
   { title: "הוספה", url: "/app/students/create", icon: Plus },
 ] as const;
 
 // לוח ההתאמות הוא כלי עבודה של שדכן/מנהל בלבד.
-const shadchanOnlyUrls = ["/app/canvas"];
+const shadchanOnlyUrls = ["/app/canvas", "/app/forums"];
 // רשימת המיועדים חושפת מיועדים של אחרים, ולכן סגורה להורה. "הוספת
 // מיועד" נשארת פתוחה לכולם — הורה מוסיף את ילדיו.
 const staffVisibleUrls = ["/app/students"];
-// בסרגל התחתון אין מקום לכל הפריטים: לשדכן/מנהל יש כבר שישה, ולכן
-// "הצעות" מוצג בו רק להורה (בדשבורד ובסיידבר הוא זמין לכולם).
-const parentOnlyUrls = ["/app/proposals"];
+// בסרגל התחתון אין מקום לכל הפריטים: לשדכן/מנהל יש כבר שבעה (כולל הפורום),
+// ולכן "הצעות" ו"שדכנים" מוצגים בו רק להורה (בסיידבר הם זמינים לכולם).
+const parentOnlyUrls = ["/app/proposals", "/app/shadchanim"];
 
 export function BottomNav({ roles }: { roles: Role[] }) {
   const pathname = usePathname();

@@ -11,8 +11,8 @@ import {
  * כשורה שלמה של כפתורים במקום פקד אחד שנפתח.
  */
 const ACTIONS_BAR = '[data-slot="student-card-actions"]';
-// חזרה, קו״ח, עריכה ו"עוד פעולות" (קו״ח מוצג רק כשקיים)
-const MAX_HEADER_CONTROLS = 4;
+// חזרה, קו״ח, עריכה, צ'אט ו"עוד פעולות" (קו״ח מוצג רק כשקיים)
+const MAX_HEADER_CONTROLS = 5;
 const CV_URL = "https://example.com/cv-test.pdf";
 
 async function openActionsMenu(page: Page) {
@@ -53,10 +53,12 @@ test.describe("הדר כרטיס המיועד — שדכן", () => {
   });
 
   test.afterAll(async () => {
+    // חדר ההקשר שנפתח מכפתור הצ'אט (נשאר עם student_id NULL אחרי מחיקת הכרטיס)
+    await admin.from("chat_rooms").delete().eq("student_id", studentId);
     await admin.from("students").delete().eq("id", studentId);
   });
 
-  test("ההדר מציג לכל היותר ארבעה פקדים", async ({ page }) => {
+  test("ההדר מציג לכל היותר חמישה פקדים", async ({ page }) => {
     // Arrange
     await page.goto(cardUrl);
     await expect(page.locator("h1")).toContainText(lastName);
@@ -77,6 +79,65 @@ test.describe("הדר כרטיס המיועד — שדכן", () => {
     ).toBeVisible();
   });
 
+  test("כפתור צ'אט גלוי בהדר ופותח ישר את שרשור הכרטיס, בלי דיאלוג", async ({
+    page,
+  }) => {
+    // Arrange
+    await page.goto(cardUrl);
+    await expect(page.locator("h1")).toContainText(lastName);
+    const chatButton = page
+      .locator(ACTIONS_BAR)
+      .getByRole("button", { name: "צ'אט", exact: true });
+    await expect(chatButton).toBeVisible();
+
+    // Act
+    await chatButton.click();
+
+    // Assert - מעבר ישיר לחדר, שדה הכתיבה בפוקוס, ואין דיאלוג ביניים
+    await expect(page).toHaveURL(/\/app\/chats\/[0-9a-f-]{36}\?compose=1/);
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.getByLabel("הודעה חדשה")).toBeFocused();
+
+    const roomId = new URL(page.url()).pathname.split("/").pop();
+    const { data: room } = await admin
+      .from("chat_rooms")
+      .select("context_kind, student_id")
+      .eq("room_id", roomId!)
+      .single();
+    expect(room).toMatchObject({
+      context_kind: "student",
+      student_id: studentId,
+    });
+
+    // בלי הודעה ראשונה אוטומטית: הפנייה עצמה היא השיחה
+    const { count } = await admin
+      .from("chat_messages")
+      .select("message_id", { count: "exact", head: true })
+      .eq("room_id", roomId!);
+    expect(count).toBe(0);
+  });
+
+  test("בשיחת הכרטיס יש כפתור 'לכרטיס של ...' שחוזר לכרטיס", async ({
+    page,
+  }) => {
+    // Arrange
+    await page.goto(cardUrl);
+    await page
+      .locator(ACTIONS_BAR)
+      .getByRole("button", { name: "צ'אט", exact: true })
+      .click();
+    await expect(page).toHaveURL(/\/app\/chats\//);
+
+    // Act
+    const link = page
+      .getByTestId("room-context-bar")
+      .getByRole("link", { name: /לכרטיס של בדיקת/ });
+
+    // Assert
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute("href", cardUrl);
+  });
+
   test("קובץ הקו״ח הוא כפתור גלוי בהדר ולא פריט בתפריט", async ({ page }) => {
     // Arrange
     await page.goto(cardUrl);
@@ -91,9 +152,9 @@ test.describe("הדר כרטיס המיועד — שדכן", () => {
 
     // Act + Assert - אין כפילות בתפריט
     await openActionsMenu(page);
-    await expect(
-      page.getByRole("menuitem", { name: "קובץ קו״ח" }),
-    ).toHaveCount(0);
+    await expect(page.getByRole("menuitem", { name: "קובץ קו״ח" })).toHaveCount(
+      0,
+    );
   });
 
   test("שאר הפעולות זמינות בתפריט, והמחיקה אינה מוצגת לשדכן", async ({
@@ -110,9 +171,10 @@ test.describe("הדר כרטיס המיועד — שדכן", () => {
     await expect(
       page.getByRole("menuitem", { name: "שיתוף הכרטיס" }),
     ).toBeVisible();
+    // "פניה למנהל הכרטיס" הוחלפה בכפתור "צ'אט" הגלוי בהדר
     await expect(
       page.getByRole("menuitem", { name: "פניה למנהל הכרטיס" }),
-    ).toBeVisible();
+    ).toHaveCount(0);
     await expect(
       page.getByRole("menuitem", { name: "עדכון סטטוס" }),
     ).toBeVisible();

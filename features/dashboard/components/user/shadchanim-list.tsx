@@ -24,7 +24,7 @@ function ShadchanimEmptyState() {
   return (
     <Empty size="compact">
       <EmptyHeader>
-        <EmptyTitle>עדיין אין שדכנים שפעלו בקו”ח של ילדיך</EmptyTitle>
+        <EmptyTitle>עדיין אין שדכנים שפעלו בשבילך</EmptyTitle>
         <EmptyDescription>
           באפשרותך לפנות לשדכנים מתוך רשימת השדכנים המומלצים של המערכת
         </EmptyDescription>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import ProposalThreadLink from "@/features/shidduchim/components/proposal-thread-link";
 import ProposalResponseDialog from "@/features/shidduchim/components/proposal-response-dialog";
 import type { ParentProposal } from "@/features/shidduchim/lib/proposals-data";
 import {
@@ -82,7 +83,7 @@ export default function ParentProposalListItem({
         ) : null}
       </div>
 
-      <div className="flex items-center gap-2 self-end sm:self-start">
+      <div className="flex flex-wrap items-center gap-2 self-end sm:self-start">
         {canRespond && (
           <ProposalResponseDialog
             shidduchId={proposal.shidduchId}
@@ -92,6 +93,7 @@ export default function ParentProposalListItem({
             currentMessage={proposal.myResponseMessage}
           />
         )}
+        <ProposalThreadLink shidduchId={proposal.shidduchId} />
         <Button asChild variant="outline" size="sm">
           <Link href={`/app/shidduchim/${proposal.shidduchId}`}>פתיחה</Link>
         </Button>

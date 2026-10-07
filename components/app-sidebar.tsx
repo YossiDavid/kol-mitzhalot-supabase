@@ -6,13 +6,16 @@ import {
   ClipboardList,
   GraduationCap,
   HeartHandshake,
+  Globe,
   Home,
   Inbox,
   LogOut,
   MessageCircle,
+  MessagesSquare,
   Network,
   Plus,
   Settings,
+  UserSearch,
   Users,
 } from "lucide-react";
 
@@ -58,6 +61,9 @@ const allItems = [
   },
   // טיוטות שנשמרו בלוח העבודה וטרם נשלחו
   { title: "הצעות שמורות", url: "/app/shadchan/drafts", icon: BookmarkCheck },
+  // רשימת השדכנים פתוחה לכל משתמש מחובר; הפורום לשדכנים (ולמנהלים) בלבד
+  { title: "שדכנים", url: "/app/shadchanim", icon: UserSearch },
+  { title: "פורום שדכנים", url: "/app/forums", icon: MessagesSquare },
   { title: "הגדרות", url: "/app/settings", icon: Settings },
 ] as const;
 
@@ -66,12 +72,20 @@ const shadchanOnlyUrls = [
   "/app/canvas",
   "/app/shadchan/proposals",
   "/app/shadchan/drafts",
+  "/app/forums",
 ];
 // רשימת המיועדים חושפת מיועדים של אחרים, ולכן סגורה להורה. "הוספת
 // מיועד" נשארת פתוחה לכולם — הורה מוסיף את ילדיו.
 const staffVisibleUrls = ["/app/students"];
 
-export function AppSidebar({ roles }: { roles: Role[] }) {
+export function AppSidebar({
+  roles,
+  highlightShadchanJoin = false,
+}: {
+  roles: Role[];
+  /** נרשם כדי להיות שדכן: "הצטרפות כשדכן" מודגש וקרוב לניווט הראשי */
+  highlightShadchanJoin?: boolean;
+}) {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
   const pathname = usePathname();
@@ -201,11 +215,35 @@ export function AppSidebar({ roles }: { roles: Role[] }) {
 
       <SidebarFooter>
         <SidebarMenu>
+          {/* יציאה מהמערכת לאתר הציבורי */}
+          <SidebarMenuItem>
+            {withTooltip(
+              <SidebarMenuButton asChild>
+                <Link href="/" prefetch={false} data-testid="sidebar-site-link">
+                  <Globe />
+                  <span>לאתר קול מצהלות</span>
+                </Link>
+              </SidebarMenuButton>,
+              "לאתר קול מצהלות",
+            )}
+          </SidebarMenuItem>
+
           {showShadchanJoin && (
             <SidebarMenuItem>
               {withTooltip(
-                <SidebarMenuButton asChild>
-                  <Link href="/app/settings/shadchan" prefetch={false}>
+                <SidebarMenuButton
+                  asChild
+                  className={
+                    highlightShadchanJoin
+                      ? "bg-primary/10 font-bold text-primary hover:bg-primary/15 hover:text-primary"
+                      : undefined
+                  }
+                >
+                  <Link
+                    href="/app/settings/shadchan"
+                    prefetch={false}
+                    data-testid="sidebar-shadchan-join"
+                  >
                     <HeartHandshake />
                     <span>הצטרפות כשדכן</span>
                   </Link>

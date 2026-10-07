@@ -20,7 +20,14 @@ import { createClient } from "@/lib/supabase/client";
 import { ProposalLimitControl } from "@/features/dashboard/components/user/proposal-limit-control";
 import type { ProposalLimitPeriod } from "@/features/students/lib/proposal-limit";
 
-export default function Children({ childs }: { childs: StudentTableRow[] }) {
+export default function Children({
+  childs,
+  caption,
+}: {
+  childs: StudentTableRow[];
+  /** כותרת הטבלה לקוראי מסך - תואמת לכותרת האזור בדשבורד */
+  caption: string;
+}) {
   const supabaseRef = useRef(createClient());
   const supabase = supabaseRef.current;
 
@@ -53,7 +60,7 @@ export default function Children({ childs }: { childs: StudentTableRow[] }) {
     <StudentsTable
       preset="children"
       className="pt-4"
-      caption="המיועדים שלך"
+      caption={caption}
       students={localChilds}
       onInShidduchimChange={handleIsInShidduchimChange}
       renderProposalLimit={(child) => (

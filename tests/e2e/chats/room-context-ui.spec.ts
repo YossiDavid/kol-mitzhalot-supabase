@@ -175,31 +175,52 @@ test.describe("שרשורי הקשר בצ'אט — ממשק", () => {
     );
   });
 
-  test("שרשור כרטיס: הכותרת מקשרת לכרטיס", async ({ page }) => {
+  test("שרשור כרטיס: כפתור 'לכרטיס של ...' בפס ההקשר", async ({ page }) => {
     await page.goto(`/app/chats/${studentRoom}`);
 
     const bar = page.getByTestId("room-context-bar");
     await expect(bar).toContainText("כרטיס: מיועד ראשון");
-    await expect(bar.getByRole("link", { name: "לכרטיס" })).toHaveAttribute(
+    const button = bar.getByRole("link", { name: "לכרטיס של מיועד ראשון" });
+    await expect(button).toHaveAttribute(
       "href",
       `/app/students/${fx.groomFirst}`,
     );
+    // כפתור ולא קישור טקסט: יש לו מסגרת ותחום לחיצה של כפתור
+    await expect(button).toHaveAttribute("data-slot", "button");
   });
 
-  test("שרשור הצעה: הכותרת מקשרת להצעה ולכרטיסי שני הצדדים", async ({
+  test("במובייל כפתורי ההקשר נשארים בתוך הרוחב וללא גלילה אופקית", async ({
     page,
   }) => {
+    await page.setViewportSize({ width: 375, height: 700 });
     await page.goto(`/app/chats/${shidduchRoom}`);
 
     const bar = page.getByTestId("room-context-bar");
     await expect(
-      bar.getByRole("link", { name: "הצעה: מיועד ראשון וכלה בדיקה" }),
-    ).toHaveAttribute("href", `/app/shidduchim/${proposalId}`);
+      bar.getByRole("link", { name: /לכרטיס של כלה בדיקה/ }),
+    ).toBeVisible();
+    const overflowsHorizontally = await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth >
+        document.documentElement.clientWidth,
+    );
+    expect(overflowsHorizontally).toBe(false);
+  });
+
+  test("שרשור הצעה: כפתורים להצעה ולכרטיסי שני הצדדים", async ({ page }) => {
+    await page.goto(`/app/chats/${shidduchRoom}`);
+
+    const bar = page.getByTestId("room-context-bar");
+    await expect(bar).toContainText("הצעה: מיועד ראשון וכלה בדיקה");
+    await expect(bar.getByRole("link", { name: "להצעה" })).toHaveAttribute(
+      "href",
+      `/app/shidduchim/${proposalId}`,
+    );
     await expect(
-      bar.getByRole("link", { name: /כרטיס מיועד ראשון/ }),
+      bar.getByRole("link", { name: "לכרטיס של מיועד ראשון" }),
     ).toHaveAttribute("href", `/app/students/${fx.groomFirst}`);
     await expect(
-      bar.getByRole("link", { name: /כרטיס כלה בדיקה/ }),
+      bar.getByRole("link", { name: "לכרטיס של כלה בדיקה" }),
     ).toHaveAttribute("href", `/app/students/${brideCard}`);
   });
 
@@ -208,7 +229,8 @@ test.describe("שרשורי הקשר בצ'אט — ממשק", () => {
   }) => {
     await page.goto(`/app/chats/${generalRoom}`);
 
-    await expect(page.getByTestId("room-context-bar")).toHaveCount(0);
+    // אותו פס הקשר כמו בשאר השרשורים, עם התפריט כפתור גלוי
+    await expect(page.getByTestId("room-context-bar")).toBeVisible();
     await page.getByRole("button", { name: "כרטיסי המשתמש" }).click();
     await expect(
       page.getByRole("menuitem", { name: "מיועד ראשון" }),
@@ -239,9 +261,7 @@ test.describe("שרשורי הקשר בצ'אט — ממשק", () => {
     const bar = page.getByTestId("room-context-bar");
     await expect(bar).toContainText("הצעה: מיועד שני וכלה בדיקה");
     await expect(bar).toContainText("ההצעה הוסרה מהמערכת");
-    await expect(
-      bar.getByRole("link", { name: /הצעה: מיועד שני/ }),
-    ).toHaveCount(0);
+    await expect(bar.getByRole("link", { name: "להצעה" })).toHaveCount(0);
 
     // הקבוצה סגורה כשאין שרשור שלא נקרא או חדר פעיל, ולכן פותחים אותה
     await page.goto("/app/chats");

@@ -24,6 +24,8 @@ type ChatComposerProps = {
   onCancelBanner: () => void;
   isSending: boolean;
   banner: ComposerBanner | null;
+  /** פוקוס על השדה כשהוא מוצג (פתיחת שיחה מכפתור "צ'אט") */
+  shouldAutoFocus?: boolean;
 };
 
 /** השדה גדל עם התוכן עד MAX_ROWS שורות, ואז גולל. */
@@ -52,9 +54,14 @@ export function ChatComposer({
   onCancelBanner,
   isSending,
   banner,
+  shouldAutoFocus = false,
 }: ChatComposerProps) {
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
   useAutoGrow(textareaRef, value);
+
+  React.useEffect(() => {
+    if (shouldAutoFocus) textareaRef.current?.focus();
+  }, [shouldAutoFocus]);
 
   const bannerKey = banner ? `${banner.kind}:${banner.messageId}` : null;
   React.useEffect(() => {
