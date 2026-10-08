@@ -142,6 +142,7 @@ function PostCard({
             </Button>
             {canDelete && (
               <ForumDeleteButton
+                variant="icon"
                 target={{
                   kind: "post",
                   id: post.id,

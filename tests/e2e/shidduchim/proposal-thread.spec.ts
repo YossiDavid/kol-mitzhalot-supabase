@@ -154,7 +154,7 @@ test.describe("שרשור הצעה בעמוד ההצעה", () => {
     await bridePage.context().close();
   });
 
-  test("להורה: שרשור מול השדכן עם ההודעות, ופנייה מהירה פותחת את אותו חדר", async ({
+  test("להורה: שרשור מול השדכן עם ההודעות, וקישור מהיר אליו בלי כפתור כפול", async ({
     browser,
   }) => {
     const parentPage = await pageAs(
@@ -172,21 +172,14 @@ test.describe("שרשור הצעה בעמוד ההצעה", () => {
       panel.getByRole("link", { name: "פתיחה בצ'אט המלא" }),
     ).toHaveAttribute("href", `/app/chats/${groomRoom}`);
 
-    // "שליחת הודעה לשדכן" כבר לא מוסיפה שורת הקשר בטקסט; ההודעה נכנסת לשרשור
-    await parentPage.getByRole("button", { name: "שליחת הודעה לשדכן" }).click();
-    const dialog = parentPage.getByRole("dialog", {
-      name: "שליחת הודעה לשדכן",
-    });
-    await dialog.getByRole("textbox", { name: "הודעה" }).fill("שאלה נוספת");
-    await dialog.getByRole("button", { name: "שליחה" }).click();
-    await expect(parentPage).toHaveURL(new RegExp(`/app/chats/${groomRoom}`));
+    // אין עוד כפתור פנייה נפרד: הכתיבה לשדכן היא בשרשור עצמו
+    await expect(
+      parentPage.getByRole("button", { name: "שליחת הודעה לשדכן" }),
+    ).toHaveCount(0);
+    await expect(
+      parentPage.getByRole("link", { name: "לשיחה על ההצעה" }),
+    ).toHaveAttribute("href", /#proposal-thread-/);
 
-    const { data: messages } = await admin
-      .from("chat_messages")
-      .select("content")
-      .eq("room_id", groomRoom)
-      .eq("content", "שאלה נוספת");
-    expect(messages).toHaveLength(1);
     await parentPage.context().close();
   });
   test("הודעה בשרשור מובילה בהתראה לעמוד ההצעה, בשני הכיוונים", async () => {

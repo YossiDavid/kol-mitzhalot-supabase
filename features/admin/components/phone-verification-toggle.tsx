@@ -15,7 +15,9 @@ export function PhoneVerificationToggle() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/v1/admin/system-settings/phone-verification");
+        const res = await fetch(
+          "/api/v1/admin/system-settings/phone-verification",
+        );
         if (!res.ok) throw new Error("load failed");
         const data = (await res.json()) as { enabled?: boolean };
         if (!cancelled) setEnabled(data.enabled !== false);
@@ -35,11 +37,14 @@ export function PhoneVerificationToggle() {
     setEnabled(checked);
     setSaving(true);
     try {
-      const res = await fetch("/api/v1/admin/system-settings/phone-verification", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled: checked }),
-      });
+      const res = await fetch(
+        "/api/v1/admin/system-settings/phone-verification",
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ enabled: checked }),
+        },
+      );
       if (!res.ok) throw new Error("save failed");
       toast.success(checked ? "אימות טלפוני הופעל" : "אימות טלפוני כובה");
     } catch {
@@ -52,22 +57,33 @@ export function PhoneVerificationToggle() {
 
   return (
     <Card className="flex-row items-center justify-between gap-4">
-      <div className="space-y-1 text-right flex-1 min-w-0">
-        <Label htmlFor="phone-verification-switch" className="text-body font-semibold">
+      <div className="min-w-0 flex-1 space-y-1 text-right">
+        <Label
+          htmlFor="phone-verification-switch"
+          className="text-body font-semibold"
+        >
           אימות טלפוני
         </Label>
         <p className="text-body-sm text-muted-foreground">
-          כאשר מופעל, משתמשים חייבים לאמת מספר טלפון לפני גישה לאפליקציה. כאשר כבוי, דרישת האימות מבוטלת.
+          כאשר מופעל, משתמשים חייבים לאמת מספר טלפון לפני גישה לאפליקציה. כאשר
+          כבוי, דרישת האימות מבוטלת.
         </p>
       </div>
-      <Switch
-        id="phone-verification-switch"
-        checked={enabled}
-        disabled={loading || saving}
-        onCheckedChange={onCheckedChange}
-        dir="ltr"
-        className="shrink-0"
-      />
+      <div className="flex shrink-0 items-center gap-2">
+        <span
+          className="text-body-sm font-medium text-muted-foreground"
+          aria-hidden="true"
+        >
+          {enabled ? "מופעל" : "כבוי"}
+        </span>
+        <Switch
+          id="phone-verification-switch"
+          checked={enabled}
+          disabled={loading || saving}
+          onCheckedChange={onCheckedChange}
+          dir="ltr"
+        />
+      </div>
     </Card>
   );
 }

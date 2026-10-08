@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Globe, HeartHandshake } from "lucide-react";
+import { Globe, HeartHandshake, ShieldCheck } from "lucide-react";
 import { AuthButton } from "@/components/auth-button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { createClient } from "@/lib/supabase/server";
@@ -49,6 +49,9 @@ export default async function Header({
     ? resolveDisplayName(user, profile)
     : { firstName: null, lastName: null };
   const greetingName = formatFullName(firstName, lastName);
+  const greeting = greetingName
+    ? `שלום וברכה, ${greetingName}!`
+    : "שלום וברכה!";
   // סוגי המשתמש בסוגריים אחרי השם. getRoles מחזיר ["user"] כברירת
   // מחדל, ולכן לכל משתמש מחובר תמיד יש לפחות תווית אחת.
   const roleLabels = user ? getRoles(user).map(getRoleLabel).join(", ") : "";
@@ -137,7 +140,7 @@ export default async function Header({
 
   return (
     <header className="sticky top-0 z-30 container flex h-16 items-center justify-between gap-5 border-b border-b-foreground/10 bg-background/95 font-semibold backdrop-blur-sm supports-[backdrop-filter]:bg-background/80">
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 items-center gap-2">
         <>
           {/* מובייל, מנהל בתוך /app/admin: תפריט הניהול */}
           {hasRole(user, "admin") && <AdminMobileMenuTrigger />}
@@ -157,29 +160,42 @@ export default async function Header({
             orientation="vertical"
             className="mx-2 hidden bg-primary data-[orientation=vertical]:h-4 md:block"
           />
-          <div className="hidden items-center gap-5 font-semibold md:flex">
-            {greetingName ? `שלום וברכה, ${greetingName}!` : "שלום וברכה!"}
+          {/* שורה אחת שנקטעת בשלוש נקודות; התווית של התפקיד נעלמת קודם (מתחת ל-2xl) */}
+          <div
+            className="hidden min-w-0 items-center gap-5 font-semibold md:flex"
+            title={greeting}
+          >
+            <span className="truncate">{greeting}</span>
             {roleLabels && (
-              <span className="font-normal text-muted-foreground">
+              <span className="hidden shrink-0 font-normal text-muted-foreground 2xl:inline">
                 ({roleLabels})
               </span>
             )}
           </div>
           {hasRole(user, "admin") && (
-            <Button variant={"link"} asChild className="hidden md:inline-flex">
-              <Link href="/app/admin">למערכת ניהול</Link>
+            <Button
+              variant={"link"}
+              asChild
+              className="hidden shrink-0 md:inline-flex"
+            >
+              <Link href="/app/admin" title="למערכת ניהול">
+                {/* מתחת ל-xl רק אייקון, כדי שהברכה לא תיקצץ; הטקסט נשאר לקוראי מסך */}
+                <ShieldCheck aria-hidden="true" className="xl:hidden" />
+                <span className="sr-only xl:not-sr-only">למערכת ניהול</span>
+              </Link>
             </Button>
           )}
         </>
       </div>
 
-      <div className="flex items-center gap-2">
-        {/* מעבר לאתר הציבורי: בדסקטופ בלבד (במובייל - בתפריט המשתמש). מתחת ל-xl רק אייקון, כדי לא לדחוס את ההדר */}
+      <div className="flex shrink-0 items-center gap-2">
+        {/* מעבר לאתר הציבורי: מ-xl ומעלה בלבד. מתחת לזה הקישור נשאר בפוטר סרגל
+            הצד ובתפריט המשתמש, כדי שהברכה לא תיקצץ */}
         <Button
           asChild
           variant="outline"
           size="sm"
-          className="hidden md:inline-flex"
+          className="hidden xl:inline-flex"
         >
           <Link
             href="/"
@@ -188,7 +204,7 @@ export default async function Header({
             data-testid="header-site-link"
           >
             <Globe aria-hidden="true" />
-            <span className="hidden xl:inline">לאתר קול מצהלות</span>
+            <span>לאתר קול מצהלות</span>
           </Link>
         </Button>
         <HeaderIcons hasUserMenu={!!user} userId={user?.id ?? null} />

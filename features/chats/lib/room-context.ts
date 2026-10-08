@@ -45,14 +45,3 @@ export function roomContextTitle(context: RoomContext): string {
   }
   return GENERAL_THREAD_TITLE;
 }
-
-/** קישור ליעד ההקשר, או null כשהיעד נמחק (מציגים רק את התווית). */
-export function roomContextHref(context: RoomContext): string | null {
-  if (context.kind === "student" && context.studentId) {
-    return `/app/students/${context.studentId}`;
-  }
-  if (context.kind === "shidduch" && context.shidduchId) {
-    return `/app/shidduchim/${context.shidduchId}`;
-  }
-  return null;
-}

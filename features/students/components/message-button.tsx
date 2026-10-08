@@ -12,18 +12,6 @@ import {
 } from "@/features/chats/lib/open-room";
 import { createClient } from "@/lib/supabase/client";
 
-export async function getOrCreateDmRoom(otherUserId: string) {
-  const supabase = createClient();
-
-  const { data, error } = await supabase.rpc("get_or_create_dm_room", {
-    other_user_id: otherUserId,
-  });
-
-  if (error) throw error;
-  // data is the uuid room_id
-  return data as string;
-}
-
 export async function sendChatMessage(roomId: string, content: string) {
   const supabase = createClient();
 

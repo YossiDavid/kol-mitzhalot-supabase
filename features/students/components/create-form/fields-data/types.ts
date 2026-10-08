@@ -3,35 +3,28 @@ import type { FieldCondition } from "../field-visibility";
 
 // מבנה ההגדרות של טופס המיועדים: שלבים → מקטעים → שדות
 
-export const TEXT_FIELD_TYPES = [
-  "text",
-  "number",
-  "date",
-  "textarea",
-  "switch",
-] as const;
+type TextFieldType = "text" | "number" | "date" | "textarea" | "switch";
 
-const SELECT_FIELD_TYPES = [
-  "select",
-  "select2",
-  "chips",
-  "chip",
-  "inputAndSelect",
-  "checkbox",
-  "radio",
-] as const;
+type SelectFieldType =
+  | "select"
+  | "select2"
+  | "chips"
+  | "chip"
+  | "inputAndSelect"
+  | "checkbox"
+  | "radio";
 
-const TEXT_SELECT_FIELD_TYPES = ["textAndSelect"] as const;
+type TextAndSelectFieldType = "textAndSelect";
 
-const RANGE_FIELD_TYPES = ["range", "rangeDouble"] as const;
+type RangeFieldType = "range" | "rangeDouble";
 
-const UPLOAD_FIELD_TYPES = ["upload"] as const;
+type UploadFieldType = "upload";
 
-const PHOTO_GALLERY_FIELD_TYPES = ["photos"] as const;
+type PhotoGalleryFieldType = "photos";
 
-const REPEATER_FIELD_TYPES = ["repeater"] as const;
+type RepeaterFieldType = "repeater";
 
-const CHILDREN_LIST_FIELD_TYPES = ["childrenList"] as const;
+type ChildrenListFieldType = "childrenList";
 
 type Condition = FieldCondition;
 
@@ -84,11 +77,11 @@ interface BaseField {
 }
 
 export interface TextField extends BaseField {
-  type: (typeof TEXT_FIELD_TYPES)[number];
+  type: TextFieldType;
 }
 
 export interface SelectField extends BaseField {
-  type: (typeof SELECT_FIELD_TYPES)[number];
+  type: SelectFieldType;
   options: FieldOptionDefinition[];
   empty?: string;
   vertical?: boolean;
@@ -114,7 +107,7 @@ export interface SelectField extends BaseField {
 }
 
 export interface TextAndSelectField extends BaseField {
-  type: (typeof TEXT_SELECT_FIELD_TYPES)[number];
+  type: TextAndSelectFieldType;
   options: {
     value: string;
     label: string;
@@ -129,11 +122,11 @@ export interface TextAndSelectField extends BaseField {
 }
 
 export interface RangeField extends BaseField {
-  type: (typeof RANGE_FIELD_TYPES)[number];
+  type: RangeFieldType;
 }
 
 export interface UploadField extends BaseField {
-  type: (typeof UPLOAD_FIELD_TYPES)[number];
+  type: UploadFieldType;
   accept?: { [key: string]: string[] } | undefined;
   multiple?: boolean;
   maxFiles?: number;
@@ -143,11 +136,11 @@ export interface UploadField extends BaseField {
 
 /** גלריית תמונות מסודרת (StudentPhotoItem[]); הראשונה היא הראשית */
 export interface PhotoGalleryField extends BaseField {
-  type: (typeof PHOTO_GALLERY_FIELD_TYPES)[number];
+  type: PhotoGalleryFieldType;
 }
 
 export interface RepeaterField {
-  type: (typeof REPEATER_FIELD_TYPES)[number];
+  type: RepeaterFieldType;
   name: string;
   /** השדות של כל שורה. השמות מתחת לשם הרשומה: "family.mechutanim.firstName" */
   fields: Field[];
@@ -172,7 +165,7 @@ export interface RepeaterField {
  * "previousPartners.children.birthDate". שדות חובה נאכפים בכל פריט קיים.
  */
 export interface ChildrenListField {
-  type: (typeof CHILDREN_LIST_FIELD_TYPES)[number];
+  type: ChildrenListFieldType;
   name: string;
   /** כותרת הרשימה. המספר שנגזר מהרשימה נוסף אחריה: "ילדים מנישואין אלו (2)" */
   label: string;
@@ -216,31 +209,3 @@ export type FormSteps = {
   title: string;
   sections: FormSection[];
 };
-
-export function isTextFieldType(type: unknown): type is TextField["type"] {
-  return TEXT_FIELD_TYPES.includes(type as TextField["type"]);
-}
-
-export function isSelectFieldType(type: unknown): type is SelectField["type"] {
-  return SELECT_FIELD_TYPES.includes(type as SelectField["type"]);
-}
-
-export function isTextAndSelectFieldType(
-  type: unknown,
-): type is TextAndSelectField["type"] {
-  return TEXT_SELECT_FIELD_TYPES.includes(type as TextAndSelectField["type"]);
-}
-
-export function isRangeFieldType(type: unknown): type is RangeField["type"] {
-  return RANGE_FIELD_TYPES.includes(type as RangeField["type"]);
-}
-
-export function isUploadFieldType(type: unknown): type is UploadField["type"] {
-  return UPLOAD_FIELD_TYPES.includes(type as UploadField["type"]);
-}
-
-export function isPhotoGalleryFieldType(
-  type: unknown,
-): type is PhotoGalleryField["type"] {
-  return PHOTO_GALLERY_FIELD_TYPES.includes(type as PhotoGalleryField["type"]);
-}

@@ -13,7 +13,6 @@ import {
 } from "@/features/students/lib/students-list-query";
 
 const LOAD_FAILED_MESSAGE = "לא הצלחנו לטעון את רשימת הכרטיסים";
-const UNEXPECTED_ERROR_MESSAGE = "שגיאה לא צפויה";
 
 /**
  * loading - הטעינה הראשונה (שלד); refreshing - עמוד/סינון/מיון חדש כשיש כבר
@@ -25,7 +24,6 @@ type PageData = {
   students: StudentTableRow[];
   total: number;
   status: StudentsPageStatus;
-  errorMessage: string | null;
 };
 
 type Criteria = { query: StudentQuery; sort: DataTableSort | null };
@@ -34,7 +32,6 @@ const INITIAL_DATA: PageData = {
   students: [],
   total: 0,
   status: "loading",
-  errorMessage: null,
 };
 
 /** סינון ומיון זהים בתוכן (גם כשהאובייקט חדש) אינם מצדיקים שאילתה חדשה */
@@ -48,13 +45,14 @@ function startLoading(previous: PageData): PageData {
   return {
     ...previous,
     status: hasRows ? "refreshing" : "loading",
-    errorMessage: null,
   };
 }
 
-function failedData(message: string): PageData {
-  return { students: [], total: 0, status: "error", errorMessage: message };
-}
+const FAILED_DATA: PageData = {
+  students: [],
+  total: 0,
+  status: "error",
+};
 
 /**
  * עמוד אחד של רשימת המיועדים מהשרת. שינוי סינון או מיון חוזר לעמוד 1.
@@ -98,7 +96,7 @@ export function useStudentsPage(
         if (error) {
           console.error("[students/list] query failed:", error);
           toast.error(LOAD_FAILED_MESSAGE);
-          setData(failedData(error.message));
+          setData(FAILED_DATA);
           return;
         }
         const total = count ?? 0;
@@ -112,17 +110,12 @@ export function useStudentsPage(
           students: (rows ?? []) as unknown as StudentTableRow[],
           total,
           status: "ready",
-          errorMessage: null,
         });
       } catch (err: unknown) {
         if (controller.signal.aborted) return;
         console.error("[students/list] unexpected failure:", err);
         toast.error(LOAD_FAILED_MESSAGE);
-        setData(
-          failedData(
-            err instanceof Error ? err.message : UNEXPECTED_ERROR_MESSAGE,
-          ),
-        );
+        setData(FAILED_DATA);
       }
     }
 

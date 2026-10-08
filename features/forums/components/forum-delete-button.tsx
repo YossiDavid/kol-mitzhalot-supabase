@@ -33,20 +33,25 @@ function describeRemoval(target: DeleteTarget): string {
  * כפתור מחיקה עם דיאלוג אישור, לפוסט או לתגובה. מוצג רק למי שהמחיקה מותרת
  * לו (כותב התוכן או מנהל); ה-RLS הוא האוכף האמיתי.
  * redirectTo: לאן לעבור אחרי מחיקה (עמוד הפוסט שנמחק); בלעדיו הדף מתרענן.
+ * variant="icon": אייקון שקט (אפור, אדום בריחוף ובמיקוד) לרשימות; השם הנגיש
+ * זהה, כך שהאישור והבדיקות לא משתנים.
  */
 export default function ForumDeleteButton({
   target,
   redirectTo,
   size = "sm",
+  variant = "labelled",
 }: {
   target: DeleteTarget;
   redirectTo?: string;
   size?: "sm" | "default";
+  variant?: "labelled" | "icon";
 }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, setIsPending] = useState(false);
 
+  const isIcon = variant === "icon";
   const isPost = target.kind === "post";
   const noun = isPost ? "פוסט" : "תגובה";
   const url = isPost
@@ -78,13 +83,18 @@ export default function ForumDeleteButton({
       <Button
         type="button"
         variant="ghost"
-        size={size}
+        size={isIcon ? "icon-sm" : size}
         onClick={() => setIsOpen(true)}
         aria-label={`מחיקת ה${noun}`}
-        className="text-destructive hover:text-destructive"
+        title={isIcon ? `מחיקת ה${noun}` : undefined}
+        className={
+          isIcon
+            ? "text-muted-foreground hover:text-destructive focus-visible:text-destructive"
+            : "text-destructive hover:text-destructive"
+        }
       >
         <Trash2 className="size-4" aria-hidden />
-        <span>מחיקה</span>
+        {!isIcon && <span>מחיקה</span>}
       </Button>
       <Dialog
         open={isOpen}

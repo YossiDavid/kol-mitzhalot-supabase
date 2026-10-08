@@ -337,15 +337,21 @@ function leadingColumn(
       size: "min",
       cell: (student) => (
         <div className="flex flex-col items-start gap-1">
-          <Switch
-            checked={student.in_shidduchim ?? false}
-            // השהיית הנהלה: הנעילה נאכפת גם במסד, וכאן רק מונעים את הלחיצה
-            disabled={!!student.admin_paused_at}
-            onCheckedChange={(checked) =>
-              props.onInShidduchimChange(student.id, checked)
-            }
-            aria-label={`פעיל בשידוכים: ${fullName(student)}`}
-          />
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={student.in_shidduchim ?? false}
+              // השהיית הנהלה: הנעילה נאכפת גם במסד, וכאן רק מונעים את הלחיצה
+              disabled={!!student.admin_paused_at}
+              onCheckedChange={(checked) =>
+                props.onInShidduchimChange(student.id, checked)
+              }
+              aria-label={`פעיל בשידוכים: ${fullName(student)}`}
+            />
+            {/* המצב גם בטקסט, באותו ניסוח של באנר הכרטיס ("אינו/ה בשידוכים") */}
+            <span className="text-body-sm text-muted-foreground">
+              {student.in_shidduchim ? "בשידוכים" : "לא בשידוכים"}
+            </span>
+          </div>
           {student.admin_paused_at && (
             <span
               className="max-w-40 text-caption text-muted-foreground"

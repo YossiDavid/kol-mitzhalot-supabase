@@ -43,29 +43,6 @@ export const SHIDDUCH_SIDE_LABELS: Record<ShidduchSide, string> = {
   bride: "צד המיועדת",
 };
 
-/** סטטוסים שבהם ההצעה עדיין "פתוחה" מבחינת ההורה */
-export const OPEN_SHIDDUCH_STATUSES: readonly ShidduchStatus[] = [
-  "sent",
-  "waiting_response",
-  "interested",
-  "more_info_needed",
-  "in_progress",
-];
-
-export function isShidduchResponse(value: unknown): value is ShidduchResponse {
-  return (
-    typeof value === "string" &&
-    (SHIDDUCH_RESPONSE_VALUES as readonly string[]).includes(value)
-  );
-}
-
-export function isShidduchSide(value: unknown): value is ShidduchSide {
-  return (
-    typeof value === "string" &&
-    (SHIDDUCH_SIDES as readonly string[]).includes(value)
-  );
-}
-
 /**
  * מראה של כללי "מתי אסור להגיב" ב-respond_to_shidduch: שידוך שהושלם סגור,
  * ושידוך שנדחה פתוח לתגובה רק לצד שבעצמו דחה (כדי שיוכל לחזור בו).

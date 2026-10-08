@@ -5,7 +5,6 @@ import { Box } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import calculateAge from "@/lib/calculateAge";
-import MessageShadchanButton from "@/features/shidduchim/components/message-shadchan-button";
 import ProposalThreadPanel from "@/features/shidduchim/components/proposal-thread-panel";
 import {
   PROPOSAL_THREAD_ANCHOR,
@@ -182,32 +181,24 @@ export default function ParentProposalView({
       </div>
 
       {canMessageShadchan && (
-        <>
-          {/* השרשור המלא מול השדכן; הכפתור שומר על פנייה מהירה בלי לגלול */}
-          <div
-            id={PROPOSAL_THREAD_ANCHOR}
-            className="scroll-mt-20 border-t pt-4"
-          >
-            <ProposalThreadPanel
-              shidduchId={proposal.shidduchId}
-              otherUserId={proposal.shadchanId}
-              withLabel="השדכן"
-              openingNote={
-                note
-                  ? {
-                      text: note,
-                      sentAt: proposal.sentAt,
-                      fromLabel: "השדכן",
-                    }
-                  : undefined
-              }
-            />
-          </div>
-          <MessageShadchanButton
-            shadchanId={proposal.shadchanId}
+        // השרשור המלא מול השדכן, עם שדה כתיבה מוטבע; אין צורך בכפתור פנייה
+        // נוסף, והקישור "לשיחה על ההצעה" בראש העמוד מגלל אליו
+        <div id={PROPOSAL_THREAD_ANCHOR} className="scroll-mt-20 border-t pt-4">
+          <ProposalThreadPanel
             shidduchId={proposal.shidduchId}
+            otherUserId={proposal.shadchanId}
+            withLabel="השדכן"
+            openingNote={
+              note
+                ? {
+                    text: note,
+                    sentAt: proposal.sentAt,
+                    fromLabel: "השדכן",
+                  }
+                : undefined
+            }
           />
-        </>
+        </div>
       )}
     </Box>
   );

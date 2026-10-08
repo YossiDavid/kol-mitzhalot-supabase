@@ -38,8 +38,6 @@ export const confirmLinkSchema = z.object({
   next: optionalField(1024),
 });
 
-export type ConfirmLinkInput = z.infer<typeof confirmLinkSchema>;
-
 /** מסיר רווחים ומפרידים: "123 456" ו-"123-456" הם אותו קוד */
 export function normalizeEmailCode(raw: string): string {
   return raw.replace(/[\s-]/g, "");
