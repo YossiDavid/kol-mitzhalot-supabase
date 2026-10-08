@@ -31,14 +31,22 @@ type UsersPageProps = {
 
 function formatDate(dateString: string | null): string {
   if (!dateString) return "לא זמין";
-  const date = new Date(dateString);
+  return new Intl.DateTimeFormat("he-IL", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(dateString));
+}
+
+function formatDateTime(dateString: string | null): string {
+  if (!dateString) return "לא זמין";
   return new Intl.DateTimeFormat("he-IL", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(date);
+  }).format(new Date(dateString));
 }
 
 const USER_COLUMNS: DataTableColumn<UserStatsRow>[] = [
@@ -54,12 +62,25 @@ const USER_COLUMNS: DataTableColumn<UserStatsRow>[] = [
     header: "אימייל",
     size: "grow",
     className: "wrap-anywhere",
-    cell: (user) => user.email || "לא זמין",
+    // בטבלה (md ומעלה): שורה אחת עם קיצור ו-title; בכרטיס המובייל ממשיך לשבור
+    cell: (user) =>
+      user.email ? (
+        // dir=ltr: הקיצור נחתך בסוף הכתובת ולא באמצע; text-right ליישור לעמודה
+        <span
+          dir="ltr"
+          className="block text-right md:max-w-40 md:truncate"
+          title={user.email}
+        >
+          {user.email}
+        </span>
+      ) : (
+        "לא זמין"
+      ),
   },
   {
     key: "purpose",
     header: "מטרת ההרשמה",
-    size: "grow",
+    size: "auto",
     cell: (user) => getSignupPurposeLabel(user.signupPurpose),
   },
   {
@@ -92,12 +113,19 @@ const USER_COLUMNS: DataTableColumn<UserStatsRow>[] = [
   {
     key: "joined",
     header: "תאריך הצטרפות",
-    cell: (user) => formatDate(user.createdAt),
+    size: "min",
+    // התאריך בלבד בשורה אחת; השעה ב-title
+    cell: (user) => (
+      <span title={formatDateTime(user.createdAt)}>
+        {formatDate(user.createdAt)}
+      </span>
+    ),
   },
   {
     key: "actions",
     header: <span className="sr-only">פעולות</span>,
     size: "min",
+    isStickyEnd: true,
     mobile: "actions",
     cell: (user) => (
       <div className="flex items-center gap-2">

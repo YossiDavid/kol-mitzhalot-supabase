@@ -89,6 +89,11 @@ function tableRows(page: Page) {
 async function openListFilteredToTestCards(page: Page) {
   await page.goto("/app/students");
   await page.locator("#search").fill(token);
+  // הסך הכל מוכיח שהסינון חל: כשבמסד יש 50 כרטיסים ומעלה, הרשימה הלא מסוננת
+  // כבר מציגה 50 שורות, וספירת שורות בלבד הייתה מסתפקת בה לפני שהסינון חל
+  await expect(range(page)).toHaveText(`מציג 1–${PAGE_SIZE} מתוך ${TOTAL}`, {
+    timeout: LOAD_TIMEOUT,
+  });
   await expect(tableRows(page)).toHaveCount(PAGE_SIZE, {
     timeout: LOAD_TIMEOUT,
   });

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 
@@ -18,28 +19,37 @@ import {
 
 import type { AdminNavSection } from "./admin-nav-items";
 
-type AdminNavSectionMobileProps = {
+type AdminNavSectionAccordionProps = {
   section: AdminNavSection;
   activeItemUrl: string | null;
   isCurrent: boolean;
-  /** סוגר את התפריט (Sheet) אחרי ניווט */
-  onNavigate: () => void;
+  /** סוגר את התפריט (Sheet) אחרי ניווט - במובייל בלבד */
+  onNavigate?: () => void;
 };
 
 /**
- * אזור בתפריט הניהול במובייל: רשימה מתקפלת במקום חלונית צד (אין hover).
- * האזור הנוכחי פתוח כברירת מחדל.
+ * אזור בתפריט הניהול כרשימה מתקפלת בתוך הסרגל (סרגל מורחב ומגירת המובייל).
+ * הלחיצה על הכותרת רק פותחת וסוגרת - לא מנווטת, ושום דבר לא נפתח במעבר
+ * עכבר או בפוקוס. כמה אזורים יכולים להיות פתוחים יחד; האזור שמכיל את העמוד
+ * הנוכחי פתוח כברירת מחדל, ונפתח גם כשמנווטים אליו מבחוץ.
  */
-export function AdminNavSectionMobile({
+export function AdminNavSectionAccordion({
   section,
   activeItemUrl,
   isCurrent,
   onNavigate,
-}: AdminNavSectionMobileProps) {
+}: AdminNavSectionAccordionProps) {
+  const [isOpen, setIsOpen] = useState(isCurrent);
+  const [wasCurrent, setWasCurrent] = useState(isCurrent);
+  // ניווט לאזור הזה פותח אותו; יציאה ממנו לא סוגרת (נשאר כפי שהמשתמש השאיר)
+  if (isCurrent !== wasCurrent) {
+    setWasCurrent(isCurrent);
+    if (isCurrent) setIsOpen(true);
+  }
   const Icon = section.icon;
 
   return (
-    <Collapsible defaultOpen={isCurrent} asChild>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} asChild>
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton

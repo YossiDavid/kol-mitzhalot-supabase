@@ -98,10 +98,11 @@ export default async function AppLayout({
           <ImpersonationBanner />
           <div className="flex flex-1 flex-col">
             <Header variant="app" />
-            <main className="container flex-1 px-3 py-4 pb-24 md:px-4 md:py-5 md:pb-5">
+            {/* 5.5rem = גובה הסרגל התחתון (4rem) + רווח, מעל ה-safe-area */}
+            <main className="container flex-1 px-3 py-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:px-4 md:py-5 md:pb-5">
               {children}
             </main>
-            <Footer className="hidden md:flex" />
+            <Footer className="hidden md:block" />
           </div>
           <BottomNav roles={roles} />
           <Toaster

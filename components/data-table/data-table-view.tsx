@@ -45,7 +45,16 @@ const ALIGN_CLASS: Record<DataTableAlign, string> = {
   end: "text-end",
 };
 
-const ROW_CLASS = "hover:bg-muted/40";
+/**
+ * עמודה דבוקה לקצה הסוף. הרקע אטום (card) כדי שהתוכן הגולל לא יציץ מתחתיה,
+ * ומעליו גוון השורה: השורה מגדירה --row-tint (במעבר עכבר / בהדגשה), והתא
+ * משכב אותו כשכבת צבע - כך הוא תמיד תואם את השורה ועדיין אטום.
+ */
+const STICKY_END_CLASS =
+  "sticky end-0 border-s bg-card bg-[linear-gradient(var(--row-tint,transparent),var(--row-tint,transparent))]";
+
+const ROW_CLASS =
+  "hover:bg-muted/40 hover:[--row-tint:color-mix(in_oklab,var(--muted)_40%,transparent)]";
 
 const LINKED_CLASS =
   "cursor-pointer outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-inset";
@@ -59,6 +68,7 @@ function columnClass<T>(column: DataTableColumn<T>) {
   return cn(
     SIZE_CLASS[column.size ?? "auto"],
     ALIGN_CLASS[column.align ?? "start"],
+    column.isStickyEnd && STICKY_END_CLASS,
   );
 }
 

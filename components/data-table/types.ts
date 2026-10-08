@@ -42,6 +42,11 @@ export interface DataTableColumn<T> {
   /** מחלקות לתא בדסקטופ ולערך בכרטיס המובייל (למשל break-all לאימייל) */
   className?: string;
   mobile?: DataTableMobileSlot;
+  /**
+   * העמודה נדבקת לקצה הסוף (שמאל ב-RTL) כשהטבלה רחבה מהמסך וגוללת
+   * אופקית - כך עמודת הפעולות תמיד נגישה. רקע אטום, וקו מפריד.
+   */
+  isStickyEnd?: boolean;
   /** תווית בכרטיס המובייל, כשכותרת העמודה אינה מתאימה */
   mobileLabel?: React.ReactNode;
   /**

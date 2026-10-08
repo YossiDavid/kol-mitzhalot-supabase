@@ -20,6 +20,7 @@ import {
 
 const LOAD_TIMEOUT = 15_000;
 const MISSING_APP_PATH = "/app/no-such-page-ux-round";
+const MISSING_RECORD_ID = "00000000-0000-0000-0000-000000000000";
 const MISSING_PUBLIC_PATH = "/no-such-page-ux-round";
 
 test.describe("קישורי חזרה ודף 404", () => {
@@ -126,6 +127,8 @@ test.describe("קישורי חזרה ודף 404", () => {
     expect(response?.status()).toBe(404);
     await expect(page.getByRole("heading", { name: "404" })).toBeVisible();
     await expect(page.getByText("הדף שחיפשת לא נמצא")).toBeVisible();
+    // כתובת שלא תואמת אף נתיב מקבלת את ה-404 הגלובלי (בלי מעטפת האפליקציה):
+    // נתיב כללי תחת /app שבר את טבלת הנתיבים כולה בהפעלה נקייה, ולכן אין כזה
     const home = page.getByRole("link", { name: "חזרה לעמוד הראשי" });
     await expect(home).toHaveAttribute("href", "/app", {
       timeout: LOAD_TIMEOUT,
@@ -136,6 +139,18 @@ test.describe("קישורי חזרה ודף 404", () => {
 
     // Assert
     await expect(page).toHaveURL(/\/app$/);
+  });
+
+  test("פוסט פורום שלא קיים: 404 בתוך מעטפת האפליקציה", async ({ page }) => {
+    // Act
+    await page.goto(`/app/forums/${MISSING_RECORD_ID}`);
+
+    // Assert
+    await expect(page.getByRole("heading", { name: "404" })).toBeVisible({
+      timeout: LOAD_TIMEOUT,
+    });
+    await expect(page.locator('[data-sidebar="content"]')).toBeVisible();
+    await expect(page.locator("header").first()).toBeVisible();
   });
 
   test("כתובת לא קיימת באתר הציבורי: הקישור חוזר לדף הבית", async ({

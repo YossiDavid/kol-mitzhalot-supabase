@@ -1,9 +1,10 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 /**
- * תפריט הניהול בסרגל הצד (בסגנון וורדפרס): בתוך /app/admin מוצגים רק פריטי
- * הניהול. האזור שמכיל את העמוד הנוכחי פתוח בתוך הסרגל, ושאר האזורים נפתחים
- * כחלונית צד במעבר עכבר או במקלדת.
+ * תפריט הניהול בסרגל הצד: בתוך /app/admin מוצגים רק פריטי הניהול. בסרגל
+ * מורחב כל אזור הוא אקורדיון בתוך הסרגל (לחיצה פותחת וסוגרת, לא מנווטת,
+ * ושום דבר לא נפתח במעבר עכבר); האזור הנוכחי פתוח כברירת מחדל. בסרגל
+ * מכווץ מעבר עכבר מציג tooltip בלבד, ולחיצה פותחת חלונית עם הקישורים.
  */
 const DESKTOP = { width: 1440, height: 900 };
 const LOAD = { timeout: 15_000 };
@@ -70,6 +71,9 @@ const section = (page: Page, key: string): Locator =>
   page.getByTestId(`admin-nav-section-${key}`);
 const flyout = (page: Page, key: string): Locator =>
   page.getByTestId(`admin-flyout-${key}`);
+/** תתי העמודים של אזור בתוך הסרגל (האקורדיון) */
+const inlineLinks = (page: Page, label: string): Locator =>
+  nav(page).getByRole("list", { name: label });
 
 /** הסרגל מתחיל מכווץ בלי העוגייה sidebar_state=true */
 async function gotoAdmin(page: Page, path: string, isExpanded = true) {
@@ -124,15 +128,106 @@ test.describe("סרגל צד — תפריט ניהול", () => {
     ).toBeVisible();
   });
 
-  test("לחיצה על פריט עליון מובילה לתת-העמוד הראשון שלו", async ({ page }) => {
+  test("לחיצה על כותרת אזור פותחת וסוגרת בתוך הסרגל ולא מנווטת", async ({
+    page,
+  }) => {
+    // Arrange
+    await gotoAdmin(page, "/app/admin");
+    const header = section(page, "people");
+    await expect(header).toHaveAttribute("aria-expanded", "false");
+
+    // Act
+    await header.click();
+
+    // Assert
+    await expect(header).toHaveAttribute("aria-expanded", "true");
+    await expect(header).toHaveAttribute("aria-controls", /.+/);
+    await expect(page).toHaveURL(/\/app\/admin$/);
+    await expect(inlineLinks(page, "אנשים").getByRole("link")).toHaveCount(4);
+
+    // Act
+    await header.click();
+
+    // Assert
+    await expect(header).toHaveAttribute("aria-expanded", "false");
+    await expect(inlineLinks(page, "אנשים")).toHaveCount(0);
+    await expect(page).toHaveURL(/\/app\/admin$/);
+  });
+
+  test("מעבר עכבר ופוקוס לא פותחים כלום", async ({ page }) => {
+    // Arrange
+    await gotoAdmin(page, "/app/admin");
+
+    for (const { key } of SECTIONS) {
+      // Act
+      await section(page, key).hover();
+      await page.waitForTimeout(ANIMATION_SETTLE_MS);
+
+      // Assert
+      await expect(section(page, key)).toHaveAttribute(
+        "aria-expanded",
+        "false",
+      );
+      await expect(flyout(page, key)).toHaveCount(0);
+    }
+
+    // Act - פוקוס מקלדת
+    await page.keyboard.press("Tab");
+    await section(page, "databases").focus();
+    await page.waitForTimeout(ANIMATION_SETTLE_MS);
+
+    // Assert
+    await expect(section(page, "databases")).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    await expect(nav(page).locator('[data-sidebar="menu-sub"]')).toHaveCount(0);
+  });
+
+  test("כמה אזורים יכולים להיות פתוחים יחד", async ({ page }) => {
     // Arrange
     await gotoAdmin(page, "/app/admin");
 
     // Act
     await section(page, "people").click();
+    await section(page, "cards").click();
 
     // Assert
-    await expect(page).toHaveURL(/\/app\/admin\/users$/);
+    await expect(section(page, "people")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    await expect(section(page, "cards")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    const hrefs = await nav(page)
+      .locator('[data-sidebar="menu-sub"] a')
+      .evaluateAll((els) => els.map((el) => el.getAttribute("href")));
+    expect(hrefs).toEqual([
+      ...SECTIONS[0].links.map(([, href]) => href),
+      ...SECTIONS[1].links.map(([, href]) => href),
+    ]);
+  });
+
+  test("ניווט לתת-עמוד משאיר את האזור פתוח", async ({ page }) => {
+    // Arrange
+    await gotoAdmin(page, "/app/admin");
+    await section(page, "finance").click();
+
+    // Act
+    await nav(page).getByRole("link", { name: "תרומות" }).click();
+
+    // Assert
+    // הניווט הראשון לדף מקמפל אותו בשרת הפיתוח - תחת עומס זה עובר את 5 השניות
+    await expect(page).toHaveURL(/\/app\/admin\/donations$/, LOAD);
+    await expect(section(page, "finance")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    await expect(nav(page).locator('a[aria-current="page"]')).toHaveText(
+      "תרומות",
+    );
   });
 
   test("הכתובת הישנה /app/admin/content מפנה לתת-העמוד הראשון", async ({
@@ -143,62 +238,6 @@ test.describe("סרגל צד — תפריט ניהול", () => {
 
     // Assert
     await expect(page).toHaveURL(/\/app\/admin\/content\/articles$/, LOAD);
-  });
-
-  test("מעבר עכבר על אזור שאינו נוכחי פותח חלונית עם הקישורים שלו", async ({
-    page,
-  }) => {
-    // Arrange
-    await gotoAdmin(page, "/app/admin");
-
-    for (const { key, label, links } of SECTIONS) {
-      // Act
-      await section(page, key).hover();
-
-      // Assert
-      const panel = flyout(page, key);
-      await expect(panel).toBeVisible();
-      await expect(section(page, key)).toHaveAttribute("aria-expanded", "true");
-      await expect(
-        panel.getByRole("navigation", { name: label }),
-      ).toBeVisible();
-      const hrefs = await panel
-        .locator("a")
-        .evaluateAll((els) => els.map((el) => el.getAttribute("href")));
-      expect(hrefs).toEqual(links.map(([, href]) => href));
-    }
-  });
-
-  test("החלונית לא נעלמת בדרך מהפריט אליה, והלחיצה מנווטת", async ({
-    page,
-  }) => {
-    // Arrange
-    await gotoAdmin(page, "/app/admin");
-    await section(page, "cards").hover();
-    const target = flyout(page, "cards").getByRole("link", {
-      name: "דוח הצעות",
-    });
-    await expect(target).toBeVisible();
-
-    // Act - תנועה איטית בין הפריט לחלונית
-    // ממתינים לסיום אנימציית הפתיחה, כדי שהמיקום יהיה סופי
-    await page.waitForTimeout(ANIMATION_SETTLE_MS);
-    const from = await section(page, "cards").boundingBox();
-    const to = await target.boundingBox();
-    if (!from || !to) throw new Error("חסרים מיקומים");
-    // בדרך אופקית מהפריט אל החלונית (כמו משתמש): אחרת הסמן עובר דרך
-    // הפריט הבא בסרגל ופותח את החלונית שלו
-    const rowY = from.y + from.height / 2;
-    await page.mouse.move(from.x + from.width / 2, rowY);
-    await page.mouse.move(to.x + to.width / 2, rowY, { steps: 25 });
-    await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, {
-      steps: 10,
-    });
-    await expect(target).toBeVisible();
-    await target.click();
-
-    // Assert
-    await expect(page).toHaveURL(/\/app\/admin\/proposals$/);
   });
 
   test("האזור הנוכחי פתוח בתוך הסרגל, ותת-העמוד מודגש", async ({ page }) => {
@@ -218,9 +257,17 @@ test.describe("סרגל צד — תפריט ניהול", () => {
       "data-active",
       "true",
     );
-    // אזור שאינו נוכחי: לא פתוח בתוך הסרגל
+    await expect(section(page, "people")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    // אזור שאינו נוכחי: סגור
     await expect(section(page, "cards")).toHaveAttribute(
       "data-active",
+      "false",
+    );
+    await expect(section(page, "cards")).toHaveAttribute(
+      "aria-expanded",
       "false",
     );
   });
@@ -266,53 +313,38 @@ test.describe("סרגל צד — תפריט ניהול", () => {
     );
   });
 
-  test("מקלדת: פוקוס פותח, חץ עובר לתת-עמוד, Enter מנווט", async ({ page }) => {
+  test("מקלדת: Enter ורווח פותחים וסוגרים, Tab ממשיך לתתי העמודים", async ({
+    page,
+  }) => {
     // Arrange
     await gotoAdmin(page, "/app/admin");
-
-    // Act
-    await page.keyboard.press("Tab"); // מסמן שימוש במקלדת (focus-visible)
     await section(page, "databases").focus();
 
-    // Assert - נפתחת בפוקוס מקלדת
-    await expect(flyout(page, "databases")).toBeVisible();
-
-    // Act
-    await page.keyboard.press("ArrowLeft");
-
-    // Assert
-    const first = flyout(page, "databases").getByRole("link", {
-      name: "מוסדות לימוד",
-    });
-    await expect(first).toBeFocused();
-
-    // Act
-    await page.keyboard.press("ArrowDown");
-    await expect(
-      flyout(page, "databases").getByRole("link", { name: "חסידויות וקהילות" }),
-    ).toBeFocused();
+    // Act + Assert - Enter פותח, Tab עובר לתתי העמודים
     await page.keyboard.press("Enter");
+    await expect(section(page, "databases")).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    await page.keyboard.press("Tab");
+    await expect(
+      nav(page).getByRole("link", { name: "מוסדות לימוד" }),
+    ).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(
+      nav(page).getByRole("link", { name: "חסידויות וקהילות" }),
+    ).toBeFocused();
 
-    // Assert
-    await expect(page).toHaveURL(/\/app\/admin\/communities$/);
+    // Act + Assert - רווח סוגר
+    await section(page, "databases").focus();
+    await page.keyboard.press("Space");
+    await expect(section(page, "databases")).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
   });
 
-  test("Escape סוגר את החלונית ומחזיר את הפוקוס לפריט", async ({ page }) => {
-    // Arrange
-    await gotoAdmin(page, "/app/admin");
-    await section(page, "cards").focus();
-    await page.keyboard.press("ArrowDown");
-    await expect(flyout(page, "cards").getByRole("link").first()).toBeFocused();
-
-    // Act
-    await page.keyboard.press("Escape");
-
-    // Assert
-    await expect(flyout(page, "cards")).toHaveCount(0);
-    await expect(section(page, "cards")).toBeFocused();
-  });
-
-  test("סרגל מכווץ: כל האזורים נפתחים כחלונית עם שם האזור", async ({
+  test("סרגל מכווץ: מעבר עכבר מציג tooltip בלבד, ולחיצה פותחת חלונית", async ({
     page,
   }) => {
     // Arrange
@@ -322,15 +354,35 @@ test.describe("סרגל צד — תפריט ניהול", () => {
       page.locator('[data-state="collapsed"]').first(),
     ).toBeVisible();
 
-    // Act - גם האזור הנוכחי נפתח כחלונית
+    // Act - מעבר עכבר
     await section(page, "people").hover();
+
+    // Assert - tooltip עם שם האזור, בלי חלונית
+    await expect(page.getByRole("tooltip")).toHaveText("אנשים");
+    await expect(flyout(page, "people")).toHaveCount(0);
+
+    // Act - לחיצה
+    await section(page, "people").click();
 
     // Assert
     const panel = flyout(page, "people");
     await expect(panel).toBeVisible();
     await expect(panel.getByText("אנשים", { exact: true })).toBeVisible();
-    await panel.getByRole("link", { name: "כל השדכנים" }).click();
+    await expect(panel.locator("a")).toHaveCount(4);
+
+    // Act - Escape סוגר
+    await page.keyboard.press("Escape");
+    await expect(flyout(page, "people")).toHaveCount(0);
+
+    // Act - פתיחה מחדש ובחירת קישור
+    await section(page, "people").click();
+    await flyout(page, "people")
+      .getByRole("link", { name: "כל השדכנים" })
+      .click();
+
+    // Assert
     await expect(page).toHaveURL(/\/app\/admin\/shadchanim$/);
+    await expect(flyout(page, "people")).toHaveCount(0);
   });
 
   test("חזרה למערכת מחזירה לניווט הרגיל", async ({ page }) => {

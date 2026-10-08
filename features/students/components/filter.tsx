@@ -322,7 +322,7 @@ export default function FilterSection() {
       <PageHeader
         title="רשימת פרחי אנ״ש"
         actions={
-          <Button asChild className="max-md:hidden">
+          <Button asChild variant="outline" className="max-md:hidden">
             <Link href={"/app"}>חזרה לעמוד הראשי</Link>
           </Button>
         }

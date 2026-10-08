@@ -121,7 +121,9 @@ type StudentsTableProps = {
   isSortedExternally?: boolean;
 } & (ListPreset | FavoritesPreset | ChildrenPreset);
 
-const ENGAGED_ROW_CLASS = "bg-warning-muted hover:bg-warning/30";
+/** --row-tint: הגוון שהעמודה הדבוקה (isStickyEnd) משכבת מעל רקע אטום */
+const ENGAGED_ROW_CLASS =
+  "bg-warning-muted [--row-tint:var(--warning-muted)] hover:bg-warning/30 hover:[--row-tint:color-mix(in_oklab,var(--warning)_30%,transparent)]";
 
 const MISSING_CV_CLASS =
   "border-warning bg-warning-muted text-warning-muted-foreground hover:bg-warning/30";
@@ -151,6 +153,19 @@ function ageSortValue(student: StudentTableRow): number | null {
   if (!student.birth_date) return null;
   const time = new Date(student.birth_date).getTime();
   return Number.isNaN(time) ? null : -time;
+}
+
+/** שם האב והאם בשתי שורות קצרות; ז״ל וכו׳ נשארים כחלק מהתואר */
+function ParentsCell({ student }: { student: StudentTableRow }) {
+  const father = parentName(student.parents_info?.father?.self);
+  const mother = parentName(student.parents_info?.mother?.self);
+  if (!father && !mother) return null;
+  return (
+    <span className="flex flex-col leading-snug">
+      {father && <span>{father}</span>}
+      {mother && <span>{mother}</span>}
+    </span>
+  );
 }
 
 function StarToggle({
@@ -477,18 +492,10 @@ function buildColumns(
       sortValue: (student) => student.first_name,
     },
     {
-      key: "father",
-      header: "שם האב",
+      key: "parents",
+      header: "הורים",
       mobile: "hidden",
-      cell: (student) => parentName(student.parents_info?.father?.self),
-      sortValue: (student) => student.parents_info?.father?.self?.name,
-    },
-    {
-      key: "mother",
-      header: "שם האם",
-      mobile: "hidden",
-      cell: (student) => parentName(student.parents_info?.mother?.self),
-      sortValue: (student) => student.parents_info?.mother?.self?.name,
+      cell: (student) => <ParentsCell student={student} />,
     },
     {
       key: "city",
@@ -521,6 +528,7 @@ function buildColumns(
       key: "actions",
       header: <span className="sr-only">פעולות</span>,
       size: "min",
+      isStickyEnd: true,
       mobile: "actions",
       cell: (student) => (
         <ActionsCell

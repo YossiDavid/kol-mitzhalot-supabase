@@ -57,6 +57,11 @@ interface BaseField {
   description?: string;
   beforeField?: string;
   /**
+   * טקסט פתיח עם חלק מתקפל (HTML): lead תמיד מוצג, more מתקפל מאחורי "קראו
+   * עוד", ו-tail (הנחיות וחובות) תמיד מוצג אחרי החלק המתקפל. גובר על beforeField.
+   */
+  beforeFieldCollapsible?: { lead: string; more: string; tail: string };
+  /**
    * שדה חובה: מציג כוכבית אדומה ונאכף במעבר שלב ובשליחה (required-fields.ts).
    * נאכף רק כשהשדה מוצג, וגם בתוך שורות של רשומה חוזרת.
    * שם עם תוארים: חובה = השם עצמו. קובץ / תמונות: קובץ שכבר שמור נחשב מולא.

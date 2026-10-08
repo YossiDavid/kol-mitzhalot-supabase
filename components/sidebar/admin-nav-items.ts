@@ -43,8 +43,8 @@ export const ADMIN_HOME_URL: Route = "/app/admin";
 export const APP_HOME_URL: Route = "/app";
 
 /**
- * האזורים בסדר התצוגה. לחיצה על האזור מובילה לתת-העמוד הראשון שלו
- * (ראו adminSectionLandingUrl) - כלל אחד לכל האזורים.
+ * האזורים בסדר התצוגה. בסרגל הניווט האזור רק נפתח ונסגר; תת-העמוד
+ * הראשון שלו (adminSectionLandingUrl) משמש את דף האזור "תוכן".
  */
 export const ADMIN_NAV_SECTIONS: readonly AdminNavSection[] = [
   {
@@ -169,7 +169,7 @@ export const ADMIN_NAV_SECTIONS: readonly AdminNavSection[] = [
   },
 ];
 
-/** היעד של לחיצה על האזור עצמו: תת-העמוד הראשון שלו */
+/** נקודת הכניסה של אזור: תת-העמוד הראשון שלו */
 export function adminSectionLandingUrl(section: AdminNavSection): Route {
   return section.items[0].url;
 }

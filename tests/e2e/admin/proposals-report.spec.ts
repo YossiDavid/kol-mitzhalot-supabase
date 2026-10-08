@@ -22,6 +22,10 @@ const REPORT_PATH = "/app/admin/proposals";
  * דוח ההצעות לניהול: יומן השליחות עם סינון לפי שדכן, כרטיס ותאריכים,
  * עימוד בשרת, והסטטוס הנוכחי ("נמחקה" כשההצעה כבר לא קיימת). מנהל בלבד.
  */
+/** תפריט הניהול: הסרגל המורחב (אקורדיון) או החלונית שנפתחת בסרגל מכווץ */
+const ADMIN_NAV_LINKS_SCOPE =
+  '[data-testid="admin-sidebar-nav"], [data-testid^="admin-flyout-"]';
+
 test.describe("דוח הצעות (ניהול)", () => {
   let admin: SupabaseClient;
   let fx: ShidduchFixtures;
@@ -198,9 +202,9 @@ test.describe("דוח הצעות (ניהול)", () => {
   test("הדוח מקושר מתפריט הניהול", async ({ page }) => {
     // Act
     await page.goto("/app/admin");
-    await page.getByTestId("admin-nav-section-cards").hover();
+    await page.getByTestId("admin-nav-section-cards").click();
     await page
-      .getByTestId("admin-flyout-cards")
+      .locator(ADMIN_NAV_LINKS_SCOPE)
       .getByRole("link", { name: "דוח הצעות" })
       .click();
 

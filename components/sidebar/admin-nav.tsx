@@ -8,8 +8,8 @@ import {
   SidebarMenu,
 } from "@/components/ui/sidebar";
 
-import { AdminNavSectionItem } from "./admin-nav-section";
-import { AdminNavSectionMobile } from "./admin-nav-section-mobile";
+import { AdminNavSectionAccordion } from "./admin-nav-section-accordion";
+import { AdminNavSectionCollapsed } from "./admin-nav-section-collapsed";
 import {
   ADMIN_HOME_URL,
   ADMIN_NAV_SECTIONS,
@@ -37,14 +37,15 @@ const HOME_ITEM: NavItem = {
 type AdminSidebarNavProps = {
   pathname: string;
   isCollapsed: boolean;
-  /** בתוך ה-Sheet של המובייל: רשימות מתקפלות במקום חלוניות, וסגירה אחרי ניווט */
+  /** בתוך ה-Sheet של המובייל: סגירה אחרי ניווט (תמיד רשימות מתקפלות) */
   isMobile?: boolean;
   onNavigate?: () => void;
 };
 
 /**
  * תפריט הניהול של הסיידבר (במקום הניווט הרגיל בתוך /app/admin): חזרה
- * למערכת, דף הבית של הניהול, וחמישה אזורים עם תתי עמודים.
+ * למערכת, דף הבית של הניהול, ואזורים עם תתי עמודים - רשימות מתקפלות
+ * בסרגל מורחב ובמובייל, וחלונית בלחיצה בסרגל מכווץ.
  */
 export function AdminSidebarNav({
   pathname,
@@ -77,21 +78,20 @@ export function AdminSidebarNav({
             onNavigate={onNavigate}
           />
           {ADMIN_NAV_SECTIONS.map((section) =>
-            isMobile ? (
-              <AdminNavSectionMobile
+            isCollapsed && !isMobile ? (
+              <AdminNavSectionCollapsed
                 key={section.key}
                 section={section}
                 activeItemUrl={activeItemUrl}
                 isCurrent={section.key === currentSectionKey}
-                onNavigate={onNavigate}
               />
             ) : (
-              <AdminNavSectionItem
+              <AdminNavSectionAccordion
                 key={section.key}
                 section={section}
                 activeItemUrl={activeItemUrl}
                 isCurrent={section.key === currentSectionKey}
-                isCollapsed={isCollapsed}
+                onNavigate={isMobile ? onNavigate : undefined}
               />
             ),
           )}

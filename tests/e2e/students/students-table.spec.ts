@@ -71,6 +71,13 @@ test.describe("טבלת המיועדים - דסקטופ", () => {
     await expect(
       table.getByRole("columnheader", { name: "שם משפחה" }),
     ).toBeVisible();
+    // שם האב ושם האם מאוחדים בעמודה אחת (לא ממוינת)
+    await expect(
+      table.getByRole("columnheader", { name: "הורים" }),
+    ).toBeVisible();
+    await expect(
+      table.getByRole("columnheader", { name: /שם האב|שם האם/ }),
+    ).toHaveCount(0);
     await expect(
       table.getByRole("columnheader", { name: "עיר" }),
     ).toBeVisible();
@@ -83,6 +90,31 @@ test.describe("טבלת המיועדים - דסקטופ", () => {
     await expect(page).toHaveURL(new RegExp(`/app/students/${studentId}$`), {
       timeout: 15_000,
     });
+  });
+});
+
+test.describe("טבלת המיועדים - רוחב דסקטופ צר", () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  test("כפתור הפעולה האחרון בשורה בתוך המסך (עמודה דבוקה)", async ({
+    page,
+  }) => {
+    // Arrange
+    await searchForTestStudent(page);
+    const table = page.getByRole("table", { name: TABLE_CAPTION });
+    const row = table.getByRole("row", { name: cardLabel });
+    await expect(row).toBeVisible({ timeout: 10_000 });
+
+    // Act
+    const box = await row
+      .getByRole("link", { name: "כרטיס מלא", exact: true })
+      .boundingBox();
+
+    // Assert - העמודה הדבוקה שומרת את הכפתור בתוך חלון התצוגה גם בטבלה רחבה
+    const viewport = page.viewportSize();
+    if (!box || !viewport) throw new Error("חסר מיקום לכפתור");
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
   });
 });
 

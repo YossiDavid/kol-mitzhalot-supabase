@@ -10,6 +10,10 @@ import { createServiceClient } from "../shidduchim/fixtures";
 const PATH = "/app/admin/donations";
 const RUN = `adm${Date.now()}`;
 
+/** תפריט הניהול: הסרגל המורחב (אקורדיון) או החלונית שנפתחת בסרגל מכווץ */
+const ADMIN_NAV_LINKS_SCOPE =
+  '[data-testid="admin-sidebar-nav"], [data-testid^="admin-flyout-"]';
+
 test.describe("תרומות (ניהול)", () => {
   let db: SupabaseClient;
   const donationIds: string[] = [];
@@ -173,9 +177,9 @@ test.describe("תרומות (ניהול)", () => {
 
   test("הקישור מתפריט הניהול", async ({ page }) => {
     await page.goto("/app/admin");
-    await page.getByTestId("admin-nav-section-finance").hover();
+    await page.getByTestId("admin-nav-section-finance").click();
     await page
-      .getByTestId("admin-flyout-finance")
+      .locator(ADMIN_NAV_LINKS_SCOPE)
       .locator(`a[href="${PATH}"]`)
       .click();
     await expect(page).toHaveURL(new RegExp(PATH));

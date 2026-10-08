@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 
 import { DashboardArea } from "./dashboard-area";
 import type { DashboardChat } from "./chat-rooms-list";
+import { sectionHasData } from "@/features/dashboard/lib/section-has-data";
 import { ActiveShidduchim, Chat, Favorites, Forum } from "./shadchan";
 
 export type ShadchanAreaProps = {
@@ -41,11 +42,13 @@ export function ShadchanArea({
         titleNumber={activeShidduchimCount.toString()}
         subTitle="ההצעות האחרונות שלך"
         button={
-          <Button asChild>
-            <Link href={"/app/shadchan/proposals" as never}>
-              לכל ההצעות שלך
-            </Link>
-          </Button>
+          sectionHasData(activeShidduchim, activeShidduchimFailed) ? (
+            <Button asChild variant="outline">
+              <Link href={"/app/shadchan/proposals" as never}>
+                לכל ההצעות שלך
+              </Link>
+            </Button>
+          ) : undefined
         }
       >
         <ActiveShidduchim
@@ -58,9 +61,11 @@ export function ShadchanArea({
         title="המועדפים שלך"
         subTitle="מיועדים שעניינו אותך והוספת ללוח העבודה"
         button={
-          <Button asChild>
-            <Link href="/app/canvas">ללוח העבודה</Link>
-          </Button>
+          sectionHasData(favorites, favoritesFailed) ? (
+            <Button asChild variant="outline">
+              <Link href="/app/canvas">ללוח העבודה</Link>
+            </Button>
+          ) : undefined
         }
       >
         <Favorites favorites={favorites} failed={favoritesFailed} />
@@ -70,9 +75,11 @@ export function ShadchanArea({
         title="צ'אטים כשדכן"
         subTitle="שיחות עם הורים ומנהלי כרטיסים על הצעות ומיועדים"
         button={
-          <Button asChild>
-            <Link href="/app/chats">לכל הצ'אטים</Link>
-          </Button>
+          sectionHasData(chats, chatsFailed) ? (
+            <Button asChild variant="outline">
+              <Link href="/app/chats">לכל הצ'אטים</Link>
+            </Button>
+          ) : undefined
         }
       >
         <Chat chats={chats} failed={chatsFailed} />
@@ -82,9 +89,11 @@ export function ShadchanArea({
         title="פורום השדכנים"
         subTitle="הפוסטים האחרונים בפורום"
         button={
-          <Button asChild>
-            <Link href={"/app/forums" as never}>לפורום השדכנים</Link>
-          </Button>
+          sectionHasData(forumPosts, forumFailed) ? (
+            <Button asChild variant="outline">
+              <Link href={"/app/forums" as never}>לפורום השדכנים</Link>
+            </Button>
+          ) : undefined
         }
       >
         <Forum posts={forumPosts} failed={forumFailed} />

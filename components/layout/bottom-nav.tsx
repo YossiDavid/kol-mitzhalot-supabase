@@ -60,10 +60,12 @@ export function BottomNav({ roles }: { roles: Role[] }) {
 
   return (
     <nav
-      className="fixed right-0 bottom-0 left-0 z-50 md:hidden"
+      // הרקע האטום על ה-nav עצמו (כולל אזור ה-safe-area), כדי שתוכן הדף לא
+      // יציץ מתחת לפינות המעוגלות או מתחת לשורת הבית של המכשיר
+      className="fixed right-0 bottom-0 left-0 z-50 bg-background md:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="flex h-16 items-center justify-around rounded-t-2xl border-t border-border/60 bg-background px-1 shadow-[0_-4px_24px_rgba(0,0,0,0.07)]">
+      <div className="flex h-16 items-center justify-around rounded-t-2xl border-t border-border/60 bg-background px-0.5 shadow-[0_-4px_24px_rgba(0,0,0,0.07)]">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.url;
@@ -112,7 +114,9 @@ export function BottomNav({ roles }: { roles: Role[] }) {
                 />
                 <UnreadChatsBadge count={unreadCount} placement="bottom-nav" />
               </span>
-              <span className="leading-none">{item.title}</span>
+              <span className="leading-none whitespace-nowrap">
+                {item.title}
+              </span>
             </Link>
           );
         })}

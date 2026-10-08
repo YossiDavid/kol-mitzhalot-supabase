@@ -1,10 +1,19 @@
 import { CARD_GUIDANCE_HTML, authorFields } from "./author-fields";
 import type { FormSteps } from "./types";
 
-const WELCOME_HTML =
-  "<h3>ברוכים הבאים למערכת השידוכים שלנו</h3><p>תודה על הצטרפותכם.</p><p>על מנת שנוכל להכיר אתכם לעומק ולהציע הצעות שידוך מותאמות ומדויקות – יש למלא את הטופס שלפניכם במלואו ובאופן מדויק.</p><p><b>המידע שתמלאו ישמר בפרטיות מוחלטת וישמש אך ורק לצורכי תהליך ההתאמה.</b></p><p>נודה על שיתוף פעולה מלא ומוקפד – זהו שלב חיוני להצלחת התהליך.</p><hr/>";
+/**
+ * פתיח ההקדמה. הניסוח של הלקוח נשמר במלואו; רק התצוגה מתקפלת:
+ * - תמיד מוצג: הכותרת, "תודה על הצטרפותכם", וההוראה למלא את הטופס במלואו.
+ * - מתקפל ("קראו עוד"): הבטחת הפרטיות ובקשת שיתוף הפעולה.
+ * - תמיד מוצג אחרי החלק המתקפל: ההנחיה "למי מיועד הכרטיס" - חובה לקרוא.
+ */
+const INTRO_LEAD_HTML =
+  "<h3>ברוכים הבאים למערכת השידוכים שלנו</h3><p>תודה על הצטרפותכם.</p><p>על מנת שנוכל להכיר אתכם לעומק ולהציע הצעות שידוך מותאמות ומדויקות – יש למלא את הטופס שלפניכם במלואו ובאופן מדויק.</p>";
 
-const INTRO_HTML = WELCOME_HTML.replace("<hr/>", `${CARD_GUIDANCE_HTML}<hr/>`);
+const INTRO_MORE_HTML =
+  "<p><b>המידע שתמלאו ישמר בפרטיות מוחלטת וישמש אך ורק לצורכי תהליך ההתאמה.</b></p><p>נודה על שיתוף פעולה מלא ומוקפד – זהו שלב חיוני להצלחת התהליך.</p>";
+
+const INTRO_TAIL_HTML = `${CARD_GUIDANCE_HTML}<hr/>`;
 
 export const introStep: FormSteps = {
   name: "intro",
@@ -33,7 +42,11 @@ export const introStep: FormSteps = {
           required: true,
           // התווית היא משפט שלם, ולכן הודעה מפורשת
           requiredMessage: "נא לבחור מי ממלא את הכרטיס",
-          beforeField: INTRO_HTML,
+          beforeFieldCollapsible: {
+            lead: INTRO_LEAD_HTML,
+            more: INTRO_MORE_HTML,
+            tail: INTRO_TAIL_HTML,
+          },
         },
         ...authorFields,
         {

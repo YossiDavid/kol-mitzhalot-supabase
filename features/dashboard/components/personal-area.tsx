@@ -11,6 +11,8 @@ import {
   ownCardsShadchanimSubtitle,
 } from "@/features/students/lib/own-cards-heading";
 
+import { sectionHasData } from "@/features/dashboard/lib/section-has-data";
+
 import { DashboardArea } from "./dashboard-area";
 import type { DashboardChat } from "./chat-rooms-list";
 import { ActiveShidduchim, Chat, Children, ShadchanimList } from "./user";
@@ -59,9 +61,11 @@ export function PersonalArea({
           title="הצעות פתוחות"
           subTitle="הצעות חדשות או מתקדמות שממתינות לטיפולך"
           button={
-            <Button asChild>
-              <Link href={"/app/proposals" as never}>לכל ההצעות</Link>
-            </Button>
+            sectionHasData(openProposals, openProposalsFailed) ? (
+              <Button asChild variant="outline">
+                <Link href={"/app/proposals" as never}>לכל ההצעות</Link>
+              </Button>
+            ) : undefined
           }
         >
           <ActiveShidduchim
@@ -80,11 +84,13 @@ export function PersonalArea({
               : "שאלות ותשובות חדשות שקיבלת משדכנים בצ'אט"
           }
           button={
-            <Button asChild>
-              <Link href="/app/chats">
-                {isInsideArea ? "לכל הצ'אטים" : "למעבר לצ'אט"}
-              </Link>
-            </Button>
+            sectionHasData(chats, chatsFailed) ? (
+              <Button asChild variant="outline">
+                <Link href="/app/chats">
+                  {isInsideArea ? "לכל הצ'אטים" : "למעבר לצ'אט"}
+                </Link>
+              </Button>
+            ) : undefined
           }
         >
           <Chat chats={chats} failed={chatsFailed} />
@@ -117,10 +123,13 @@ export function PersonalArea({
           headingLevel={headingLevel}
           title="שדכנים שפעלו בשבילך"
           subTitle={ownCardsShadchanimSubtitle(ownCards)}
+          // hasNoShadchanim: ריק, ובכשל (לא ידוע) הוא false - שם הכפתור נשאר
           button={
-            <Button asChild>
-              <Link href="/app/shadchanim">לכל השדכנים</Link>
-            </Button>
+            hasNoShadchanim ? undefined : (
+              <Button asChild variant="outline">
+                <Link href="/app/shadchanim">לכל השדכנים</Link>
+              </Button>
+            )
           }
         >
           <ShadchanimList />

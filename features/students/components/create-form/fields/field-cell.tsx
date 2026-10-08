@@ -2,6 +2,8 @@
 
 import { Fragment, type ReactNode } from "react";
 
+import { CollapsibleBefore } from "./collapsible-before";
+
 import { cn } from "@/lib/utils";
 import {
   FIELD_SCROLL_MARGIN_CLASS,
@@ -41,7 +43,11 @@ export function FieldCell({
 
   return (
     <Fragment>
-      {renderBeforeField(field.beforeField ?? field.before)}
+      {field.beforeFieldCollapsible ? (
+        <CollapsibleBefore {...field.beforeFieldCollapsible} />
+      ) : (
+        renderBeforeField(field.beforeField ?? field.before)
+      )}
       <div
         className={cn(widthClass, FIELD_SCROLL_MARGIN_CLASS)}
         {...fieldCellAttributes(field.name)}

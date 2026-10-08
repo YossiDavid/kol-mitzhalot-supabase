@@ -6,23 +6,23 @@ import { CONTROL_HEIGHT, CONTROL_SQUARE } from "@/components/ui/control-size";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "[&>svg]:stroke-2.5 inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md leading-none! font-bold whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 active:scale-90 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "[&>svg]:stroke-2.5 inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md leading-none! font-bold whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 active:scale-90 disabled:pointer-events-none aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-active",
+          "bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-active disabled:bg-muted disabled:text-foreground/65",
         destructive:
-          "bg-destructive text-white hover:bg-destructive-hover focus-visible:ring-destructive/20 active:bg-destructive-active dark:focus-visible:ring-destructive/40",
+          "bg-destructive text-white hover:bg-destructive-hover focus-visible:ring-destructive/20 active:bg-destructive-active disabled:bg-muted disabled:text-foreground/65 dark:focus-visible:ring-destructive/40",
         outline:
-          "border border-primary bg-transparent text-primary shadow-xs hover:bg-primary-muted active:bg-primary-muted dark:border-primary dark:bg-transparent dark:hover:bg-primary-muted dark:active:bg-primary-muted",
+          "border border-primary bg-transparent text-primary shadow-xs hover:bg-primary-muted active:bg-primary-muted disabled:border-border disabled:bg-transparent disabled:text-foreground/65 disabled:shadow-none dark:border-primary dark:bg-transparent dark:hover:bg-primary-muted dark:active:bg-primary-muted dark:disabled:border-border dark:disabled:bg-transparent",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary-hover active:bg-secondary-active",
+          "bg-secondary text-secondary-foreground hover:bg-secondary-hover active:bg-secondary-active disabled:bg-muted disabled:text-foreground/65",
         ghost:
-          "bg-transparent text-foreground hover:bg-primary-muted hover:text-primary active:bg-primary-muted dark:hover:bg-primary-muted dark:hover:text-primary",
-        link: "text-primary underline-offset-4 hover:text-primary-hover hover:underline",
+          "bg-transparent text-foreground hover:bg-primary-muted hover:text-primary active:bg-primary-muted disabled:bg-transparent disabled:text-foreground/65 dark:hover:bg-primary-muted dark:hover:text-primary",
+        link: "text-primary underline-offset-4 hover:text-primary-hover hover:underline disabled:text-foreground/65",
         destructiveOutline:
-          "border border-destructive/40 bg-transparent text-destructive shadow-xs hover:bg-destructive-muted focus-visible:ring-destructive/20 active:bg-destructive-muted dark:border-destructive dark:bg-transparent dark:hover:bg-destructive-muted dark:focus-visible:ring-destructive/40 dark:active:bg-destructive-muted",
+          "border border-destructive/40 bg-transparent text-destructive shadow-xs hover:bg-destructive-muted focus-visible:ring-destructive/20 active:bg-destructive-muted disabled:border-border disabled:bg-transparent disabled:text-foreground/65 disabled:shadow-none dark:border-destructive dark:bg-transparent dark:hover:bg-destructive-muted dark:focus-visible:ring-destructive/40 dark:active:bg-destructive-muted dark:disabled:border-border dark:disabled:bg-transparent",
       },
       // הגבהים מסולם הרכיבים המשותף, כדי שכפתור ושדה באותה שורה יתיישרו
       size: {
