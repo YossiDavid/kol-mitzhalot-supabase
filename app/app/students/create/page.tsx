@@ -58,7 +58,7 @@ export default function CreateStudentPage() {
         console.error(
           "No student ID returned from create_full_student_profile",
         );
-        toast.error("שגיאה: לא התקבל מזהה סטודנט");
+        toast.error("שגיאה: לא התקבל מזהה כרטיס");
         return;
       }
 
@@ -78,9 +78,8 @@ export default function CreateStudentPage() {
       );
 
       if (photoResult.error) {
-        toast.error(
-          `הקו״ח נשמר, אבל שמירת התמונות נכשלה: ${photoResult.error}`,
-        );
+        console.error("Failed saving student photos:", photoResult.error);
+        toast.error("הקו״ח נשמר, אבל שמירת התמונות נכשלה");
       }
 
       const hasUploadErrors =
@@ -113,9 +112,7 @@ export default function CreateStudentPage() {
             "Error updating medical records with documents:",
             medicalUpdateError,
           );
-          toast.error(
-            `הקו״ח נשמר, אבל הייתה בעיה בעדכון מסמכים רפואיים: ${medicalUpdateError.message}`,
-          );
+          toast.error("הקו״ח נשמר, אבל הייתה בעיה בעדכון מסמכים רפואיים");
         }
       }
 

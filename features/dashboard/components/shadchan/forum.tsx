@@ -1,3 +1,4 @@
+import { Box } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -9,6 +10,8 @@ import {
 import { postPreview } from "@/features/forums/lib/format";
 import { MessageSquareMore } from "lucide-react";
 import Link from "next/link";
+
+import { SectionLoadFailed } from "../section-load-failed";
 
 type ForumPost = {
   id: string;
@@ -25,18 +28,7 @@ export default function Forum({
   /** השליפה נכשלה: מציגים הודעת שגיאה ולא "אין הודעות" */
   failed?: boolean;
 }) {
-  if (failed) {
-    return (
-      <Empty size="compact">
-        <EmptyHeader>
-          <EmptyTitle>לא הצלחנו לטעון את הפורום</EmptyTitle>
-          <EmptyDescription>
-            אנא רעננו את הדף או נסו שוב בעוד מספר דקות.
-          </EmptyDescription>
-        </EmptyHeader>
-      </Empty>
-    );
-  }
+  if (failed) return <SectionLoadFailed title="לא הצלחנו לטעון את הפורום" />;
 
   if (posts.length === 0) {
     return (
@@ -57,13 +49,14 @@ export default function Forum({
     );
   }
 
+  // שורות מופרדות בקו בתוך Box אחד (כמו מסגרת הרשימות האחרות), בלי מסגרת לכל שורה
   return (
-    <div className="space-y-3">
+    <Box className="divide-y divide-border overflow-hidden p-0">
       {posts.slice(0, 3).map((post) => (
         <Link
           key={post.id}
           href={`/app/forums/${post.id}` as never}
-          className="block rounded-lg border p-3 text-right hover:bg-muted/50"
+          className="block p-4 text-right transition hover:bg-muted/50"
           dir="rtl"
         >
           <p className="text-body-sm leading-snug font-semibold">
@@ -74,11 +67,6 @@ export default function Forum({
           </p>
         </Link>
       ))}
-      <div className="pt-1">
-        <Button asChild variant="outline" size="sm">
-          <Link href="/app/forums">לכל הפוסטים</Link>
-        </Button>
-      </div>
-    </div>
+    </Box>
   );
 }

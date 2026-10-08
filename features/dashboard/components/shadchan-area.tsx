@@ -11,8 +11,12 @@ import { ActiveShidduchim, Chat, Favorites, Forum } from "./shadchan";
 export type ShadchanAreaProps = {
   activeShidduchim: React.ComponentProps<typeof ActiveShidduchim>["shiduchim"];
   activeShidduchimCount: number;
+  /** שליפת ההצעות האחרונות נכשלה */
+  activeShidduchimFailed: boolean;
   favorites: React.ComponentProps<typeof Favorites>["favorites"];
+  favoritesFailed: boolean;
   chats: DashboardChat[];
+  chatsFailed: boolean;
   forumPosts: React.ComponentProps<typeof Forum>["posts"];
   forumFailed: boolean;
 };
@@ -21,8 +25,11 @@ export type ShadchanAreaProps = {
 export function ShadchanArea({
   activeShidduchim,
   activeShidduchimCount,
+  activeShidduchimFailed,
   favorites,
+  favoritesFailed,
   chats,
+  chatsFailed,
   forumPosts,
   forumFailed,
 }: ShadchanAreaProps) {
@@ -41,7 +48,10 @@ export function ShadchanArea({
           </Button>
         }
       >
-        <ActiveShidduchim shiduchim={activeShidduchim} />
+        <ActiveShidduchim
+          shiduchim={activeShidduchim}
+          failed={activeShidduchimFailed}
+        />
       </DashboardSection>
       <DashboardSection
         headingLevel="h3"
@@ -53,7 +63,7 @@ export function ShadchanArea({
           </Button>
         }
       >
-        <Favorites favorites={favorites} />
+        <Favorites favorites={favorites} failed={favoritesFailed} />
       </DashboardSection>
       <DashboardSection
         headingLevel="h3"
@@ -65,15 +75,15 @@ export function ShadchanArea({
           </Button>
         }
       >
-        <Chat chats={chats} />
+        <Chat chats={chats} failed={chatsFailed} />
       </DashboardSection>
       <DashboardSection
         headingLevel="h3"
-        title="הפורומים שלך"
-        subTitle="הפורומים האחרונים שלך"
+        title="פורום השדכנים"
+        subTitle="הפוסטים האחרונים בפורום"
         button={
           <Button asChild>
-            <Link href={"/app/forums" as never}>לכל הפורומים שלך</Link>
+            <Link href={"/app/forums" as never}>לפורום השדכנים</Link>
           </Button>
         }
       >

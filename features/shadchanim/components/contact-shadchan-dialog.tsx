@@ -102,7 +102,7 @@ export default function ContactShadchanDialog({
           <DialogHeader>
             <DialogTitle>פניה ל{shadchanName}</DialogTitle>
             <DialogDescription>
-              ההודעה תישלח בצ׳אט, והשדכן יקבל התראה על הפנייה.
+              ההודעה תישלח בצ'אט, והשדכן יקבל התראה על הפנייה.
             </DialogDescription>
           </DialogHeader>
 

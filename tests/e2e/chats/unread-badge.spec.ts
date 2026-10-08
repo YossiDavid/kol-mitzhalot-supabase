@@ -131,7 +131,7 @@ test.describe("תג צ'אטים שלא נקראו", () => {
     await unreadLink.click();
     await expect(page).toHaveURL(/\/app\/chats$/);
     await page
-      .getByRole("complementary", { name: "רשימת הצ׳אטים" })
+      .getByRole("complementary", { name: "רשימת הצ'אטים" })
       .getByRole("link", { name: /Fixture Manager/ })
       .click();
     const log = page.getByRole("log", { name: "הודעות" });

@@ -15,6 +15,10 @@ const LOGIN_REQUIRED_MESSAGE = "שגיאה: יש להתחבר למערכת";
 const TOO_LARGE_MESSAGE = "הכרטיס גדול מדי לשמירה. כדאי לקצר טקסטים ארוכים.";
 const TOO_MANY_REQUESTS_MESSAGE = "יותר מדי ניסיונות שמירה. נסו שוב בעוד דקה.";
 
+/** כשל שמירה שאינו מוכר: הודעת המסד הגולמית נרשמת בקונסול ולא מוצגת למשתמש */
+const GENERIC_SAVE_FAILURE_MESSAGE =
+  "שמירת הכרטיס נכשלה. אפשר לנסות שוב, ואם התקלה חוזרת פנו אלינו דרך עמוד צרו קשר.";
+
 const HTTP_UNAUTHORIZED = 401;
 const HTTP_PAYLOAD_TOO_LARGE = 413;
 const HTTP_TOO_MANY_REQUESTS = 429;
@@ -95,13 +99,17 @@ async function send(
   if (!parsed.ok) return failure(parsed.message);
 
   if (!response.ok) {
-    const statusMessage = messageForStatus(response.status);
     const serverMessage =
       typeof parsed.body.error === "string" ? parsed.body.error : "";
+    const knownMessage =
+      messageForStatus(response.status) ?? RPC_MESSAGES[serverMessage];
+    if (knownMessage) return failure(knownMessage);
+
+    // הודעת השרת עצמה (לרוב טקסט גולמי מהמסד) לא מוצגת: רק הנחיה קבועה
+    console.error("[students/save] rejected", response.status, serverMessage);
+    const described = describeStudentSaveError(serverMessage);
     return failure(
-      statusMessage ??
-        RPC_MESSAGES[serverMessage] ??
-        describeStudentSaveError(serverMessage || `שגיאה ${response.status}`),
+      described === serverMessage ? GENERIC_SAVE_FAILURE_MESSAGE : described,
     );
   }
   return { data: parsed.body, error: null };
@@ -116,7 +124,7 @@ export async function createStudentProfile(
   const id = result.data.id;
   return typeof id === "string"
     ? { data: id, error: null }
-    : failure("שגיאה: לא התקבל מזהה סטודנט");
+    : failure("שגיאה: לא התקבל מזהה כרטיס");
 }
 
 /** מעדכן כרטיס קיים */

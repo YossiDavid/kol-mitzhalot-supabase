@@ -323,7 +323,7 @@ export default function FilterSection() {
         title="רשימת פרחי אנ״ש"
         actions={
           <Button asChild className="max-md:hidden">
-            <Link href={"/app"}>לכל ההצעות האחרונות</Link>
+            <Link href={"/app"}>חזרה לעמוד הראשי</Link>
           </Button>
         }
       />

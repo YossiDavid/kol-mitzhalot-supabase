@@ -6,6 +6,7 @@ import { Box, PageTitle } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/server";
+import { describeSupabaseError } from "@/lib/supabase/describe-error";
 import { hasRole } from "@/lib/user";
 import {
   getCardBackLink,
@@ -21,6 +22,9 @@ import {
 import { loadStudentPhotos } from "@/features/students/lib/student-photos";
 import type { StudentPhotoItem } from "@/features/students/lib/student-photo-rules";
 import EditStudentForm from "./edit-student-form";
+
+/** PostgREST: `.single()` ללא שורה תואמת - כרטיס שאינו קיים, לא תקלה */
+const NO_ROWS_ERROR_CODE = "PGRST116";
 
 // אין כאן export const dynamic — הוא אסור תחת Cache Components (ראה ההערה
 // בדף הכרטיס). noStore מספיק כדי שהטופס ייטען תמיד מהמצב העדכני.
@@ -168,11 +172,22 @@ async function EditStudentPageContent({
     .eq("id", id)
     .single();
 
-  if (error || !data) {
+  if (error && error.code !== NO_ROWS_ERROR_CODE) {
+    console.error("[students/edit] load failed", describeSupabaseError(error));
+    return (
+      <EditNotice
+        title="לא הצלחנו לטעון את הכרטיס"
+        body="אירעה תקלה בשליפת הנתונים. אנא רעננו את הדף או נסו שוב בעוד מספר דקות."
+        backLink={backLink}
+      />
+    );
+  }
+
+  if (!data) {
     return (
       <EditNotice
         title="מיועד לא נמצא"
-        body={error?.message ?? "הרשומה שחיפשת אינה קיימת במערכת"}
+        body="הרשומה שחיפשת אינה קיימת במערכת"
         backLink={backLink}
       />
     );

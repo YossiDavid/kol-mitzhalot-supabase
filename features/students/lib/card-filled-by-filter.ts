@@ -10,7 +10,7 @@ export const CARD_FILLED_BY_FILTER_OPTIONS: ReadonlyArray<{
   value: CardFilledByFilter;
   label: string;
 }> = [
-  { value: "direct", label: "מועמדים והורים" },
+  { value: "direct", label: "מיועדים והורים" },
   { value: "third_party", label: "צד שלישי" },
 ];
 

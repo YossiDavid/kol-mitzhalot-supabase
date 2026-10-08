@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
   ]);
 
   if (!groom || !bride) {
-    return NextResponse.json({ error: "פרטי מועמדים חסרים" }, { status: 404 });
+    return NextResponse.json({ error: "פרטי מיועדים חסרים" }, { status: 404 });
   }
 
   // הצד שמקבל עכשיו הצעה חדשה חייב להיות פעיל ובתוך המכסה שלו. נבדק לפני

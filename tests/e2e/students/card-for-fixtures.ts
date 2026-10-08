@@ -6,14 +6,14 @@ import { expect, type Page } from "@playwright/test";
  */
 
 export const CARD_FOR_LABELS = {
-  self: "המועמד/ת בעצמו/ה",
-  child: "אב או אם של המועמד/ת",
+  self: "המיועד/ת בעצמו/ה",
+  child: "אב או אם של המיועד/ת",
   other: "אדם אחר (שדכן/ית, קרוב/ת משפחה, מכר/ה)",
 } as const;
 
 export const FILLER_NAME = "ממלא בדיקה";
 export const FILLER_PHONE = "0521234567";
-export const FILL_REASON = "למועמד אין גישה למחשב";
+export const FILL_REASON = "למיועד אין גישה למחשב";
 
 /** בורר הקשר: ל-select אין id, ולכן נמצא לפי תא השדה */
 export const relationSelect = (page: Page) =>

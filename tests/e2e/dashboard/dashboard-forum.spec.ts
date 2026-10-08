@@ -57,6 +57,16 @@ test.describe("דשבורד: מקטע הפורומים", () => {
       0,
     );
     await expect(page.getByText("לא הצלחנו לטעון את הפורום")).toHaveCount(0);
+    // הכפתור היחיד לפורום הוא בכותרת המקטע; אין כפתור כפול בתחתית הרשימה
+    await expect(page.getByRole("link", { name: "לכל הפוסטים" })).toHaveCount(
+      0,
+    );
+    await expect(
+      page.getByRole("link", { name: "לפורום השדכנים" }),
+    ).toHaveAttribute("href", "/app/forums");
+    await expect(
+      page.getByRole("heading", { name: "פורום השדכנים" }),
+    ).toBeVisible();
 
     // Act
     await postLink.click();

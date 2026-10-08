@@ -36,7 +36,7 @@ export function AuthorInfoCard({
       )}
       {canSeeKnowsWell && info.knowsWell !== null && (
         <p className="text-caption text-muted-foreground">
-          מכיר/ה היטב את המועמד/ת: {info.knowsWell ? "כן" : "לא"}
+          מכיר/ה היטב את המיועד/ת: {info.knowsWell ? "כן" : "לא"}
         </p>
       )}
       {info.phone && (

@@ -91,7 +91,7 @@ async function ShadchanProfileContent({
       {profile.description && (
         <div className="space-y-2">
           <h2 className="text-body font-bold">אודות</h2>
-          <p className="whitespace-pre-line text-body-sm">
+          <p className="text-body-sm whitespace-pre-line">
             {profile.description}
           </p>
         </div>
@@ -108,34 +108,34 @@ function ShadchanProfileSkeleton() {
   return (
     <SkeletonRegion>
       <Card aria-hidden>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-center gap-4">
-          <Skeleton className="size-20 rounded-full" />
-          <div className="min-w-0 space-y-2">
-            <Skeleton className="h-7 w-48" />
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-4 w-40" />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-4">
+            <Skeleton className="size-20 rounded-full" />
+            <div className="min-w-0 space-y-2">
+              <Skeleton className="h-7 w-48" />
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-40" />
+            </div>
+          </div>
+          <Skeleton className="h-9 w-full sm:w-40" />
+        </div>
+
+        <Skeleton className="h-16 w-full rounded-xl" />
+
+        <div className="space-y-2">
+          <Skeleton className="h-5 w-20" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-4/5" />
+        </div>
+
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-24" />
+          <div className="flex flex-wrap gap-2">
+            {Array.from({ length: SKELETON_TAG_COUNT }, (_, i) => (
+              <Skeleton key={i} className="h-6 w-20 rounded-full" />
+            ))}
           </div>
         </div>
-        <Skeleton className="h-9 w-full sm:w-40" />
-      </div>
-
-      <Skeleton className="h-16 w-full rounded-xl" />
-
-      <div className="space-y-2">
-        <Skeleton className="h-5 w-20" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-4/5" />
-      </div>
-
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-24" />
-        <div className="flex flex-wrap gap-2">
-          {Array.from({ length: SKELETON_TAG_COUNT }, (_, i) => (
-            <Skeleton key={i} className="h-6 w-20 rounded-full" />
-          ))}
-        </div>
-      </div>
       </Card>
     </SkeletonRegion>
   );
@@ -150,11 +150,11 @@ export default function ShadchanProfilePage({
   return (
     <Page width="content">
       <Link
-        href="/app"
+        href="/app/shadchanim"
         className="inline-flex items-center gap-1.5 text-body-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowRight className="size-4" aria-hidden />
-        חזרה ללוח הבקרה
+        חזרה לרשימת השדכנים
       </Link>
 
       <Suspense fallback={<ShadchanProfileSkeleton />}>

@@ -44,32 +44,41 @@ const STUDENT_TABLE_COLUMNS = [
   "previous_partners(children, children_number, no_children)",
 ].join(", ");
 
-/** המיועדים שהמשתמש סימן במועדפים */
+/**
+ * המיועדים שהמשתמש סימן במועדפים. failed נפרד מרשימה ריקה: שליפה שנכשלה
+ * מציגה "לא הצלחנו לטעון" ולא "עוד לא הוספת מועדפים"
+ */
 export async function getFavoriteStudents(
   supabase: ServerSupabase,
   favoriteIds: string[],
 ) {
   // בלי מועדפים אין מה לשלוף - התוצאה זהה לשאילתה על רשימה ריקה
-  if (favoriteIds.length === 0) return [];
+  if (favoriteIds.length === 0) return { students: [], failed: false };
 
   const { data, error } = await supabase
     .from("students")
     .select(STUDENT_TABLE_COLUMNS)
     .in("id", favoriteIds);
 
-  if (error) console.error(error);
-  return data ?? [];
+  if (error) {
+    console.error("[dashboard/favorites]", describeSupabaseError(error));
+    return { students: [], failed: true };
+  }
+  return { students: data ?? [], failed: false };
 }
 
-/** המיועדים שבניהול המשתמש */
+/** המיועדים שבניהול המשתמש. failed נפרד מרשימה ריקה (כמו במועדפים) */
 export async function getOwnStudents(supabase: ServerSupabase, userId: string) {
   const { data, error } = await supabase
     .from("students")
     .select(STUDENT_TABLE_COLUMNS)
     .eq("user_id", userId);
 
-  if (error) console.error(error);
-  return data ?? [];
+  if (error) {
+    console.error("[dashboard/own-students]", describeSupabaseError(error));
+    return { students: [], failed: true };
+  }
+  return { students: data ?? [], failed: false };
 }
 
 /** סטטוס בקשת ההצטרפות כשדכן של המשתמש; null כשאין שורה, או שהשליפה נכשלה */
@@ -104,7 +113,7 @@ const SHIDDUCH_SIDE_COLUMNS = `
 /** "ההצעות האחרונות שלך" — הרשימה המלאה ב-/app/shadchan/proposals */
 const RECENT_SHIDDUCHIM_LIMIT = 6;
 
-/** השידוכים שהשדכן המחובר הציע (האחרונים) */
+/** השידוכים שהשדכן המחובר הציע (האחרונים). failed נפרד מרשימה ריקה */
 export async function getRecentShidduchim(
   supabase: ServerSupabase,
   shadchanId: string,
@@ -132,8 +141,14 @@ export async function getRecentShidduchim(
     .order("created_at", { ascending: false })
     .limit(RECENT_SHIDDUCHIM_LIMIT);
 
-  if (error) console.error(error);
-  return data ?? [];
+  if (error) {
+    console.error(
+      "[dashboard/recent-shidduchim]",
+      describeSupabaseError(error),
+    );
+    return { shidduchim: [], failed: true };
+  }
+  return { shidduchim: data ?? [], failed: false };
 }
 
 /** כלל ההצעות שהשדכן שלח, לא רק האחרונות שמוצגות. null כשהספירה נכשלה */
@@ -171,7 +186,17 @@ export async function getLatestForumPosts(supabase: ServerSupabase) {
   return { posts: data ?? [], failed: false };
 }
 
-/** חדרי הצ'אט של המשתמש, החדש קודם. שגיאה מחזירה null (כמו "אין חדרים") */
+/** שורות החדרים, או null (אחרי רישום) כששליפתם נכשלה */
+function chatRoomsOrNull<T>(
+  data: T[] | null,
+  error: Parameters<typeof describeSupabaseError>[0] | null,
+): T[] | null {
+  if (!error) return data;
+  console.error("[dashboard/chat-rooms]", describeSupabaseError(error));
+  return null;
+}
+
+/** חדרי הצ'אט של המשתמש, החדש קודם. שגיאה מחזירה null (שונה מרשימה ריקה) */
 async function getChatRooms(supabase: ServerSupabase, userId: string) {
   // עמודות ההקשר (כללי/כרטיס/הצעה) מבדילות בין כמה שיחות עם אותו אדם
   const roomColumns =
@@ -184,7 +209,13 @@ async function getChatRooms(supabase: ServerSupabase, userId: string) {
     .eq("user_id", userId)
     .is("deleted_before", null);
 
-  if (participantsError) return null;
+  if (participantsError) {
+    console.error(
+      "[dashboard/chat-participants]",
+      describeSupabaseError(participantsError),
+    );
+    return null;
+  }
 
   if (participants && participants.length > 0) {
     const { data, error } = await supabase
@@ -195,7 +226,7 @@ async function getChatRooms(supabase: ServerSupabase, userId: string) {
         participants.map((p) => p.room_id),
       )
       .order("last_message_at", { ascending: false, nullsFirst: false });
-    return error ? null : data;
+    return chatRoomsOrNull(data, error);
   }
 
   // fallback: query by user_a/user_b directly
@@ -204,7 +235,7 @@ async function getChatRooms(supabase: ServerSupabase, userId: string) {
     .select(roomColumns)
     .or(`user_a.eq.${userId},user_b.eq.${userId}`)
     .order("last_message_at", { ascending: false, nullsFirst: false });
-  return error ? null : data;
+  return chatRoomsOrNull(data, error);
 }
 
 /** ההודעה האחרונה של כל חדר, בשאילתה אחת. הודעה שלא נמצאה - חסרה מהמפה */
@@ -214,10 +245,15 @@ async function getLastMessagesById(
 ) {
   if (messageIds.length === 0) return new Map<string, LastMessage>();
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("chat_messages")
     .select("message_id, content, created_at, sender_id")
     .in("message_id", messageIds);
+
+  // ההודעות האחרונות הן קישוט לשורה: בלעדיהן השיחות עדיין מוצגות
+  if (error) {
+    console.error("[dashboard/last-messages]", describeSupabaseError(error));
+  }
 
   return new Map((data ?? []).map((message) => [message.message_id, message]));
 }
@@ -249,13 +285,16 @@ async function getOtherUserMetadata(
   }
 }
 
-/** שורות הצ'אט בדשבורד: הצד השני, וההודעה האחרונה בחדר */
+/**
+ * שורות הצ'אט בדשבורד: הצד השני, וההודעה האחרונה בחדר. failed נפרד
+ * מרשימה ריקה: שליפת חדרים שנכשלה מציגה "לא הצלחנו לטעון"
+ */
 export async function getChatsWithLastMessage(
   supabase: ServerSupabase,
   userId: string,
 ) {
   const chatRooms = await getChatRooms(supabase, userId);
-  if (!chatRooms) return [];
+  if (!chatRooms) return { chats: [], failed: true };
 
   const messageIds = chatRooms.flatMap((room) =>
     room.last_message_id ? [room.last_message_id] : [],
@@ -276,7 +315,7 @@ export async function getChatsWithLastMessage(
     ),
   ]);
 
-  return chats.flatMap((chat) => {
+  const rows = chats.flatMap((chat) => {
     if (!chat) return [];
     const { room, userData } = chat;
     const lastMsg = room.last_message_id
@@ -302,6 +341,7 @@ export async function getChatsWithLastMessage(
       },
     ];
   });
+  return { chats: rows, failed: false };
 }
 
 /**
@@ -321,7 +361,12 @@ async function getShadchanShidduchIds(
     .eq("shadchan_id", userId)
     .in("id", shidduchIds);
 
-  if (error) console.error(error);
+  if (error) {
+    console.error(
+      "[dashboard/shadchan-shidduchim]",
+      describeSupabaseError(error),
+    );
+  }
   return new Set((data ?? []).map((row) => row.id));
 }
 
@@ -334,11 +379,14 @@ export async function getChatsBySide(
   userId: string,
   ownStudentIds: ReadonlySet<string>,
 ) {
-  const chats = await getChatsWithLastMessage(supabase, userId);
+  const { chats, failed } = await getChatsWithLastMessage(supabase, userId);
   const shadchanShidduchIds = await getShadchanShidduchIds(
     supabase,
     userId,
     shidduchIdsOf(chats),
   );
-  return splitChatsBySide(chats, ownStudentIds, shadchanShidduchIds);
+  return {
+    ...splitChatsBySide(chats, ownStudentIds, shadchanShidduchIds),
+    failed,
+  };
 }

@@ -20,11 +20,11 @@ export const introStep: FormSteps = {
           label: "מי ממלא את הכרטיס?",
           type: "radio",
           description:
-            "הצעות שידוך נשלחות לכרטיסים שמולאו על ידי המועמד/ת או הוריו/ה.",
+            "הצעות שידוך נשלחות לכרטיסים שמולאו על ידי המיועד/ת או הוריו/ה.",
           vertical: true,
           options: [
-            { value: "self", label: "המועמד/ת בעצמו/ה" },
-            { value: "child", label: "אב או אם של המועמד/ת" },
+            { value: "self", label: "המיועד/ת בעצמו/ה" },
+            { value: "child", label: "אב או אם של המיועד/ת" },
             {
               value: "other",
               label: "אדם אחר (שדכן/ית, קרוב/ת משפחה, מכר/ה)",

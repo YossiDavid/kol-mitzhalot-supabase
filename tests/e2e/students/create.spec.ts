@@ -204,7 +204,7 @@ test.describe("יצירת תלמיד חדש", () => {
     expect(created).toEqual({ card_for: "child", identity_number: null });
   });
 
-  test("המועמד/ת בעצמו/ה: פרטי ממלא הכרטיס מוסתרים ואינם חובה", async ({
+  test("המיועד/ת בעצמו/ה: פרטי ממלא הכרטיס מוסתרים ואינם חובה", async ({
     page,
   }) => {
     // Arrange + Act
@@ -243,9 +243,9 @@ test.describe("יצירת תלמיד חדש", () => {
     await page.getByRole("button", { name: "המשך לשלב הבא" }).click();
 
     // Assert
-    await expect(page.getByText("נא לבחור מה הקשר שלך למועמד/ת")).toBeVisible();
+    await expect(page.getByText("נא לבחור מה הקשר שלך למיועד/ת")).toBeVisible();
     await expect(
-      page.getByText("נא לציין האם את/ה מכיר/ה היטב את המועמד/ת"),
+      page.getByText("נא לציין האם את/ה מכיר/ה היטב את המיועד/ת"),
     ).toBeVisible();
     await expect(
       page.getByText("נא להסביר מדוע הכרטיס ממולא על ידך"),
@@ -277,7 +277,7 @@ test.describe("יצירת תלמיד חדש", () => {
   test("ההנחיה לציבור מוצגת בראש הטופס", async ({ page }) => {
     // Assert
     await expect(
-      page.getByText("המערכת נועדה בעיקר למועמדים עצמם ולהוריהם", {
+      page.getByText("המערכת נועדה בעיקר למיועדים עצמם ולהוריהם", {
         exact: false,
       }),
     ).toBeVisible();

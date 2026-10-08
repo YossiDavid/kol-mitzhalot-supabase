@@ -21,6 +21,9 @@ import { DEFAULT_STUDENTS_SORT } from "@/features/students/lib/students-list-sor
 import { useStudentsPage } from "@/features/students/lib/use-students-page";
 import { cn } from "@/lib/utils";
 
+/** הודעה קבועה למשתמש כשעדכון המועדפים נכשל (הפרטים הטכניים נרשמים בקונסול) */
+const FAVORITES_UPDATE_ERROR = "עדכון המועדפים נכשל, נסו שוב";
+
 export default function StudentsList() {
   const [user, setUser] = useState<User | undefined>(undefined);
   const { query } = useStudentQuery();
@@ -33,7 +36,6 @@ export default function StudentsList() {
     students,
     total,
     status,
-    errorMessage,
     page,
     setPage,
     reload,
@@ -83,7 +85,8 @@ export default function StudentsList() {
     });
 
     if (error) {
-      toast.error(error.message);
+      console.error("[students/list] favorites update failed:", error);
+      toast.error(FAVORITES_UPDATE_ERROR);
       return;
     }
     if (data) setUser(data.user || undefined);
@@ -98,20 +101,13 @@ export default function StudentsList() {
       <div className="mt-8">
         <Empty>
           <EmptyHeader>
-            <EmptyTitle>לא הצלחנו לטעון את רשימת הכרטיסים</EmptyTitle>
+            <EmptyTitle>לא הצלחנו לטעון את רשימת המיועדים</EmptyTitle>
             <EmptyDescription>
               אירעה תקלה בשליפת הנתונים. נסו שוב, ואם התקלה חוזרת פנו למנהל
               המערכת.
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <p
-              className="text-body-sm text-muted-foreground"
-              dir="ltr"
-              role="alert"
-            >
-              {errorMessage}
-            </p>
             <Button variant="outline" onClick={reload}>
               נסו שוב
             </Button>

@@ -21,10 +21,18 @@ import {
 import { ClearFavoritesButton } from "@/features/students/components/clear-favorites-button";
 import { createClient } from "@/lib/supabase/client";
 
+import { SectionLoadFailed } from "../section-load-failed";
+
+/** הודעה קבועה למשתמש כשהסרת מועדף נכשלה (הפרטים הטכניים נרשמים בקונסול) */
+const REMOVE_FAVORITE_ERROR = "הסרת המיועד מהמועדפים נכשלה, נסו שוב";
+
 export default function Favorites({
   favorites,
+  failed = false,
 }: {
   favorites: StudentTableRow[];
+  /** השליפה נכשלה: מציגים הודעת שגיאה ולא "עוד לא הוספת מועדפים" */
+  failed?: boolean;
 }) {
   const supabaseRef = useRef(createClient());
   const supabase = supabaseRef.current;
@@ -55,7 +63,8 @@ export default function Favorites({
     });
 
     if (error) {
-      toast.error(error.message);
+      console.error("[dashboard/favorites] remove failed", error);
+      toast.error(REMOVE_FAVORITE_ERROR);
       return;
     }
 
@@ -66,6 +75,10 @@ export default function Favorites({
 
     toast.success("המיועד הוסר מהמועדפים");
   };
+
+  if (failed) {
+    return <SectionLoadFailed title="לא הצלחנו לטעון את המועדפים" />;
+  }
 
   return (
     <>

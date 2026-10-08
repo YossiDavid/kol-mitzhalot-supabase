@@ -15,6 +15,7 @@ import {
 import { SkeletonRegion } from "@/components/ui/skeleton";
 import { CardSkeleton } from "@/components/ui/card-skeleton";
 import { createClient } from "@/lib/supabase/server";
+import { ProposalsLoadFailed } from "@/features/shidduchim/components/proposals-load-failed";
 import ParentProposalListItem from "@/features/shidduchim/components/parent-proposal-list-item";
 import { getMyProposals } from "@/features/shidduchim/lib/proposals-data";
 
@@ -36,7 +37,12 @@ async function ProposalsList() {
 
   if (!user) notFound();
 
-  const proposals = await getMyProposals(supabase);
+  const { proposals, failed } = await getMyProposals(supabase);
+
+  // שליפה שנכשלה אינה "אין הצעות": לא מציגים מצב ריק ולא מציעים להוסיף מיועד
+  if (failed) {
+    return <ProposalsLoadFailed title="לא הצלחנו לטעון את ההצעות" />;
+  }
 
   // כדי להבחין בין "אין מיועדים עדיין" ל"אין הצעות עדיין" במצב הריק
   const { count: childrenCount, error: childrenErr } =
@@ -110,7 +116,7 @@ export default function ProposalsPage() {
         description="כל הצעות השידוך שנשלחו אליכם, ואפשרות להשיב לשדכן ישירות מכאן."
         actions={
           <Button asChild variant="outline">
-            <Link href="/app">חזרה לאפליקציה</Link>
+            <Link href="/app">חזרה לעמוד הראשי</Link>
           </Button>
         }
       />

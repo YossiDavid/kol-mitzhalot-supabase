@@ -87,7 +87,7 @@ async function markAllRoomsRead(): Promise<void> {
 }
 
 const roomsAside = (page: Page) =>
-  page.getByRole("complementary", { name: "רשימת הצ׳אטים" });
+  page.getByRole("complementary", { name: "רשימת הצ'אטים" });
 
 const roomRow = (page: Page): Locator =>
   roomsAside(page).getByRole("link", { name: new RegExp(OTHER_USER_NAME) });

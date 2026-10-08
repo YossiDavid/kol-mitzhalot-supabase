@@ -1,21 +1,24 @@
-import { Button } from "@/components/ui/button";
 import {
   Empty,
-  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
 } from "@/components/ui/empty";
 import ParentProposalListItem from "@/features/shidduchim/components/parent-proposal-list-item";
 import type { ParentProposal } from "@/features/shidduchim/lib/proposals-data";
-import { Crown } from "lucide-react";
-import Link from "next/link";
+
+import { SectionLoadFailed } from "../section-load-failed";
 
 export default function ActiveShidduchim({
   shiduchim,
+  failed = false,
 }: {
   shiduchim: ParentProposal[];
+  /** השליפה נכשלה: מציגים הודעת שגיאה ולא "אין הצעות" */
+  failed?: boolean;
 }) {
+  if (failed) return <SectionLoadFailed title="לא הצלחנו לטעון את ההצעות" />;
+
   return (
     <>
       {shiduchim.length > 0 ? (
@@ -35,14 +38,6 @@ export default function ActiveShidduchim({
               רוצה להצטרף למנוי פרימיום ולהבליט את המיועד/ת ברשימות השדכנים?
             </EmptyDescription>
           </EmptyHeader>
-          <EmptyContent>
-            <Button asChild>
-              <Link href="/app/premium">
-                <Crown className="fill-current text-favorite" /> להצטרפות למנוי
-                פרימיום
-              </Link>
-            </Button>
-          </EmptyContent>
         </Empty>
       )}
     </>

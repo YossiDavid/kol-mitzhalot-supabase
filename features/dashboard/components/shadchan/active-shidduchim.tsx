@@ -14,6 +14,7 @@ import ShadchanProposalCard, {
   type SideExtras,
 } from "@/features/shidduchim/components/shadchan-proposal-card";
 import { parseShadchanProposalRows } from "@/features/shidduchim/components/shadchan-proposals-data";
+import { SectionLoadFailed } from "../section-load-failed";
 import { employmentCategoryToHebrew } from "@/features/students/lib/profile-labels";
 
 /**
@@ -109,10 +110,15 @@ function extrasById(
 /** "שידוכים באויר" — ההצעות האחרונות שהשדכן שלח, באותו כרטיס כמו ברשימה המלאה */
 export default function ActiveShidduchim({
   shiduchim,
+  failed = false,
 }: {
   /** שורות shidduchim גולמיות מהשאילתה בדשבורד; מאומתות כאן */
   shiduchim: readonly unknown[];
+  /** השליפה נכשלה: מציגים הודעת שגיאה ולא "עדיין לא שלחת הצעות" */
+  failed?: boolean;
 }) {
+  if (failed) return <SectionLoadFailed title="לא הצלחנו לטעון את ההצעות" />;
+
   const proposals = parseShadchanProposalRows(shiduchim);
   const extras = extrasById(shiduchim);
 

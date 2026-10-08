@@ -118,7 +118,7 @@ export default function ShadchanProposalsPage() {
               <DraftsLink />
             </Suspense>
             <Button asChild variant="outline">
-              <Link href="/app/canvas">חזרה ללוח העבודה</Link>
+              <Link href="/app/canvas">ללוח העבודה</Link>
             </Button>
           </>
         }

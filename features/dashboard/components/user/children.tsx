@@ -17,14 +17,18 @@ import {
   type StudentTableRow,
 } from "@/features/students/components/students-table";
 import { createClient } from "@/lib/supabase/client";
+import { SectionLoadFailed } from "../section-load-failed";
 import { ProposalLimitControl } from "@/features/dashboard/components/user/proposal-limit-control";
 import type { ProposalLimitPeriod } from "@/features/students/lib/proposal-limit";
 
 export default function Children({
   childs,
   caption,
+  failed = false,
 }: {
   childs: StudentTableRow[];
+  /** השליפה נכשלה: מציגים הודעת שגיאה ולא "עדיין לא נוסף מיועד/ת" */
+  failed?: boolean;
   /** כותרת הטבלה לקוראי מסך - תואמת לכותרת האזור בדשבורד */
   caption: string;
 }) {
@@ -55,6 +59,10 @@ export default function Children({
       ),
     );
   };
+
+  if (failed) {
+    return <SectionLoadFailed title="לא הצלחנו לטעון את המיועדים שלך" />;
+  }
 
   return (
     <StudentsTable

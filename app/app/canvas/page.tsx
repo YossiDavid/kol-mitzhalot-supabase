@@ -1,5 +1,12 @@
 import { Page, PageHeader } from "@/components/layout";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
+import { describeSupabaseError } from "@/lib/supabase/describe-error";
 import { DESK_STUDENT_SELECT } from "@/features/shidduchim/lib/desk-student-select";
 import ShiduchDesk from "@/features/shidduchim/components/shiduch-desk";
 import { createClient } from "@/lib/supabase/server";
@@ -21,7 +28,25 @@ async function ShiduchDeskContent() {
     .select(DESK_STUDENT_SELECT)
     .in("id", user?.user_metadata?.favorites || []);
 
-  return <ShiduchDesk initialFavorites={favorites.data || []} />;
+  // שליפה שנכשלה אינה "אין מועדפים": הלוח עצמו תלוי במועדפים, ולכן מציגים שגיאה
+  if (favorites.error) {
+    console.error(
+      "[canvas] favorites select failed",
+      describeSupabaseError(favorites.error),
+    );
+    return (
+      <Empty data-testid="canvas-load-failed">
+        <EmptyHeader>
+          <EmptyTitle>לא הצלחנו לטעון את המועדפים</EmptyTitle>
+          <EmptyDescription>
+            אנא רעננו את הדף או נסו שוב בעוד מספר דקות.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    );
+  }
+
+  return <ShiduchDesk initialFavorites={favorites.data} />;
 }
 
 /** שלד שולחן העבודה: אזור השידוך למעלה, ורצועת המועדפים בתחתית. */

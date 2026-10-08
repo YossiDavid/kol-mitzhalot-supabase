@@ -4,7 +4,7 @@ import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
 
 /**
  * רשימת המיועדים: תג "מולא ע״י צד שלישי" רק בכרטיסי card_for = 'other', וסינון
- * "מילוי הכרטיס" בשרת (כרטיס ישן בלי card_for שייך ל"מועמדים והורים"),
+ * "מילוי הכרטיס" בשרת (כרטיס ישן בלי card_for שייך ל"מיועדים והורים"),
  * בשילוב עם סינון אחר ונוקה ב"ניקוי הסינון".
  */
 const LOAD_TIMEOUT = 15_000;
@@ -91,7 +91,7 @@ test.describe("תג צד שלישי וסינון מילוי הכרטיס", () =>
     }
   });
 
-  test("שלושה ערכים: הכל, מועמדים והורים (כולל ישן), צד שלישי", async ({
+  test("שלושה ערכים: הכל, מיועדים והורים (כולל ישן), צד שלישי", async ({
     page,
   }) => {
     // Arrange
@@ -99,7 +99,7 @@ test.describe("תג צד שלישי וסינון מילוי הכרטיס", () =>
     const filter = page.getByLabel("מילוי הכרטיס");
     await expect(filter.locator("option")).toHaveText([
       "הכל",
-      "מועמדים והורים",
+      "מיועדים והורים",
       "צד שלישי",
     ]);
 
@@ -110,7 +110,7 @@ test.describe("תג צד שלישי וסינון מילוי הכרטיס", () =>
     });
     await expect(rowFor(page, "other")).toBeVisible();
 
-    // Act + Assert - מועמדים והורים: כולל כרטיס ישן בלי card_for
+    // Act + Assert - מיועדים והורים: כולל כרטיס ישן בלי card_for
     await filter.selectOption("direct");
     await expect(rowFor(page, "other")).toHaveCount(0, {
       timeout: LOAD_TIMEOUT,

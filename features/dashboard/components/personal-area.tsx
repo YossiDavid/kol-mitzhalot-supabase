@@ -19,8 +19,11 @@ type PersonalAreaProps = {
   /** כשהמשתמש שדכן/מנהל: האזור עטוף בכותרת, והמקטעים מתחתיה */
   isInsideArea: boolean;
   openProposals: ParentProposal[];
+  openProposalsFailed: boolean;
   chats: DashboardChat[];
+  chatsFailed: boolean;
   ownCards: StudentTableRow[];
+  ownCardsFailed: boolean;
   /** אין שדכנים שפעלו בשבילך. כשלא ידוע (שגיאה) - false, ולא מסתירים */
   hasNoShadchanim: boolean;
 };
@@ -32,14 +35,20 @@ type PersonalAreaProps = {
 export function PersonalArea({
   isInsideArea,
   openProposals,
+  openProposalsFailed,
   chats,
+  chatsFailed,
   ownCards,
+  ownCardsFailed,
   hasNoShadchanim,
 }: PersonalAreaProps) {
   const headingLevel = isInsideArea ? "h3" : "h2";
-  const isDecluttered = isInsideArea && ownCards.length === 0;
-  const showProposals = !isDecluttered || openProposals.length > 0;
-  const showChats = !isDecluttered || chats.length > 0;
+  // כרטיסים שלא נטענו אינם "אין כרטיסים": אז לא מסתירים מקטעים
+  const isDecluttered =
+    isInsideArea && ownCards.length === 0 && !ownCardsFailed;
+  const showProposals =
+    !isDecluttered || openProposals.length > 0 || openProposalsFailed;
+  const showChats = !isDecluttered || chats.length > 0 || chatsFailed;
   const showShadchanim = !isDecluttered || !hasNoShadchanim;
 
   const sections = (
@@ -55,7 +64,10 @@ export function PersonalArea({
             </Button>
           }
         >
-          <ActiveShidduchim shiduchim={openProposals} />
+          <ActiveShidduchim
+            shiduchim={openProposals}
+            failed={openProposalsFailed}
+          />
         </DashboardSection>
       )}
       {showChats && (
@@ -70,12 +82,12 @@ export function PersonalArea({
           button={
             <Button asChild>
               <Link href="/app/chats">
-                {isInsideArea ? "לכל הצ'אטים" : "למעבר לצ׳אט"}
+                {isInsideArea ? "לכל הצ'אטים" : "למעבר לצ'אט"}
               </Link>
             </Button>
           }
         >
-          <Chat chats={chats} />
+          <Chat chats={chats} failed={chatsFailed} />
         </DashboardSection>
       )}
       <DashboardSection
@@ -94,7 +106,11 @@ export function PersonalArea({
         >
           {CARD_GUIDANCE_SHORT}
         </p>
-        <Children childs={ownCards} caption={ownCardsHeading(ownCards)} />
+        <Children
+          childs={ownCards}
+          caption={ownCardsHeading(ownCards)}
+          failed={ownCardsFailed}
+        />
       </DashboardSection>
       {showShadchanim && (
         <DashboardSection

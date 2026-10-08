@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
 
   if (gErr || !groom || bErr || !bride) {
     return NextResponse.json(
-      { error: "לא נמצאו כרטיסי סטודנטים" },
+      { error: "לא נמצאו כרטיסי מיועדים" },
       { status: 404 },
     );
   }

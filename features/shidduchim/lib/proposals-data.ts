@@ -104,15 +104,21 @@ type GetMyProposalsOptions = {
   limit?: number;
 };
 
+export type MyProposalsResult = {
+  proposals: ParentProposal[];
+  /** השליפה נכשלה (או חזרה במבנה לא צפוי): לא להציג כ"אין הצעות" */
+  failed: boolean;
+};
+
 /**
  * ההצעות שנשלחו למשתמש כמנהל כרטיס - שורה לכל צד שלו בשידוך. במקרה של
- * שגיאה מחזירה רשימה ריקה (אחרי רישום), כמו שאר קטעי הדשבורד, כדי שתקלה
- * בקטע אחד לא תפיל את כל הדף.
+ * שגיאה מחזירה רשימה ריקה עם failed (אחרי רישום), כדי שתקלה בקטע אחד לא
+ * תפיל את כל הדף, והקורא יבחין בין כישלון ל"אין הצעות".
  */
 export async function getMyProposals(
   supabase: ServerSupabase,
   { shidduchId, openOnly = false, limit }: GetMyProposalsOptions = {},
-): Promise<ParentProposal[]> {
+): Promise<MyProposalsResult> {
   const { data, error } = await supabase.rpc("get_my_shidduch_proposals", {
     p_shidduch_id: shidduchId ?? null,
     p_open_only: openOnly,
@@ -124,7 +130,7 @@ export async function getMyProposals(
       "[proposals] get_my_shidduch_proposals failed",
       describeSupabaseError(error),
     );
-    return [];
+    return { proposals: [], failed: true };
   }
 
   const parsed = z.array(proposalRowSchema).safeParse(data ?? []);
@@ -133,10 +139,10 @@ export async function getMyProposals(
       "[proposals] unexpected get_my_shidduch_proposals shape",
       parsed.error.issues,
     );
-    return [];
+    return { proposals: [], failed: true };
   }
 
-  return parsed.data.map(toParentProposal);
+  return { proposals: parsed.data.map(toParentProposal), failed: false };
 }
 
 const sideResponseRowSchema = z.object({

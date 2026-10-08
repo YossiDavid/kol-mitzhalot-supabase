@@ -13,7 +13,7 @@ export const SHADCHAN_ACTION_LABELS: Record<ShadchanActionType, string> = {
   proposal: "הציע/ה שידוך",
   view: "צפה/תה בכרטיס",
   photo_request: "ביקש/ה לראות תמונה",
-  message: "פנה/תה אליך בצ׳אט",
+  message: "פנה/תה אליך בצ'אט",
 };
 
 /** The fields a shadchan shares publicly (from the join form), per card. */

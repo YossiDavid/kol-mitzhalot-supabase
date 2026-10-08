@@ -62,7 +62,7 @@ test.describe("שרשורי הקשר בצ'אט — ממשק", () => {
   }
 
   const roomsAside = (page: Page) =>
-    page.getByRole("complementary", { name: "רשימת הצ׳אטים" });
+    page.getByRole("complementary", { name: "רשימת הצ'אטים" });
 
   const threadLink = (page: Page, roomId: string): Locator =>
     page.locator(`a[data-room-id="${roomId}"]`);

@@ -34,22 +34,28 @@ type ServerSupabase = Awaited<ReturnType<typeof createClient>>;
 /** כמה פריטים מוצגים בכל מקטע תמצית (צ'אטים, מועדפים) */
 const DASHBOARD_PREVIEW_LIMIT = 5;
 
-const EMPTY_CHATS: DashboardChats = { shadchan: [], personal: [] };
+const EMPTY_CHATS: DashboardChats = {
+  shadchan: [],
+  personal: [],
+  failed: false,
+};
 
 /** שדכן/מנהל מקבלים פיצול לשני אזורים; משתמש רגיל - כל השיחות באזור האישי */
 async function loadChats(
   supabase: ServerSupabase,
   userId: string,
   isShadchanView: boolean,
-  ownStudentsPromise: Promise<unknown[]>,
+  ownStudentsPromise: Promise<{ students: unknown[] }>,
 ): Promise<DashboardChats> {
   if (!isShadchanView) {
+    const { chats, failed } = await getChatsWithLastMessage(supabase, userId);
     return {
       shadchan: [],
-      personal: await getChatsWithLastMessage(supabase, userId),
+      personal: chats,
+      failed,
     };
   }
-  const ownStudents = await ownStudentsPromise;
+  const { students: ownStudents } = await ownStudentsPromise;
   const ownStudentIds = new Set(
     ownStudents.flatMap((student) => {
       const id = (student as { id?: unknown }).id;
@@ -85,26 +91,30 @@ async function DashboardSections() {
   // מסווגים את השיחות (כרטיס שלי = שיחה אישית)
   const ownStudentsPromise = user?.id
     ? getOwnStudents(supabase, user.id)
-    : Promise.resolve([]);
+    : Promise.resolve({ students: [], failed: false });
 
   // כל הסקשנים בלתי תלויים זה בזה, ולכן נשלפים במקביל. כל שליפה מטפלת
   // בשגיאה שלה (רישום + ערך ריק), כך שתקלה בסקשן אחד לא מפילה את האחרים.
   const [
-    favoritesStudentsData,
-    childrenData,
-    activeShidduchimData,
+    favoritesResult,
+    ownStudentsResult,
+    activeShidduchimResult,
     activeShidduchimCountRaw,
-    openProposals,
+    openProposalsResult,
     forumResult,
     chats,
     shadchanApplicationStatus,
   ] = await Promise.all([
     // מיועדים שעניינו אותך והוספת ללוח העבודה - מוצגים לשדכן ולמנהל בלבד
-    isShadchanView ? getFavoriteStudents(supabase, favorites) : [],
+    isShadchanView
+      ? getFavoriteStudents(supabase, favorites)
+      : { students: [], failed: false },
     // הכרטיסים שבבעלות המשתמש
     ownStudentsPromise,
     // השידוכים שהשדכן המחובר הציע
-    user?.id && isShadchanView ? getRecentShidduchim(supabase, user.id) : [],
+    user?.id && isShadchanView
+      ? getRecentShidduchim(supabase, user.id)
+      : { shidduchim: [], failed: false },
     // המספר בכותרת הוא כלל ההצעות שנשלחו, ולא רק האחרונות שמוצגות
     user?.id && isShadchanView ? getSentShidduchimCount(supabase, user.id) : 0,
     // הצעות פתוחות שנשלחו למיועדים של המשתמש (כמנהל כרטיס) - החדשות קודם
@@ -113,7 +123,7 @@ async function DashboardSections() {
           openOnly: true,
           limit: OPEN_PROPOSALS_LIMIT,
         })
-      : [],
+      : { proposals: [], failed: false },
     // פוסטים אחרונים בפורום השדכנים
     isShadchanView
       ? getLatestForumPosts(supabase)
@@ -130,7 +140,10 @@ async function DashboardSections() {
   ]);
 
   // select עם רשימת עמודות מפורשת מבלבל את הסקת הטיפוסים של supabase-js
-  const ownCards = childrenData as unknown as StudentTableRow[];
+  const ownCards = ownStudentsResult.students as unknown as StudentTableRow[];
+  const favoritesStudentsData = favoritesResult.students;
+  const activeShidduchimData = activeShidduchimResult.shidduchim;
+  const openProposals = openProposalsResult.proposals;
 
   // הדשבורד מציג תמצית: האחרונים בלבד, והכפתור בכל מקטע מוביל לעמוד המלא.
   // החדרים כבר ממוינים מהחדש לישן, והחיתוך נעשה אחרי הפיצול לאזורים
@@ -144,7 +157,7 @@ async function DashboardSections() {
   // שדכן/מנהל בלי כרטיסים: האם יש בכלל שדכנים שפעלו בשבילו. רק אז נדרשת
   // השליפה, והיא מסתירה את המקטע רק כשחזרה רשימה ריקה (שגיאה - לא מסתירים)
   const hasNoShadchanim =
-    isShadchanView && ownCards.length === 0
+    isShadchanView && ownCards.length === 0 && !ownStudentsResult.failed
       ? (await getShadchanimWhoActedForMe(1))?.length === 0
       : false;
 
@@ -178,10 +191,13 @@ async function DashboardSections() {
             activeShidduchimData as unknown as ShadchanAreaProps["activeShidduchim"]
           }
           activeShidduchimCount={activeShidduchimCount}
+          activeShidduchimFailed={activeShidduchimResult.failed}
           favorites={
             favoritesPreview as unknown as ShadchanAreaProps["favorites"]
           }
+          favoritesFailed={favoritesResult.failed}
           chats={shadchanChats}
+          chatsFailed={chats.failed}
           forumPosts={forumResult.posts}
           forumFailed={forumResult.failed}
         />
@@ -192,8 +208,11 @@ async function DashboardSections() {
         <PersonalArea
           isInsideArea={isShadchanView}
           openProposals={openProposals}
+          openProposalsFailed={openProposalsResult.failed}
           chats={personalChats}
+          chatsFailed={chats.failed}
           ownCards={ownCards}
+          ownCardsFailed={ownStudentsResult.failed}
           hasNoShadchanim={hasNoShadchanim}
         />
       )}

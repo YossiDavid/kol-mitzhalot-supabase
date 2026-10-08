@@ -62,7 +62,7 @@ export function RoomList() {
           .is("deleted_before", null);
 
         if (participantsError || !participants?.length) {
-          if (participantsError) toast.error("שגיאה בטעינת הצ׳אטים");
+          if (participantsError) toast.error("שגיאה בטעינת הצ'אטים");
           if (isMounted) setRooms([]);
           return;
         }
@@ -76,7 +76,7 @@ export function RoomList() {
           .order("last_message_at", { ascending: false, nullsFirst: false });
 
         if (roomsError) {
-          toast.error("שגיאה בטעינת הצ׳אטים");
+          toast.error("שגיאה בטעינת הצ'אטים");
           if (isMounted) setRooms([]);
           return;
         }
@@ -195,9 +195,9 @@ export function RoomList() {
     : null;
 
   return (
-    <aside aria-label="רשימת הצ׳אטים" className="flex h-full min-h-0 flex-col">
+    <aside aria-label="רשימת הצ'אטים" className="flex h-full min-h-0 flex-col">
       <div className="flex h-16 shrink-0 items-center gap-2 border-b border-border px-4">
-        <h1 className="text-subtitle font-bold text-foreground">צ׳אטים</h1>
+        <h1 className="text-subtitle font-bold text-foreground">צ'אטים</h1>
         {!loading && groups.length > 0 && (
           <span className="rounded-full bg-primary-muted px-2 py-0.5 text-caption font-semibold text-primary tabular-nums">
             {groups.length}
@@ -213,7 +213,7 @@ export function RoomList() {
         {loading ? (
           <div
             role="status"
-            aria-label="טוען צ׳אטים"
+            aria-label="טוען צ'אטים"
             className="flex flex-col gap-1 p-2"
           >
             {Array.from({ length: SKELETON_ROWS }, (_, i) => (

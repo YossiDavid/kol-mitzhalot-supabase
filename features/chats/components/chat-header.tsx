@@ -25,7 +25,7 @@ export function ChatHeader({ title, avatarUrl, isOnline }: ChatHeaderProps) {
         size="icon"
         className="-ms-1 shrink-0 rounded-full text-muted-foreground md:hidden"
       >
-        <Link href="/app/chats" aria-label="חזרה לרשימת הצ׳אטים">
+        <Link href="/app/chats" aria-label="חזרה לרשימת הצ'אטים">
           <ArrowRight className="size-5" />
         </Link>
       </Button>

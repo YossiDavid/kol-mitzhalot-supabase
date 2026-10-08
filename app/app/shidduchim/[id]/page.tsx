@@ -13,6 +13,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
+import { ProposalsLoadFailed } from "@/features/shidduchim/components/proposals-load-failed";
 import ParentProposalView from "@/features/shidduchim/components/parent-proposal-view";
 import CandidateSummaryCard from "@/features/shidduchim/components/candidate-summary";
 import {
@@ -95,7 +96,7 @@ async function ShidduchCardContent({
     notFound();
   }
 
-  const [{ data: shidduch }, parentProposals] = await Promise.all([
+  const [{ data: shidduch }, parentProposalsResult] = await Promise.all([
     supabase
       .from("shidduchim")
       .select(
@@ -118,10 +119,27 @@ async function ShidduchCardContent({
     getMyProposals(supabase, { shidduchId: id }),
   ]);
 
+  const { proposals: parentProposals } = parentProposalsResult;
   const isAdmin = hasRole(user, "admin");
   const isManager = !!shidduch && (isAdmin || shidduch.shadchan_id === user.id);
 
   if (!isManager) {
+    // שליפה שנכשלה אינה "ההצעה לא קיימת": לא להפוך הצעה אמיתית ל-404
+    if (parentProposalsResult.failed) {
+      return (
+        <div className="space-y-6">
+          <PageHeader
+            title="הצעת שידוך"
+            actions={
+              <Button variant="outline" asChild>
+                <Link href="/app/proposals">לכל ההצעות</Link>
+              </Button>
+            }
+          />
+          <ProposalsLoadFailed title="לא הצלחנו לטעון את ההצעה" />
+        </div>
+      );
+    }
     if (parentProposals.length === 0) {
       notFound();
     }
@@ -178,6 +196,8 @@ async function ShidduchCardContent({
   );
   const groomName = groomSummary.fullName;
   const brideName = brideSummary.fullName;
+  // מנהל שצופה בהצעה של שדכן אחר חוזר לעמוד הראשי, לא לרשימה שאינה שלו
+  const isOwnShidduch = shidduch.shadchan_id === user.id;
   const currentStatus: ShidduchStatus = isShidduchStatus(shidduch.status)
     ? shidduch.status
     : "draft";
@@ -224,7 +244,11 @@ async function ShidduchCardContent({
         title="כרטיס שידוך"
         actions={
           <Button variant="outline" asChild>
-            <Link href="/app">חזרה לאפליקציה</Link>
+            {isOwnShidduch ? (
+              <Link href="/app/shadchan/proposals">לכל השידוכים שלי</Link>
+            ) : (
+              <Link href="/app">חזרה לעמוד הראשי</Link>
+            )}
           </Button>
         }
       />
@@ -303,7 +327,7 @@ async function ShidduchCardContent({
 
           {/* מחיקה מותרת רק לשדכן שיצר את ההצעה — כך גם מדיניות ה-RLS,
             ולכן אין להציג את הכפתור למנהל שצופה בהצעה של אחר */}
-          {shidduch.shadchan_id === user.id && (
+          {isOwnShidduch && (
             <DeleteShidduchButton
               shidduchId={shidduch.id}
               pairLabel={`${groomName} - ${brideName}`}
