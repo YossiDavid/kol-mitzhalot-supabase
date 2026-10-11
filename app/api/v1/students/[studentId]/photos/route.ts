@@ -1,19 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { getStudentCardAccess } from "@/features/students/lib/student-card-access";
 import { canViewStudentPhoto } from "@/features/students/lib/student-photo-access";
 import {
   NO_STORE_HEADERS,
   type StudentGalleryResponse,
 } from "@/features/students/lib/student-photo-api";
 import { loadStudentPhotos } from "@/features/students/lib/student-photos";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
 import { createClient } from "@/lib/supabase/server";
 
 /**
  * כל גלריית התמונות של כרטיס, חתומה - נטענת כשפותחים את ה-lightbox מטבלת
- * המיועדים. אותה הרשאה כמו בעמוד הכרטיס: הכרטיס נקרא ב-RLS של המשתמש,
- * ואצל בת נדרש can_view_student_photo. בלי הרשאה - 403 ואף קישור לא נחתם.
+ * המיועדים. אותה הרשאה כמו בעמוד הכרטיס: הגישה לכרטיס נקבעת במסד
+ * (get_student_card_access), והתמונה עצמה ב-can_view_student_photo. בלי הרשאה - 403 ואף קישור לא נחתם.
  * התשובה כוללת קישורים בלבד, לא נתיבים.
  */
 
@@ -39,7 +41,13 @@ export async function GET(
   } = await supabase.auth.getUser();
   if (!user) return errorResponse("נדרשת התחברות", 401);
 
-  const { data: student, error } = await supabase
+  // מי רשאי לראות את הכרטיס נקבע במסד (get_student_card_access): בעלים, שדכן,
+  // מנהל, איש צוות, או מי שקיבל הצעה. מי שקיבל הצעה אינו קורא את שורת
+  // students, ולכן המגדר נקרא ב-service role - רק אחרי שהגישה אושרה.
+  const access = await getStudentCardAccess(supabase, studentId);
+  if (access.level === "none") return errorResponse("הכרטיס לא נמצא", 404);
+
+  const { data: student, error } = await createAdminClient()
     .from("students")
     .select("id, gender")
     .eq("id", studentId)

@@ -245,6 +245,13 @@ async function StudentPageContent({
     );
   }
 
+  // מי שצופה דרך הצעה אינו קורא את שורת students (גם לא את האישורים שלמעלה),
+  // ולכן אצלו ההגבלה נקבעת מהשורה שהמסד החזיר - שכבר מכילה נתונים בסיסיים בלבד.
+  const isBasicView =
+    isBasicOnly ||
+    (isProposalView &&
+      isDisplayRestricted(student, { isOwner: false, isAdmin }));
+
   // רישום צפייה של שדכן בכרטיס ("שדכנים שפעלו בשבילך" בלוח ההורה).
   // הקריאה יוצאת עכשיו (כל עוד ה-cookies של הבקשה זמינים) ו-after() רק
   // מבטיח שהיא תסתיים גם אחרי שהעמוד נשלח - הרינדור לא ממתין לה.
@@ -285,7 +292,7 @@ async function StudentPageContent({
   // כרטיס צד שלישי שלא אושר: שדכן שאינו הממלא אינו רואה את הכרטיס המלא, ולכן
   // גם לא עורך אותו (מסך העריכה מציג את כל הנתונים)
   const canEdit =
-    !isBasicOnly && (student.user_id === user?.id || isShadchan || isAdmin);
+    !isBasicView && (student.user_id === user?.id || isShadchan || isAdmin);
   const approvingAdminNames =
     isAdmin && approval?.card_for === "other"
       ? await Promise.all([
@@ -309,7 +316,7 @@ async function StudentPageContent({
       isProposalView={isProposalView}
       showMedical={!isProposalView || !!access?.shareMedical}
       owner={owner}
-      isBasicOnly={isBasicOnly}
+      isBasicOnly={isBasicView}
       adminControls={
         approval && approvingAdminNames ? (
           <ThirdPartyApprovalControls

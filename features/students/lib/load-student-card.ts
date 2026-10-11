@@ -16,7 +16,6 @@ import {
   type FullStudentRow,
 } from "@/features/students/lib/student-card-data";
 import {
-  buildProposalStudentSelect,
   parseProposalRow,
   type ProposalDisclosure,
   type ProposalStudentRow,
@@ -50,6 +49,9 @@ export type LoadStudentCardInput = {
   proposal: ProposalDisclosure | null;
 };
 
+/** הפונקציה שמחזירה את הכרטיס למי שצופה בו דרך הצעת שידוך */
+const PROPOSAL_CARD_RPC = "get_proposal_student_card";
+
 /** השאילתה עצמה לפי הווריאנט; הנתונים חוזרים כ-unknown ומאומתים אחר כך */
 async function fetchRow(input: LoadStudentCardInput) {
   const { supabase, studentId, isAnonymous, isBasicOnly, proposal } = input;
@@ -65,15 +67,15 @@ async function fetchRow(input: LoadStudentCardInput) {
       .is("deleted_at", null)
       .single();
   }
+  if (proposal) {
+    // מי שקיבל הצעה אינו קורא את students בכלל: המסד בונה לו את הכרטיס מרשימת
+    // עמודות מפורשת, לפי מה שהשדכן פתח להצעה (וגם בכרטיס צד שלישי שלא אושר -
+    // שם הפונקציה מחזירה נתונים בסיסיים בלבד). null: אין הצעה שחושפת את הכרטיס.
+    return supabase.rpc(PROPOSAL_CARD_RPC, { p_student_id: studentId });
+  }
   return supabase
     .from("students")
-    .select(
-      isBasicOnly
-        ? BASIC_STUDENT_SELECT
-        : proposal
-          ? buildProposalStudentSelect(proposal)
-          : FULL_STUDENT_SELECT,
-    )
+    .select(isBasicOnly ? BASIC_STUDENT_SELECT : FULL_STUDENT_SELECT)
     .eq("id", studentId)
     .single();
 }
@@ -106,15 +108,16 @@ function parseCard(
           row,
         }));
   }
-  if (isBasicOnly) {
-    return wrap(studentRowSchemas.basic.safeParse(data), (row) => ({
-      variant: "basic",
-      row,
-    }));
-  }
+  // לפני הבסיסי, כמו ב-fetchRow: צופה דרך הצעה מקבל תמיד את שורת ההצעה
   if (proposal) {
     return wrap(parseProposalRow(data, proposal), (row) => ({
       variant: "proposal",
+      row,
+    }));
+  }
+  if (isBasicOnly) {
+    return wrap(studentRowSchemas.basic.safeParse(data), (row) => ({
+      variant: "basic",
       row,
     }));
   }
