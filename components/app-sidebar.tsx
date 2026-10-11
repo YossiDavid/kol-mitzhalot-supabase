@@ -89,7 +89,7 @@ export function AppSidebar({
 
       {/* SidebarContent הוא מכל הגלילה והפוטר מוצמד מתחתיו. הדהייה בתחתית ומרווח
           סיום מונעים תווית קבוצה חצויה על קצה האזור; סרגל גלילה דק מראה שיש עוד */}
-      <SidebarContent className="[mask-image:linear-gradient(to_bottom,black_calc(100%_-_1.5rem),transparent)] pb-6 [scrollbar-width:thin] group-data-[collapsible=icon]:[mask-image:none]">
+      <SidebarContent className="[mask-image:linear-gradient(to_bottom,black_calc(100%_-_1.5rem),transparent)] pb-6 [scrollbar-width:none] group-data-[collapsible=icon]:[mask-image:none] [&::-webkit-scrollbar]:hidden">
         {isAdminMode ? (
           <AdminSidebarNav
             pathname={pathname}
