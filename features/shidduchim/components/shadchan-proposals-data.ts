@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { createClient } from "@/lib/supabase/server";
 import { isProposalsPending } from "@/features/students/lib/third-party-card";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
+import { fetchPageClamped, isRangeNotSatisfiable } from "@/lib/pagination";
 import type { ShidduchSide } from "@/features/shidduchim/lib/responses";
 import {
   SHIDDUCH_STATUS_VALUES,
@@ -45,12 +46,6 @@ export interface ShadchanProposal {
 }
 
 export type ProposalKind = "sent" | "draft";
-
-export interface ShadchanProposalsResult {
-  proposals: ShadchanProposal[];
-  /** השליפה נכשלה — כדי שהדף יציג שגיאה ולא "אין הצעות" מטעה */
-  failed: boolean;
-}
 
 const nullableText = z.string().nullable();
 
@@ -146,36 +141,77 @@ export function parseShadchanProposalRows(
   });
 }
 
-/** הצעות שנשלחו (החדשות קודם) או טיוטות (האחרונות שנערכו קודם) */
-export async function getShadchanProposals(
+/** כמה הצעות בעמוד ב"כל השידוכים שלי" וב"הצעות שמורות" */
+export const SHADCHAN_PROPOSALS_PAGE_SIZE = 20;
+
+export interface ShadchanProposalsPage {
+  proposals: ShadchanProposal[];
+  /** כל ההצעות מהסוג הזה (כל העמודים) */
+  total: number;
+  /** העמוד שהוחזר בפועל; קטן מהמבוקש כשהמבוקש היה אחרי הסוף */
+  page: number;
+  failed: boolean;
+}
+
+/**
+ * עמוד אחד של הצעות שנשלחו (החדשות קודם) או טיוטות (האחרונות שנערכו קודם).
+ * הסדר דטרמיניסטי: אחרי עמודות המיון בא id, אחרת שורות עם אותו זמן יכלו
+ * לחזור פעמיים או להיעלם בין עמודים. עמוד אחרי הסוף מתכווץ לעמוד האחרון.
+ */
+export async function getShadchanProposalsPage(
   supabase: ServerSupabase,
   shadchanId: string,
   kind: ProposalKind,
-): Promise<ShadchanProposalsResult> {
-  const base = supabase
-    .from("shidduchim")
-    .select(SHADCHAN_PROPOSAL_SELECT)
-    .eq("shadchan_id", shadchanId);
+  requestedPage: number,
+): Promise<ShadchanProposalsPage> {
+  const result = await fetchPageClamped(
+    requestedPage,
+    SHADCHAN_PROPOSALS_PAGE_SIZE,
+    async ({ from, to }) => {
+      const base = supabase
+        .from("shidduchim")
+        .select(SHADCHAN_PROPOSAL_SELECT, { count: "exact" })
+        .eq("shadchan_id", shadchanId);
 
-  const query =
-    kind === "draft"
-      ? base.eq("status", "draft").order("updated_at", { ascending: false })
-      : base
-          .neq("status", "draft")
-          .order("sent_at", { ascending: false, nullsFirst: false })
-          .order("created_at", { ascending: false });
+      const query =
+        kind === "draft"
+          ? base
+              .eq("status", "draft")
+              .order("updated_at", { ascending: false })
+              .order("id", { ascending: false })
+          : base
+              .neq("status", "draft")
+              .order("sent_at", { ascending: false, nullsFirst: false })
+              .order("created_at", { ascending: false })
+              .order("id", { ascending: false });
 
-  const { data, error } = await query;
+      const { data, error, count } = await query.range(from, to);
 
-  if (error) {
-    console.error(
-      `[shadchan-proposals] ${kind} select failed`,
-      describeSupabaseError(error),
-    );
-    return { proposals: [], failed: true };
-  }
+      if (isRangeNotSatisfiable(error)) {
+        return { rows: [], total: 0, failed: false, isOutOfRange: true };
+      }
+      if (error) {
+        console.error(
+          `[shadchan-proposals] ${kind} select failed`,
+          describeSupabaseError(error),
+        );
+        return { rows: [], total: 0, failed: true };
+      }
 
-  return { proposals: parseShadchanProposalRows(data ?? []), failed: false };
+      return {
+        rows: parseShadchanProposalRows(data ?? []),
+        total: count ?? 0,
+        failed: false,
+      };
+    },
+  );
+
+  return {
+    proposals: result.rows,
+    total: result.total,
+    page: result.page,
+    failed: result.failed,
+  };
 }
 
 /** מספר הטיוטות של השדכן, לקישור "הצעות שמורות (N)". 0 גם בשגיאה. */

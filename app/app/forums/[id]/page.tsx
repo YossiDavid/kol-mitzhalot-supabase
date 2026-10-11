@@ -14,7 +14,10 @@ import ReplyForm from "@/features/forums/components/reply-form";
 import { getForumAccess } from "@/features/forums/lib/access";
 import { formatForumDate } from "@/features/forums/lib/format";
 import { getForumPost } from "@/features/forums/lib/queries";
-import type { ForumReply } from "@/features/forums/lib/types";
+import {
+  FORUM_REPLIES_SAFETY_LIMIT,
+  type ForumReply,
+} from "@/features/forums/lib/types";
 import { z } from "zod";
 
 function ReplyItem({
@@ -96,7 +99,7 @@ async function ForumPostContent({
                 target={{
                   kind: "post",
                   id: post.id,
-                  replyCount: post.replies.length,
+                  replyCount: post.replyCount,
                 }}
                 redirectTo="/app/forums"
               />
@@ -107,7 +110,7 @@ async function ForumPostContent({
 
       <section aria-labelledby="forum-replies-title" className="space-y-4">
         <h2 id="forum-replies-title" className="text-subtitle font-bold">
-          תגובות ({post.replies.length})
+          תגובות ({post.replyCount})
         </h2>
         {post.replies.map((reply) => (
           <ReplyItem
@@ -116,6 +119,16 @@ async function ForumPostContent({
             canDelete={canDelete(reply.authorId)}
           />
         ))}
+        {post.replyCount > post.replies.length && (
+          <p
+            role="status"
+            data-testid="forum-replies-capped"
+            className="text-body-sm text-muted-foreground"
+          >
+            מוצגות {FORUM_REPLIES_SAFETY_LIMIT} התגובות הראשונות מתוך{" "}
+            {post.replyCount}.
+          </p>
+        )}
         <Card size="sm">
           <ReplyForm postId={post.id} />
         </Card>

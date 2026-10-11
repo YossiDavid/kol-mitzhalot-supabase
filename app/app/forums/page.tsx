@@ -29,13 +29,21 @@ import {
   listForumCategories,
   listForumPosts,
 } from "@/features/forums/lib/queries";
-import type { ForumPostSummary } from "@/features/forums/lib/types";
+import {
+  FORUM_POSTS_PAGE_SIZE,
+  type ForumPostSummary,
+} from "@/features/forums/lib/types";
+import { UrlPagination } from "@/components/url-pagination";
+import { parsePageParam } from "@/lib/pagination";
 import CreatePostDialog from "./create-post-dialog";
 
 /** כמה שלדי פוסטים להציג בזמן הטעינה. */
 const SKELETON_POST_COUNT = 3;
 
-type ForumSearchParams = Promise<{ cat?: string }>;
+type ForumSearchParams = Promise<{
+  cat?: string;
+  page?: string | string[];
+}>;
 
 /** כפתור הפרסום מופיע רק למי שמורשה לכתוב בפורום */
 async function ForumActions() {
@@ -168,10 +176,14 @@ async function ForumPosts({
     return <ForumAccessNotice status={access.status} />;
   }
 
-  const { cat: currentCat = "" } = await searchParams;
-  const posts = await listForumPosts(access.userId, currentCat);
+  const { cat: currentCat = "", page: rawPage } = await searchParams;
+  const result = await listForumPosts(
+    access.userId,
+    currentCat,
+    parsePageParam(rawPage),
+  );
 
-  if (posts === null) {
+  if (result === null) {
     return (
       <Empty>
         <EmptyHeader>
@@ -184,6 +196,7 @@ async function ForumPosts({
     );
   }
 
+  const { posts, total, page } = result;
   if (posts.length === 0) {
     return (
       <Empty>
@@ -206,6 +219,11 @@ async function ForumPosts({
           canDelete={access.isAdmin || post.authorId === access.userId}
         />
       ))}
+      <UrlPagination
+        page={page}
+        total={total}
+        pageSize={FORUM_POSTS_PAGE_SIZE}
+      />
     </>
   );
 }

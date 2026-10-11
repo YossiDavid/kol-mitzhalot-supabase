@@ -11,20 +11,30 @@ import {
 import ShadchanCard from "@/features/shadchanim/components/shadchan-card";
 import {
   getMyContactQuota,
-  listApprovedShadchanim,
+  listApprovedShadchanimPage,
+  SHADCHANIM_PAGE_SIZE,
 } from "@/features/shadchanim/lib/queries";
+import { UrlPagination } from "@/components/url-pagination";
+import { parsePageParam } from "@/lib/pagination";
 
 /** כמה שלדי כרטיסים להציג בזמן הטעינה. */
 const SKELETON_CARD_COUNT = 6;
 
-async function ShadchanimList() {
+type ShadchanimSearchParams = Promise<{ page?: string | string[] }>;
+
+async function ShadchanimList({
+  searchParams,
+}: {
+  searchParams: ShadchanimSearchParams;
+}) {
   noStore();
-  const [shadchanim, quota] = await Promise.all([
-    listApprovedShadchanim(),
+  const requestedPage = parsePageParam((await searchParams).page);
+  const [result, quota] = await Promise.all([
+    listApprovedShadchanimPage(requestedPage),
     getMyContactQuota(),
   ]);
 
-  if (shadchanim === null) {
+  if (result === null) {
     return (
       <Empty>
         <EmptyHeader>
@@ -37,6 +47,7 @@ async function ShadchanimList() {
     );
   }
 
+  const { shadchanim, total, page } = result;
   if (shadchanim.length === 0) {
     return (
       <Empty>
@@ -49,18 +60,29 @@ async function ShadchanimList() {
   }
 
   return (
-    <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {shadchanim.map((shadchan) => (
-        <li key={shadchan.id} data-testid="shadchan-list-item">
-          <ShadchanCard shadchan={shadchan} quota={quota} />
-        </li>
-      ))}
-    </ul>
+    <>
+      <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {shadchanim.map((shadchan) => (
+          <li key={shadchan.id} data-testid="shadchan-list-item">
+            <ShadchanCard shadchan={shadchan} quota={quota} />
+          </li>
+        ))}
+      </ul>
+      <UrlPagination
+        page={page}
+        total={total}
+        pageSize={SHADCHANIM_PAGE_SIZE}
+      />
+    </>
   );
 }
 
 /** רשימת השדכנים המאושרים. פתוחה לכל משתמש מחובר, כמו הפרופיל הציבורי של שדכן. */
-export default function ShadchanimPage() {
+export default function ShadchanimPage({
+  searchParams,
+}: {
+  searchParams: ShadchanimSearchParams;
+}) {
   return (
     <Page>
       <PageHeader
@@ -70,7 +92,7 @@ export default function ShadchanimPage() {
       <Suspense
         fallback={<CardGridSkeleton count={SKELETON_CARD_COUNT} lines={3} />}
       >
-        <ShadchanimList />
+        <ShadchanimList searchParams={searchParams} />
       </Suspense>
     </Page>
   );

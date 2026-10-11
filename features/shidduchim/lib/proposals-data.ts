@@ -3,6 +3,11 @@ import { z } from "zod";
 import type { createClient } from "@/lib/supabase/server";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
 import {
+  fetchPageClamped,
+  isRangeNotSatisfiable,
+  type PagedResult,
+} from "@/lib/pagination";
+import {
   SHIDDUCH_RESPONSE_VALUES,
   SHIDDUCH_SIDES,
   type ShidduchResponse,
@@ -143,6 +148,74 @@ export async function getMyProposals(
   }
 
   return { proposals: parsed.data.map(toParentProposal), failed: false };
+}
+
+/** כמה הצעות בעמוד ב"הצעות שקיבלתי" */
+export const PROPOSALS_PAGE_SIZE = 20;
+
+export type MyProposalsPage = {
+  proposals: ParentProposal[];
+  /** כל ההצעות של המשתמש (כל העמודים) */
+  total: number;
+  /** העמוד שהוחזר בפועל; קטן מהמבוקש כשהמבוקש היה אחרי הסוף */
+  page: number;
+  failed: boolean;
+};
+
+/**
+ * עמוד אחד מההצעות שנשלחו למשתמש. הפונקציה get_my_shidduch_proposals כבר
+ * ממיינת דטרמיניסטית (החדשות קודם, ואז id וצד), ו-PostgREST מחיל את הטווח
+ * על התוצאה שלה - בלי שינוי סכמה. עמוד אחרי הסוף מתכווץ לעמוד האחרון.
+ */
+export async function getMyProposalsPage(
+  supabase: ServerSupabase,
+  requestedPage: number,
+): Promise<MyProposalsPage> {
+  const result: PagedResult<ParentProposal> = await fetchPageClamped(
+    requestedPage,
+    PROPOSALS_PAGE_SIZE,
+    async ({ from, to }) => {
+      const { data, error, count } = await supabase
+        .rpc(
+          "get_my_shidduch_proposals",
+          { p_shidduch_id: null, p_open_only: false, p_limit: null },
+          { count: "exact" },
+        )
+        .range(from, to);
+
+      if (isRangeNotSatisfiable(error)) {
+        return { rows: [], total: 0, failed: false, isOutOfRange: true };
+      }
+      if (error) {
+        console.error(
+          "[proposals] get_my_shidduch_proposals page failed",
+          describeSupabaseError(error),
+        );
+        return { rows: [], total: 0, failed: true };
+      }
+
+      const parsed = z.array(proposalRowSchema).safeParse(data ?? []);
+      if (!parsed.success) {
+        console.error(
+          "[proposals] unexpected get_my_shidduch_proposals shape",
+          parsed.error.issues,
+        );
+        return { rows: [], total: 0, failed: true };
+      }
+      return {
+        rows: parsed.data.map(toParentProposal),
+        total: count ?? parsed.data.length,
+        failed: false,
+      };
+    },
+  );
+
+  return {
+    proposals: result.rows,
+    total: result.total,
+    page: result.page,
+    failed: result.failed,
+  };
 }
 
 const sideResponseRowSchema = z.object({

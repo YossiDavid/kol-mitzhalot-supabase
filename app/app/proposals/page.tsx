@@ -17,18 +17,30 @@ import { CardSkeleton } from "@/components/ui/card-skeleton";
 import { createClient } from "@/lib/supabase/server";
 import { ProposalsLoadFailed } from "@/features/shidduchim/components/proposals-load-failed";
 import ParentProposalListItem from "@/features/shidduchim/components/parent-proposal-list-item";
-import { getMyProposals } from "@/features/shidduchim/lib/proposals-data";
+import {
+  getMyProposalsPage,
+  PROPOSALS_PAGE_SIZE,
+} from "@/features/shidduchim/lib/proposals-data";
+import { UrlPagination } from "@/components/url-pagination";
+import { parsePageParam } from "@/lib/pagination";
 
 /** כמה שורות הצעה מסומנות בשלד הרשימה. */
 const SKELETON_PROPOSAL_COUNT = 3;
 
+type ProposalsSearchParams = Promise<{ page?: string | string[] }>;
+
 /**
- * כל ההצעות שנשלחו למשתמש כמנהל כרטיס. הרשימה מגיעה מ-
+ * ההצעות שנשלחו למשתמש כמנהל כרטיס. הרשימה מגיעה מ-
  * get_my_shidduch_proposals, שמחזירה רק הצעות שנשלחו לצד של המשתמש
  * (לפי recipient_scope), ורק את ההערה שנכתבה לצד הזה.
  */
-async function ProposalsList() {
+async function ProposalsList({
+  searchParams,
+}: {
+  searchParams: ProposalsSearchParams;
+}) {
   noStore();
+  const requestedPage = parsePageParam((await searchParams).page);
   const supabase = await createClient();
 
   const {
@@ -37,7 +49,10 @@ async function ProposalsList() {
 
   if (!user) notFound();
 
-  const { proposals, failed } = await getMyProposals(supabase);
+  const { proposals, total, page, failed } = await getMyProposalsPage(
+    supabase,
+    requestedPage,
+  );
 
   // שליפה שנכשלה אינה "אין הצעות": לא מציגים מצב ריק ולא מציעים להוסיף מיועד
   if (failed) {
@@ -83,15 +98,18 @@ async function ProposalsList() {
   }
 
   return (
-    <Box className="space-y-4">
-      {proposals.map((proposal) => (
-        <ParentProposalListItem
-          key={`${proposal.shidduchId}-${proposal.side}`}
-          proposal={proposal}
-          showNote
-        />
-      ))}
-    </Box>
+    <>
+      <Box className="space-y-4">
+        {proposals.map((proposal) => (
+          <ParentProposalListItem
+            key={`${proposal.shidduchId}-${proposal.side}`}
+            proposal={proposal}
+            showNote
+          />
+        ))}
+      </Box>
+      <UrlPagination page={page} total={total} pageSize={PROPOSALS_PAGE_SIZE} />
+    </>
   );
 }
 
@@ -108,7 +126,11 @@ function ProposalsListSkeleton() {
   );
 }
 
-export default function ProposalsPage() {
+export default function ProposalsPage({
+  searchParams,
+}: {
+  searchParams: ProposalsSearchParams;
+}) {
   return (
     <Page>
       <PageHeader
@@ -122,7 +144,7 @@ export default function ProposalsPage() {
       />
 
       <Suspense fallback={<ProposalsListSkeleton />}>
-        <ProposalsList />
+        <ProposalsList searchParams={searchParams} />
       </Suspense>
     </Page>
   );

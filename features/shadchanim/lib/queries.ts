@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
+import { fetchPageClamped, isRangeNotSatisfiable } from "@/lib/pagination";
 import {
   SHADCHAN_ACTION_TYPES,
   type ContactQuota,
@@ -158,26 +159,64 @@ export async function getShadchanPublicProfile(
   };
 }
 
+/** Shadchanim per page on the directory page ("שדכנים"). */
+export const SHADCHANIM_PAGE_SIZE = 20;
+
+export type ApprovedShadchanimPage = {
+  shadchanim: ShadchanPublicCard[];
+  /** All approved shadchanim (all pages). */
+  total: number;
+  /** The page actually returned; lower than requested when it was past the end. */
+  page: number;
+};
+
 /**
- * Approved shadchanim for the directory page ("שדכנים"), without phone/email
- * (those are on the full profile and behind the daily-limited contact form).
- * Returns null on failure so the UI can tell "error" apart from "none yet".
+ * One page of approved shadchanim for the directory page ("שדכנים"), without
+ * phone/email (those are on the full profile and behind the daily-limited
+ * contact form). The RPC sorts by last/first name only, so the order is
+ * re-applied here with shadchan_id as a tie-breaker, otherwise people with
+ * the same name could repeat or vanish between pages. NULL names sort first,
+ * like the RPC's COALESCE(..., ''). Returns null on failure so the UI can
+ * tell "error" apart from "none yet".
  */
-export async function listApprovedShadchanim(): Promise<
-  ShadchanPublicCard[] | null
-> {
+export async function listApprovedShadchanimPage(
+  requestedPage: number,
+): Promise<ApprovedShadchanimPage | null> {
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("list_approved_shadchanim");
-  if (error) {
-    console.error("[shadchanim/list]", describeSupabaseError(error));
-    return null;
-  }
+  const result = await fetchPageClamped(
+    requestedPage,
+    SHADCHANIM_PAGE_SIZE,
+    async ({ from, to }) => {
+      const { data, error, count } = await supabase
+        .rpc("list_approved_shadchanim", undefined, { count: "exact" })
+        .order("last_name", { ascending: true, nullsFirst: true })
+        .order("first_name", { ascending: true, nullsFirst: true })
+        .order("shadchan_id", { ascending: true })
+        .range(from, to);
+      if (isRangeNotSatisfiable(error)) {
+        return { rows: [], total: 0, failed: false, isOutOfRange: true };
+      }
+      if (error) {
+        console.error("[shadchanim/list]", describeSupabaseError(error));
+        return { rows: [], total: 0, failed: true };
+      }
 
-  const parsed = z.array(publicCardRowSchema).safeParse(data ?? []);
-  if (!parsed.success) {
-    console.error("[shadchanim/list] unexpected shape", parsed.error);
-    return null;
-  }
-
-  return parsed.data.map(toPublicCard);
+      const parsed = z.array(publicCardRowSchema).safeParse(data ?? []);
+      if (!parsed.success) {
+        console.error("[shadchanim/list] unexpected shape", parsed.error);
+        return { rows: [], total: 0, failed: true };
+      }
+      return {
+        rows: parsed.data.map(toPublicCard),
+        total: count ?? parsed.data.length,
+        failed: false,
+      };
+    },
+  );
+  if (result.failed) return null;
+  return {
+    shadchanim: result.rows,
+    total: result.total,
+    page: result.page,
+  };
 }

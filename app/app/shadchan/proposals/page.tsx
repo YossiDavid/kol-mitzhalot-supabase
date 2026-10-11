@@ -18,8 +18,11 @@ import ShadchanProposalCard from "@/features/shidduchim/components/shadchan-prop
 import ShadchanProposalListSkeleton from "@/features/shidduchim/components/shadchan-proposal-list-skeleton";
 import {
   countShadchanDrafts,
-  getShadchanProposals,
+  getShadchanProposalsPage,
+  SHADCHAN_PROPOSALS_PAGE_SIZE,
 } from "@/features/shidduchim/components/shadchan-proposals-data";
+import { UrlPagination } from "@/components/url-pagination";
+import { parsePageParam } from "@/lib/pagination";
 import { getSideResponses } from "@/features/shidduchim/lib/proposals-data";
 
 async function getCurrentUserOrNotFound() {
@@ -31,15 +34,23 @@ async function getCurrentUserOrNotFound() {
   return { supabase, user };
 }
 
+type ProposalsSearchParams = Promise<{ page?: string | string[] }>;
+
 /** ההצעות שנשלחו בלבד — טיוטות מוצגות בדף ההצעות השמורות */
-async function ShadchanProposalsList() {
+async function ShadchanProposalsList({
+  searchParams,
+}: {
+  searchParams: ProposalsSearchParams;
+}) {
   noStore();
+  const requestedPage = parsePageParam((await searchParams).page);
   const { supabase, user } = await getCurrentUserOrNotFound();
 
-  const { proposals, failed } = await getShadchanProposals(
+  const { proposals, total, page, failed } = await getShadchanProposalsPage(
     supabase,
     user.id,
     "sent",
+    requestedPage,
   );
 
   if (failed) {
@@ -71,20 +82,27 @@ async function ShadchanProposalsList() {
     );
   }
 
-  // תגובות ההורים לכל ההצעות, בשאילתה אחת
+  // תגובות ההורים להצעות העמוד, בשאילתה אחת
   const responses = await getSideResponses(
     supabase,
     proposals.map((proposal) => proposal.id),
   );
 
   return (
-    <ul className="grid gap-4">
-      {proposals.map((proposal) => (
-        <li key={proposal.id}>
-          <ShadchanProposalCard proposal={proposal} responses={responses} />
-        </li>
-      ))}
-    </ul>
+    <>
+      <ul className="grid gap-4">
+        {proposals.map((proposal) => (
+          <li key={proposal.id}>
+            <ShadchanProposalCard proposal={proposal} responses={responses} />
+          </li>
+        ))}
+      </ul>
+      <UrlPagination
+        page={page}
+        total={total}
+        pageSize={SHADCHAN_PROPOSALS_PAGE_SIZE}
+      />
+    </>
   );
 }
 
@@ -106,7 +124,11 @@ async function DraftsLink() {
   );
 }
 
-export default function ShadchanProposalsPage() {
+export default function ShadchanProposalsPage({
+  searchParams,
+}: {
+  searchParams: ProposalsSearchParams;
+}) {
   return (
     <Page>
       <PageHeader
@@ -125,7 +147,7 @@ export default function ShadchanProposalsPage() {
       />
 
       <Suspense fallback={<ShadchanProposalListSkeleton />}>
-        <ShadchanProposalsList />
+        <ShadchanProposalsList searchParams={searchParams} />
       </Suspense>
     </Page>
   );

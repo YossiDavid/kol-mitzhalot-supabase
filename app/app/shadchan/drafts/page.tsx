@@ -20,10 +20,13 @@ import DraftActions from "@/features/shidduchim/components/draft-actions";
 import ShadchanProposalCard from "@/features/shidduchim/components/shadchan-proposal-card";
 import ShadchanProposalListSkeleton from "@/features/shidduchim/components/shadchan-proposal-list-skeleton";
 import {
-  getShadchanProposals,
+  getShadchanProposalsPage,
+  SHADCHAN_PROPOSALS_PAGE_SIZE,
   type ShadchanProposal,
 } from "@/features/shidduchim/components/shadchan-proposals-data";
 import { THIRD_PARTY_PROPOSAL_MESSAGE } from "@/features/students/lib/third-party-card";
+import { UrlPagination } from "@/components/url-pagination";
+import { parsePageParam } from "@/lib/pagination";
 import { displayName } from "@/features/shidduchim/lib/responses";
 
 const DRAFTS_URL = "/app/shadchan/drafts";
@@ -68,8 +71,15 @@ function DraftCardActions({ proposal }: { proposal: ShadchanProposal }) {
   );
 }
 
-async function DraftsList() {
+type DraftsSearchParams = Promise<{ page?: string | string[] }>;
+
+async function DraftsList({
+  searchParams,
+}: {
+  searchParams: DraftsSearchParams;
+}) {
   noStore();
+  const requestedPage = parsePageParam((await searchParams).page);
   const supabase = await createClient();
   const {
     data: { user },
@@ -80,10 +90,11 @@ async function DraftsList() {
     notFound();
   }
 
-  const { proposals, failed } = await getShadchanProposals(
+  const { proposals, total, page, failed } = await getShadchanProposalsPage(
     supabase,
     user.id,
     "draft",
+    requestedPage,
   );
 
   if (failed) {
@@ -119,20 +130,31 @@ async function DraftsList() {
   }
 
   return (
-    <ul className="grid gap-4">
-      {proposals.map((proposal) => (
-        <li key={proposal.id}>
-          <ShadchanProposalCard
-            proposal={proposal}
-            actions={<DraftCardActions proposal={proposal} />}
-          />
-        </li>
-      ))}
-    </ul>
+    <>
+      <ul className="grid gap-4">
+        {proposals.map((proposal) => (
+          <li key={proposal.id}>
+            <ShadchanProposalCard
+              proposal={proposal}
+              actions={<DraftCardActions proposal={proposal} />}
+            />
+          </li>
+        ))}
+      </ul>
+      <UrlPagination
+        page={page}
+        total={total}
+        pageSize={SHADCHAN_PROPOSALS_PAGE_SIZE}
+      />
+    </>
   );
 }
 
-export default function ShadchanDraftsPage() {
+export default function ShadchanDraftsPage({
+  searchParams,
+}: {
+  searchParams: DraftsSearchParams;
+}) {
   return (
     <Page>
       <PageHeader
@@ -151,7 +173,7 @@ export default function ShadchanDraftsPage() {
       />
 
       <Suspense fallback={<ShadchanProposalListSkeleton />}>
-        <DraftsList />
+        <DraftsList searchParams={searchParams} />
       </Suspense>
     </Page>
   );

@@ -2,15 +2,14 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
+import { fetchPageClamped, isRangeNotSatisfiable } from "@/lib/pagination";
+import { FORUM_REPLIES_SAFETY_LIMIT, FORUM_POSTS_PAGE_SIZE } from "./types";
 import type {
   ForumCategory,
   ForumPostDetail,
   ForumPostSummary,
   ForumReply,
 } from "./types";
-
-/** כמה פוסטים נטענים לרשימה */
-const FORUM_POSTS_LIMIT = 50;
 
 const FALLBACK_AUTHOR_NAME = "שדכן";
 
@@ -103,35 +102,64 @@ export async function listForumCategories(): Promise<ForumCategory[]> {
   return data ?? [];
 }
 
-/** פוסטים מוצמדים קודם, אחריהם החדשים ביותר. null בכשל, כדי להבדיל משגיאה ל"אין פוסטים" */
+export type ForumPostsPage = {
+  posts: ForumPostSummary[];
+  /** כל הפוסטים בנושא (כל העמודים) */
+  total: number;
+  /** העמוד שהוחזר בפועל; קטן מהמבוקש כשהמבוקש היה אחרי הסוף */
+  page: number;
+};
+
+/**
+ * עמוד אחד של פוסטים: מוצמדים קודם, אחריהם החדשים ביותר, ובסוף id כדי שהסדר
+ * יהיה יציב בין עמודים. עמוד אחרי הסוף מתכווץ לעמוד האחרון.
+ * null בכשל, כדי להבדיל משגיאה ל"אין פוסטים".
+ */
 export async function listForumPosts(
   userId: string,
   categorySlug: string,
-): Promise<ForumPostSummary[] | null> {
+  requestedPage: number,
+): Promise<ForumPostsPage | null> {
   const supabase = await createClient();
 
   let categoryId: string | null = null;
   if (categorySlug) {
     const categories = await listForumCategories();
     categoryId = categories.find((c) => c.slug === categorySlug)?.id ?? null;
-    if (!categoryId) return [];
+    if (!categoryId) return { posts: [], total: 0, page: 1 };
   }
 
-  let query = supabase
-    .from("forum_posts")
-    .select(POST_COLUMNS)
-    .order("is_pinned", { ascending: false })
-    .order("created_at", { ascending: false })
-    .limit(FORUM_POSTS_LIMIT);
-  if (categoryId) query = query.eq("category_id", categoryId);
+  const result = await fetchPageClamped(
+    requestedPage,
+    FORUM_POSTS_PAGE_SIZE,
+    async ({ from, to }) => {
+      let query = supabase
+        .from("forum_posts")
+        .select(POST_COLUMNS, { count: "exact" })
+        .order("is_pinned", { ascending: false })
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .range(from, to);
+      if (categoryId) query = query.eq("category_id", categoryId);
 
-  const { data, error } = await query;
-  if (error) {
-    console.error("[forums/posts]", describeSupabaseError(error));
-    return null;
-  }
+      const { data, error, count } = await query;
+      if (isRangeNotSatisfiable(error)) {
+        return { rows: [], total: 0, failed: false, isOutOfRange: true };
+      }
+      if (error) {
+        console.error("[forums/posts]", describeSupabaseError(error));
+        return { rows: [], total: 0, failed: true };
+      }
+      return {
+        rows: (data ?? []) as unknown as PostRow[],
+        total: count ?? 0,
+        failed: false,
+      };
+    },
+  );
+  if (result.failed) return null;
 
-  const rows = (data ?? []) as unknown as PostRow[];
+  const rows = result.rows;
   const [names, likedIds] = await Promise.all([
     loadAuthorNames(
       supabase,
@@ -145,7 +173,7 @@ export async function listForumPosts(
     ),
   ]);
 
-  return rows.map((row) => ({
+  const posts = rows.map((row) => ({
     id: row.id,
     authorId: row.author_id,
     title: row.title,
@@ -158,6 +186,7 @@ export async function listForumPosts(
     likeCount: countOf(row.likes),
     isLikedByMe: likedIds.has(row.id),
   }));
+  return { posts, total: result.total, page: result.page };
 }
 
 /** פוסט בודד עם התגובות שלו, או null כשאינו קיים (או שאין הרשאה לראותו) */
@@ -183,7 +212,10 @@ export async function getForumPost(
     .from("forum_replies")
     .select("id, content, created_at, author_id, likes:forum_likes(count)")
     .eq("post_id", postId)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true })
+    // תקרת בטיחות: פוסט עם מאות תגובות לא נטען כולו בבת אחת
+    .limit(FORUM_REPLIES_SAFETY_LIMIT);
   if (replyError) {
     console.error("[forums/replies]", describeSupabaseError(replyError));
   }
@@ -222,6 +254,7 @@ export async function getForumPost(
     isPinned: post.is_pinned === true,
     authorName: names.get(post.author_id) ?? FALLBACK_AUTHOR_NAME,
     category: post.category,
+    replyCount: countOf(post.replies),
     likeCount: countOf(post.likes),
     isLikedByMe: likedPosts.has(post.id),
     replies,

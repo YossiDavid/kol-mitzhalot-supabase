@@ -8,6 +8,10 @@ import {
   parseNewCardsFilter,
 } from "@/features/students/lib/new-card-window";
 import { parseCardFilledByFilter } from "@/features/students/lib/card-filled-by-filter";
+import {
+  pageCount as sharedPageCount,
+  pageRange as sharedPageRange,
+} from "@/lib/pagination";
 import { buildStudentsOrder } from "@/features/students/lib/students-list-sort";
 
 /** כמה כרטיסים בעמוד אחד ברשימת המיועדים */
@@ -207,13 +211,12 @@ function applyOrder(
 
 /** טווח השורות (כולל משני הקצוות) של עמוד, לפי מספר עמוד שמתחיל ב-1 */
 export function pageRange(page: number): { from: number; to: number } {
-  const from = (page - 1) * STUDENTS_PAGE_SIZE;
-  return { from, to: from + STUDENTS_PAGE_SIZE - 1 };
+  return sharedPageRange(page, STUDENTS_PAGE_SIZE);
 }
 
 /** מספר העמודים הכולל; לפחות 1, גם כשאין תוצאות */
 export function pageCount(total: number): number {
-  return Math.max(1, Math.ceil(total / STUDENTS_PAGE_SIZE));
+  return sharedPageCount(total, STUDENTS_PAGE_SIZE);
 }
 
 /** שאילתת עמוד אחד של רשימת המיועדים: סינון, מיון, וטווח עם ספירה מדויקת */
