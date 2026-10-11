@@ -83,9 +83,7 @@ async function CategoryFilters({
         >
           <Link
             href={
-              (filter.slug
-                ? `/app/forums?cat=${filter.slug}`
-                : "/app/forums") as never
+              filter.slug ? `/app/forums?cat=${filter.slug}` : "/app/forums"
             }
             aria-current={currentCat === filter.slug ? "page" : undefined}
           >
@@ -120,10 +118,7 @@ function PostCard({
           </div>
           <CardTitle asChild>
             <h2>
-              <Link
-                href={`/app/forums/${post.id}` as never}
-                className="hover:underline"
-              >
+              <Link href={`/app/forums/${post.id}`} className="hover:underline">
                 {post.title}
               </Link>
             </h2>
@@ -143,7 +138,7 @@ function PostCard({
               initialLiked={post.isLikedByMe}
             />
             <Button asChild variant="ghost" size="sm">
-              <Link href={`/app/forums/${post.id}` as never}>
+              <Link href={`/app/forums/${post.id}`}>
                 <MessageCircle className="size-4" aria-hidden />
                 {post.replyCount} תגובות
               </Link>

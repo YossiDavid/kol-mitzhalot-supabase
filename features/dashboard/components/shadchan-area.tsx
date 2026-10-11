@@ -44,9 +44,7 @@ export function ShadchanArea({
         button={
           sectionHasData(activeShidduchim, activeShidduchimFailed) ? (
             <Button asChild variant="outline">
-              <Link href={"/app/shadchan/proposals" as never}>
-                לכל ההצעות שלך
-              </Link>
+              <Link href={"/app/shadchan/proposals"}>לכל ההצעות שלך</Link>
             </Button>
           ) : undefined
         }
@@ -91,7 +89,7 @@ export function ShadchanArea({
         button={
           sectionHasData(forumPosts, forumFailed) ? (
             <Button asChild variant="outline">
-              <Link href={"/app/forums" as never}>לפורום השדכנים</Link>
+              <Link href={"/app/forums"}>לפורום השדכנים</Link>
             </Button>
           ) : undefined
         }

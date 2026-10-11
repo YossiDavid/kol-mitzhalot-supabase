@@ -4,45 +4,33 @@ import {
 } from "@/features/chats/lib/room-context";
 import { getDisplayName } from "@/features/chats/lib/user-display";
 import type { ApplicationStatus } from "@/lib/application-status";
+import { describeZodIssues } from "@/lib/describe-zod-issues";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
 import type { createClient } from "@/lib/supabase/server";
+import {
+  STUDENT_TABLE_COLUMNS,
+  parseStudentTableRows,
+} from "./student-table-rows";
 import { shidduchIdsOf, splitChatsBySide } from "./chat-sides";
 
 type ServerSupabase = Awaited<ReturnType<typeof createClient>>;
 
 /**
- * הטבלאות בדשבורד (מועדפים, המיועדים שלך) מציגות רק את שדות StudentTableRow.
- * אין כאן העמודות הכבדות של הכרטיס המלא (family_info, author_info, about...)
- * ולא ההיסטוריות והרשומות הרפואיות - הכרטיס המלא נשלף בדף הכרטיס עצמו.
- * previous_partners: לשורת הילדים של גרוש/אלמן. ללא הרשאה (RLS) חוזר מערך ריק.
+ * מאמת את שורות הטבלה לפני שהן מגיעות לתצוגה. שורה שאינה תואמת (למשל שם
+ * עמודה שהשתנה) נחשבת כשל טעינה, כמו שגיאת שליפה, ואינה נבלעת בשקט.
  */
-const STUDENT_TABLE_COLUMNS = [
-  "id",
-  "gender",
-  "personal_status",
-  "first_name",
-  "last_name",
-  "nickname",
-  // שמות הורים בלבד בכרטיס צד שלישי שלא אושר להצגה מלאה (מסד: parents_info_for_viewer)
-  "parents_info:parents_info_for_viewer",
-  "city",
-  "community",
-  "birth_date",
-  "height",
-  "cv_url",
-  "photo_count",
-  "status_changed_at",
-  "in_shidduchim",
-  // עבור מי מולא הכרטיס: קובע את הכותרת ("הכרטיס שלי" / "המיועדים שלך") ותג בשורה
-  "card_for",
-  "third_party_full_display_approved_at",
-  "third_party_proposals_approved_at",
-  // נדרשות לבקרות של מנהל הכרטיס בטבלה: מכסת ההצעות ונעילת ההשהיה של ההנהלה
-  "proposal_limit_count",
-  "proposal_limit_period",
-  "admin_paused_at",
-  "previous_partners(children, children_number, no_children)",
-].join(", ");
+function toStudentTableResult(data: unknown, logTag: string) {
+  const parsed = parseStudentTableRows(data);
+  if (!parsed.success) {
+    console.error(
+      logTag,
+      "unexpected student rows",
+      describeZodIssues(parsed.error.issues),
+    );
+    return { students: [], failed: true };
+  }
+  return { students: parsed.data, failed: false };
+}
 
 /**
  * המיועדים שהמשתמש סימן במועדפים. failed נפרד מרשימה ריקה: שליפה שנכשלה
@@ -64,7 +52,7 @@ export async function getFavoriteStudents(
     console.error("[dashboard/favorites]", describeSupabaseError(error));
     return { students: [], failed: true };
   }
-  return { students: data ?? [], failed: false };
+  return toStudentTableResult(data, "[dashboard/favorites]");
 }
 
 /** המיועדים שבניהול המשתמש. failed נפרד מרשימה ריקה (כמו במועדפים) */
@@ -78,7 +66,7 @@ export async function getOwnStudents(supabase: ServerSupabase, userId: string) {
     console.error("[dashboard/own-students]", describeSupabaseError(error));
     return { students: [], failed: true };
   }
-  return { students: data ?? [], failed: false };
+  return toStudentTableResult(data, "[dashboard/own-students]");
 }
 
 /** סטטוס בקשת ההצטרפות כשדכן של המשתמש; null כשאין שורה, או שהשליפה נכשלה */

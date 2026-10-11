@@ -145,7 +145,7 @@ export default function ForumPostPage({
   return (
     <Page width="content">
       <Link
-        href={"/app/forums" as never}
+        href={"/app/forums"}
         className="inline-flex items-center gap-1.5 text-body-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowRight className="size-4" aria-hidden />

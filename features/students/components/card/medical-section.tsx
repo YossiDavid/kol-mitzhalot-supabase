@@ -11,14 +11,17 @@ import { CardSection } from "./card-section";
 
 type MedicalContact = { name?: string; phone?: string; email?: string };
 
-type MedicalRecords = {
-  status?: string;
-  details?: string;
-  exposure_level?: string;
-  related_issue_preference?: string;
-  contact_info?: { type?: string; contacts?: MedicalContact[] } | null;
-  documents?: string[] | null;
-} | null;
+type MedicalRecords =
+  | {
+      status?: string;
+      details?: string;
+      exposure_level?: string;
+      related_issue_preference?: string;
+      contact_info?: { type?: string; contacts?: MedicalContact[] } | null;
+      documents?: string[] | null;
+    }
+  | null
+  | undefined;
 
 function ContactList({ contacts }: { contacts: MedicalContact[] }) {
   return (

@@ -12,6 +12,7 @@ import { hebrewBirthDate } from "@/features/students/lib/birth-date-hebrew";
 import { getTotalChildrenCount } from "@/features/students/lib/previous-partner-children";
 import type { CardBackLink } from "@/features/students/lib/card-back-link";
 import { genderToHebrew } from "@/features/students/lib/student-card-data";
+import type { StudentCardData } from "@/features/students/lib/shape-student-card";
 import type {
   PrivateNote,
   StaffFeedback,
@@ -32,13 +33,6 @@ import { PreviousMarriagesSection } from "./previous-marriages-section";
 import { ReferencesSection } from "./references-section";
 import { StudentCardBackLink, StudentCardHero } from "./student-card-hero";
 import { StudentCardPhoto } from "./student-card-photo";
-
-/**
- * שורת הכרטיס המלאה. מגיעה מ-`select("*")` עם embeds, ולכן היא רופפת:
- * עמודות ה-JSON נשמרות כאובייקטים חופשיים.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type StudentRow = any;
 
 /**
  * כרטיס המיועד למשתמש מחובר. הפעולות (`actions`) מגיעות מהעמוד, כי הן
@@ -62,7 +56,7 @@ export function StudentCard({
   backLink,
   actions,
 }: {
-  student: StudentRow;
+  student: StudentCardData;
   photos: StudentPhotoView[];
   photoCount: number;
   photoPrivate: boolean;

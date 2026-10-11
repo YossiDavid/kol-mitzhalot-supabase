@@ -1,20 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export default function DeleteShidduchButton({
   shidduchId,
@@ -33,67 +24,44 @@ export default function DeleteShidduchButton({
   /** יעד ניווט אחרי המחיקה: הדף הנוכחי כבר לא יהיה נגיש */
   redirectTo?: string;
 }) {
-  const [open, setOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const router = useRouter();
 
-  async function handleDelete() {
-    setDeleting(true);
-    try {
-      const res = await fetch(`/api/v1/shidduchim/${shidduchId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        toast.error(err.error || "מחיקת ההצעה נכשלה");
-        return;
-      }
-      toast.success("ההצעה נמחקה");
-      setOpen(false);
-      router.push(redirectTo as never);
-    } catch {
-      toast.error("מחיקת ההצעה נכשלה");
-    } finally {
-      setDeleting(false);
+  async function handleDelete(): Promise<boolean> {
+    const res = await fetch(`/api/v1/shidduchim/${shidduchId}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      toast.error(err.error || "מחיקת ההצעה נכשלה");
+      return false;
     }
+    toast.success("ההצעה נמחקה");
+    return true;
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <ConfirmDialog
+      trigger={
         <Button variant={variant} size="sm">
           <Trash2 className="h-4 w-4" />
           מחיקת ההצעה
         </Button>
-      </DialogTrigger>
-      <DialogContent size="sm">
-        <DialogHeader>
-          <DialogTitle>מחיקת הצעת שידוך</DialogTitle>
-          <DialogDescription>
-            ההצעה <strong>{pairLabel}</strong> תימחק לצמיתות, יחד עם תגובות
-            הצדדים שכבר התקבלו.
-            {wasSent
-              ? " ההצעה כבר נשלחה, ולכן היא תיעלם גם מהחשבון של מנהלי הכרטיסים שקיבלו אותה. המייל שכבר נשלח אליהם יישאר אצלם."
-              : " לאחר המחיקה אפשר יהיה להציע את הצמד הזה מחדש."}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => setOpen(false)}
-            disabled={deleting}
-          >
-            ביטול
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={deleting}
-          >
-            {deleting ? "מוחק..." : "מחיקת ההצעה"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      }
+      title="מחיקת הצעת שידוך"
+      description={
+        <>
+          ההצעה <strong>{pairLabel}</strong> תימחק לצמיתות, יחד עם תגובות הצדדים
+          שכבר התקבלו.
+          {wasSent
+            ? " ההצעה כבר נשלחה, ולכן היא תיעלם גם מהחשבון של מנהלי הכרטיסים שקיבלו אותה. המייל שכבר נשלח אליהם יישאר אצלם."
+            : " לאחר המחיקה אפשר יהיה להציע את הצמד הזה מחדש."}
+        </>
+      }
+      confirmLabel="מחיקת ההצעה"
+      pendingLabel="מוחק..."
+      onConfirm={handleDelete}
+      onSuccess={() => router.push(redirectTo as never)}
+      onError={() => toast.error("מחיקת ההצעה נכשלה")}
+    />
   );
 }

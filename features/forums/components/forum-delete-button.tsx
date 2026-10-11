@@ -5,14 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 type DeleteTarget =
   | { kind: "post"; id: string; replyCount: number }
@@ -49,7 +42,6 @@ export default function ForumDeleteButton({
 }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
-  const [isPending, setIsPending] = useState(false);
 
   const isIcon = variant === "icon";
   const isPost = target.kind === "post";
@@ -58,24 +50,21 @@ export default function ForumDeleteButton({
     ? `/api/v1/forum/posts/${target.id}`
     : `/api/v1/forum/replies/${target.id}`;
 
-  async function confirmDelete() {
-    setIsPending(true);
-    try {
-      const res = await fetch(url, { method: "DELETE" });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        toast.error(err.error || `מחיקת ה${noun} נכשלה, נסו שוב`);
-        return;
-      }
-      toast.success(isPost ? "הפוסט נמחק" : "התגובה נמחקה");
-      setIsOpen(false);
-      if (redirectTo) router.replace(redirectTo as never);
-      else router.refresh();
-    } catch {
-      toast.error(`מחיקת ה${noun} נכשלה, נסו שוב`);
-    } finally {
-      setIsPending(false);
+  async function confirmDelete(): Promise<boolean> {
+    const res = await fetch(url, { method: "DELETE" });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      toast.error(err.error || `מחיקת ה${noun} נכשלה, נסו שוב`);
+      return false;
     }
+    toast.success(isPost ? "הפוסט נמחק" : "התגובה נמחקה");
+    return true;
+  }
+
+  // רץ אחרי שהדיאלוג נסגר
+  function handleDeleted() {
+    if (redirectTo) router.replace(redirectTo as never);
+    else router.refresh();
   }
 
   return (
@@ -96,35 +85,17 @@ export default function ForumDeleteButton({
         <Trash2 className="size-4" aria-hidden />
         {!isIcon && <span>מחיקה</span>}
       </Button>
-      <Dialog
+      <ConfirmDialog
         open={isOpen}
-        onOpenChange={(open) => !isPending && setIsOpen(open)}
-      >
-        <DialogContent size="sm">
-          <DialogHeader>
-            <DialogTitle>{isPost ? "מחיקת פוסט" : "מחיקת תגובה"}</DialogTitle>
-            <DialogDescription>{describeRemoval(target)}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsOpen(false)}
-              disabled={isPending}
-            >
-              ביטול
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={confirmDelete}
-              disabled={isPending}
-            >
-              {isPending ? "מוחק..." : `מחיקת ה${noun}`}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={setIsOpen}
+        title={isPost ? "מחיקת פוסט" : "מחיקת תגובה"}
+        description={describeRemoval(target)}
+        confirmLabel={`מחיקת ה${noun}`}
+        pendingLabel="מוחק..."
+        onConfirm={confirmDelete}
+        onSuccess={handleDeleted}
+        onError={() => toast.error(`מחיקת ה${noun} נכשלה, נסו שוב`)}
+      />
     </>
   );
 }

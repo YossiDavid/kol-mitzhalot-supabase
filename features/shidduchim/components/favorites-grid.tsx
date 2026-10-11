@@ -15,6 +15,7 @@ import {
   EmptyMedia,
 } from "@/components/ui/empty";
 
+import { removeFavorite } from "@/features/students/lib/favorites";
 import { ClearFavoritesButton } from "@/features/students/components/clear-favorites-button";
 import StudentBox from "./student-box";
 import type { Student } from "./student-box";
@@ -81,11 +82,9 @@ export default function FavoritesGrid({
   const handleRemoveFromFavorites = async (student: Student) => {
     const nextFavorites = favorites.filter((s) => s.id !== student.id);
 
-    const { error } = await supabase.auth.updateUser({
-      data: { favorites: nextFavorites.map((s) => s.id) },
-    });
+    const result = await removeFavorite(supabase, student.id);
 
-    if (error) {
+    if (!result.ok) {
       toast.error("שגיאה בהסרת המועדף");
       return;
     }
@@ -114,7 +113,7 @@ export default function FavoritesGrid({
       {/* Tab switcher */}
       <div
         className={cn(
-          "before:bg-primary relative mx-auto flex w-fit cursor-pointer gap-2 rounded-full bg-white p-2 select-none",
+          "relative mx-auto flex w-fit cursor-pointer gap-2 rounded-full bg-white p-2 select-none before:bg-primary",
           "before:absolute before:top-0 before:left-0 before:h-full before:w-1/2 before:rounded-full before:border-4 before:border-white before:transition-all before:duration-300",
           activeTab === "male" ? "before:translate-x-full" : "",
         )}

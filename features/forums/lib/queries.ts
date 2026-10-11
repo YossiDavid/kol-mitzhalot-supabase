@@ -1,6 +1,9 @@
 /** Server-side reads for the shadchanim forum. RLS limits them to approved shadchanim and admins. */
 
+import { z } from "zod";
+
 import { createClient } from "@/lib/supabase/server";
+import { describeZodIssues } from "@/lib/describe-zod-issues";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
 import { fetchPageClamped, isRangeNotSatisfiable } from "@/lib/pagination";
 import { FORUM_REPLIES_SAFETY_LIMIT, FORUM_POSTS_PAGE_SIZE } from "./types";
@@ -13,27 +16,49 @@ import type {
 
 const FALLBACK_AUTHOR_NAME = "שדכן";
 
-type CountRow = { count: number }[] | null;
+/**
+ * שורות הפורום מאומתות בגבול ה-DB: ל-supabase-js אין טיפוסים שנוצרו, והוא
+ * לא מסיק שורה ממחרוזת select. ה-schema הוא מקור הטיפוס, כך ששינוי שם עמודה
+ * ב-POST_COLUMNS נכשל באימות (ונרשם) במקום להחזיר שדות ריקים בשקט.
+ */
+const countRowsSchema = z.array(z.object({ count: z.number() })).nullable();
 
-type PostRow = {
-  id: string;
-  title: string;
-  content: string;
-  created_at: string;
-  author_id: string;
-  is_pinned: boolean | null;
-  category: ForumCategory | null;
-  replies: CountRow;
-  likes: CountRow;
-};
+const categorySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  slug: z.string(),
+});
 
-type ReplyRow = {
-  id: string;
-  content: string;
-  created_at: string;
-  author_id: string;
-  likes: CountRow;
-};
+const postRowSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  content: z.string(),
+  created_at: z.string(),
+  author_id: z.string(),
+  is_pinned: z.boolean().nullable(),
+  category: categorySchema.nullable(),
+  replies: countRowsSchema,
+  likes: countRowsSchema,
+});
+
+const replyRowSchema = z.object({
+  id: z.string(),
+  content: z.string(),
+  created_at: z.string(),
+  author_id: z.string(),
+  likes: countRowsSchema,
+});
+
+const authorNameRowSchema = z.object({
+  user_id: z.string(),
+  display_name: z.string().nullable(),
+});
+
+/** שורת לייקים לפי עמודה דינמית (post_id / reply_id) */
+const likeRowSchema = z.record(z.string(), z.string().nullable());
+
+type PostRow = z.infer<typeof postRowSchema>;
+type CountRow = PostRow["replies"];
 
 const POST_COLUMNS = `id, title, content, created_at, author_id, is_pinned,
   category:forum_categories(id, name, slug),
@@ -58,10 +83,15 @@ async function loadAuthorNames(
     console.error("[forums/author-names]", describeSupabaseError(error));
     return names;
   }
-  for (const row of (data ?? []) as {
-    user_id: string;
-    display_name: string | null;
-  }[]) {
+  const parsed = z.array(authorNameRowSchema).safeParse(data ?? []);
+  if (!parsed.success) {
+    console.error(
+      "[forums/author-names] unexpected rows",
+      describeZodIssues(parsed.error.issues),
+    );
+    return names;
+  }
+  for (const row of parsed.data) {
     if (row.display_name) names.set(row.user_id, row.display_name);
   }
   return names;
@@ -83,9 +113,16 @@ async function loadMyLikes(
     console.error("[forums/my-likes]", describeSupabaseError(error));
     return new Set();
   }
-  const rows = (data ?? []) as unknown as Record<string, string | null>[];
+  const parsed = z.array(likeRowSchema).safeParse(data ?? []);
+  if (!parsed.success) {
+    console.error(
+      "[forums/my-likes] unexpected rows",
+      describeZodIssues(parsed.error.issues),
+    );
+    return new Set();
+  }
   return new Set(
-    rows.map((row) => row[column]).filter((id): id is string => !!id),
+    parsed.data.map((row) => row[column]).filter((id): id is string => !!id),
   );
 }
 
@@ -150,11 +187,15 @@ export async function listForumPosts(
         console.error("[forums/posts]", describeSupabaseError(error));
         return { rows: [], total: 0, failed: true };
       }
-      return {
-        rows: (data ?? []) as unknown as PostRow[],
-        total: count ?? 0,
-        failed: false,
-      };
+      const parsed = z.array(postRowSchema).safeParse(data ?? []);
+      if (!parsed.success) {
+        console.error(
+          "[forums/posts] unexpected rows",
+          describeZodIssues(parsed.error.issues),
+        );
+        return { rows: [], total: 0, failed: true };
+      }
+      return { rows: parsed.data, total: count ?? 0, failed: false };
     },
   );
   if (result.failed) return null;
@@ -206,7 +247,15 @@ export async function getForumPost(
     return null;
   }
   if (!data) return null;
-  const post = data as unknown as PostRow;
+  const parsedPost = postRowSchema.safeParse(data);
+  if (!parsedPost.success) {
+    console.error(
+      "[forums/post] unexpected row",
+      describeZodIssues(parsedPost.error.issues),
+    );
+    return null;
+  }
+  const post = parsedPost.data;
 
   const { data: replyData, error: replyError } = await supabase
     .from("forum_replies")
@@ -219,7 +268,14 @@ export async function getForumPost(
   if (replyError) {
     console.error("[forums/replies]", describeSupabaseError(replyError));
   }
-  const replyRows = (replyData ?? []) as unknown as ReplyRow[];
+  const parsedReplies = z.array(replyRowSchema).safeParse(replyData ?? []);
+  if (!parsedReplies.success) {
+    console.error(
+      "[forums/replies] unexpected rows",
+      describeZodIssues(parsedReplies.error.issues),
+    );
+  }
+  const replyRows = parsedReplies.success ? parsedReplies.data : [];
 
   const [names, likedPosts, likedReplies] = await Promise.all([
     loadAuthorNames(supabase, [

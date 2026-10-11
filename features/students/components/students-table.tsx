@@ -33,7 +33,11 @@ import { summarizeChildren } from "@/features/students/lib/children-summary";
 import calculateAge from "@/lib/calculateAge";
 import { cn } from "@/lib/utils";
 
-type ParentName = { prefix?: string; name?: string; suffix?: string };
+type ParentName = {
+  prefix?: string | null;
+  name?: string | null;
+  suffix?: string | null;
+};
 
 /** השדות שטבלת המיועדים מציגה - משותף לרשימה, למועדפים ולילדים */
 export type StudentTableRow = {
@@ -45,8 +49,8 @@ export type StudentTableRow = {
   /** כינוי, מוצג בסוגריים אחרי השם הפרטי. שדה לא חובה בטופס */
   nickname?: string | null;
   parents_info?: {
-    father?: { self?: ParentName };
-    mother?: { self?: ParentName };
+    father?: { self?: ParentName | null } | null;
+    mother?: { self?: ParentName | null } | null;
   } | null;
   city?: string | null;
   /** חסידות או קהילה, מתוך מאגר הקהילות */
@@ -141,7 +145,7 @@ function studentCardHref(id: string) {
   return `/app/students/${id}` as Route;
 }
 
-function parentName(parent: ParentName | undefined) {
+function parentName(parent: ParentName | null | undefined) {
   return [parent?.prefix, parent?.name].filter(Boolean).join(" ");
 }
 

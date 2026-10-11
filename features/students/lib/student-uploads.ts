@@ -1,3 +1,4 @@
+import { describeSupabaseError } from "@/lib/supabase/describe-error";
 import type { createClient } from "@/lib/supabase/client";
 import {
   STUDENT_PHOTOS_BUCKET,
@@ -141,6 +142,19 @@ export async function uploadStudentPhoto(
   return (await uploadToStudentsBucket(supabase, path, file)) ? path : null;
 }
 
+/** הודעה קבועה כשהמסד לא החזיר הסבר בעברית */
+const PHOTOS_SAVE_FALLBACK_MESSAGE = "נסו שוב מאוחר יותר";
+const HEBREW_LETTER = /[א-ת]/;
+
+/**
+ * set_student_photos מסביר כשל צפוי (הרשאה, מכסה, כפילות) ב-HINT בעברית,
+ * והוא היחיד שמגיע למשתמש. כל טקסט אחר מהמסד (הודעת Postgres, hint באנגלית)
+ * נשאר בלוג בלבד.
+ */
+function photosSaveErrorMessage(hint: string | null | undefined): string {
+  return hint && HEBREW_LETTER.test(hint) ? hint : PHOTOS_SAVE_FALLBACK_MESSAGE;
+}
+
 export type SaveStudentPhotosResult = {
   /** כמה תמונות חדשות לא הועלו (ולכן לא נשמרו) */
   failedUploads: number;
@@ -183,12 +197,15 @@ export async function saveStudentPhotos(
   });
 
   if (error) {
-    console.error("[students/photos] set_student_photos failed:", error);
+    console.error(
+      "[students/photos] set_student_photos failed:",
+      describeSupabaseError(error),
+    );
     // הקבצים שהועלו עכשיו לא נרשמו בגלריה - מנקים אותם כדי שלא יישארו יתומים
     if (uploadedPaths.length > 0) {
       await supabase.storage.from(STUDENT_PHOTOS_BUCKET).remove(uploadedPaths);
     }
-    return { failedUploads, error: error.hint || error.message };
+    return { failedUploads, error: photosSaveErrorMessage(error.hint) };
   }
 
   const removedPaths = Array.isArray(removed)

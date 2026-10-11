@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { MessageSquareText, Pencil, Trash2, Users } from "lucide-react";
 
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -248,7 +249,7 @@ function ShadchanNoteItem({
 }: {
   note: ShadchanNote;
   onEdit: (id: string, body: string) => Promise<boolean>;
-  onDelete: (id: string) => Promise<void>;
+  onDelete: (id: string) => Promise<boolean>;
 }) {
   const [isEditing, setIsEditing] = useState(false);
 
@@ -281,16 +282,24 @@ function ShadchanNoteItem({
               >
                 <Pencil className="size-3.5" />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="text-destructive hover:text-destructive"
-                title="מחיקת ההערה"
-                aria-label="מחיקת ההערה"
-                onClick={() => onDelete(note.id)}
-              >
-                <Trash2 className="size-3.5" />
-              </Button>
+              <ConfirmDialog
+                trigger={
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="text-destructive hover:text-destructive"
+                    title="מחיקת ההערה"
+                    aria-label="מחיקת ההערה"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                }
+                title="מחיקת הערה"
+                description="למחוק את ההערה? לא ניתן יהיה לשחזר אותה."
+                confirmLabel="מחיקה"
+                pendingLabel="מוחק..."
+                onConfirm={() => onDelete(note.id)}
+              />
             </>
           )}
         </span>
@@ -355,14 +364,14 @@ export function ShadchanNotes({
     return true;
   }
 
-  async function handleDelete(id: string): Promise<void> {
-    if (!confirm("למחוק את ההערה?")) return;
+  async function handleDelete(id: string): Promise<boolean> {
     const deleted = await requestNoteChange(studentId, id, {
       method: "DELETE",
     });
-    if (!deleted) return;
+    if (!deleted) return false;
     setNotes((prev) => prev.filter((note) => note.id !== id));
     toast.success("ההערה נמחקה");
+    return true;
   }
 
   return (

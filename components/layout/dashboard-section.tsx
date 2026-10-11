@@ -18,6 +18,11 @@ export default function DashboardSection({
   headingLevel: Heading = "h2",
   ...props
 }: DashboardSectionProps) {
+  // מקטע בתוך אזור (h3) קטן מכותרת האזור (text-title). מקטע עצמאי (h2) גדל
+  // ל-title בדסקטופ, כי אין מעליו כותרת אזור
+  const headingClass =
+    Heading === "h3" ? "text-subtitle" : "text-subtitle md:text-title";
+
   return (
     <section className={cn(props.className, props.containerClassName)}>
       <div
@@ -27,7 +32,7 @@ export default function DashboardSection({
         )}
       >
         <div>
-          <Heading className="text-subtitle md:text-title">
+          <Heading className={headingClass}>
             {props.title}
             {props.titleNumber && Number(props.titleNumber) > 0 && (
               <span className="ms-1.5 font-normal">

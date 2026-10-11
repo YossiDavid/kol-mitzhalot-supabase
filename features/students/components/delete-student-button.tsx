@@ -6,14 +6,7 @@ import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 /**
  * דיאלוג האישור למחיקת כרטיס, נשלט מבחוץ. הופרד מהכפתור כדי שגם פריט
@@ -36,66 +29,53 @@ export function StudentDeleteDialog({
   /** יעד ניווט אחרי מחיקה. נדרש בעמוד הכרטיס עצמו, שכבר לא יהיה נגיש למנהל. */
   redirectTo?: string;
 }) {
-  const [deleting, setDeleting] = useState(false);
   const router = useRouter();
 
-  async function handleDelete() {
-    setDeleting(true);
-    try {
-      const res = await fetch(`/api/v1/admin/students/${studentId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        toast.error(err.error || "שגיאה במחיקת הכרטיס");
-        return;
-      }
-      toast.success("הכרטיס נמחק");
-      onOpenChange(false);
-      onDeleted?.();
-      // מהכרטיס עצמו חייבים לנווט החוצה — הוא כבר לא נגיש אחרי המחיקה
-      if (redirectTo) {
-        router.push(redirectTo as never);
-        return;
-      }
-      router.refresh();
-    } catch (error) {
-      console.error(error);
-      toast.error("שגיאה במחיקת הכרטיס");
-    } finally {
-      setDeleting(false);
+  async function handleDelete(): Promise<boolean> {
+    const res = await fetch(`/api/v1/admin/students/${studentId}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      toast.error(err.error || "שגיאה במחיקת הכרטיס");
+      return false;
     }
+    toast.success("הכרטיס נמחק");
+    return true;
+  }
+
+  // רץ אחרי שהדיאלוג נסגר
+  function handleDeleted() {
+    onDeleted?.();
+    // מהכרטיס עצמו חייבים לנווט החוצה — הוא כבר לא נגיש אחרי המחיקה
+    if (redirectTo) {
+      router.push(redirectTo as never);
+      return;
+    }
+    router.refresh();
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="sm">
-        <DialogHeader>
-          <DialogTitle>מחיקת כרטיס</DialogTitle>
-          <DialogDescription>
-            הכרטיס של <strong>{studentName}</strong> יוסר מהמערכת ולא יופיע עוד
-            ברשימות ובחיפושים. הנתונים והיסטוריית ההצעות שלו נשמרים במערכת ולא
-            נמחקים לצמיתות.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={deleting}
-          >
-            ביטול
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={deleting}
-          >
-            {deleting ? "מוחק..." : "מחק כרטיס"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <ConfirmDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="מחיקת כרטיס"
+      description={
+        <>
+          הכרטיס של <strong>{studentName}</strong> יוסר מהמערכת ולא יופיע עוד
+          ברשימות ובחיפושים. הנתונים והיסטוריית ההצעות שלו נשמרים במערכת ולא
+          נמחקים לצמיתות.
+        </>
+      }
+      confirmLabel="מחק כרטיס"
+      pendingLabel="מוחק..."
+      onConfirm={handleDelete}
+      onSuccess={handleDeleted}
+      onError={(error) => {
+        console.error(error);
+        toast.error("שגיאה במחיקת הכרטיס");
+      }}
+    />
   );
 }
 

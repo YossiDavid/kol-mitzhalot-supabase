@@ -1,46 +1,57 @@
+import { z } from "zod";
+
 import calculateAge from "@/lib/calculateAge";
+import {
+  buildSelect,
+  embedFragment,
+  pickColumns,
+  pickEmbeds,
+  type StudentColumn,
+  type StudentEmbed,
+} from "@/features/students/lib/student-row-schema";
 
 /**
- * העמודות שנשלפות לגולש לא מחובר. חייבות להישאר תואמות בדיוק ל-
- * `ANONYMOUS_STUDENT_SELECT` - שום שדה רגיש (ת.ז./טלפון/סוג מכשיר/רחוב/בית/
- * קו"ח/user_id/institution_id) לא מופיע כאן. החריג המוסכם הוא הממליצים
+ * העמודות שנשלפות לגולש לא מחובר. שום שדה רגיש (ת.ז./טלפון/סוג מכשיר/רחוב/
+ * בית/קו"ח/user_id/institution_id) לא מופיע כאן. החריג המוסכם הוא הממליצים
  * (`references`), שמוצגים במלואם לבקשת הלקוח.
+ *
+ * `nickname` נחשף בכוונה גם בתצוגה הציבורית: זהו כינוי פשוט שמסייע בזיהוי,
+ * ולא פרט מזהה כמו ת.ז. או טלפון.
  */
-export type AnonymousStudentRow = {
-  id: string;
-  first_name: string;
-  last_name: string;
-  /**
-   * כינוי ("יוסי" ל"יוסף"). נחשף בכוונה גם בתצוגה הציבורית: זהו כינוי פשוט
-   * שמסייע בזיהוי, ולא פרט מזהה כמו ת.ז. או טלפון.
-   */
-  nickname: string | null;
-  gender: string | null;
-  personal_status: string | null;
-  city: string | null;
-  height: number | null;
-  community: string | null;
-  shtible: string | null;
-  plan_for_life: string | null;
-  head_cover_type: string | null;
-  about: string | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  parents_info: Record<string, any> | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  family_info: Record<string, any> | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  author_info: Record<string, any> | null;
-  image_url: string | null;
-  birth_date: string | null;
-  deleted_at: string | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  education_history: Array<Record<string, any>> | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  employment_history: Array<Record<string, any>> | null;
-  /** ממליצים - מוצגים בכוונה במלואם (סוג, שם, טלפון, אימייל), גם בציבורי */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  references: Array<Record<string, any>> | null;
-};
+export const ANONYMOUS_STUDENT_COLUMNS = [
+  "id",
+  "first_name",
+  "last_name",
+  "nickname",
+  "gender",
+  "personal_status",
+  "city",
+  "height",
+  "community",
+  "shtible",
+  "plan_for_life",
+  "head_cover_type",
+  "about",
+  "parents_info",
+  "family_info",
+  "author_info",
+  "image_url",
+  "birth_date",
+  "deleted_at",
+] as const satisfies readonly StudentColumn[];
+
+const ANONYMOUS_STUDENT_EMBEDS = [
+  "education_history",
+  "employment_history",
+  "references",
+] as const satisfies readonly StudentEmbed[];
+
+const anonymousStudentSchema = z.object({
+  ...pickColumns(ANONYMOUS_STUDENT_COLUMNS),
+  ...pickEmbeds(ANONYMOUS_STUDENT_EMBEDS),
+});
+
+export type AnonymousStudentRow = z.infer<typeof anonymousStudentSchema>;
 
 /**
  * אובייקט התצוגה הציבורי בפועל - בלי birth_date (הוחלף בגיל מספרי) ובלי
@@ -55,21 +66,70 @@ export type PublicStudent = Omit<
 };
 
 /** ה-select של הגולש הלא מחובר - בלי אף עמודה רגישה */
-export const ANONYMOUS_STUDENT_SELECT = `id, first_name, last_name, nickname, gender, personal_status, city, height, community, shtible, plan_for_life, head_cover_type, about, parents_info, family_info, author_info, image_url, birth_date, deleted_at,
-			education_history(*),
-			employment_history(*),
-			references(id, reference_type, name, phone, email)
-		`;
+export const ANONYMOUS_STUDENT_SELECT = buildSelect(ANONYMOUS_STUDENT_COLUMNS, [
+  embedFragment("education_history"),
+  embedFragment("employment_history"),
+  embedFragment("references", "id, reference_type, name, phone, email"),
+]);
+
+/**
+ * העמודות של הכרטיס המלא (select "*"): כל העמודות שהכרטיס צורך. שאילתת ה-"*"
+ * מחזירה גם עמודות נוספות, אבל ה-schema חותך כל מה שלא הוצהר כאן, ולכן הן
+ * אינן מגיעות לרינדור.
+ */
+export const FULL_STUDENT_COLUMNS = [
+  "id",
+  "user_id",
+  "first_name",
+  "last_name",
+  "nickname",
+  "gender",
+  "personal_status",
+  "birth_date",
+  "height",
+  "country",
+  "city",
+  "street",
+  "house",
+  "community",
+  "shtible",
+  "phone",
+  "cellphone_type",
+  "plan_for_life",
+  "head_cover_type",
+  "about",
+  "image_url",
+  "cv_url",
+  "parents_info",
+  "family_info",
+  "author_info",
+  "in_shidduchim",
+  "card_for",
+  "third_party_full_display_approved_at",
+  "third_party_proposals_approved_at",
+  "deleted_at",
+] as const satisfies readonly StudentColumn[];
+
+const FULL_STUDENT_EMBEDS = [
+  "education_history",
+  "employment_history",
+  "medical_records",
+  "partner_preferences",
+  "references",
+  "previous_partners",
+] as const satisfies readonly StudentEmbed[];
+
+const fullStudentSchema = z.object({
+  ...pickColumns(FULL_STUDENT_COLUMNS),
+  ...pickEmbeds(FULL_STUDENT_EMBEDS),
+});
+
+export type FullStudentRow = z.infer<typeof fullStudentSchema>;
 
 /** ה-select של משתמש מחובר - הכרטיס המלא עם כל הטבלאות המקושרות */
-export const FULL_STUDENT_SELECT = `*,
-		education_history(*),
-		employment_history(*),
-		medical_records(*),
-		partner_preferences(*),
-		references(*),
-		previous_partners(*)
-	`;
+export const FULL_STUDENT_SELECT = `*, ${FULL_STUDENT_EMBEDS.map((embed) =>
+  embedFragment(embed),
+).join(", ")}`;
 
 /**
  * בונה את אובייקט התצוגה הציבורי מתוך שורת ה-DB הגולמית שנשלפה עבור משתמש
@@ -115,16 +175,89 @@ export function genderToHebrew(gender: string | null | undefined) {
  * ואף טבלה רגישה (partner_preferences, previous_partners, references,
  * medical_records).
  */
-const PARENT_NAME_PATHS = `parents_father:parents_info->father->self, parents_mother:parents_info->mother->self`;
+export const BASIC_STUDENT_COLUMNS = [
+  "id",
+  "user_id",
+  "first_name",
+  "last_name",
+  "nickname",
+  "gender",
+  "personal_status",
+  "birth_date",
+  "height",
+  "country",
+  "city",
+  "community",
+  "shtible",
+  "cellphone_type",
+  "cv_url",
+  "in_shidduchim",
+  "card_for",
+  "author_info",
+  "third_party_full_display_approved_at",
+  "third_party_proposals_approved_at",
+  "parents_father",
+  "parents_mother",
+] as const satisfies readonly StudentColumn[];
 
-export const BASIC_STUDENT_SELECT = `id, user_id, first_name, last_name, nickname, gender, personal_status, birth_date, height, country, city, community, shtible, cellphone_type, cv_url, in_shidduchim, card_for, author_info, third_party_full_display_approved_at, third_party_proposals_approved_at, ${PARENT_NAME_PATHS},
-		education_history(*),
-		employment_history(*)`;
+const BASIC_STUDENT_EMBEDS = [
+  "education_history",
+  "employment_history",
+] as const satisfies readonly StudentEmbed[];
+
+const basicStudentSchema = z.object({
+  ...pickColumns(BASIC_STUDENT_COLUMNS),
+  ...pickEmbeds(BASIC_STUDENT_EMBEDS),
+});
+
+export type BasicStudentRow = z.infer<typeof basicStudentSchema>;
+
+export const BASIC_STUDENT_SELECT = buildSelect(
+  BASIC_STUDENT_COLUMNS,
+  BASIC_STUDENT_EMBEDS.map((embed) => embedFragment(embed)),
+);
 
 /** הגרסה של הגולש הלא מחובר: בלי user_id, cv_url והטלפון */
-export const ANONYMOUS_BASIC_STUDENT_SELECT = `id, first_name, last_name, nickname, gender, personal_status, city, height, community, shtible, author_info, image_url, birth_date, deleted_at, ${PARENT_NAME_PATHS},
-			education_history(*),
-			employment_history(*)`;
+export const ANONYMOUS_BASIC_STUDENT_COLUMNS = [
+  "id",
+  "first_name",
+  "last_name",
+  "nickname",
+  "gender",
+  "personal_status",
+  "city",
+  "height",
+  "community",
+  "shtible",
+  "author_info",
+  "image_url",
+  "birth_date",
+  "deleted_at",
+  "parents_father",
+  "parents_mother",
+] as const satisfies readonly StudentColumn[];
+
+const anonymousBasicStudentSchema = z.object({
+  ...pickColumns(ANONYMOUS_BASIC_STUDENT_COLUMNS),
+  ...pickEmbeds(BASIC_STUDENT_EMBEDS),
+});
+
+export type AnonymousBasicStudentRow = z.infer<
+  typeof anonymousBasicStudentSchema
+>;
+
+export const ANONYMOUS_BASIC_STUDENT_SELECT = buildSelect(
+  ANONYMOUS_BASIC_STUDENT_COLUMNS,
+  BASIC_STUDENT_EMBEDS.map((embed) => embedFragment(embed)),
+);
+
+/** האימות של שורת הווריאנט שחזרה מהשאילתה (הגבול בין ה-DB לקוד) */
+export const studentRowSchemas = {
+  anonymous: anonymousStudentSchema,
+  anonymousBasic: anonymousBasicStudentSchema,
+  basic: basicStudentSchema,
+  full: fullStudentSchema,
+} as const;
 
 type ParentNameJson = Record<string, unknown> | null | undefined;
 
@@ -151,7 +284,7 @@ export function parentsInfoFromNames<
 
 /** השדות שהשורה הציבורית דורשת וה-select הבסיסי אינו שולף - ריקים */
 export function toAnonymousRowFromBasic(
-  row: Record<string, unknown>,
+  row: AnonymousBasicStudentRow,
 ): AnonymousStudentRow {
   return {
     plan_for_life: null,
@@ -160,5 +293,5 @@ export function toAnonymousRowFromBasic(
     family_info: null,
     references: null,
     ...parentsInfoFromNames(row),
-  } as unknown as AnonymousStudentRow;
+  };
 }

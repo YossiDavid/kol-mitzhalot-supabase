@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { User as LucideUser } from "lucide-react";
 import Link from "next/link";
-import { User as SupabaseUser } from "@supabase/supabase-js";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +18,7 @@ import {
   type StudentTableRow,
 } from "@/features/students/components/students-table";
 import { ClearFavoritesButton } from "@/features/students/components/clear-favorites-button";
+import { removeFavorite } from "@/features/students/lib/favorites";
 import { createClient } from "@/lib/supabase/client";
 
 import { SectionLoadFailed } from "../section-load-failed";
@@ -37,7 +37,6 @@ export default function Favorites({
   const supabaseRef = useRef(createClient());
   const supabase = supabaseRef.current;
 
-  const [user, setUser] = useState<SupabaseUser | undefined>(undefined);
   const [localFavorites, setLocalFavorites] =
     useState<StudentTableRow[]>(favorites);
 
@@ -45,34 +44,15 @@ export default function Favorites({
     setLocalFavorites(favorites);
   }, [favorites]);
 
-  useEffect(() => {
-    let isMounted = true;
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (isMounted) setUser(user || undefined);
-    });
-    return () => {
-      isMounted = false;
-    };
-  }, [supabase]);
-
   const handleFavoriteRemove = async (id: string) => {
-    const currentFavs: string[] = user?.user_metadata?.favorites || [];
-    const nextFavs = currentFavs.filter((fid) => fid !== id);
-    const { data, error } = await supabase.auth.updateUser({
-      data: { favorites: nextFavs },
-    });
+    const result = await removeFavorite(supabase, id);
 
-    if (error) {
-      console.error("[dashboard/favorites] remove failed", error);
+    if (!result.ok) {
       toast.error(REMOVE_FAVORITE_ERROR);
       return;
     }
 
-    if (data) {
-      setUser(data.user || undefined);
-      setLocalFavorites((prev) => prev.filter((fav) => fav.id !== id));
-    }
-
+    setLocalFavorites((prev) => prev.filter((fav) => fav.id !== id));
     toast.success("המיועד הוסר מהמועדפים");
   };
 

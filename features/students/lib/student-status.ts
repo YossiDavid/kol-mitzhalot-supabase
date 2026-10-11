@@ -1,3 +1,18 @@
+import {
+  PERSONAL_STATUS_VALUES,
+  type PersonalStatus,
+} from "@/features/engagements/lib/set-student-personal-status";
+
+/**
+ * הסטטוס האישי כערך שהתפריט מכיר. ערך ישן שאינו ברשימה (למשל "widower")
+ * הופך ל-null - לתפריט אין עבורו פריט נבחר ממילא.
+ */
+export function toPersonalStatus(
+  status: string | null | undefined,
+): PersonalStatus | null {
+  return PERSONAL_STATUS_VALUES.find((value) => value === status) ?? null;
+}
+
 /**
  * סטטוסים שמוציאים את הכרטיס משידוכים (in_shidduchim=false). ברשימה
  * הרגילה הם מוסתרים, אבל סינון מפורש לפיהם מציג אותם - אחרת כרטיס שסומן

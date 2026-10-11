@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Save, Send, User as UserIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { getCompatibilityNotes } from "@/features/shidduchim/lib/compatibility";
+import { readFavorites } from "@/features/students/lib/favorites";
 import { hasRole } from "@/lib/user-role";
 import {
   THIRD_PARTY_PROPOSAL_MESSAGE,
@@ -118,7 +119,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
     const { data: userData, error: userErr } = await supabase.auth.getUser();
     if (userErr) return;
 
-    const favIds: string[] = userData?.user?.user_metadata?.favorites || [];
+    const favIds = readFavorites(userData?.user);
     if (!favIds.length) {
       setFavorites([]);
       return;

@@ -244,8 +244,11 @@ test.describe("שדכן מחובר", () => {
     const editedItem = page.getByRole("listitem").filter({ hasText: edited });
     await expect(editedItem).toBeVisible({ timeout: 10_000 });
 
-    page.once("dialog", (dialog) => dialog.accept());
     await editedItem.getByRole("button", { name: "מחיקת ההערה" }).click();
+    await page
+      .getByRole("dialog", { name: "מחיקת הערה" })
+      .getByRole("button", { name: "מחיקה", exact: true })
+      .click();
     await expect(editedItem).toHaveCount(0);
   });
 

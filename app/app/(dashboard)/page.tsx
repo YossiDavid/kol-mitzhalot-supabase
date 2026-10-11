@@ -1,8 +1,5 @@
 import { Page, PageHeader } from "@/components/layout";
-import {
-  ShadchanArea,
-  type ShadchanAreaProps,
-} from "@/features/dashboard/components/shadchan-area";
+import { ShadchanArea } from "@/features/dashboard/components/shadchan-area";
 import { PersonalArea } from "@/features/dashboard/components/personal-area";
 import { getShadchanimWhoActedForMe } from "@/features/shadchanim/lib/queries";
 import { createClient } from "@/lib/supabase/server";
@@ -16,8 +13,8 @@ import {
   getRecentShidduchim,
   getSentShidduchimCount,
 } from "@/features/dashboard/lib/queries";
+import { readFavorites } from "@/features/students/lib/favorites";
 import { getMyProposals } from "@/features/shidduchim/lib/proposals-data";
-import type { StudentTableRow } from "@/features/students/components/students-table";
 import { ShadchanJoinBanner } from "@/features/dashboard/components/user/shadchan-join-banner";
 import { shadchanJoinPrompt } from "@/features/dashboard/lib/shadchan-join-prompt";
 import { readSignupPurpose } from "@/features/auth/lib/signup-purpose";
@@ -77,7 +74,7 @@ async function DashboardSections() {
   const isShadchan = hasRole(user, "shadchan");
 
   const isShadchanView = Boolean(user?.id && (isShadchan || isAdmin));
-  const favorites: string[] = user?.user_metadata?.favorites || [];
+  const favorites = readFavorites(user);
 
   const signupPurpose = user ? readSignupPurpose(user) : null;
   const needsShadchanApplicationStatus =
@@ -139,8 +136,7 @@ async function DashboardSections() {
       : null,
   ]);
 
-  // select עם רשימת עמודות מפורשת מבלבל את הסקת הטיפוסים של supabase-js
-  const ownCards = ownStudentsResult.students as unknown as StudentTableRow[];
+  const ownCards = ownStudentsResult.students;
   const favoritesStudentsData = favoritesResult.students;
   const activeShidduchimData = activeShidduchimResult.shidduchim;
   const openProposals = openProposalsResult.proposals;
@@ -187,14 +183,10 @@ async function DashboardSections() {
 
       {isShadchanView && (
         <ShadchanArea
-          activeShidduchim={
-            activeShidduchimData as unknown as ShadchanAreaProps["activeShidduchim"]
-          }
+          activeShidduchim={activeShidduchimData}
           activeShidduchimCount={activeShidduchimCount}
           activeShidduchimFailed={activeShidduchimResult.failed}
-          favorites={
-            favoritesPreview as unknown as ShadchanAreaProps["favorites"]
-          }
+          favorites={favoritesPreview}
           favoritesFailed={favoritesResult.failed}
           chats={shadchanChats}
           chatsFailed={chats.failed}

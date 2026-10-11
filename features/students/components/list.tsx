@@ -16,6 +16,11 @@ import { toast } from "sonner";
 import { User } from "@supabase/supabase-js";
 import { StudentsTable } from "@/features/students/components/students-table";
 import { StudentsPagination } from "@/features/students/components/students-pagination";
+import {
+  addFavorite,
+  readFavorites,
+  removeFavorite,
+} from "@/features/students/lib/favorites";
 import { isOutOfShidduchimStatus } from "@/features/students/lib/student-status";
 import { DEFAULT_STUDENTS_SORT } from "@/features/students/lib/students-list-sort";
 import { useStudentsPage } from "@/features/students/lib/use-students-page";
@@ -26,6 +31,7 @@ const FAVORITES_UPDATE_ERROR = "עדכון המועדפים נכשל, נסו ש�
 
 export default function StudentsList() {
   const [user, setUser] = useState<User | undefined>(undefined);
+  const [favorites, setFavorites] = useState<string[]>([]);
   const { query } = useStudentQuery();
   // המיון נשמר כאן ולא בטבלה: כל שינוי סינון או עמוד טוען מחדש, ובלי
   // זה הטבלה הייתה נבנית מחדש והמיון שבחרו היה מתאפס.
@@ -49,17 +55,16 @@ export default function StudentsList() {
   useEffect(() => {
     let isMounted = true;
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (isMounted) setUser(user || undefined);
+      if (!isMounted) return;
+      setUser(user || undefined);
+      setFavorites(readFavorites(user));
     });
     return () => {
       isMounted = false;
     };
   }, [supabase]);
 
-  const favSet = useMemo(
-    () => new Set<string>(user?.user_metadata?.favorites || []),
-    [user?.user_metadata?.favorites],
-  );
+  const favSet = useMemo(() => new Set<string>(favorites), [favorites]);
 
   const isAdmin = hasRole(user, "admin");
 
@@ -75,21 +80,15 @@ export default function StudentsList() {
       return;
     }
 
-    const currentFavs: string[] = user?.user_metadata?.favorites || [];
-    const nextFavs = checked
-      ? [...currentFavs, id]
-      : currentFavs.filter((fid) => fid !== id);
+    const result = checked
+      ? await addFavorite(supabase, id)
+      : await removeFavorite(supabase, id);
 
-    const { data, error } = await supabase.auth.updateUser({
-      data: { favorites: nextFavs },
-    });
-
-    if (error) {
-      console.error("[students/list] favorites update failed:", error);
+    if (!result.ok) {
       toast.error(FAVORITES_UPDATE_ERROR);
       return;
     }
-    if (data) setUser(data.user || undefined);
+    setFavorites(result.favorites);
   };
 
   if (status === "loading")

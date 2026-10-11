@@ -5,24 +5,15 @@ import { after } from "next/server";
 import type { User } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/server";
-import { describeSupabaseError } from "@/lib/supabase/describe-error";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getUser, hasRole } from "@/lib/user";
 import { StudentCardActions } from "@/features/students/components/card/student-card-actions";
 import { PublicStudentCard } from "@/features/students/components/card/public-student-card";
 import { StudentCard } from "@/features/students/components/card/student-card";
 import { StudentCardSkeleton } from "@/features/students/components/card/student-card-skeleton";
-import {
-  ANONYMOUS_BASIC_STUDENT_SELECT,
-  ANONYMOUS_STUDENT_SELECT,
-  BASIC_STUDENT_SELECT,
-  FULL_STUDENT_SELECT,
-  buildPublicStudent,
-  parentsInfoFromNames,
-  toAnonymousRowFromBasic,
-  type AnonymousStudentRow,
-} from "@/features/students/lib/student-card-data";
-import { withoutFillReason } from "@/features/students/lib/author-info";
+import { buildPublicStudent } from "@/features/students/lib/student-card-data";
+import { loadStudentCard } from "@/features/students/lib/load-student-card";
+import { shapeStudentCard } from "@/features/students/lib/shape-student-card";
 import { isDisplayRestricted } from "@/features/students/lib/third-party-card";
 import { loadThirdPartyApproval } from "@/features/students/lib/third-party-approval";
 import { ThirdPartyApprovalControls } from "@/features/admin/components/third-party-approval-controls";
@@ -34,13 +25,11 @@ import { loadStudentPhotos } from "@/features/students/lib/student-photos";
 import {
   canViewStudentPhoto,
   isGroomPhotoWithheld,
+  type PhotoAccessSubject,
 } from "@/features/students/lib/student-photo-access";
+import { toPersonalStatus } from "@/features/students/lib/student-status";
 import { getCardBackLink } from "@/features/students/lib/card-back-link";
 import { getStudentCardAccess } from "@/features/students/lib/student-card-access";
-import {
-  buildProposalStudentSelect,
-  redactProposalStudent,
-} from "@/features/students/lib/student-proposal-card";
 import { recordStudentCardView } from "@/features/students/lib/record-card-view";
 import {
   loadAdminDisplayName,
@@ -86,8 +75,7 @@ function CardNotice({
 async function loadViewerPhotos(
   supabase: Awaited<ReturnType<typeof createClient>>,
   user: User,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  student: any,
+  student: PhotoAccessSubject,
   isProposalView: boolean,
 ) {
   // בחור שנחשף לצד הכלה דרך הצעה ששדכן סימן בה "בלי תמונה": אין תמונות
@@ -181,43 +169,21 @@ async function StudentPageContent({
   // השורה ופידבק הצוות אינם תלויים זה בזה (מזהה הכרטיס כבר ידוע מהכתובת),
   // ולכן יוצאים יחד. הפידבק נצרך רק אחרי שהשורה עברה את כל הבדיקות למטה;
   // כרטיס שאינו זמין לצופה מחזיר הודעה, והפידבק שנשלף נזרק בלי להיחשף.
-  const rowQuery = isAnonymous
-    ? createAdminClient()
-        .from("students")
-        .select(
-          isBasicOnly
-            ? ANONYMOUS_BASIC_STUDENT_SELECT
-            : ANONYMOUS_STUDENT_SELECT,
-        )
-        .eq("id", id)
-        // אין RLS למשתמש anon (זה client עם service role) - הסינון על
-        // deleted_at חייב לקרות כאן במפורש, אחרת כרטיס שנמחק "רך" יחשף.
-        .is("deleted_at", null)
-        .single()
-    : supabase
-        .from("students")
-        .select(
-          isBasicOnly
-            ? BASIC_STUDENT_SELECT
-            : isProposalView && access
-              ? buildProposalStudentSelect(access)
-              : FULL_STUDENT_SELECT,
-        )
-        .eq("id", id)
-        .single();
-  const [{ data, error }, staffFeedback] = await Promise.all([
-    rowQuery,
+  // הווריאנט נבחר ומאומת ב-loadStudentCard (select + schema + טיפוס).
+  const [loaded, staffFeedback] = await Promise.all([
+    loadStudentCard({
+      supabase,
+      studentId: id,
+      isAnonymous,
+      isBasicOnly,
+      proposal: isProposalView && access ? access : null,
+    }),
     loadStaffFeedback(supabase, id),
   ]);
 
-  if (error) {
-    // הודעת Postgres נשארת בשרת: גולש אנונימי אינו אמור לראות שמות
-    // טבלאות ועמודות
-    console.error(
-      "[students/card] load failed",
-      id,
-      describeSupabaseError(error),
-    );
+  if (loaded.status === "error") {
+    // הפירוט נשאר בשרת: גולש אנונימי אינו אמור לראות שמות טבלאות ועמודות
+    console.error("[students/card] load failed", id, loaded.detail);
     return (
       <CardNotice
         tone="error"
@@ -226,33 +192,55 @@ async function StudentPageContent({
       />
     );
   }
-
-  // חיתוך פרטי ההתקשרות שחבויים בעמודות ה-JSON. חייב לקרות כאן, לפני
-  // שהשורה מגיעה לרינדור.
-  //
-  // השורה רופפת בכוונה, כמו StudentRow ב-student-card.tsx: ה-select נבנה
-  // בזמן ריצה לפי רמת הגישה, ולכן PostgREST אינו יכול להסיק ממנו טיפוס.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const shapedRow: any =
-    isBasicOnly && data && !isAnonymous
-      ? parentsInfoFromNames(data as never)
-      : data;
-  // ההסבר "מדוע מילאתי" מוצג למנהלים ולממלא בלבד
-  const canSeeFillReason =
-    isAdmin || Boolean(shapedRow?.user_id && shapedRow.user_id === user?.id);
-  const unreasonedRow: any =
-    shapedRow && !canSeeFillReason && shapedRow.author_info
-      ? { ...shapedRow, author_info: withoutFillReason(shapedRow.author_info) }
-      : shapedRow;
-  const student: any =
-    isProposalView && access && unreasonedRow
-      ? redactProposalStudent(unreasonedRow as Record<string, unknown>, access)
-      : unreasonedRow;
-  if (!student) {
+  if (loaded.status === "missing") {
     return (
       <CardNotice
         title="מיועד לא נמצא"
         body="הרשומה שחיפשת אינה קיימת במערכת"
+      />
+    );
+  }
+
+  // חיתוך פרטי ההתקשרות שחבויים בעמודות ה-JSON וההסבר "מדוע מילאתי" (למנהלים
+  // ולממלא בלבד). חייב לקרות כאן, לפני שהשורה מגיעה לרינדור.
+  const shaped = shapeStudentCard(
+    loaded.card,
+    { userId: user?.id ?? null, isAdmin },
+    isProposalView && access ? access : null,
+  );
+
+  // פידבק אנשי צוות (staffFeedback, נשלף למעלה) גלוי לכל צופה בכרטיס -
+  // גם בענף הציבורי (קישור השיתוף)
+
+  // --- ענף ציבורי (משתמש לא מחובר) --------------------------------------
+  if (shaped.audience === "anonymous") {
+    const publicStudent = buildPublicStudent(shaped.student);
+
+    // כלל מוחלט: אצל בת לעולם לא מוצגת תמונה בדף הציבורי - הגלריה נטענת
+    // ונחתמת רק לבן, ולבת לא נוצר אף קישור.
+    const publicPhotos =
+      publicStudent.gender === "male"
+        ? (await loadStudentPhotos(publicStudent.id, { canView: true })).photos
+        : [];
+
+    return (
+      <PublicStudentCard
+        studentId={publicStudent.id}
+        student={publicStudent}
+        photos={publicPhotos}
+        staffFeedback={staffFeedback}
+        thirdParty={approval ?? undefined}
+        isBasicOnly={isBasicOnly}
+      />
+    );
+  }
+  const student = shaped.student;
+  if (!user) {
+    // ענף מחובר קיים רק למשתמש מחובר; אנונימי טופל למעלה
+    return (
+      <CardNotice
+        title="הכרטיס אינו זמין"
+        body="אין לך הרשאה לצפות בכרטיס הזה, או שהוא אינו קיים במערכת"
       />
     );
   }
@@ -262,36 +250,6 @@ async function StudentPageContent({
   // מבטיח שהיא תסתיים גם אחרי שהעמוד נשלח - הרינדור לא ממתין לה.
   if (user && hasRole(user, "shadchan") && student.user_id !== user.id) {
     after(recordStudentCardView(supabase, student.id));
-  }
-
-  // פידבק אנשי צוות (staffFeedback, נשלף למעלה) גלוי לכל צופה בכרטיס -
-  // גם בענף הציבורי (קישור השיתוף)
-
-  // --- ענף ציבורי (משתמש לא מחובר) --------------------------------------
-  if (isAnonymous) {
-    const publicStudent = buildPublicStudent(
-      isBasicOnly
-        ? toAnonymousRowFromBasic(student)
-        : (student as AnonymousStudentRow),
-    );
-
-    // כלל מוחלט: אצל בת לעולם לא מוצגת תמונה בדף הציבורי - הגלריה נטענת
-    // ונחתמת רק לבן, ולבת לא נוצר אף קישור.
-    const publicPhotos =
-      publicStudent.gender === "male"
-        ? (await loadStudentPhotos(student.id, { canView: true })).photos
-        : [];
-
-    return (
-      <PublicStudentCard
-        studentId={student.id}
-        student={publicStudent}
-        photos={publicPhotos}
-        staffFeedback={staffFeedback}
-        thirdParty={approval ?? undefined}
-        isBasicOnly={isBasicOnly}
-      />
-    );
   }
 
   // התמונות, הערות השדכן ופרטי מנהל הכרטיס אינם תלויים זה בזה (כולם
@@ -381,8 +339,8 @@ async function StudentPageContent({
               : null
           }
           cvUrl={student.cv_url ?? null}
-          personalStatus={student.personal_status}
-          gender={student.gender}
+          personalStatus={toPersonalStatus(student.personal_status)}
+          gender={student.gender ?? null}
           inShidduchim={student.in_shidduchim}
           canEdit={canEdit}
           canManage={isShadchan}

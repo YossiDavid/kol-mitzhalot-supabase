@@ -254,7 +254,11 @@ function UnmatchedSection({ rows }: { rows: UnmatchedPaymentRow[] }) {
         אותם מול הספק.
       </p>
       {rows.length === 0 ? (
-        <p className="text-body-sm text-muted-foreground">אין תשלומים כאלה.</p>
+        <Empty size="compact">
+          <EmptyHeader>
+            <EmptyTitle>אין תשלומים כאלה.</EmptyTitle>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <DataTable
           caption="תשלומים שלא הותאמו"

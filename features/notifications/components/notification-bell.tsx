@@ -8,6 +8,7 @@ import type { Route } from "next";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import {
   Popover,
   PopoverContent,
@@ -163,9 +164,11 @@ export function NotificationBell({ userId }: { userId: string }) {
         <Separator />
 
         {items.length === 0 ? (
-          <p className="px-4 py-10 text-center text-body-sm text-muted-foreground">
-            אין התראות
-          </p>
+          <Empty size="compact" surface={false}>
+            <EmptyHeader>
+              <EmptyTitle>אין התראות</EmptyTitle>
+            </EmptyHeader>
+          </Empty>
         ) : (
           <ScrollArea className="h-[320px]">
             <ul className="divide-y divide-border">

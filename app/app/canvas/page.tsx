@@ -8,6 +8,7 @@ import {
 import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
 import { DESK_STUDENT_SELECT } from "@/features/shidduchim/lib/desk-student-select";
+import { readFavorites } from "@/features/students/lib/favorites";
 import ShiduchDesk from "@/features/shidduchim/components/shiduch-desk";
 import { createClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/user";
@@ -26,7 +27,7 @@ async function ShiduchDeskContent() {
   const favorites = await supabase
     .from("students")
     .select(DESK_STUDENT_SELECT)
-    .in("id", user?.user_metadata?.favorites || []);
+    .in("id", readFavorites(user));
 
   // שליפה שנכשלה אינה "אין מועדפים": הלוח עצמו תלוי במועדפים, ולכן מציגים שגיאה
   if (favorites.error) {

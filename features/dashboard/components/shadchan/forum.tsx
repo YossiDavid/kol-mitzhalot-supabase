@@ -55,7 +55,7 @@ export default function Forum({
       {posts.slice(0, 3).map((post) => (
         <Link
           key={post.id}
-          href={`/app/forums/${post.id}` as never}
+          href={`/app/forums/${post.id}`}
           className="block p-4 text-right transition hover:bg-muted/50"
           dir="rtl"
         >

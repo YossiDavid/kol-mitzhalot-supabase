@@ -10,17 +10,20 @@ import {
 
 import { CardSection } from "./card-section";
 
-type PartnerPreferences = {
-  additional_information?: string | null;
-  age_min?: number | null;
-  age_max?: number | null;
-  work_status?: string | null;
-  head_cover_type?: string | null;
-  plan_for_life?: string | null;
-  cellphone_type?: string | null;
-  preferred_countries?: string[] | null;
-  about_partner?: string | null;
-} | null;
+type PartnerPreferences =
+  | {
+      additional_information?: string | null;
+      age_min?: number | null;
+      age_max?: number | null;
+      work_status?: string | null;
+      head_cover_type?: string | null;
+      plan_for_life?: string | null;
+      cellphone_type?: string | null;
+      preferred_countries?: string[] | null;
+      about_partner?: string | null;
+    }
+  | null
+  | undefined;
 
 function PreferenceBox({
   label,
@@ -43,8 +46,7 @@ export function PartnerPreferencesSection({
   gender,
 }: {
   preferences: PartnerPreferences;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  gender: any;
+  gender: string | null | undefined;
 }) {
   if (!preferences) return null;
 

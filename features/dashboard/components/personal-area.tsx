@@ -63,7 +63,7 @@ export function PersonalArea({
           button={
             sectionHasData(openProposals, openProposalsFailed) ? (
               <Button asChild variant="outline">
-                <Link href={"/app/proposals" as never}>לכל ההצעות</Link>
+                <Link href={"/app/proposals"}>לכל ההצעות</Link>
               </Button>
             ) : undefined
           }
