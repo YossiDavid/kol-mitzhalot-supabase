@@ -85,7 +85,7 @@ export default function StudentsList() {
       : await removeFavorite(supabase, id);
 
     if (!result.ok) {
-      toast.error(FAVORITES_UPDATE_ERROR);
+      toast.error(result.message ?? FAVORITES_UPDATE_ERROR);
       return;
     }
     setFavorites(result.favorites);

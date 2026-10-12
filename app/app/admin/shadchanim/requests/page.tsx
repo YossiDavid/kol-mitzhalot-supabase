@@ -13,6 +13,9 @@ import { Suspense } from "react";
 // מספר כרטיסי השלד בזמן הטעינה - מקרב את גובה הרשימה האמיתית.
 const FALLBACK_CARD_COUNT = 3;
 
+/** שלושת שדות החובה בבקשה; בקשה ישנה שהוגשה לפני שהפכו לחובה מציגה זאת במפורש */
+const MISSING_FIELD_LABEL = "לא צוין (בקשה שהוגשה לפני שהשדה נדרש)";
+
 type ShadchanRequest = {
   id: string;
   user_id: string;
@@ -24,6 +27,7 @@ type ShadchanRequest = {
   website_url: string | null;
   location: string | null;
   community: string | null;
+  synagogue_rabbi: string | null;
   languages: string[] | null;
   certifications: string[] | null;
   application_status: "pending" | "approved" | "rejected" | null;
@@ -229,24 +233,30 @@ async function ShadchanRequestsContent() {
                         </p>
                       </div>
                     )}
-                  {request.contact_phone && (
-                    <div>
-                      <h4 className="mb-1 font-semibold">טלפון:</h4>
-                      <p className="text-body-sm">{request.contact_phone}</p>
-                    </div>
-                  )}
+                  <div>
+                    <h4 className="mb-1 font-semibold">טלפון:</h4>
+                    <p className="text-body-sm" data-testid="request-phone">
+                      {request.contact_phone || MISSING_FIELD_LABEL}
+                    </p>
+                  </div>
                   {request.contact_email && (
                     <div>
                       <h4 className="mb-1 font-semibold">אימייל:</h4>
                       <p className="text-body-sm">{request.contact_email}</p>
                     </div>
                   )}
-                  {request.community && (
-                    <div>
-                      <h4 className="mb-1 font-semibold">קהילה / חסידות:</h4>
-                      <p className="text-body-sm">{request.community}</p>
-                    </div>
-                  )}
+                  <div>
+                    <h4 className="mb-1 font-semibold">קהילה / חסידות:</h4>
+                    <p className="text-body-sm" data-testid="request-community">
+                      {request.community || MISSING_FIELD_LABEL}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="mb-1 font-semibold">רב בית הכנסת:</h4>
+                    <p className="text-body-sm" data-testid="request-rabbi">
+                      {request.synagogue_rabbi || MISSING_FIELD_LABEL}
+                    </p>
+                  </div>
                   {request.location && (
                     <div>
                       <h4 className="mb-1 font-semibold">מיקום:</h4>

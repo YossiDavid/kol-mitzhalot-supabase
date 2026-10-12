@@ -47,11 +47,12 @@ export const familyStep: FormSteps = {
           condition: parentIsAlive("father"),
         },
         {
+          // סבים: רשות לכולם (בגיל מבוגר לא תמיד אפשר לדעת). התוויות מנוסחות
+          // מנקודת המבט של ההורה שבמקטע, בלי תלות במגדר המיועד/ת
           name: "father.grandFather",
           label: "שם אביו",
           type: "textAndSelect",
           ...MALE_NAME_TITLES,
-          required: true,
           width: "lg",
         },
         {
@@ -59,7 +60,6 @@ export const familyStep: FormSteps = {
           label: "שם אמו",
           type: "textAndSelect",
           ...FEMALE_NAME_TITLES,
-          required: true,
           width: "lg",
         },
         {
@@ -106,15 +106,13 @@ export const familyStep: FormSteps = {
           label: "שם אביה",
           type: "textAndSelect",
           ...MALE_NAME_TITLES,
-          required: true,
           width: "lg",
         },
         {
           name: "mother.grandMother",
-          label: "שם אימה",
+          label: "שם אמה",
           type: "textAndSelect",
           ...FEMALE_NAME_TITLES,
-          required: true,
           width: "lg",
         },
         {

@@ -242,31 +242,32 @@ test.describe("הצעות לכרטיס צד שלישי", () => {
     await expect(page.getByRole("button", { name: "שלח הצעה" })).toBeDisabled();
   });
 
-  test("לוח עבודה: כפתור השליחה חסום עם הסבר, ומתאפשר אחרי אישור", async ({
+  test("לוח עבודה: כרטיס שטרם אושר להצעות לא עולה ללוח, ועולה (עם שליחה פתוחה) אחרי אישור", async ({
     page,
   }) => {
-    // Arrange
+    // Arrange - הכרטיס סומן כמועדף, אבל טרם אושר לקבלת הצעות
     await setFavorites([fx.groomFirst, fx.brideFirst]);
-    await page.goto("/app/canvas");
-    await placeBoth(page);
 
-    // Assert - חסום
-    await expect(page.getByTestId("third-party-send-blocked")).toHaveText(
-      BLOCK_MESSAGE,
-    );
-    await expect(page.getByRole("button", { name: "שלח הצעה" })).toBeDisabled();
+    // Act
+    await page.goto("/app/canvas");
+
+    // Assert - החתן אינו בלוח (הוא נשאר במטא-דאטה של המועדפים)
+    await expect(page.getByRole("tab", { name: "מיועדות" })).toBeVisible();
     await expect(
-      page.getByTestId("third-party-card-tag").first(),
-    ).toBeVisible();
+      page.getByRole("button", { name: /^שיבוץ .* במשבצת המיועד$/ }),
+    ).toHaveCount(0);
 
     // Act - אישור, וטעינה מחדש של הלוח
     await setApprovals({ proposals: true });
     await page.goto("/app/canvas");
     await placeBoth(page);
 
-    // Assert - פתוח
+    // Assert - על הלוח, מסומן כצד שלישי, והשליחה פתוחה
     await expect(page.getByTestId("third-party-send-blocked")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "שלח הצעה" })).toBeEnabled();
+    await expect(
+      page.getByTestId("third-party-card-tag").first(),
+    ).toBeVisible();
   });
 });
 

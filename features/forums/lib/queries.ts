@@ -34,6 +34,7 @@ const postRowSchema = z.object({
   title: z.string(),
   content: z.string(),
   created_at: z.string(),
+  edited_at: z.string().nullable(),
   author_id: z.string(),
   is_pinned: z.boolean().nullable(),
   category: categorySchema.nullable(),
@@ -45,6 +46,7 @@ const replyRowSchema = z.object({
   id: z.string(),
   content: z.string(),
   created_at: z.string(),
+  edited_at: z.string().nullable(),
   author_id: z.string(),
   likes: countRowsSchema,
 });
@@ -60,7 +62,7 @@ const likeRowSchema = z.record(z.string(), z.string().nullable());
 type PostRow = z.infer<typeof postRowSchema>;
 type CountRow = PostRow["replies"];
 
-const POST_COLUMNS = `id, title, content, created_at, author_id, is_pinned,
+const POST_COLUMNS = `id, title, content, created_at, edited_at, author_id, is_pinned,
   category:forum_categories(id, name, slug),
   replies:forum_replies(count), likes:forum_likes(count)`;
 
@@ -220,6 +222,7 @@ export async function listForumPosts(
     title: row.title,
     content: row.content,
     createdAt: row.created_at,
+    editedAt: row.edited_at,
     isPinned: row.is_pinned === true,
     authorName: names.get(row.author_id) ?? FALLBACK_AUTHOR_NAME,
     category: row.category,
@@ -259,7 +262,9 @@ export async function getForumPost(
 
   const { data: replyData, error: replyError } = await supabase
     .from("forum_replies")
-    .select("id, content, created_at, author_id, likes:forum_likes(count)")
+    .select(
+      "id, content, created_at, edited_at, author_id, likes:forum_likes(count)",
+    )
     .eq("post_id", postId)
     .order("created_at", { ascending: true })
     .order("id", { ascending: true })
@@ -296,6 +301,7 @@ export async function getForumPost(
     authorId: row.author_id,
     content: row.content,
     createdAt: row.created_at,
+    editedAt: row.edited_at,
     authorName: names.get(row.author_id) ?? FALLBACK_AUTHOR_NAME,
     likeCount: countOf(row.likes),
     isLikedByMe: likedReplies.has(row.id),
@@ -307,6 +313,7 @@ export async function getForumPost(
     title: post.title,
     content: post.content,
     createdAt: post.created_at,
+    editedAt: post.edited_at,
     isPinned: post.is_pinned === true,
     authorName: names.get(post.author_id) ?? FALLBACK_AUTHOR_NAME,
     category: post.category,

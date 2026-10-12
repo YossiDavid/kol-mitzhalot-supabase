@@ -132,7 +132,7 @@ test.describe("טבלת המיועדים - מובייל", () => {
     await expect(page.getByRole("table")).toHaveCount(0);
     await expect(card.getByText(`${FIRST_NAME} ${lastName}`)).toBeVisible();
     await expect(card.getByText(CITY)).toBeVisible();
-    await expect(card.getByText(String(HEIGHT))).toBeVisible();
+    await expect(card.getByText(String(HEIGHT), { exact: true })).toBeVisible();
     await expect(card.getByRole("link", { name: "כרטיס מלא" })).toBeVisible();
 
     // Act - גם הכרטיס כולו פותח את הכרטיס המלא

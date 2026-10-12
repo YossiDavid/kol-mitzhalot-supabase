@@ -28,6 +28,7 @@ import {
 import { NewCardBadge } from "@/features/students/components/new-card-badge";
 import { SelfCardTag } from "@/features/students/components/self-card-tag";
 import { ThirdPartyCardTag } from "@/features/students/components/third-party-card-tag";
+import { isFavoritable } from "@/features/students/lib/third-party-card";
 import type { CardFor } from "@/features/students/lib/own-cards-heading";
 import { summarizeChildren } from "@/features/students/lib/children-summary";
 import calculateAge from "@/lib/calculateAge";
@@ -394,20 +395,24 @@ function leadingColumn(
       const isFavorite = props.isFavorite(student.id);
       const isBlocked =
         !isFavorite && isOutOfShidduchimStatus(student.personal_status);
+      // כרטיס צד שלישי שטרם אושר להצעות לא מגיע ללוח העבודה - בלי כוכב
+      const canFavorite = isFavoritable(student);
       return (
         <div className="flex items-center gap-1">
-          <StarToggle
-            isActive={isFavorite}
-            isDisabled={isBlocked}
-            label={
-              isFavorite
-                ? "הסר ממועדפים"
-                : isBlocked
-                  ? "לא ניתן להוסיף מאורס או נשוי למועדפים"
-                  : "הוסף למועדפים"
-            }
-            onToggle={() => props.onToggleFavorite(student.id, !isFavorite)}
-          />
+          {canFavorite && (
+            <StarToggle
+              isActive={isFavorite}
+              isDisabled={isBlocked}
+              label={
+                isFavorite
+                  ? "הסר ממועדפים"
+                  : isBlocked
+                    ? "לא ניתן להוסיף מאורס או נשוי למועדפים"
+                    : "הוסף למועדפים"
+              }
+              onToggle={() => props.onToggleFavorite(student.id, !isFavorite)}
+            />
+          )}
           {props.canDelete && (
             <DeleteStudentButton
               variant="icon"

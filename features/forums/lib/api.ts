@@ -93,3 +93,42 @@ export async function deleteForumRow(
   }
   return NextResponse.json({ ok: true });
 }
+
+/**
+ * עדכון שורה בפורום בלקוח של המשתמש (עריכה בידי הכותב בלבד: מדיניות ה-UPDATE
+ * היא author_id = auth.uid(), ואין לה WITH CHECK). לכן הקורא מעביר כאן רק את
+ * העמודות הניתנות לעריכה, ו-edited_at נקבע בשרת. אפס שורות = לא קיים או שאין
+ * הרשאה (404 אחיד, כמו במחיקה).
+ */
+export async function updateForumRow(
+  table: "forum_posts" | "forum_replies",
+  id: string,
+  values: Record<string, string | null>,
+): Promise<NextResponse> {
+  const writer = await requireForumWriter();
+  if (!writer.ok) return writer.response;
+
+  const { data, error } = await writer.supabase
+    .from(table)
+    .update({ ...values, edited_at: new Date().toISOString() })
+    .eq("id", id)
+    .select("id");
+  if (error) return forumWriteError(`update-${table}`, error);
+
+  if (!data || data.length === 0) {
+    return NextResponse.json(
+      { error: "הפריט לא נמצא, או שאין לך הרשאה לערוך אותו" },
+      { status: 404 },
+    );
+  }
+  return NextResponse.json({ ok: true });
+}
+
+/** גוף JSON של בקשה, או null כשאינו JSON תקין */
+export async function readJsonBody(req: Request): Promise<unknown | null> {
+  try {
+    return await req.json();
+  } catch {
+    return null;
+  }
+}

@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
 
 /**
- * טופס ההצטרפות כשדכן: שדה "קהילה / חסידות" אופציונלי. משתמש שכבר שדכן או
+ * טופס ההצטרפות כשדכן: שדה "קהילה / חסידות" חובה (הכיסוי המלא של שדות החובה ב-shadchan-required-fields.spec.ts). משתמש שכבר שדכן או
  * אדמין מופנה משם, ולכן הבדיקה מדלגת אם הטופס לא נפתח.
  */
 test.describe("הגדרות — הצטרפות כשדכן", () => {
-  test("שדה הקהילה מוצג וללא כוכבית חובה", async ({ page }) => {
+  test("שדה הקהילה מוצג", async ({ page }) => {
     // Arrange
     await page.goto("/app/settings/shadchan");
     const heading = page.getByRole("heading", { name: "טופס הצטרפות" });

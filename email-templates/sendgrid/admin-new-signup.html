@@ -3,7 +3,7 @@
 <head>
   <!--
     ספק: SendGrid. סוג: Dynamic Transactional Template.
-    משתנים: subject, user_name, user_email, user_phone, user_url
+    משתנים: subject, user_name, user_email, user_phone, signup_purpose, user_url
     נושא מוצע: {{subject}}
     כל הערכים ב-{{...}} עוברים בריחת HTML אוטומטית ב-Handlebars.
     לוגו: URL קבוע בתבנית. תחתית: {{{unsubscribe}}} וכו' מוגדרים ע"י SendGrid.
@@ -31,7 +31,7 @@
             <td style="padding:8px 32px 16px;text-align:right;">
               <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7;">שלום,</p>
               <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7;">משתמש חדש נרשם למערכת קול מצהלות.</p>
-              <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7;">שם: {{user_name}}<br />אימייל: {{user_email}}<br />טלפון: {{user_phone}}</p>
+              <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7;">שם: {{user_name}}<br />אימייל: {{user_email}}<br />טלפון: {{user_phone}}{{#if signup_purpose}}<br />מטרת ההרשמה: {{signup_purpose}}{{/if}}</p>
             </td>
           </tr>
           {{#if user_url}}

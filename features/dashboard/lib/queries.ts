@@ -11,7 +11,10 @@ import {
   STUDENT_TABLE_COLUMNS,
   parseStudentTableRows,
 } from "./student-table-rows";
-import { STUDENT_CARDS_VIEW } from "@/features/students/lib/third-party-card";
+import {
+  STUDENT_CARDS_VIEW,
+  keepFavoritable,
+} from "@/features/students/lib/third-party-card";
 import { shidduchIdsOf, splitChatsBySide } from "./chat-sides";
 
 type ServerSupabase = Awaited<ReturnType<typeof createClient>>;
@@ -53,7 +56,9 @@ export async function getFavoriteStudents(
     console.error("[dashboard/favorites]", describeSupabaseError(error));
     return { students: [], failed: true };
   }
-  return toStudentTableResult(data, "[dashboard/favorites]");
+  // צד שלישי שטרם אושר להצעות לא מוצג בלוח (המטא-דאטה נשאר, וחוזר באישור)
+  const result = toStudentTableResult(data, "[dashboard/favorites]");
+  return { ...result, students: keepFavoritable(result.students) };
 }
 
 /** המיועדים שבניהול המשתמש. failed נפרד מרשימה ריקה (כמו במועדפים) */

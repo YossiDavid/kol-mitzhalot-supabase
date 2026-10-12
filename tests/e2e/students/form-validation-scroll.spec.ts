@@ -89,6 +89,6 @@ test("שם עם תוארים מקבל הודעה עם התווית המגדרי�
 
   // Assert
   const fatherCell = page.locator('[data-field-name="father.self"]');
-  await expect(fatherCell.getByText("נא למלא שם אביה")).toBeVisible();
+  await expect(fatherCell.getByText("נא למלא שם האב")).toBeVisible();
   await expect(page.locator("#father-self")).toBeFocused();
 });

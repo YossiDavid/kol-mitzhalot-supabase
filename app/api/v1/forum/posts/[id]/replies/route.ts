@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { forumWriteError, requireForumWriter } from "@/features/forums/lib/api";
-import { FORUM_REPLY_MAX } from "@/features/forums/lib/types";
-
-const replySchema = z.object({
-  content: z.string().trim().min(1).max(FORUM_REPLY_MAX),
-});
+import {
+  FORUM_REPLY_INVALID_MESSAGE,
+  forumReplyFieldsSchema,
+} from "@/features/forums/lib/schemas";
 
 export async function POST(
   req: NextRequest,
@@ -26,9 +25,12 @@ export async function POST(
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const parsed = replySchema.safeParse(payload);
+  const parsed = forumReplyFieldsSchema.safeParse(payload);
   if (!parsed.success) {
-    return NextResponse.json({ error: "יש לכתוב תגובה" }, { status: 400 });
+    return NextResponse.json(
+      { error: FORUM_REPLY_INVALID_MESSAGE },
+      { status: 400 },
+    );
   }
 
   const { data, error } = await writer.supabase

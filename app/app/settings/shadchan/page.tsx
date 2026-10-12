@@ -20,18 +20,14 @@ import {
 import { CardSkeleton } from "@/components/ui/card-skeleton";
 import { Form, FormField } from "@/components/ui/form";
 import { FormFieldShell } from "@/components/ui/form-field-shell";
-import {
-  FormActions,
-  FormFields,
-  FormGrid,
-} from "@/components/ui/form-layout";
+import { FormActions, FormFields, FormGrid } from "@/components/ui/form-layout";
 import { Input } from "@/components/ui/input";
 import { SkeletonRegion } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import {
   optionalEmail,
-  optionalPhone,
   optionalText,
+  requiredPhone,
   requiredText,
   requiredChoice,
   requiredWholeNumber,
@@ -42,25 +38,27 @@ import { createClient } from "@/lib/supabase/client";
 import { hasRole } from "@/lib/user-role";
 
 /** מספר שדות הטופס, לשלד הטעינה. */
-const FORM_FIELD_COUNT = 6;
+const FORM_FIELD_COUNT = 7;
 
-/**
- * האם "קהילה / חסידות" שדה חובה בבקשת ההצטרפות. הלקוח עשוי להחליט שכן -
- * מספיק להחליף ל-true (הסכמה והכוכבית בטופס נגזרות מכאן).
- */
-const IS_COMMUNITY_REQUIRED = false;
+/** אורך מקסימלי לשם הרב (תואם ל-CHECK בעמודה synagogue_rabbi) */
+const SYNAGOGUE_RABBI_MAX_LENGTH = 100;
+
+/** הודעה קבועה למשתמש כששמירת הבקשה נכשלת (הפרטים הטכניים נרשמים בקונסול) */
+const SUBMIT_ERROR_MESSAGE = "שליחת הבקשה נכשלה, נסו שוב";
 
 const shadchanSchema = z.object({
   bio: requiredText("ביוגרפיה"),
   experience_years: requiredWholeNumber("שנות ניסיון"),
   closed_matches: requiredWholeNumber("מספר השידוכים שנסגרו"),
   specializations: optionalText(),
-  contact_phone: optionalPhone(),
+  contact_phone: requiredPhone("טלפון ליצירת קשר"),
   contact_email: optionalEmail(),
   languages: optionalText(),
-  community: IS_COMMUNITY_REQUIRED
-    ? requiredChoice("קהילה / חסידות")
-    : optionalText(),
+  community: requiredChoice("קהילה / חסידות"),
+  synagogue_rabbi: requiredText("רב בית הכנסת שלך").max(
+    SYNAGOGUE_RABBI_MAX_LENGTH,
+    `שם הרב ארוך מדי (עד ${SYNAGOGUE_RABBI_MAX_LENGTH} תווים)`,
+  ),
 });
 
 type ShadchanFormData = z.infer<typeof shadchanSchema>;
@@ -74,6 +72,7 @@ const EMPTY_FORM: ShadchanFormData = {
   contact_email: "",
   languages: "",
   community: "",
+  synagogue_rabbi: "",
 };
 
 /** רק מה שהטופס באמת צריך לדעת על בקשה שכבר הוגשה */
@@ -163,6 +162,8 @@ function ShadchanApplicationForm() {
             : data.languages || "",
           closed_matches: data.closed_matches?.toString() || "",
           community: data.community || "",
+          // בקשות שהוגשו לפני הוספת השדה: ריק, ויידרש במילוי הבא
+          synagogue_rabbi: data.synagogue_rabbi || "",
         });
       }
 
@@ -208,7 +209,8 @@ function ShadchanApplicationForm() {
         closed_matches: data.closed_matches
           ? parseInt(data.closed_matches)
           : null,
-        community: data.community || null,
+        community: data.community,
+        synagogue_rabbi: data.synagogue_rabbi,
       };
 
       // אם זו בקשה חדשה, הוסף application_status = 'pending'
@@ -233,9 +235,7 @@ function ShadchanApplicationForm() {
       );
       router.push("/app/settings");
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "אירעה שגיאה בשליחת הבקשה";
-      toast.error(errorMessage);
+      toast.error(SUBMIT_ERROR_MESSAGE);
       console.error("Error submitting shadchan application:", error);
     }
   };
@@ -332,7 +332,7 @@ function ShadchanApplicationForm() {
                     control={form.control}
                     name="contact_phone"
                     render={({ field }) => (
-                      <FormFieldShell label="טלפון ליצירת קשר">
+                      <FormFieldShell label="טלפון ליצירת קשר" required>
                         <Input
                           {...field}
                           type="tel"
@@ -366,15 +366,31 @@ function ShadchanApplicationForm() {
                   control={form.control}
                   name="community"
                   render={({ field }) => (
-                    <FormFieldShell
-                      label="קהילה / חסידות"
-                      required={IS_COMMUNITY_REQUIRED}
-                    >
+                    <FormFieldShell label="קהילה / חסידות" required>
                       <SearchSelectField
                         {...COMMUNITY_SEARCH}
                         id="community"
                         value={field.value}
                         onChange={field.onChange}
+                        disabled={isSubmitting}
+                      />
+                    </FormFieldShell>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="synagogue_rabbi"
+                  render={({ field }) => (
+                    <FormFieldShell
+                      label="רב בית הכנסת שלך"
+                      description="שם הרב של בית הכנסת שבו אתה מתפלל. הפרט נראה למנהל המערכת בלבד."
+                      required
+                    >
+                      <Input
+                        {...field}
+                        placeholder="לדוגמה: הרב יעקב כהן"
+                        maxLength={SYNAGOGUE_RABBI_MAX_LENGTH}
                         disabled={isSubmitting}
                       />
                     </FormFieldShell>

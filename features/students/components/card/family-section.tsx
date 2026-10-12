@@ -154,7 +154,7 @@ export function FamilySection({
             label="אמא"
             parent={parentsInfo?.mother}
             grandFatherLabel="אביה:"
-            grandMotherLabel="אימה:"
+            grandMotherLabel="אמה:"
             maidenName={parentsInfo?.mother?.maidenName}
             isDeceased={isParentDeceased(parentsInfo, "mother")}
             deathNote={

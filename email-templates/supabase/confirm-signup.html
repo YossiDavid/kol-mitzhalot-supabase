@@ -2,7 +2,8 @@
   ספק: Supabase Auth (לא SendGrid)
   מיקום ב-Dashboard: Authentication → Email Templates → Confirm signup / Confirm Your Signup
   נושא מוצע: אישור הרשמה למערכת
-  משתנים: {{ .RedirectTo }}, {{ .TokenHash }}, {{ .Token }} (הקוד בן 6 הספרות)
+  משתנים: {{ .RedirectTo }}, {{ .TokenHash }}, {{ .Token }} (הקוד בן 6 הספרות),
+  {{ .Data.signup_purpose }} (מטרת ההרשמה מהטופס, מתוך user_metadata; ריק למשתמשים שלא נרשמו בטופס)
 
   חשוב: לא משתמשים ב-ConfirmationURL. הוא מצביע על כתובת האימות של Supabase עצמה, שנצרכת
   בכל בקשת GET — גם של סורק קישורים (מסנן אינטרנט, הגנת Gmail) — ואז הלחיצה של המשתמש נכשלת
@@ -55,6 +56,19 @@
             </p>
           </td>
         </tr>
+
+        <!-- הבהרה לנרשם כשדכן בלבד (signup_purpose = shadchan): ההרשמה הראשונית אינה בקשת הצטרפות -->
+        {{ if .Data.signup_purpose }}{{ if eq .Data.signup_purpose "shadchan" }}
+        <tr>
+          <td style="padding:0 32px 24px;text-align:right;">
+            <div dir="rtl" style="background:#f0f9fa;border:1px solid #cfe7ea;border-radius:10px;padding:14px 16px;color:#254c49;font-size:14px;line-height:1.7;text-align:right;">
+              <strong>נרשמת כשדכן/ית.</strong>
+              ההרשמה הראשונית נקלטה. כדי להצטרף כשדכן/ית, יש להיכנס למערכת,
+              לעבור אל הגדרות ← &quot;הצטרפות כשדכן&quot;, ולמלא את טופס הבקשה.
+            </div>
+          </td>
+        </tr>
+        {{ end }}{{ end }}
 
         <!-- קוד חלופי: סורקי קישורים צורכים את הקישור מראש; את הקוד אי אפשר לצרוך כך -->
         <tr>

@@ -1,4 +1,11 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import {
+  STUDENT_CARDS_VIEW,
+  THIRD_PARTY_APPROVAL_COLUMNS,
+  THIRD_PARTY_FAVORITE_MESSAGE,
+  isFavoritable,
+  type ThirdPartyApprovalColumns,
+} from "@/features/students/lib/third-party-card";
 
 /**
  * המועדפים נשמרים ב-user_metadata.favorites (מערך מזהי כרטיסים).
@@ -10,7 +17,10 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
  */
 const FAVORITES_METADATA_KEY = "favorites";
 
-export type FavoritesResult = { ok: true; favorites: string[] } | { ok: false };
+/** message (אם קיים) הוא סיבה קבועה וקריאה למשתמש; בלעדיה מציגים הודעה כללית */
+export type FavoritesResult =
+  | { ok: true; favorites: string[] }
+  | { ok: false; message?: string };
 
 /** מזהי המועדפים מתוך המשתמש. ערך שאינו מערך מחרוזות נחשב "אין מועדפים" */
 export function readFavorites(
@@ -76,10 +86,36 @@ async function updateFavorites(
   }
 }
 
-export function addFavorite(
+/**
+ * בודק דרך student_cards אם הכרטיס רשאי להיות מועדף. הכרטיס שלא נמצא (אין
+ * הרשאה לראות אותו) או שהקריאה נכשלה - נחשב לא רשאי; לא מסתירים כשל.
+ */
+async function checkFavoritable(
+  supabase: SupabaseClient,
+  studentId: string,
+): Promise<FavoritesResult | null> {
+  const { data, error } = await supabase
+    .from(STUDENT_CARDS_VIEW)
+    .select(THIRD_PARTY_APPROVAL_COLUMNS)
+    .eq("id", studentId)
+    .maybeSingle<ThirdPartyApprovalColumns>();
+  if (error || !data) return fail("check favoritable", error ?? "not found");
+  if (!isFavoritable(data)) {
+    return { ok: false, message: THIRD_PARTY_FAVORITE_MESSAGE };
+  }
+  return null;
+}
+
+export async function addFavorite(
   supabase: SupabaseClient,
   studentId: string,
 ): Promise<FavoritesResult> {
+  try {
+    const refusal = await checkFavoritable(supabase, studentId);
+    if (refusal) return refusal;
+  } catch (error: unknown) {
+    return fail("check favoritable", error);
+  }
   return updateFavorites(supabase, "add", (current) =>
     current.includes(studentId) ? [...current] : [...current, studentId],
   );

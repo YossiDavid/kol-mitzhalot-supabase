@@ -449,6 +449,7 @@ test.describe("התראות — טריגרים ו-routes", () => {
         firstName: "נרשם",
         lastName: "חדש",
         phone: "+972500000099",
+        signup_purpose: "shadchan",
       },
     });
     expect(error).toBeNull();
@@ -465,6 +466,9 @@ test.describe("התראות — טריגרים ו-routes", () => {
       expect(notifications).toHaveLength(1);
       expect(notifications![0].link).toBe(`/app/admin/users/${newUserId}`);
       expect(notifications![0].body).toContain(email);
+      expect(notifications![0].body).toContain(
+        "מטרת ההרשמה: אני רוצה להצטרף כשדכן/ית",
+      );
 
       // Assert: סימון ממתין (sent_at ריק) - הבסיס לאידמפוטנטיות המייל
       const { data: marker } = await admin
@@ -473,6 +477,43 @@ test.describe("התראות — טריגרים ו-routes", () => {
         .eq("user_id", newUserId)
         .single();
       expect(marker).toEqual({ sent_at: null, claimed_at: null });
+    } finally {
+      await admin.auth.admin.deleteUser(newUserId);
+    }
+  });
+
+  test("הרשמה בלי מטרה מוכרת: ההתראה בלי שורת מטרה", async () => {
+    // Arrange
+    const { data: users } = await admin.auth.admin.listUsers({ perPage: 1000 });
+    const adminUser = users?.users.find((u) => u.email === ADMIN_EMAIL);
+    test.skip(!adminUser, "משתמש המנהל של הבדיקות לא קיים - setup-admin לא רץ");
+    const email = `playwright-nopurpose-${Date.now()}@kol-mitzhalot.test`;
+
+    // Act
+    const { data: created, error } = await admin.auth.admin.createUser({
+      email,
+      phone: `+9725${Date.now().toString().slice(-8)}`,
+      email_confirm: true,
+      user_metadata: {
+        firstName: "בלי",
+        lastName: "מטרה",
+        signup_purpose: "xx",
+      },
+    });
+    expect(error).toBeNull();
+    const newUserId = created.user!.id;
+
+    try {
+      // Assert
+      const { data: notifications } = await admin
+        .from("notifications")
+        .select("body")
+        .eq("user_id", adminUser!.id)
+        .eq("type", "user_registered")
+        .eq("related_id", newUserId);
+      expect(notifications).toHaveLength(1);
+      expect(notifications![0].body).toContain(email);
+      expect(notifications![0].body).not.toContain("מטרת ההרשמה");
     } finally {
       await admin.auth.admin.deleteUser(newUserId);
     }

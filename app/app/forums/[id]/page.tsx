@@ -9,29 +9,44 @@ import { Card } from "@/components/ui/card";
 import { CardGridSkeleton } from "@/components/ui/card-skeleton";
 import ForumAccessNotice from "@/features/forums/components/access-notice";
 import ForumDeleteButton from "@/features/forums/components/forum-delete-button";
+import ForumEditButton from "@/features/forums/components/forum-edit-button";
 import ForumLikeButton from "@/features/forums/components/like-button";
 import ReplyForm from "@/features/forums/components/reply-form";
 import { getForumAccess } from "@/features/forums/lib/access";
 import { formatForumDate } from "@/features/forums/lib/format";
-import { getForumPost } from "@/features/forums/lib/queries";
+import {
+  getForumPost,
+  listForumCategories,
+} from "@/features/forums/lib/queries";
 import {
   FORUM_REPLIES_SAFETY_LIMIT,
   type ForumReply,
 } from "@/features/forums/lib/types";
 import { z } from "zod";
 
+/** סימון "נערך" עם מועד העריכה האחרונה (שעון ישראל); לא מוצג למי שלא נערך */
+function EditedMarker({ editedAt }: { editedAt: string | null }) {
+  if (!editedAt) return null;
+  return (
+    <span data-testid="forum-edited"> · נערך {formatForumDate(editedAt)}</span>
+  );
+}
+
 function ReplyItem({
   reply,
   canDelete,
+  canEdit,
 }: {
   reply: ForumReply;
   canDelete: boolean;
+  canEdit: boolean;
 }) {
   return (
     <Card size="sm" asChild>
       <article data-testid="forum-reply">
         <p className="text-caption text-muted-foreground">
           {reply.authorName} · {formatForumDate(reply.createdAt)}
+          <EditedMarker editedAt={reply.editedAt} />
         </p>
         <p className="text-body-sm leading-relaxed whitespace-pre-wrap">
           {reply.content}
@@ -42,6 +57,11 @@ function ReplyItem({
             initialCount={reply.likeCount}
             initialLiked={reply.isLikedByMe}
           />
+          {canEdit && (
+            <ForumEditButton
+              target={{ kind: "reply", id: reply.id, content: reply.content }}
+            />
+          )}
           {canDelete && (
             <ForumDeleteButton target={{ kind: "reply", id: reply.id }} />
           )}
@@ -65,12 +85,17 @@ async function ForumPostContent({
   const { id } = await params;
   if (!z.guid().safeParse(id).success) notFound();
 
-  const post = await getForumPost(access.userId, id);
+  const [post, categories] = await Promise.all([
+    getForumPost(access.userId, id),
+    listForumCategories(),
+  ]);
   if (!post) notFound();
 
   /** הכפתור רק לכותב התוכן או למנהל; ה-RLS אוכף זאת גם בשרת */
   const canDelete = (authorId: string) =>
     access.isAdmin || authorId === access.userId;
+  /** עריכה לכותב בלבד: מדיניות ה-UPDATE במסד אינה כוללת מנהל */
+  const canEdit = (authorId: string) => authorId === access.userId;
 
   return (
     <div className="space-y-6">
@@ -84,6 +109,7 @@ async function ForumPostContent({
           <PageTitle>{post.title}</PageTitle>
           <p className="text-caption text-muted-foreground">
             {post.authorName} · {formatForumDate(post.createdAt)}
+            <EditedMarker editedAt={post.editedAt} />
           </p>
           <p className="text-body leading-relaxed whitespace-pre-wrap">
             {post.content}
@@ -94,6 +120,18 @@ async function ForumPostContent({
               initialCount={post.likeCount}
               initialLiked={post.isLikedByMe}
             />
+            {canEdit(post.authorId) && (
+              <ForumEditButton
+                target={{
+                  kind: "post",
+                  id: post.id,
+                  title: post.title,
+                  content: post.content,
+                  categoryId: post.category?.id ?? null,
+                  categories,
+                }}
+              />
+            )}
             {canDelete(post.authorId) && (
               <ForumDeleteButton
                 target={{
@@ -117,6 +155,7 @@ async function ForumPostContent({
             key={reply.id}
             reply={reply}
             canDelete={canDelete(reply.authorId)}
+            canEdit={canEdit(reply.authorId)}
           />
         ))}
         {post.replyCount > post.replies.length && (

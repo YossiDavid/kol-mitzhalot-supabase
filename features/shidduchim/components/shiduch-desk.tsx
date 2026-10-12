@@ -23,6 +23,7 @@ import { hasRole } from "@/lib/user-role";
 import {
   THIRD_PARTY_PROPOSAL_MESSAGE,
   isProposalsPending,
+  keepFavoritable,
   STUDENT_CARDS_VIEW,
 } from "@/features/students/lib/third-party-card";
 import { DESK_STUDENT_SELECT } from "@/features/shidduchim/lib/desk-student-select";
@@ -131,7 +132,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
       .select(DESK_STUDENT_SELECT)
       .in("id", favIds);
 
-    if (!error) setFavorites(data || []);
+    if (!error) setFavorites(keepFavoritable(data || []));
   };
 
   const handleFavoritesChanged = async () => {

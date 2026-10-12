@@ -20,7 +20,8 @@ function GrandParent({
   value: NameWithTitles | null | undefined;
   withDivider?: boolean;
 }) {
-  if (!value) return null;
+  // סבים הם שדה רשות: בלי שם (גם אם נשמר אובייקט ריק) לא מציגים שורת תווית
+  if (!value?.name?.trim()) return null;
   return (
     <div className={withDivider ? "mt-3 border-t border-border pt-3" : "mt-2"}>
       <p className="text-caption text-muted-foreground">{label}</p>

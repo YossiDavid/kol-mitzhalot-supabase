@@ -1,18 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { forumWriteError, requireForumWriter } from "@/features/forums/lib/api";
-import { FORUM_POST_MAX, FORUM_TITLE_MAX } from "@/features/forums/lib/types";
+import {
+  FORUM_POST_INVALID_MESSAGE,
+  forumPostFieldsSchema,
+} from "@/features/forums/lib/schemas";
 
 /**
  * פרסום פוסט בפורום השדכנים. הקריאה והרשימה נעשות ישירות מהדפים (שרת),
  * כך שנשאר כאן רק הפרסום. העמודה בטבלה היא content (לא body).
  */
-const createSchema = z.object({
-  title: z.string().trim().min(1).max(FORUM_TITLE_MAX),
-  content: z.string().trim().min(1).max(FORUM_POST_MAX),
-  categoryId: z.guid().nullish(),
-});
-
 export async function POST(req: NextRequest) {
   const writer = await requireForumWriter();
   if (!writer.ok) return writer.response;
@@ -24,10 +20,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const parsed = createSchema.safeParse(payload);
+  const parsed = forumPostFieldsSchema.safeParse(payload);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "יש למלא כותרת ותוכן תקינים" },
+      { error: FORUM_POST_INVALID_MESSAGE },
       { status: 400 },
     );
   }

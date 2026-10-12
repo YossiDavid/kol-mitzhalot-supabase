@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { readSignupPurpose } from "@/features/auth/lib/signup-purpose";
+import { resolveUserPhone } from "@/lib/phone";
 import { readTemplateId, sendEmail } from "@/lib/email/send-email";
 import {
   ADMIN_NEW_SIGNUP_TEMPLATE_ENV,
@@ -112,7 +114,9 @@ async function sendToAdmins(
     userId,
     fullName: fullName || null,
     email: user.email ?? null,
-    phone: typeof meta.phone === "string" ? meta.phone : null,
+    // אותו מקור כמו בדף המשתמש של המנהל: מטא-דאטה ואז עמודת הטלפון של auth
+    phone: resolveUserPhone(user),
+    signupPurpose: readSignupPurpose(user),
   });
   const templateId = readTemplateId(ADMIN_NEW_SIGNUP_TEMPLATE_ENV);
 

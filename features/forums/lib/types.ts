@@ -21,6 +21,8 @@ export type ForumPostSummary = {
   title: string;
   content: string;
   createdAt: string;
+  /** מתי נערך לאחרונה; null = לא נערך */
+  editedAt: string | null;
   isPinned: boolean;
   authorName: string;
   category: ForumCategory | null;
@@ -34,6 +36,7 @@ export type ForumReply = {
   authorId: string;
   content: string;
   createdAt: string;
+  editedAt: string | null;
   authorName: string;
   likeCount: number;
   isLikedByMe: boolean;

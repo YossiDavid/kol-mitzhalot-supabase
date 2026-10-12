@@ -597,7 +597,12 @@ test.describe("וריאנטי הכרטיס מול המסד", () => {
     await page.goto("/app/students");
     await page.locator("#search").fill(BRIDE_LAST);
     // הכלה אינה בבעלות השדכן אך נראית לו ברשימה
-    await page.getByRole("button", { name: "הוסף למועדפים" }).first().click();
+    // הכוכב של שורת הכלה עצמה: לחיצה על הכוכב הראשון בדף נתפסה לפני שהסינון
+    // חל, ועל שורה אחרת
+    await page
+      .getByRole("row", { name: new RegExp(BRIDE_LAST) })
+      .getByRole("button", { name: "הוסף למועדפים" })
+      .click();
     await expect.poll(readFavorites).toEqual([brideId]);
 
     await page.goto("/app");

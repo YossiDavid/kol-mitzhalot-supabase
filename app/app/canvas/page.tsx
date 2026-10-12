@@ -14,7 +14,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/user";
 import { unstable_noStore as noStore } from "next/cache";
 import { Suspense } from "react";
-import { STUDENT_CARDS_VIEW } from "@/features/students/lib/third-party-card";
+import {
+  STUDENT_CARDS_VIEW,
+  keepFavoritable,
+} from "@/features/students/lib/third-party-card";
 
 /** כמה כרטיסי מועדפים מסומנים בשלד שולחן העבודה. */
 const SKELETON_FAVORITE_COUNT = 4;
@@ -48,7 +51,8 @@ async function ShiduchDeskContent() {
     );
   }
 
-  return <ShiduchDesk initialFavorites={favorites.data} />;
+  // צד שלישי שטרם אושר להצעות לא עולה ללוח (נשאר במטא-דאטה וחוזר באישור)
+  return <ShiduchDesk initialFavorites={keepFavoritable(favorites.data)} />;
 }
 
 /** שלד שולחן העבודה: אזור השידוך למעלה, ורצועת המועדפים בתחתית. */

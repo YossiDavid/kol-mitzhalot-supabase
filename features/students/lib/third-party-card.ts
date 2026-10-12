@@ -45,6 +45,30 @@ export function isProposalsPending(card: ThirdPartyApprovalColumns): boolean {
 }
 
 /**
+ * האם אפשר לסמן את הכרטיס כמועדף (= להביא אותו ללוח העבודה של השדכן):
+ * רק כרטיס שאינו ממתין לאישור קבלת הצעות. כרטיס רגיל, ישן (card_for ריק)
+ * וצד שלישי שאושר - כן; צד שלישי שטרם אושר להצעות - לא (גם אם ההצגה המלאה
+ * שלו כבר אושרה, האישורים בלתי תלויים).
+ */
+export function isFavoritable(card: ThirdPartyApprovalColumns): boolean {
+  return !isProposalsPending(card);
+}
+
+/**
+ * מסנן מרשימת מועדפים כרטיסים שאינם מועמדים ללוח (ראו isFavoritable).
+ * המסנן אינו נוגע ב-user_metadata: אחרי אישור ההנהלה הכרטיס חוזר מעצמו.
+ */
+export function keepFavoritable<T extends ThirdPartyApprovalColumns>(
+  cards: readonly T[],
+): T[] {
+  return cards.filter(isFavoritable);
+}
+
+/** הסירוב להוסיף למועדפים כרטיס צד שלישי שטרם אושר להצעות */
+export const THIRD_PARTY_FAVORITE_MESSAGE =
+  "לא ניתן להוסיף למועדפים כרטיס שמולא על ידי צד שלישי וטרם אושר לקבלת הצעות על ידי הנהלת המערכת.";
+
+/**
  * האם הצופה מוגבל לנתונים בסיסיים: כרטיס צד שלישי בלי אישור הצגה, והצופה
  * אינו מי שמנהל את הכרטיס (ממלא הכרטיס) ואינו מנהל מערכת.
  * אותו כלל נאכף במסד (student_display_restricted).

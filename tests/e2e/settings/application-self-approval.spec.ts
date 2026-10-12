@@ -27,6 +27,13 @@ const ADMIN_EMAIL =
 const INSTITUTION_GENDER = "male";
 const INSTITUTION_TYPE = "yeshiva_gedola";
 
+/** שדות החובה של בקשת שדכן (טלפון, קהילה, רב) - בלעדיהם הטריגר דוחה הגשה */
+const COMPLETE_SHADCHAN_FIELDS = {
+  contact_phone: "0501234567",
+  community: "בעלזא",
+  synagogue_rabbi: "הרב בדיקה",
+};
+
 test.describe("הצהרה עצמית כאיש צוות / שדכן מאושר", () => {
   test.describe.configure({ mode: "serial" });
 
@@ -236,6 +243,7 @@ test.describe("הצהרה עצמית כאיש צוות / שדכן מאושר", (
   test("אותו דבר בשדכנים: לא ניתן לאשר את עצמך, ופורום סגור", async () => {
     // Act
     await applicant.from("shadchanim_info").insert({
+      ...COMPLETE_SHADCHAN_FIELDS,
       user_id: applicantId,
       application_status: "approved",
       approved_at: new Date().toISOString(),
@@ -262,6 +270,7 @@ test.describe("הצהרה עצמית כאיש צוות / שדכן מאושר", (
     await admin
       .from("shadchanim_info")
       .update({
+        ...COMPLETE_SHADCHAN_FIELDS,
         application_status: "rejected",
         rejected_reason: "חסר מידע",
         rejected_at: new Date().toISOString(),

@@ -192,35 +192,11 @@ const genderLabelOverrides: Record<string, { male: string; female: string }> = {
     male: "שם האם של האשה",
     female: "שם האם של הבעל",
   },
-  // Father section — labels differ for male vs female student
-  "father.self": {
-    male: "שם אביו",
-    female: "שם אביה",
-  },
-  "father.grandFather": {
-    male: "שם אבי אביו",
-    female: "שם אבי אביה",
-  },
-  "father.grandMother": {
-    male: "שם אם אביו",
-    female: "שם אם אביה",
-  },
-  // Mother section
-  "mother.self": {
-    male: "שם אמו",
-    female: "שם אמה",
-  },
+  // שמות ההורים והסבים בשלב "על המשפחה" אינם כאן: התוויות שלהם מנוסחות
+  // מנקודת המבט של ההורה שבמקטע (family-step.ts), בלי תלות במגדר המיועד/ת
   "mother.maidenName": {
     male: "שם נעורים של האם",
     female: "שם נעורים של האם",
-  },
-  "mother.grandFather": {
-    male: "שם אבי אמו",
-    female: "שם אבי אמה",
-  },
-  "mother.grandMother": {
-    male: "שם אם אמו",
-    female: "שם אם אמה",
   },
   // המיועד/ת עצמו/ה
   phone: {

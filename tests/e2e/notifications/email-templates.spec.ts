@@ -72,6 +72,40 @@ test.describe("תבניות מייל", () => {
     expect(content.text).toContain("לא צוין");
   });
 
+  test("מייל הרשמה חדשה: מטרת ההרשמה מופיעה בטקסט, ב-HTML ובמשתנה התבנית", () => {
+    // Act
+    const content = buildAdminNewSignupEmail({
+      userId: "00000000-0000-4000-8000-000000000001",
+      fullName: "דוד",
+      email: "a@b.co",
+      phone: "0501234567",
+      signupPurpose: "shadchan",
+    });
+
+    // Assert
+    expect(content.text).toContain("מטרת ההרשמה: אני רוצה להצטרף כשדכן/ית");
+    expect(content.html).toContain("אני רוצה להצטרף כשדכן/ית");
+    expect(content.dynamicData.signup_purpose).toBe("אני רוצה להצטרף כשדכן/ית");
+  });
+
+  test("מייל הרשמה חדשה: מטרה חסרה או לא מוכרת - בלי שורת מטרה", () => {
+    for (const signupPurpose of [null, undefined, "", "לא-מוכר"]) {
+      // Act
+      const content = buildAdminNewSignupEmail({
+        userId: "00000000-0000-4000-8000-000000000001",
+        fullName: "דוד",
+        email: "a@b.co",
+        phone: null,
+        signupPurpose,
+      });
+
+      // Assert
+      expect(content.text).not.toContain("מטרת ההרשמה");
+      expect(content.html).not.toContain("מטרת ההרשמה");
+      expect(content.dynamicData.signup_purpose).toBe("");
+    }
+  });
+
   test("עדכון הצד השני: החלקים האוטומטיים לא חושפים מי דחה ומדוע", () => {
     // Act
     const content = buildClosedNoticeEmail(
