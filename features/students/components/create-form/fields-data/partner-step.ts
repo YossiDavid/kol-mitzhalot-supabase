@@ -119,7 +119,7 @@ export const partnerStep: FormSteps = {
         {
           name: "partner.aboutThePartner",
           width: "full",
-          label: "כמה מילים על אופי וסגנון המיועד/ת",
+          label: "כמה מילים על האופי והסגנון שמחפשים במיועד/ת",
           type: "textarea",
         },
         {
