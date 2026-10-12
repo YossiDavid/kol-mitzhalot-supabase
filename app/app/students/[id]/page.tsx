@@ -14,7 +14,10 @@ import { StudentCardSkeleton } from "@/features/students/components/card/student
 import { buildPublicStudent } from "@/features/students/lib/student-card-data";
 import { loadStudentCard } from "@/features/students/lib/load-student-card";
 import { shapeStudentCard } from "@/features/students/lib/shape-student-card";
-import { isDisplayRestricted } from "@/features/students/lib/third-party-card";
+import {
+  STUDENT_CARDS_VIEW,
+  isDisplayRestricted,
+} from "@/features/students/lib/third-party-card";
 import { loadThirdPartyApproval } from "@/features/students/lib/third-party-approval";
 import { ThirdPartyApprovalControls } from "@/features/admin/components/third-party-approval-controls";
 import {
@@ -138,10 +141,9 @@ async function StudentPageContent({
   // כרטיס צד שלישי שלא אושר להצגה מלאה: הצופה (חוץ מבעל הכרטיס ומנהל) מקבל
   // select בסיסי בלבד, ולכן שאר הנתונים לא נשלפים ולא מגיעים ללקוח כלל.
   // נקבע לפני השליפה, כמו רמת הגישה.
-  const approval = await loadThirdPartyApproval(
-    isAnonymous ? createAdminClient() : supabase,
-    id,
-  );
+  const approval = isAnonymous
+    ? await loadThirdPartyApproval(createAdminClient(), id, "students")
+    : await loadThirdPartyApproval(supabase, id, STUDENT_CARDS_VIEW);
   const isBasicOnly =
     approval !== null &&
     isDisplayRestricted(approval, {

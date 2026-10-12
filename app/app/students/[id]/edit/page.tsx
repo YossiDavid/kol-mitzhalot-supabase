@@ -12,7 +12,10 @@ import {
   getCardBackLink,
   type CardBackLink,
 } from "@/features/students/lib/card-back-link";
-import { isDisplayRestricted } from "@/features/students/lib/third-party-card";
+import {
+  STUDENT_CARDS_VIEW,
+  isDisplayRestricted,
+} from "@/features/students/lib/third-party-card";
 import { loadThirdPartyApproval } from "@/features/students/lib/third-party-approval";
 import {
   existingMedicalDocuments,
@@ -140,7 +143,11 @@ async function EditStudentPageContent({
 
   // כרטיס צד שלישי שלא אושר להצגה מלאה: מסך העריכה מציג את כל הנתונים, ולכן
   // שדכן שאינו הממלא אינו נכנס אליו (אותו כלל כמו בדף הכרטיס)
-  const approval = await loadThirdPartyApproval(supabase, id);
+  const approval = await loadThirdPartyApproval(
+    supabase,
+    id,
+    STUDENT_CARDS_VIEW,
+  );
   if (
     approval &&
     isDisplayRestricted(approval, {

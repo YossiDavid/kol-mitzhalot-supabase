@@ -13,6 +13,7 @@ import {
   pageRange as sharedPageRange,
 } from "@/lib/pagination";
 import { buildStudentsOrder } from "@/features/students/lib/students-list-sort";
+import { STUDENT_CARDS_VIEW } from "@/features/students/lib/third-party-card";
 
 /** כמה כרטיסים בעמוד אחד ברשימת המיועדים */
 export const STUDENTS_PAGE_SIZE = 50;
@@ -20,8 +21,9 @@ export const STUDENTS_PAGE_SIZE = 50;
 /**
  * העמודות שהטבלה קוראת: התצוגה, המיון (שם משפחה/פרטי, אב, אם, עיר, חסידות,
  * גיל, גובה, סטטוס), הכוכב, הקו״ח, אייקון התמונה והדגשת מאורסים. parents_info
- * נשלף כולו כי שם האב והאם יושבים בתוכו. בלי העמודות הכבדות של הכרטיס המלא
- * (family_info, author_info, about...) שכל שורה ברשימה לא קוראת.
+ * נשלף כולו כי שם האב והאם יושבים בתוכו (בכרטיס מוגבל ה-view מחזיר בו שמות
+ * בלבד). בלי העמודות הכבדות של הכרטיס המלא (family_info, about...), שאינן
+ * קיימות ב-view בכלל.
  */
 const STUDENT_ROW_COLUMNS = [
   "id",
@@ -30,7 +32,7 @@ const STUDENT_ROW_COLUMNS = [
   "first_name",
   "last_name",
   "nickname",
-  "parents_info:parents_info_for_viewer",
+  "parents_info",
   "city",
   "community",
   "birth_date",
@@ -51,7 +53,7 @@ type SupabaseBrowserClient = ReturnType<typeof createClient>;
 
 function selectStudents(supabase: SupabaseBrowserClient, columns: string) {
   return supabase
-    .from("students")
+    .from(STUDENT_CARDS_VIEW)
     .select(columns, { count: "exact" })
     .is("deleted_at", null);
 }

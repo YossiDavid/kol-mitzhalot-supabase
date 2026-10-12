@@ -12,6 +12,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { STUDENT_CARDS_VIEW } from "@/features/students/lib/third-party-card";
 import { createClient } from "@/lib/supabase/client";
 import type { ContextCard } from "../lib/use-context-targets";
 
@@ -27,7 +28,7 @@ export function UserCardsMenu({ otherUserId }: { otherUserId: string }) {
   React.useEffect(() => {
     let isMounted = true;
     supabase
-      .from("students")
+      .from(STUDENT_CARDS_VIEW)
       .select("id, first_name, last_name")
       .eq("user_id", otherUserId)
       .is("deleted_at", null)

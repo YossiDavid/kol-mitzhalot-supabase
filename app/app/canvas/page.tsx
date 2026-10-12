@@ -14,6 +14,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/user";
 import { unstable_noStore as noStore } from "next/cache";
 import { Suspense } from "react";
+import { STUDENT_CARDS_VIEW } from "@/features/students/lib/third-party-card";
 
 /** כמה כרטיסי מועדפים מסומנים בשלד שולחן העבודה. */
 const SKELETON_FAVORITE_COUNT = 4;
@@ -25,7 +26,7 @@ async function ShiduchDeskContent() {
   const user = await getUser();
 
   const favorites = await supabase
-    .from("students")
+    .from(STUDENT_CARDS_VIEW)
     .select(DESK_STUDENT_SELECT)
     .in("id", readFavorites(user));
 

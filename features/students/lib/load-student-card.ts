@@ -15,6 +15,7 @@ import {
   type BasicStudentRow,
   type FullStudentRow,
 } from "@/features/students/lib/student-card-data";
+import { STUDENT_CARDS_VIEW } from "@/features/students/lib/third-party-card";
 import {
   parseProposalRow,
   type ProposalDisclosure,
@@ -73,9 +74,19 @@ async function fetchRow(input: LoadStudentCardInput) {
     // שם הפונקציה מחזירה נתונים בסיסיים בלבד). null: אין הצעה שחושפת את הכרטיס.
     return supabase.rpc(PROPOSAL_CARD_RPC, { p_student_id: studentId });
   }
+  if (isBasicOnly) {
+    // כרטיס צד שלישי שלא אושר: שורת students שלו אינה נקראת ישירות על ידי
+    // שדכן או איש צוות. ה-view מחזיר את הנתונים הבסיסיים בלבד, ו-parents_info
+    // שלו כבר מכיל שמות הורים בלבד.
+    return supabase
+      .from(STUDENT_CARDS_VIEW)
+      .select(BASIC_STUDENT_SELECT)
+      .eq("id", studentId)
+      .single();
+  }
   return supabase
     .from("students")
-    .select(isBasicOnly ? BASIC_STUDENT_SELECT : FULL_STUDENT_SELECT)
+    .select(FULL_STUDENT_SELECT)
     .eq("id", studentId)
     .single();
 }

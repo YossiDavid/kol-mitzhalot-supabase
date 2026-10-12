@@ -59,8 +59,8 @@ export const STUDENT_TABLE_SELECT = {
   first_name: "first_name",
   last_name: "last_name",
   nickname: "nickname",
-  // שמות הורים בלבד בכרטיס צד שלישי שלא אושר להצגה מלאה (מסד: parents_info_for_viewer)
-  parents_info: "parents_info:parents_info_for_viewer",
+  // נקרא מ-student_cards: שמות הורים בלבד בכרטיס צד שלישי שלא אושר להצגה מלאה
+  parents_info: "parents_info",
   city: "city",
   community: "community",
   birth_date: "birth_date",

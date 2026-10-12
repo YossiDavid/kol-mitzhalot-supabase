@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
+import { STUDENT_CARDS_VIEW } from "@/features/students/lib/third-party-card";
 
 /**
  * מצב אישורי ההנהלה של כרטיס, כפי שהוא נקרא לפני שליפת הכרטיס עצמו: הוא
@@ -37,12 +38,21 @@ const FAIL_CLOSED_ROW: ThirdPartyApprovalRow = {
   third_party_proposals_approved_by: null,
 };
 
+/**
+ * מאיפה נקראים האישורים. משתמש מחובר קורא את ה-view (student_cards), כי שורת
+ * students של כרטיס מוגבל אינה נקראת ישירות על ידי שדכן או איש צוות;
+ * ה-service role (גולש לא מחובר) קורא את הטבלה עצמה - ה-view מסנן לפי המשתמש
+ * המחובר ולכן ריק עבורו.
+ */
+export type ApprovalSource = typeof STUDENT_CARDS_VIEW | "students";
+
 export async function loadThirdPartyApproval(
   client: SupabaseClient,
   studentId: string,
+  source: ApprovalSource,
 ): Promise<ThirdPartyApprovalRow | null> {
   const { data, error } = await client
-    .from("students")
+    .from(source)
     .select(COLUMNS)
     .eq("id", studentId)
     .is("deleted_at", null)

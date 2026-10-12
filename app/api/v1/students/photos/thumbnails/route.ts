@@ -9,6 +9,7 @@ import {
   type StudentThumbnailsResponse,
 } from "@/features/students/lib/student-photo-api";
 import { loadPrimaryPhotoUrls } from "@/features/students/lib/student-photos";
+import { STUDENT_CARDS_VIEW } from "@/features/students/lib/third-party-card";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
 import { createClient } from "@/lib/supabase/server";
 
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
 
   const studentIds = [...new Set(parsed.data.studentIds)];
   const { data, error } = await supabase
-    .from("students")
+    .from(STUDENT_CARDS_VIEW)
     .select("id, gender, photo_count")
     .in("id", studentIds)
     .is("deleted_at", null);

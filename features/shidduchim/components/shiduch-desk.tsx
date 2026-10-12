@@ -23,6 +23,7 @@ import { hasRole } from "@/lib/user-role";
 import {
   THIRD_PARTY_PROPOSAL_MESSAGE,
   isProposalsPending,
+  STUDENT_CARDS_VIEW,
 } from "@/features/students/lib/third-party-card";
 import { DESK_STUDENT_SELECT } from "@/features/shidduchim/lib/desk-student-select";
 
@@ -126,7 +127,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
     }
 
     const { data, error } = await supabase
-      .from("students")
+      .from(STUDENT_CARDS_VIEW)
       .select(DESK_STUDENT_SELECT)
       .in("id", favIds);
 

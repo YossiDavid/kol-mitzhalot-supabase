@@ -161,8 +161,8 @@ test.describe("הצגה מוגבלת של כרטיס צד שלישי", () => {
       .select("name")
       .eq("student_id", cardId);
     const parents = await matchmaker
-      .from("students")
-      .select("parents_info:parents_info_for_viewer")
+      .from("student_cards")
+      .select("parents_info")
       .eq("id", cardId)
       .single();
 

@@ -3,6 +3,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import type { User } from "@supabase/supabase-js";
 import { z } from "zod";
 
+import { STUDENT_CARDS_VIEW } from "@/features/students/lib/third-party-card";
 import { createClient } from "@/lib/supabase/server";
 import { hasRole } from "@/lib/user";
 
@@ -52,7 +53,7 @@ async function resolveStaffAuthor(
   if (!hasRole(user, "staff")) return FORBIDDEN;
 
   const { data: student, error } = await supabase
-    .from("students")
+    .from(STUDENT_CARDS_VIEW)
     .select("id, institution_id")
     .eq("id", studentId)
     .maybeSingle();

@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 import type { createClient } from "@/lib/supabase/server";
-import { isProposalsPending } from "@/features/students/lib/third-party-card";
+import {
+  STUDENT_CARDS_VIEW,
+  isProposalsPending,
+} from "@/features/students/lib/third-party-card";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
 import { fetchPageClamped, isRangeNotSatisfiable } from "@/lib/pagination";
 import type { ShidduchSide } from "@/features/shidduchim/lib/responses";
@@ -88,8 +91,8 @@ const SHADCHAN_PROPOSAL_SELECT = `
   bride_id,
   note_for_groom,
   note_for_bride,
-  groom:students!shidduchim_groom_id_fkey(first_name,last_name,birth_date,city,card_for,third_party_proposals_approved_at),
-  bride:students!shidduchim_bride_id_fkey(first_name,last_name,birth_date,city)
+  groom:${STUDENT_CARDS_VIEW}!shidduchim_groom_id_fkey(first_name,last_name,birth_date,city,card_for,third_party_proposals_approved_at),
+  bride:${STUDENT_CARDS_VIEW}!shidduchim_bride_id_fkey(first_name,last_name,birth_date,city)
 `;
 
 function toPerson(

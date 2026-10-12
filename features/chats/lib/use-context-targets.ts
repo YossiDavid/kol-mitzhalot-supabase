@@ -3,6 +3,7 @@
 import * as React from "react";
 import { z } from "zod";
 
+import { STUDENT_CARDS_VIEW } from "@/features/students/lib/third-party-card";
 import { createClient } from "@/lib/supabase/client";
 import type { RoomContext } from "./room-context";
 
@@ -88,7 +89,7 @@ export function useContextTargets(context: RoomContext): ContextTargets {
     async function load(): Promise<ContextTargets> {
       if (context.kind === "student" && context.studentId) {
         const { data } = await supabase
-          .from("students")
+          .from(STUDENT_CARDS_VIEW)
           .select("id, first_name, last_name")
           .eq("id", context.studentId)
           .maybeSingle();
@@ -109,7 +110,7 @@ export function useContextTargets(context: RoomContext): ContextTargets {
 
         const sideIds: string[] = [shidduch.groom_id, shidduch.bride_id];
         const { data: students } = await supabase
-          .from("students")
+          .from(STUDENT_CARDS_VIEW)
           .select("id, first_name, last_name")
           .in("id", sideIds);
         const names = new Map(

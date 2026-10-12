@@ -11,6 +11,7 @@ import {
   STUDENT_TABLE_COLUMNS,
   parseStudentTableRows,
 } from "./student-table-rows";
+import { STUDENT_CARDS_VIEW } from "@/features/students/lib/third-party-card";
 import { shidduchIdsOf, splitChatsBySide } from "./chat-sides";
 
 type ServerSupabase = Awaited<ReturnType<typeof createClient>>;
@@ -44,7 +45,7 @@ export async function getFavoriteStudents(
   if (favoriteIds.length === 0) return { students: [], failed: false };
 
   const { data, error } = await supabase
-    .from("students")
+    .from(STUDENT_CARDS_VIEW)
     .select(STUDENT_TABLE_COLUMNS)
     .in("id", favoriteIds);
 
@@ -58,7 +59,7 @@ export async function getFavoriteStudents(
 /** המיועדים שבניהול המשתמש. failed נפרד מרשימה ריקה (כמו במועדפים) */
 export async function getOwnStudents(supabase: ServerSupabase, userId: string) {
   const { data, error } = await supabase
-    .from("students")
+    .from(STUDENT_CARDS_VIEW)
     .select(STUDENT_TABLE_COLUMNS)
     .eq("user_id", userId);
 
@@ -93,7 +94,7 @@ const SHIDDUCH_SIDE_COLUMNS = `
   birth_date,
   city,
   cv_url,
-  parents_info:parents_info_for_viewer,
+  parents_info,
   education_history(name),
   employment_history(category,role)
 `;
@@ -120,8 +121,8 @@ export async function getRecentShidduchim(
       recipient_scope,
       groom_id,
       bride_id,
-      groom:students!shidduchim_groom_id_fkey(${SHIDDUCH_SIDE_COLUMNS}),
-      bride:students!shidduchim_bride_id_fkey(${SHIDDUCH_SIDE_COLUMNS})
+      groom:${STUDENT_CARDS_VIEW}!shidduchim_groom_id_fkey(${SHIDDUCH_SIDE_COLUMNS}),
+      bride:${STUDENT_CARDS_VIEW}!shidduchim_bride_id_fkey(${SHIDDUCH_SIDE_COLUMNS})
     `,
     )
     .eq("shadchan_id", shadchanId)

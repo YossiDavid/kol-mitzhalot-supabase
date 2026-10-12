@@ -56,6 +56,16 @@ export function isDisplayRestricted(
   return isFullDisplayPending(card) && !viewer.isOwner && !viewer.isAdmin;
 }
 
+/**
+ * ה-view שממנו נקראים כרטיסים לרשימות ולתצוגה הבסיסית (public.student_cards):
+ * אותן שורות שהצופה רשאי לראות ב-students, ברשימת עמודות מפורשת. כרטיס מוגבל
+ * חוזר ממנו עם הנתונים הבסיסיים בלבד - שאר העמודות ריקות, parents_info מכיל
+ * שמות הורים בלבד - ושורת students שלו אינה נקראת ישירות על ידי שדכן או איש
+ * צוות. לכן כל קריאה שצריכה להציג גם כרטיס כזה (רשימה, מועדפים, לוח, שם
+ * בצ'אט) עוברת דרכו; הכרטיס המלא והעריכה ממשיכים לקרוא את students.
+ */
+export const STUDENT_CARDS_VIEW = "student_cards";
+
 export const THIRD_PARTY_TAG_PENDING_LABEL = "מידע בסיסי · מולא ע״י צד שלישי";
 export const THIRD_PARTY_TAG_APPROVED_LABEL = "מולא ע״י צד שלישי";
 
