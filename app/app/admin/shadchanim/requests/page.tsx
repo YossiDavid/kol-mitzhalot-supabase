@@ -8,7 +8,15 @@ import { Badge } from "@/components/ui/badge";
 import { APPLICATION_STATUS_BADGE_VARIANT } from "@/lib/application-status";
 import { unstable_noStore as noStore } from "next/cache";
 import { ShadchanRequestActions } from "@/features/admin/components/request-actions";
+import { ApplicationMessagesList } from "@/features/admin/components/application-messages-list";
+import {
+  fetchApplicationMessages,
+  groupMessagesByApplicant,
+} from "@/features/admin/lib/application-messages";
 import { Suspense } from "react";
+import type { Route } from "next";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 // מספר כרטיסי השלד בזמן הטעינה - מקרב את גובה הרשימה האמיתית.
 const FALLBACK_CARD_COUNT = 3;
@@ -123,6 +131,11 @@ async function ShadchanRequestsContent() {
     console.error("Error in ShadchanRequestsPage:", error);
   }
 
+  // היסטוריית ההודעות שנשלחו למבקשים (RLS: מנהל רואה הכול)
+  const messagesByApplicant = groupMessagesByApplicant(
+    await fetchApplicationMessages(await createClient(), "shadchan"),
+  );
+
   if (error) {
     return (
       <Page>
@@ -206,10 +219,27 @@ async function ShadchanRequestsContent() {
                       </>
                     )}
                   </div>
-                  {request.application_status === "pending" && (
-                    <ShadchanRequestActions requestId={request.user_id} />
-                  )}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ShadchanRequestActions
+                      requestId={request.user_id}
+                      isPending={request.application_status === "pending"}
+                    />
+                    <Button asChild variant="outline" size="sm">
+                      <Link
+                        href={
+                          `/app/admin/shadchanim/${request.user_id}/edit` as Route
+                        }
+                      >
+                        עריכת פרופיל
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
+
+                <ApplicationMessagesList
+                  heading="הודעות שנשלחו למבקש/ת"
+                  messages={messagesByApplicant.get(request.user_id) ?? []}
+                />
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {request.bio && (

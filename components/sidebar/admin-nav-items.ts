@@ -3,6 +3,7 @@ import {
   FileText,
   GraduationCap,
   HeartHandshake,
+  Flag,
   Image as ImageIcon,
   Inbox,
   Landmark,
@@ -88,6 +89,11 @@ export const ADMIN_NAV_SECTIONS: readonly AdminNavSection[] = [
         title: "בקשות צפייה בתמונה",
         url: "/app/admin/photo-requests",
         icon: ImageIcon,
+      },
+      {
+        title: "דיווחים על כרטיסים",
+        url: "/app/admin/card-reports",
+        icon: Flag,
       },
       {
         title: "דוח הצעות",

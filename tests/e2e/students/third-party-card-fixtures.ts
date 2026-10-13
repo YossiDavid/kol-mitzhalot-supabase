@@ -63,6 +63,7 @@ export async function seedFullCard(
       author_info: {
         name: FILLER_NAME,
         phone: "0527654321",
+        email: "filler-fixture@example.test",
         relation: "שדכן/ית",
         relationType: "shadchan",
         knowsWell: true,

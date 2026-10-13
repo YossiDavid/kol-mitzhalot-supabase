@@ -211,6 +211,7 @@ test.describe("וריאנטי הכרטיס מול המסד", () => {
       author_info: {
         name: "אבא-ממלא",
         phone: "0507777001",
+        email: "author-live@example.test",
         relation: "אב",
         relationType: "father",
         knowsWell: true,

@@ -1,6 +1,11 @@
 import { test, expect, type Locator, type Page } from "@playwright/test";
 
-import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
+import {
+  createServiceClient,
+  ensureCardManagerId,
+  getTestUserId,
+  TEST_USER_EMAIL,
+} from "../shidduchim/fixtures";
 
 /**
  * עריכת כרטיס: "שמירת שינויים" מכל שלב. השמירה מאמתת את כל הטופס, נשארת
@@ -19,6 +24,9 @@ const INVALID_SAVE_MESSAGE = /השינויים לא נשמרו: יש שדות ש
 const FATHER_NAME = "אברהם";
 const BACK_STREET = "רחוב האזהרה";
 const NICKNAME = "בערל";
+const AUTHOR_EMAIL = "author-edit@example.test";
+const NEW_AUTHOR_EMAIL = "author-added@example.test";
+const AUTHOR_EMAIL_MISSING_MESSAGE = "נא למלא אימייל של ממלא/ת הכרטיס";
 const CV_FILE_PATTERN = /-cv\.pdf$/;
 // קומפילציית dev של דף העריכה, העלאות ושמירות חוזרות - מעבר ל-30s
 const SLOW_TEST_TIMEOUT_MS = 90_000;
@@ -74,7 +82,12 @@ async function createCompleteStudent(): Promise<string> {
         about: "משפחה תורנית",
         mechutanim: [],
       },
-      author_info: { name: "כותב הבדיקה", phone: "0503333333", relation: "אב" },
+      author_info: {
+        name: "כותב הבדיקה",
+        phone: "0503333333",
+        email: AUTHOR_EMAIL,
+        relation: "אב",
+      },
     })
     .select("id")
     .single();
@@ -328,5 +341,121 @@ test.describe.serial("שמירת שינויים מכל שלב בעריכת כר�
     await expect(page).toHaveURL(/\/app\/students$/);
     expect(didAsk).toBe(false);
     expect((await readStudent()).street).toBe(BACK_STREET);
+  });
+
+  // כרטיס ישן שנשמר לפני שאימייל הממלא נדרש נטען כרגיל. הבעלים מקבל את
+  // אימייל החשבון שלו מראש (כמו ביצירה) ויכול לעבור ישר לשלב מאוחר ולשמור;
+  // עורך שאינו הבעלים לא חייב לנחש את האימייל של הממלא
+  const OLD_AUTHOR_INFO = {
+    name: "כותב הבדיקה",
+    phone: "0503333333",
+    relation: "אב",
+  };
+
+  const readAuthorInfo = async () => {
+    const { data } = await admin
+      .from("students")
+      .select("author_info")
+      .eq("id", studentId)
+      .single();
+    return data?.author_info as Record<string, unknown> | null;
+  };
+
+  const seedOldCard = (extra: Record<string, unknown> = {}) =>
+    admin
+      .from("students")
+      .update({ author_info: OLD_AUTHOR_INFO, ...extra })
+      .eq("id", studentId);
+
+  test("כרטיס ישן, בעלים: האימייל מתמלא מראש, עוברים ישר לשלב מאוחר, והוא נשמר", async ({
+    page,
+  }) => {
+    test.setTimeout(SLOW_TEST_TIMEOUT_MS);
+
+    // Arrange - כרטיס ישן: author_info בלי email
+    await seedOldCard();
+    await page.goto(`/app/students/${studentId}/edit`);
+
+    // Assert - מולא מראש באימייל החשבון
+    await expect(page.locator("#author-email")).toHaveValue(TEST_USER_EMAIL);
+
+    // Act - ישר לשלב מאוחר ושמירה
+    await openStep(page, PERSONAL_STEP);
+    await page.locator("#street").fill("רחוב האימייל");
+    await saveAndWaitForBaseline(page);
+
+    // Assert
+    expect(await readAuthorInfo()).toMatchObject({ email: TEST_USER_EMAIL });
+  });
+
+  test("כרטיס ישן, בעלים: מחיקת האימייל נחסמת בהודעה על השדה", async ({
+    page,
+  }) => {
+    test.setTimeout(SLOW_TEST_TIMEOUT_MS);
+
+    // Arrange
+    await seedOldCard();
+    await page.goto(`/app/students/${studentId}/edit`);
+    await page.locator("#author-email").fill("");
+
+    // Act
+    await stepsNav(page)
+      .getByRole("button", { name: PERSONAL_STEP, exact: true })
+      .click();
+
+    // Assert - ההודעה על השדה, ולא עברנו שלב
+    await expect(page.getByText(AUTHOR_EMAIL_MISSING_MESSAGE)).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: PERSONAL_STEP }),
+    ).toHaveCount(0);
+  });
+
+  test("כרטיס ישן, עורך שאינו הבעלים: השדה ריק ולא חובה, נשמר בלי אימייל", async ({
+    page,
+  }) => {
+    test.setTimeout(SLOW_TEST_TIMEOUT_MS);
+
+    // Arrange - הכרטיס שייך למשתמש אחר; משתמש הבדיקה (שדכן) עורך אותו
+    const testUserId = await getTestUserId(admin);
+    const ownerId = await ensureCardManagerId(admin);
+    await seedOldCard({ user_id: ownerId });
+    try {
+      await page.goto(`/app/students/${studentId}/edit`);
+
+      // Assert - לא מולא באימייל העורך, ואינו מסומן כחובה
+      await expect(page.locator("#author-email")).toHaveValue("");
+      await expect(
+        page.locator('[data-field-name="author.email"] label'),
+      ).not.toContainText("*");
+
+      // Act - שינוי בשלב אחר ושמירה
+      await openStep(page, PERSONAL_STEP);
+      await page.locator("#street").fill("רחוב העורך");
+      await saveAndWaitForBaseline(page);
+
+      // Assert - נשמר, ואימייל הממלא נשאר חסר
+      expect(await readAuthorInfo()).not.toHaveProperty("email");
+      expect((await readStudent()).street).toBe("רחוב העורך");
+    } finally {
+      await admin
+        .from("students")
+        .update({ user_id: testUserId })
+        .eq("id", studentId);
+    }
+  });
+
+  test("כרטיס ישן, בעלים: מילוי ידני של אימייל אחר נשמר", async ({ page }) => {
+    test.setTimeout(SLOW_TEST_TIMEOUT_MS);
+
+    // Arrange
+    await seedOldCard();
+    await page.goto(`/app/students/${studentId}/edit`);
+
+    // Act
+    await page.locator("#author-email").fill(NEW_AUTHOR_EMAIL);
+    await saveAndWaitForBaseline(page);
+
+    // Assert
+    expect(await readAuthorInfo()).toMatchObject({ email: NEW_AUTHOR_EMAIL });
   });
 });

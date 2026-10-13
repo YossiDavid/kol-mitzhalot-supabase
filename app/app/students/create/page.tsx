@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { createClient } from "@/lib/supabase/client";
@@ -24,6 +25,27 @@ const supabase = createClient();
 
 export default function CreateStudentPage() {
   const router = useRouter();
+  // האימייל מגיע אחרי שהטופס כבר מוצג (הטופס אינו ממתין לו); אם הטעינה
+  // נכשלה או שאין אימייל - השדה פשוט נשאר ריק וחובה
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+    // getSession קורא את ה-session המקומי בלי סבב רשת, כך שהאימייל מתמלא
+    // כמעט מיד אחרי העלייה (לפני שהמשתמש מספיק לעבור שלב). זה רק מילוי
+    // מראש של שדה ניתן לעריכה - לא החלטת הרשאה
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!isCancelled) setUserEmail(data.session?.user.email ?? null);
+      })
+      .catch((error: unknown) => {
+        console.error("Loading user email for card form failed:", error);
+      });
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   const handleSubmit: StudentFormWizardProps["onSubmit"] = async (values) => {
     try {
@@ -133,6 +155,7 @@ export default function CreateStudentPage() {
 
   return (
     <StudentFormWizard
+      lateAuthorEmail={userEmail}
       heading="הוספת קו״ח למערכת"
       submitLabel="שליחה למערכת"
       submittingLabel="שומר..."

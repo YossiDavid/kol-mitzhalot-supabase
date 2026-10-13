@@ -29,6 +29,7 @@ const FORBIDDEN_CODE = "42501";
 const REFERENCE_NAME = `ממליץ-יצירה-${STAMP}`;
 const PARTNER_TEXT = `מחפשים-יצירה-${STAMP}`;
 const REASON = `אין-גישה-למחשב-${STAMP}`;
+const FILLER_EMAIL = `filler-${STAMP}@example.test`;
 
 function createPayload(lastName: string) {
   return {
@@ -45,6 +46,7 @@ function createPayload(lastName: string) {
     author_info: {
       name: "ממלא",
       phone: "0521234567",
+      email: FILLER_EMAIL,
       relation: "שדכן/ית",
       relationType: "shadchan",
       knowsWell: true,
@@ -259,6 +261,7 @@ test.describe("כרטיס צד שלישי - הנהלה", () => {
       page.getByTestId("third-party-approval-controls"),
     ).toBeVisible();
     await expect(page.getByTestId("author-fill-reason")).toContainText(REASON);
+    await expect(page.getByTestId("author-email")).toHaveText(FILLER_EMAIL);
     await expect(page.getByText(REFERENCE_NAME)).toBeVisible();
     await expect(page.getByTestId("third-party-hidden-note")).toHaveCount(0);
 
@@ -320,6 +323,9 @@ test.describe("כרטיס צד שלישי - הנהלה", () => {
     await expect(row).toBeVisible();
     await expect(row.getByTestId(`reason-${cardId}`)).toHaveText(REASON);
     await expect(row.getByTestId(`filler-${cardId}`)).toContainText("ממלא");
+    await expect(row.getByTestId(`filler-email-${cardId}`)).toHaveText(
+      FILLER_EMAIL,
+    );
     await expect(row.getByTestId(`filler-${cardId}`)).toContainText(
       "מכיר/ה היטב: כן",
     );

@@ -34,6 +34,7 @@ import {
 } from "@/features/settings/lib/staff-application-schema";
 import { createClient } from "@/lib/supabase/client";
 import { hasRole } from "@/lib/user-role";
+import { ApplicationMessagesCard } from "./application-messages-card";
 
 export function StaffApplicationForm() {
   const router = useRouter();
@@ -283,6 +284,7 @@ export function StaffApplicationForm() {
         title={STAFF_PAGE_TITLE}
         description={STAFF_PAGE_DESCRIPTION}
       />
+      <ApplicationMessagesCard kind="staff" />
       <Card>
         <CardHeader>
           <CardTitle>טופס הצטרפות</CardTitle>

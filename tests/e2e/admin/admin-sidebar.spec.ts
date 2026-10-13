@@ -33,6 +33,7 @@ const SECTIONS: readonly SectionSpec[] = [
     links: [
       ["כרטיסי צד שלישי", "/app/admin/third-party-cards"],
       ["בקשות צפייה בתמונה", "/app/admin/photo-requests"],
+      ["דיווחים על כרטיסים", "/app/admin/card-reports"],
       ["דוח הצעות", "/app/admin/proposals"],
       ["שיוך מוסד המוני", "/app/admin/students/institutions"],
     ],

@@ -197,7 +197,7 @@ StudentBox.ViewProfile = function ViewProfile() {
   return (
     <Button variant="outline" className="w-full" asChild>
       <Link href={`/app/students/${item?.id}`}>
-        צפיה בקו״ח
+        צפיה בכרטיס
         <FileCheck className="size-4" />
       </Link>
     </Button>

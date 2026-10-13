@@ -22,6 +22,7 @@ import {
   studentToFormValues,
   type StudentRowWithRelations,
 } from "@/features/students/lib/student-to-form";
+import { applyAuthorEmailRules } from "@/features/students/lib/author-email-rules";
 import { loadStudentPhotos } from "@/features/students/lib/student-photos";
 import type { StudentPhotoItem } from "@/features/students/lib/student-photo-rules";
 import EditStudentForm from "./edit-student-form";
@@ -227,7 +228,13 @@ async function EditStudentPageContent({
   return (
     <EditStudentForm
       studentId={id}
-      initialValues={{ ...studentToFormValues(student), photos }}
+      initialValues={{
+        ...applyAuthorEmailRules(studentToFormValues(student), {
+          isOwner: student.user_id === user.id,
+          accountEmail: user.email,
+        }),
+        photos,
+      }}
       existingCvUrl={typeof student.cv_url === "string" ? student.cv_url : null}
       existingMedicalDocuments={existingMedicalDocuments(student)}
       isCardOwner={student.user_id === user.id}

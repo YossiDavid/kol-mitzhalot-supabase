@@ -248,6 +248,7 @@ export function studentToFormValues(
   return {
     isOnShiduchim: student.in_shidduchim !== false,
     cardFor: text(student.card_for),
+    authorEmailOptional: "",
     gender: text(student.gender),
 
     firstName: text(student.first_name),

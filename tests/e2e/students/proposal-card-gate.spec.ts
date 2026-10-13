@@ -45,6 +45,7 @@ const CONTACT = {
   fatherPhone: `052${T}2`,
   fatherEmail: `father-gate-${T}@example.test`,
   authorPhone: `053${T}3`,
+  authorEmail: `author-gate-${T}@example.test`,
   refPhone: `054${T}4`,
   refEmail: `ref-gate-${T}@example.test`,
   rabbiPhone: `055${T}5`,
@@ -233,6 +234,7 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
         author_info: {
           name: "אבא-ממלא",
           phone: CONTACT.authorPhone,
+          email: CONTACT.authorEmail,
           relation: "אב",
           relationType: "father",
           knowsWell: true,

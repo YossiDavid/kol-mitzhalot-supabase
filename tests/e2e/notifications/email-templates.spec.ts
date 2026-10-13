@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import { sendEmail } from "../../../lib/email/send-email";
 import { escapeHtml } from "../../../lib/email/escape-html";
 import { buildAdminNewSignupEmail } from "../../../lib/email/templates/admin-new-signup";
+import { buildApplicationMessageEmail } from "../../../lib/email/templates/application-message";
 import { buildApplicationDecisionEmail } from "../../../lib/email/templates/application-decision";
 import { buildClosedNoticeEmail } from "../../../lib/email/templates/shidduch-closed-notice";
 
@@ -153,5 +154,51 @@ test.describe("תבניות מייל", () => {
     });
 
     expect(result.ok).toBe(false);
+  });
+
+  test("הודעת מנהל למבקש: HTML בריחה, טקסט גולמי ונתוני תבנית דינמית", () => {
+    // Act
+    const content = buildApplicationMessageEmail({
+      kind: "shadchan",
+      firstName: "משה",
+      message: INJECTION,
+    });
+
+    // Assert
+    expect(content.subject.trim()).not.toBe("");
+    expect(content.text).toContain(INJECTION);
+    expect(content.html).not.toContain("<script>");
+    expect(content.html).toContain("&lt;script&gt;");
+    expect(content.html).toContain('dir="rtl"');
+    expect(content.dynamicData).toMatchObject({
+      first_name: "משה",
+      kind_label: "שדכן",
+      message: INJECTION,
+    });
+  });
+
+  test("אישור עם הודעה: ההודעה בטקסט, בבריחה ב-HTML וב-dynamicData; בלי הודעה אין שורה", () => {
+    // Act
+    const withMessage = buildApplicationDecisionEmail({
+      kind: "staff",
+      decision: "approved",
+      firstName: null,
+      reason: null,
+      message: INJECTION,
+    });
+    const without = buildApplicationDecisionEmail({
+      kind: "staff",
+      decision: "approved",
+      firstName: null,
+      reason: null,
+    });
+
+    // Assert
+    expect(withMessage.text).toContain(INJECTION);
+    expect(withMessage.html).not.toContain("<script>");
+    expect(withMessage.html).toContain("&lt;script&gt;");
+    expect(withMessage.dynamicData?.message).toBe(INJECTION);
+    expect(without.text).not.toContain("הודעה מההנהלה");
+    expect(without.dynamicData?.message).toBe("");
   });
 });

@@ -12,6 +12,11 @@ import {
   INSTITUTION_TYPE_LABELS,
   type InstitutionType,
 } from "@/features/institutions/lib/institution-labels";
+import { ApplicationMessagesList } from "@/features/admin/components/application-messages-list";
+import {
+  fetchApplicationMessages,
+  groupMessagesByApplicant,
+} from "@/features/admin/lib/application-messages";
 import { Suspense } from "react";
 
 // מספר כרטיסי השלד בזמן הטעינה - מקרב את גובה הרשימה האמיתית.
@@ -127,6 +132,11 @@ async function StaffRequestsContent() {
     console.error("Error in StaffRequestsPage:", error);
   }
 
+  // היסטוריית ההודעות שנשלחו למבקשים (RLS: מנהל רואה הכול)
+  const messagesByApplicant = groupMessagesByApplicant(
+    await fetchApplicationMessages(await createClient(), "staff"),
+  );
+
   if (error) {
     return (
       <Page>
@@ -210,10 +220,16 @@ async function StaffRequestsContent() {
                       </>
                     )}
                   </div>
-                  {request.application_status === "pending" && (
-                    <StaffRequestActions requestId={request.user_id} />
-                  )}
+                  <StaffRequestActions
+                    requestId={request.user_id}
+                    isPending={request.application_status === "pending"}
+                  />
                 </div>
+
+                <ApplicationMessagesList
+                  heading="הודעות שנשלחו למבקש/ת"
+                  messages={messagesByApplicant.get(request.user_id) ?? []}
+                />
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>

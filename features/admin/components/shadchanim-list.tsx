@@ -4,6 +4,9 @@ import {
   type DataTableColumn,
 } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import type { Route } from "next";
+import Link from "next/link";
 import { applicationStatusVariant } from "@/lib/application-status";
 import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import {
@@ -95,10 +98,22 @@ const SHADCHAN_COLUMNS: DataTableColumn<ShadchanRow>[] = [
     header: "התחברות אחרונה",
     cell: (shadchan) => formatDate(shadchan.lastSignInAt),
   },
+  {
+    key: "edit",
+    header: "עריכה",
+    size: "min",
+    cell: (shadchan) => (
+      <Button asChild variant="outline" size="sm">
+        <Link href={`/app/admin/shadchanim/${shadchan.id}/edit` as Route}>
+          עריכת פרופיל
+        </Link>
+      </Button>
+    ),
+  },
 ];
 
 export function ShadchanimListFallback() {
-  return <DataTableSkeleton breakpoint="xl" columns={8} className="pt-2" />;
+  return <DataTableSkeleton breakpoint="xl" columns={9} className="pt-2" />;
 }
 
 export async function ShadchanimList({

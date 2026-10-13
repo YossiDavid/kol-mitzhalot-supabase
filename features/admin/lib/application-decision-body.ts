@@ -3,8 +3,26 @@ import { z } from "zod";
 /** אורך מקסימלי לסיבת דחייה (נשמרת ב-DB ונשלחת במייל למבקש) */
 export const APPLICATION_REJECT_REASON_MAX_LENGTH = 1000;
 
+/** אורך מקסימלי להודעה חופשית של מנהל למבקש (גם מצורפת לאישור) */
+export const APPLICATION_MESSAGE_MAX_LENGTH = 2000;
+
+/** הודעה שנשארה ריקה אחרי trim נחשבת כלא הוזנה */
+const optionalMessageSchema = z
+  .string()
+  .trim()
+  .max(APPLICATION_MESSAGE_MAX_LENGTH)
+  .transform((value) => value || undefined)
+  .optional();
+
 export const approveBodySchema = z.object({
   userId: z.guid(),
+  /** הודעה אופציונלית שנשלחת למבקש יחד עם האישור */
+  message: optionalMessageSchema,
+});
+
+export const messageBodySchema = z.object({
+  userId: z.guid(),
+  message: z.string().trim().min(1).max(APPLICATION_MESSAGE_MAX_LENGTH),
 });
 
 export const rejectBodySchema = z.object({

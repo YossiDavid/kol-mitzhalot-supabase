@@ -6,7 +6,7 @@ import {
 } from "./card-for-fixtures";
 import { test, expect, Page } from "@playwright/test";
 
-import { createServiceClient } from "../shidduchim/fixtures";
+import { createServiceClient, TEST_USER_EMAIL } from "../shidduchim/fixtures";
 
 const fill = (page: Page, fieldName: string, value: string) =>
   page.locator(`#${fieldName.replace(/[^a-zA-Z0-9]+/g, "-")}`).fill(value);
@@ -197,11 +197,13 @@ test.describe("יצירת תלמיד חדש", () => {
     // card_for נשמר, וה-ת"ז נשארת null (לא מחרוזת ריקה שמתנגשת ב-UNIQUE)
     const { data: created, error } = await createServiceClient()
       .from("students")
-      .select("card_for, identity_number")
+      .select("card_for, identity_number, author_info")
       .eq("id", createdStudentId as string)
       .single();
     expect(error).toBeNull();
-    expect(created).toEqual({ card_for: "child", identity_number: null });
+    expect(created).toMatchObject({ card_for: "child", identity_number: null });
+    // אימייל הממלא נשמר ב-author_info.email (מולא מראש באימייל המשתמש)
+    expect(created?.author_info).toMatchObject({ email: TEST_USER_EMAIL });
   });
 
   test("המיועד/ת בעצמו/ה: פרטי ממלא הכרטיס מוסתרים ואינם חובה", async ({
@@ -215,6 +217,54 @@ test.describe("יצירת תלמיד חדש", () => {
     await expect(page.locator("#author-phone")).toHaveCount(0);
     await expect(relationSelect(page)).toHaveCount(0);
     await expect(page.locator("#author-fillReason")).toHaveCount(0);
+  });
+
+  test("אימייל ממלא הכרטיס: מוצג בכל card_for ומתמלא מראש באימייל המשתמש", async ({
+    page,
+  }) => {
+    for (const label of Object.values(CARD_FOR_LABELS)) {
+      // Act
+      await page.getByRole("radio", { name: label }).check();
+
+      // Assert
+      await expect(page.locator("#author-email")).toHaveValue(TEST_USER_EMAIL);
+    }
+  });
+
+  test("אימייל ממלא הכרטיס חובה בכל card_for, וההודעה על השדה", async ({
+    page,
+  }) => {
+    const missingMessage = page.getByText("נא למלא אימייל של ממלא/ת הכרטיס");
+    for (const choose of [
+      async () =>
+        page.getByRole("radio", { name: CARD_FOR_LABELS.self }).check(),
+      async () => chooseChildCard(page),
+      async () => chooseThirdPartyCard(page),
+    ]) {
+      // Arrange
+      await choose();
+      await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
+      await page.locator("#author-email").fill("");
+
+      // Act
+      await page.getByRole("button", { name: "המשך לשלב הבא" }).click();
+
+      // Assert
+      await expect(missingMessage).toBeVisible();
+    }
+  });
+
+  test("אימייל ממלא הכרטיס לא תקין נחסם", async ({ page }) => {
+    // Arrange
+    await page.getByRole("radio", { name: CARD_FOR_LABELS.self }).check();
+    await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
+    await page.locator("#author-email").fill("not-an-email");
+
+    // Act
+    await page.getByRole("button", { name: "המשך לשלב הבא" }).click();
+
+    // Assert
+    await expect(page.getByText("אימייל לא תקין")).toBeVisible();
   });
 
   test("אב או אם: פרטי הממלא מוצגים בהקדמה, ובלי פרטי צד שלישי", async ({

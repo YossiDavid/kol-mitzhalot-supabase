@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { sendApplicationDecisionEmail } from "@/features/notifications/lib/send-application-decision-email";
+import { recordApplicationMessage } from "@/features/admin/lib/record-application-message";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   approveBodySchema,
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
     if (!parsedBody.ok) {
       return NextResponse.json({ error: parsedBody.error }, { status: 400 });
     }
-    const { userId } = parsedBody.data;
+    const { userId, message } = parsedBody.data;
 
     // Verify the requesting user is authenticated and is an admin
     const supabase = await createClient();
@@ -41,10 +42,11 @@ export async function POST(req: NextRequest) {
     // יכול לכתוב). מוסיפים shadchan לרשימה הקיימת בלי לדרוס אותה - דריסה היא
     // הבאג שהוריד למשתמש אמיתי (hello@shos.digital) את הרשאות השדכן שלו כשאושר
     // בנפרד כאיש צוות.
-    const roleUpdate = await updateUserRoles(adminClient, userId, (existing) => [
-      ...existing,
-      "shadchan",
-    ]);
+    const roleUpdate = await updateUserRoles(
+      adminClient,
+      userId,
+      (existing) => [...existing, "shadchan"],
+    );
 
     if (!roleUpdate.ok) {
       console.error("Error updating user role:", roleUpdate.message);
@@ -73,12 +75,23 @@ export async function POST(req: NextRequest) {
       // לא נחזיר שגיאה כאן כי התפקיד כבר עודכן
       // אבל נדווח על זה
     } else if (changedRows && changedRows.length > 0) {
+      // הודעה אופציונלית: נשמרת + התראת פעמון פעם אחת (רק במעבר אמיתי), ונשלחת
+      // במייל האישור עצמו ולא במייל נפרד.
+      if (message) {
+        await recordApplicationMessage(adminClient, {
+          kind: "shadchan",
+          applicantId: userId,
+          adminId: currentUser.id,
+          message,
+        });
+      }
       // אחרי התגובה ובלי לזרוק: כשל במייל אינו מכשיל את האישור.
       after(() =>
         sendApplicationDecisionEmail({
           applicantId: userId,
           kind: "shadchan",
           decision: "approved",
+          message: message ?? null,
         }),
       );
     }

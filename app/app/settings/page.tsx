@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Page, PageHeader } from "@/components/layout";
 import { ProfileForm } from "@/features/settings/components/profile-form";
 import { ApplicationStatusCard } from "@/features/settings/components/application-status-card";
+import { ShadchanProfileEditCard } from "@/features/settings/components/shadchan-profile-edit-card";
+import { hasRole } from "@/lib/user-role";
 import { CardSkeleton } from "@/components/ui/card-skeleton";
 import { SkeletonRegion } from "@/components/ui/skeleton";
 import { redirect } from "next/navigation";
@@ -77,6 +79,9 @@ async function SettingsContent({
         phoneVerificationEnabled={phoneVerificationEnabled}
         next={nextPath}
       />
+      {hasRole(user, "shadchan") && !hasRole(user, "admin") && (
+        <ShadchanProfileEditCard />
+      )}
       <ApplicationStatusCard role="shadchan" />
       <ApplicationStatusCard role="staff" />
     </>

@@ -1,5 +1,6 @@
 import {
   CreditCard,
+  Flag,
   Image as ImageIcon,
   Inbox,
   PartyPopper,
@@ -61,6 +62,7 @@ export type PendingQueueKey =
   | "staffRequests"
   | "photoRequests"
   | "thirdPartyCards"
+  | "cardReports"
   | "submissions"
   | "engagements"
   | "unmatchedPayments";
@@ -143,6 +145,23 @@ export const PENDING_QUEUES: readonly PendingQueue[] = [
           .is("deleted_at", null)
           .or(THIRD_PARTY_PENDING_FILTER),
       ),
+  },
+  {
+    key: "cardReports",
+    title: "דיווחים על כרטיסים",
+    href: "/app/admin/card-reports",
+    icon: Flag,
+    emptyText: "אין דיווחים פתוחים",
+    // card_reports.status = open (כמו ברירת המחדל של דף הדיווחים)
+    load: async () => {
+      const supabase = await createClient();
+      return loadCount("card reports", () =>
+        supabase
+          .from("card_reports")
+          .select("id", HEAD_COUNT)
+          .eq("status", "open"),
+      );
+    },
   },
   {
     key: "submissions",

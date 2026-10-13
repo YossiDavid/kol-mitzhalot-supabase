@@ -1,4 +1,4 @@
-import { Phone } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 
 import {
   describeAuthorRelation,
@@ -45,6 +45,15 @@ export function AuthorInfoCard({
           className="mt-1 flex items-center gap-1 text-caption text-muted-foreground hover:text-primary"
         >
           <Phone size={12} /> {info.phone}
+        </a>
+      )}
+      {info.email && (
+        <a
+          href={`mailto:${info.email}`}
+          className="mt-1 flex items-center gap-1 text-caption text-muted-foreground hover:text-primary"
+          data-testid="author-email"
+        >
+          <Mail size={12} /> {info.email}
         </a>
       )}
       {info.fillReason && (

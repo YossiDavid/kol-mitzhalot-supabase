@@ -378,7 +378,9 @@ function buildParentsInfo(values: StudentFormValues) {
 // מילוי עבור עצמי: אין "ממלא טופס" נפרד, ולכן לא נשמר מה שנשאר בשדות
 // (author-info.ts)
 function buildAuthorInfoPayload(values: StudentFormValues) {
-  return buildAuthorInfo(values.cardFor, values.author);
+  const { email, ...info } = buildAuthorInfo(values.cardFor, values.author);
+  // עורך שאינו הבעלים רשאי להשאיר אימייל ריק: המפתח נשמר רק כשיש ערך
+  return email ? { ...info, email } : info;
 }
 
 function buildFamilyInfo(values: StudentFormValues) {

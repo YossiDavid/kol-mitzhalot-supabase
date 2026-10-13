@@ -5,7 +5,10 @@ import Link from "next/link";
 import {
   Ellipsis,
   FileText,
+  Flag,
+  Pause,
   Pencil,
+  Play,
   Share2,
   Trash2,
   UserRound,
@@ -20,13 +23,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { CardAdminPauseDialog } from "@/features/admin/components/card-admin-pause-dialog";
+import { ReportCardDialog } from "@/features/students/components/card/report-card-dialog";
 import { StudentDeleteDialog } from "@/features/students/components/delete-student-button";
 import { StudentChatButton } from "@/features/students/components/message-button";
 import { shareStudentCard } from "@/features/students/lib/share-student-card";
 
 import { StudentStatusMenu, type PersonalStatus } from "./student-status-menu";
 
-type OpenDialog = "delete" | null;
+type OpenDialog = "delete" | "report" | "pause" | null;
 
 /**
  * שורת הפעולות של הכרטיס: פעולה ראשית אחת ("עריכה"), כפתור "צ'אט" גלוי ותפריט
@@ -49,6 +54,8 @@ export function StudentCardActions({
   canDelete,
   inShidduchim,
   ownerUserId,
+  canReport = false,
+  adminPause = null,
 }: {
   studentId: string;
   studentName: string;
@@ -64,6 +71,10 @@ export function StudentCardActions({
   inShidduchim?: boolean | null;
   /** בעל הכרטיס, לקישור "פרטי המשתמש" - נמסר למנהל מערכת בלבד */
   ownerUserId?: string | null;
+  /** מחובר, רואה את הכרטיס ואינו בעליו: "דיווח על הכרטיס". נקבע בשרת */
+  canReport?: boolean;
+  /** מנהל מערכת בלבד: מצב ההשהיה ע"י הנהלה. null - אין בקרת השהיה */
+  adminPause?: { isPaused: boolean } | null;
 }) {
   const [openDialog, setOpenDialog] = useState<OpenDialog>(null);
 
@@ -137,6 +148,20 @@ export function StudentCardActions({
             </DropdownMenuItem>
           )}
 
+          {canReport && (
+            <DropdownMenuItem onSelect={() => setOpenDialog("report")}>
+              <Flag />
+              דיווח על הכרטיס
+            </DropdownMenuItem>
+          )}
+
+          {adminPause && (
+            <DropdownMenuItem onSelect={() => setOpenDialog("pause")}>
+              {adminPause.isPaused ? <Play /> : <Pause />}
+              {adminPause.isPaused ? "ביטול השהיה" : "השהיית הכרטיס"}
+            </DropdownMenuItem>
+          )}
+
           {canManage && (
             <StudentStatusMenu
               studentId={studentId}
@@ -159,6 +184,25 @@ export function StudentCardActions({
           )}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {canReport && (
+        <ReportCardDialog
+          studentId={studentId}
+          studentName={studentName}
+          open={openDialog === "report"}
+          onOpenChange={(open) => setOpenDialog(open ? "report" : null)}
+        />
+      )}
+
+      {adminPause && (
+        <CardAdminPauseDialog
+          studentId={studentId}
+          studentName={studentName}
+          isPaused={adminPause.isPaused}
+          open={openDialog === "pause"}
+          onOpenChange={(open) => setOpenDialog(open ? "pause" : null)}
+        />
+      )}
 
       {canDelete && (
         <StudentDeleteDialog

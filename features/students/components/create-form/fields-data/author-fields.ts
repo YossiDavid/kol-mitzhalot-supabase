@@ -19,7 +19,59 @@ import type { Field } from "./types";
  * אין פרטים; הורה: שם, טלפון וקשר (אב / אם); אדם אחר: קשר מובנה, שם, טלפון,
  * "מכיר היטב" והסבר מדוע הוא ממלא במקום המועמד/ההורים. הכול חובה במקום
  * (נאכף רק כשמוצג, required-fields.ts), לא בסוף הטופס.
+ *
+ * אימייל ממלא הכרטיס (author.email) חובה בכל שלוש האפשרויות, גם "עבור עצמי"
+ * (בקשת הלקוח). בטופס חדש הוא מתמלא מראש באימייל המשתמש המחובר (create/page).
  */
+
+/** הודעת חוסר באימייל הממלא; נשארת על השדה גם כשהשמירה נעשית משלב אחר */
+const AUTHOR_EMAIL_REQUIRED_MESSAGE = "נא למלא אימייל של ממלא/ת הכרטיס";
+
+/** פרמטר טופס (לא נשמר): עורך שאינו הבעלים אינו חייב למלא אימייל ממלא */
+export const AUTHOR_EMAIL_OPTIONAL_PARAM = "authorEmailOptional";
+export const AUTHOR_EMAIL_OPTIONAL_VALUE = "true";
+
+/**
+ * שדה האימייל בשתי גרסאות: חובה (ברירת מחדל - יצירה ובעלים), ורשות לעורך
+ * שאינו הבעלים (אדמין / שדכן): הוא לא יכול לדעת את האימייל של הממלא.
+ */
+function authorEmailFields(
+  label: string,
+  condition: FieldCondition[],
+): Field[] {
+  const base = {
+    name: "author.email",
+    width: "sm",
+    label,
+    type: "text",
+  } as const;
+  return [
+    {
+      ...base,
+      required: true,
+      requiredMessage: AUTHOR_EMAIL_REQUIRED_MESSAGE,
+      condition: [
+        ...condition,
+        {
+          parameter: AUTHOR_EMAIL_OPTIONAL_PARAM,
+          operator: "!==",
+          value: AUTHOR_EMAIL_OPTIONAL_VALUE,
+        },
+      ],
+    },
+    {
+      ...base,
+      condition: [
+        ...condition,
+        {
+          parameter: AUTHOR_EMAIL_OPTIONAL_PARAM,
+          operator: "===",
+          value: AUTHOR_EMAIL_OPTIONAL_VALUE,
+        },
+      ],
+    },
+  ];
+}
 
 const cardForIs = (value: string): FieldCondition => ({
   parameter: "cardFor",
@@ -27,6 +79,7 @@ const cardForIs = (value: string): FieldCondition => ({
   value,
 });
 
+const IS_SELF = [cardForIs("self")];
 const IS_PARENT = [cardForIs("child")];
 const IS_THIRD_PARTY = [cardForIs("other")];
 const IS_OTHER_RELATION: FieldCondition[] = [
@@ -55,6 +108,8 @@ const THIRD_PARTY_CONSEQUENCE_HTML = noticeHtml(THIRD_PARTY_CONSEQUENCE_TITLE, [
 ]);
 
 export const authorFields: Field[] = [
+  // --- עבור עצמי ---
+  ...authorEmailFields("האימייל שלך", IS_SELF),
   // --- הורה ---
   {
     name: "author.relationType",
@@ -82,6 +137,7 @@ export const authorFields: Field[] = [
     required: true,
     condition: IS_PARENT,
   },
+  ...authorEmailFields('אימייל ממלא/ת הקו"ח', IS_PARENT),
   // --- אדם אחר ---
   {
     name: "author.relationType",
@@ -119,6 +175,7 @@ export const authorFields: Field[] = [
     required: true,
     condition: IS_THIRD_PARTY,
   },
+  ...authorEmailFields("אימייל של ממלא/ת הכרטיס", IS_THIRD_PARTY),
   {
     name: "author.knowsWell",
     width: "full",

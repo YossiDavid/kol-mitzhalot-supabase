@@ -42,7 +42,12 @@ function buildStudentRow() {
       },
       mother: { self: { name: "האם" }, phone: MOTHER_PHONE },
     },
-    author_info: { name: "האב", relation: "אב", phone: PARENT_PHONE },
+    author_info: {
+      name: "האב",
+      relation: "אב",
+      phone: PARENT_PHONE,
+      email: "author-disclosure@example.test",
+    },
     previous_partners: [
       {
         full_name: "פלונית",
@@ -168,6 +173,7 @@ test.describe("חיתוך פרטי קשר מעמודות JSON", () => {
 
     // Assert
     expect(row.author_info.phone).toBe(PARENT_PHONE);
+    expect(row.author_info.email).toBe("author-disclosure@example.test");
     expect(row.parents_info.father.phone).toBe(PARENT_PHONE);
   });
 

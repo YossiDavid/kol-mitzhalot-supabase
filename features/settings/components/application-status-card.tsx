@@ -17,6 +17,7 @@ import {
   APPLICATION_STATUS_LABELS,
   applicationStatusVariant,
 } from "@/lib/application-status";
+import { ApplicationMessagesCard } from "./application-messages-card";
 import { INSTITUTION_TYPE_LABELS } from "@/features/institutions/lib/institution-labels";
 
 import {
@@ -138,36 +139,40 @@ export function ApplicationStatusCard({ role }: { role: ApplicationRole }) {
   const state = useApplicationStatus(role);
   const copy = COPY[role];
 
-  if (state.kind === "hasRole") return null;
+  // מי שכבר בתפקיד לא רואה את כרטיס הבקשה, אבל כן את ההודעות שקיבל עליה
+  if (state.kind === "hasRole") return <ApplicationMessagesCard kind={role} />;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{copy.title}</CardTitle>
-        <CardDescription>
-          {state.kind === "loading" ? (
-            <span role="status">
-              <span className="sr-only">טוען...</span>
-              <Skeleton aria-hidden className="mt-1 h-4 w-56 max-w-full" />
-            </span>
-          ) : (
-            copy.description
-          )}
-        </CardDescription>
-      </CardHeader>
-      {state.kind === "ready" && (
-        <CardContent className="space-y-4">
-          {state.application && (
-            <StatusDetails application={state.application} />
-          )}
-          <div className="flex gap-2">
-            <ApplicationAction
-              application={state.application}
-              href={copy.href}
-            />
-          </div>
-        </CardContent>
-      )}
-    </Card>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>{copy.title}</CardTitle>
+          <CardDescription>
+            {state.kind === "loading" ? (
+              <span role="status">
+                <span className="sr-only">טוען...</span>
+                <Skeleton aria-hidden className="mt-1 h-4 w-56 max-w-full" />
+              </span>
+            ) : (
+              copy.description
+            )}
+          </CardDescription>
+        </CardHeader>
+        {state.kind === "ready" && (
+          <CardContent className="space-y-4">
+            {state.application && (
+              <StatusDetails application={state.application} />
+            )}
+            <div className="flex gap-2">
+              <ApplicationAction
+                application={state.application}
+                href={copy.href}
+              />
+            </div>
+          </CardContent>
+        )}
+      </Card>
+      <ApplicationMessagesCard kind={role} />
+    </>
   );
 }

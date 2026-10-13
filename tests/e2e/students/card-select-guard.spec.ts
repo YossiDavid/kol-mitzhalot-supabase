@@ -192,7 +192,11 @@ function baseRow() {
       mother: { self: { name: "האם" }, phone: "052-1111111" },
     },
     family_info: null,
-    author_info: { name: "האב", phone: "050-0000000" },
+    author_info: {
+      name: "האב",
+      phone: "050-0000000",
+      email: "filler@example.test",
+    },
     card_for: "self",
     third_party_full_display_approved_at: null,
     third_party_proposals_approved_at: null,
@@ -324,6 +328,8 @@ test.describe("redactProposalStudent", () => {
       expect(parent).not.toHaveProperty("email");
     }
     expect(redacted.author_info).not.toHaveProperty("phone");
+    expect(redacted.author_info).not.toHaveProperty("email");
+    expect(JSON.stringify(redacted)).not.toContain("filler@example.test");
     expect(JSON.stringify(redacted)).not.toContain("03-1234567");
     expect(JSON.stringify(redacted)).toContain("האב");
   });
@@ -334,5 +340,7 @@ test.describe("redactProposalStudent", () => {
     // הידור בלבד: phone/email הם never, ולכן אי אפשר לקרוא בהם ערך
     const phone: undefined = redacted.author_info?.phone;
     expect(phone).toBeUndefined();
+    const email: undefined = redacted.author_info?.email;
+    expect(email).toBeUndefined();
   });
 });

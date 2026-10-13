@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 
+import { EMAIL_INVALID_MESSAGE, EMAIL_PATTERN } from "@/lib/forms/schema";
 import { isValidPhone, PHONE_INVALID_MESSAGE } from "@/lib/phone";
 import {
   FILL_REASON_MAX_LENGTH,
@@ -31,6 +32,9 @@ const studentFormBaseSchema = z.object({
   isOnShiduchim: z.boolean().default(true),
   // עבור מי הכרטיס מולא: self / child / other. ריק בכרטיס ישן
   cardFor: opt,
+  // "true": עורך שאינו הבעלים, ואימייל הממלא אינו חובה עבורו (author-fields.ts).
+  // פרמטר טופס בלבד - לא נשמר
+  authorEmailOptional: opt,
   gender: opt,
 
   firstName: opt,
@@ -155,6 +159,8 @@ const studentFormBaseSchema = z.object({
   author: z.object({
     name: opt,
     phone: opt,
+    // אימייל ממלא הכרטיס - חובה בכל card_for (author-fields.ts)
+    email: opt,
     // טקסט חופשי: רק כשהקשר הוא "אחר" (author-info.ts)
     relation: opt,
     relationType: opt,
@@ -177,11 +183,17 @@ function toIssuePath(path: string): Array<string | number> {
 function collectAuthorContentIssues(
   values: z.infer<typeof studentFormBaseSchema>,
 ): Array<{ path: string; message: string }> {
+  const issues: Array<{ path: string; message: string }> = [];
+  // האימייל נבדק בכל card_for שנבחר (חוסר בו נתפס כשדה חובה)
+  const email = values.author.email.trim();
+  if (values.cardFor && email && !EMAIL_PATTERN.test(email)) {
+    issues.push({ path: "author.email", message: EMAIL_INVALID_MESSAGE });
+  }
+
   const hasAuthor =
     values.cardFor === "child" || isThirdPartyCardFor(values.cardFor);
-  if (!hasAuthor) return [];
+  if (!hasAuthor) return issues;
 
-  const issues: Array<{ path: string; message: string }> = [];
   const phone = values.author.phone.trim();
   if (phone && !isValidPhone(phone)) {
     issues.push({ path: "author.phone", message: PHONE_INVALID_MESSAGE });

@@ -128,16 +128,18 @@ test.describe("author_info", () => {
     expect(describeAuthorRelation(legacyUnmatchedParent)).toBe("סבתא");
   });
 
-  test("מילוי עצמי לא שומר פרטי ממלא", () => {
+  test("מילוי עצמי שומר רק אימייל, ולא את שאר פרטי הממלא", () => {
     const stored = buildAuthorInfo("self", {
       name: "נשאר",
       phone: "0501234567",
+      email: " me@example.test ",
       relationType: "father",
     });
 
     expect(stored).toEqual({
       name: "",
       phone: "",
+      email: "me@example.test",
       relation: "",
       relationType: null,
       knowsWell: null,
@@ -166,6 +168,7 @@ test.describe("author_info", () => {
     const stored = buildAuthorInfo("other", {
       name: "שדכנית",
       phone: "0501234567",
+      email: "shadchanit@example.test",
       relationType: "other",
       relation: " מכרה של המשפחה ",
       knowsWell: "false",
@@ -175,6 +178,7 @@ test.describe("author_info", () => {
     expect(stored).toEqual({
       name: "שדכנית",
       phone: "0501234567",
+      email: "shadchanit@example.test",
       relation: "מכרה של המשפחה",
       relationType: "other",
       knowsWell: false,
@@ -183,6 +187,7 @@ test.describe("author_info", () => {
     expect(toAuthorFormValues(stored)).toEqual({
       name: "שדכנית",
       phone: "0501234567",
+      email: "shadchanit@example.test",
       relation: "מכרה של המשפחה",
       relationType: "other",
       knowsWell: "false",

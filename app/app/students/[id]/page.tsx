@@ -18,6 +18,8 @@ import {
   STUDENT_CARDS_VIEW,
   isDisplayRestricted,
 } from "@/features/students/lib/third-party-card";
+import { AdminPausedBanner } from "@/features/students/components/card/admin-paused-banner";
+import { loadCardAdminPaused } from "@/features/students/lib/card-admin-pause";
 import { loadThirdPartyApproval } from "@/features/students/lib/third-party-approval";
 import { ThirdPartyApprovalControls } from "@/features/admin/components/third-party-approval-controls";
 import {
@@ -272,7 +274,7 @@ async function StudentPageContent({
   const canWriteStaffFeedback = hasRole(user, "staff") && !isProposalView;
   // פרטי מנהל הכרטיס (אימייל + קישור) נשלפים רק למנהל מערכת, ורק בכרטיס
   // המלא - לא בענף הציבורי ולא בתצוגת הצעה, ולכן לא מגיעים אליהם גם כ-props.
-  const [{ photoPrivate, studentPhotos }, shadchanNotes, owner] =
+  const [{ photoPrivate, studentPhotos }, shadchanNotes, owner, isAdminPaused] =
     await Promise.all([
       loadViewerPhotos(supabase, user, student, isProposalView),
       isShadchan
@@ -281,6 +283,8 @@ async function StudentPageContent({
       isAdmin && !isProposalView && student.user_id
         ? loadCardOwnerInfo(student.user_id)
         : Promise.resolve(null),
+      // מצב ההשהיה ע"י ההנהלה: נשלף למנהל מערכת בלבד, בנפרד מרשימות העמודות
+      isAdmin ? loadCardAdminPaused(student.id) : Promise.resolve(null),
     ]);
   const currentUserName = [
     user?.user_metadata?.firstName,
@@ -320,19 +324,22 @@ async function StudentPageContent({
       owner={owner}
       isBasicOnly={isBasicView}
       adminControls={
-        approval && approvingAdminNames ? (
-          <ThirdPartyApprovalControls
-            studentId={student.id}
-            fullDisplay={{
-              approvedAt: approval.third_party_full_display_approved_at,
-              approvedByName: approvingAdminNames[0],
-            }}
-            proposals={{
-              approvedAt: approval.third_party_proposals_approved_at,
-              approvedByName: approvingAdminNames[1],
-            }}
-          />
-        ) : null
+        <>
+          {isAdminPaused === true && <AdminPausedBanner />}
+          {approval && approvingAdminNames ? (
+            <ThirdPartyApprovalControls
+              studentId={student.id}
+              fullDisplay={{
+                approvedAt: approval.third_party_full_display_approved_at,
+                approvedByName: approvingAdminNames[0],
+              }}
+              proposals={{
+                approvedAt: approval.third_party_proposals_approved_at,
+                approvedByName: approvingAdminNames[1],
+              }}
+            />
+          ) : null}
+        </>
       }
       actions={
         // ההרשאות נקבעות כאן, בשרת, ונמסרות כדגלים: קו״ח רק כשקיים, עריכה
@@ -355,6 +362,12 @@ async function StudentPageContent({
           canManage={isShadchan}
           canDelete={isAdmin}
           ownerUserId={owner?.userId ?? null}
+          // דיווח: כל מחובר שרואה את הכרטיס ואינו בעליו. ההכרעה האמיתית
+          // נעשית שוב בשרת, ב-report_student_card
+          canReport={student.user_id !== user.id}
+          adminPause={
+            isAdminPaused === null ? null : { isPaused: isAdminPaused }
+          }
         />
       }
     />

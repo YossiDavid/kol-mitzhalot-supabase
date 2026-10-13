@@ -67,6 +67,7 @@ export type ThirdPartyCardRow = {
   fillerName: string;
   fillerRelation: string;
   fillerPhone: string;
+  fillerEmail: string;
   knowsWell: boolean | null;
   fillReason: string;
   fullDisplayApprovedAt: string | null;
@@ -90,6 +91,7 @@ function toRow(raw: z.infer<typeof rowSchema>): ThirdPartyCardRow {
     fillerName: author.name,
     fillerRelation: describeAuthorRelation(author),
     fillerPhone: author.phone,
+    fillerEmail: author.email,
     knowsWell: author.knowsWell,
     fillReason: author.fillReason,
     fullDisplayApprovedAt: raw.third_party_full_display_approved_at,

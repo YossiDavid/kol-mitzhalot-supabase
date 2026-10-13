@@ -282,7 +282,7 @@ test.describe("כללי שדה חובה נגזרים ממערך השדות", () 
     ]);
   });
 
-  test("מי ממלא: עצמי - בלי פרטי ממלא; הורה ואדם אחר - חובה", () => {
+  test("מי ממלא: עצמי - רק אימייל; הורה ואדם אחר - כל פרטי הממלא חובה", () => {
     // Arrange
     const pathsFor = (cardFor: string, author: Record<string, string> = {}) =>
       issuePaths(studentFields, { gender: "male", cardFor, author }).filter(
@@ -290,19 +290,33 @@ test.describe("כללי שדה חובה נגזרים ממערך השדות", () 
       );
 
     // Act + Assert
-    expect(pathsFor("self")).toEqual([]);
+    expect(pathsFor("self")).toEqual(["author.email"]);
     expect(pathsFor("child")).toEqual([
+      "author.email",
       "author.name",
       "author.phone",
       "author.relationType",
     ]);
     expect(pathsFor("other")).toEqual([
+      "author.email",
       "author.fillReason",
       "author.knowsWell",
       "author.name",
       "author.phone",
       "author.relationType",
     ]);
+    // עורך שאינו הבעלים (פרמטר טופס שהשרת קובע): האימייל אינו חובה
+    for (const cardFor of ["self", "child", "other"]) {
+      expect(
+        issuePaths(studentFields, {
+          gender: "male",
+          cardFor,
+          authorEmailOptional: "true",
+        }),
+      ).not.toContain("author.email");
+    }
+    // עם אימייל - אין דרישה
+    expect(pathsFor("self", { email: "a@b.co" })).toEqual([]);
     // "אחר" דורש גם פירוט חופשי
     expect(pathsFor("other", { relationType: "other" })).toContain(
       "author.relation",

@@ -82,6 +82,14 @@ const COLUMNS: DataTableColumn<ThirdPartyCardRow>[] = [
             {row.fillerPhone}
           </p>
         )}
+        {row.fillerEmail && (
+          <p
+            className="text-caption text-muted-foreground"
+            data-testid={`filler-email-${row.id}`}
+          >
+            {row.fillerEmail}
+          </p>
+        )}
         <p className="text-caption text-muted-foreground">
           מכיר/ה היטב: {knowsWellLabel(row.knowsWell)}
         </p>

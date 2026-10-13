@@ -38,6 +38,7 @@ type AfterStepChange = "scrollToTop" | "focusFirstError" | null;
 export const emptyStudentFormValues: StudentFormValues = {
   isOnShiduchim: true,
   cardFor: "",
+  authorEmailOptional: "",
   gender: "",
   firstName: "",
   lastName: "",
@@ -171,6 +172,7 @@ export const emptyStudentFormValues: StudentFormValues = {
   author: {
     name: "",
     phone: "",
+    email: "",
     relation: "",
     relationType: "",
     knowsWell: "",
@@ -243,6 +245,11 @@ export type StudentFormWizardProps = {
   submittingLabel: string;
   /** ערכי התחלה לעריכה. ביצירה נשאר undefined ומתקבל טופס ריק. */
   initialValues?: StudentFormValues;
+  /**
+   * יצירה: אימייל שנודע אחרי שהטופס כבר הוצג (טעינת המשתמש). ממלא את
+   * אימייל הממלא רק אם הוא עדיין ריק ולא נערך - הטופס אינו ממתין לו.
+   */
+  lateAuthorEmail?: string | null;
   onSubmit: (values: StudentFormValues) => Promise<void>;
   /**
    * עריכה בלבד: "שמירת שינויים" מכל שלב, בלי לעזוב אותו. מחזיר האם נשמר.
@@ -259,6 +266,7 @@ export function StudentFormWizard({
   submitLabel,
   submittingLabel,
   initialValues,
+  lateAuthorEmail,
   onSubmit,
   onSaveProgress,
   isRefreshingSavedValues = false,
@@ -288,6 +296,13 @@ export function StudentFormWizard({
     // הפוקוס לשגיאה מנוהל כאן, לפי סדר התצוגה ועם גלילה מתחת לכותרת הדביקה
     shouldFocusError: false,
   });
+
+  useEffect(() => {
+    if (!lateAuthorEmail) return;
+    const isEmpty = !form.getValues("author.email")?.trim();
+    const isUntouched = !form.getFieldState("author.email").isDirty;
+    if (isEmpty && isUntouched) form.setValue("author.email", lateAuthorEmail);
+  }, [form, lateAuthorEmail]);
 
   // האשף צופה רק במגדר (תוויות ושמות שלבים). תנאי תצוגה נצפים בכל שדה ומקטע
   // לחוד (use-form-conditions.ts), כדי שהקלדה לא תרנדר את כל הטופס

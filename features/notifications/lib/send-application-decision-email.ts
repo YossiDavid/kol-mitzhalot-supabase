@@ -13,6 +13,8 @@ type DecisionEmailParams = {
   decision: ApplicationDecision;
   /** סיבת דחייה, אם הוזנה */
   reason?: string | null;
+  /** הודעה חופשית של המנהל שמצורפת למייל האישור */
+  message?: string | null;
 };
 
 /**
@@ -45,6 +47,7 @@ export async function sendApplicationDecisionEmail(
           ? rawFirstName.trim()
           : null,
       reason: params.reason ?? null,
+      message: params.message ?? null,
     });
 
     const result = await sendEmail({

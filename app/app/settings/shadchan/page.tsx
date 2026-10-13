@@ -1,93 +1,64 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import Link from "next/link";
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 
 import { Page, PageHeader } from "@/components/layout";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { CardSkeleton } from "@/components/ui/card-skeleton";
-import { Form, FormField } from "@/components/ui/form";
-import { FormFieldShell } from "@/components/ui/form-field-shell";
-import { FormActions, FormFields, FormGrid } from "@/components/ui/form-layout";
-import { Input } from "@/components/ui/input";
 import { SkeletonRegion } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
+import { ShadchanProfileFormCard } from "@/features/shadchanim/components/shadchan-profile-form-card";
 import {
-  optionalEmail,
-  optionalText,
-  requiredPhone,
-  requiredText,
-  requiredChoice,
-  requiredWholeNumber,
-} from "@/lib/forms/schema";
-import { SearchSelectField } from "@/features/students/components/create-form/fields/search-select-field";
-import { COMMUNITY_SEARCH } from "@/features/students/components/create-form/fields-data/shared-options";
+  EMPTY_SHADCHAN_FORM,
+  formToColumns,
+  rowToForm,
+  SHADCHAN_PROFILE_SELECT,
+  type ShadchanFormData,
+} from "@/features/shadchanim/lib/profile-form";
+import { ApplicationMessagesCard } from "@/features/settings/components/application-messages-card";
+import { shadchanProfileHref } from "@/features/shadchanim/lib/types";
 import { createClient } from "@/lib/supabase/client";
 import { hasRole } from "@/lib/user-role";
 
 /** מספר שדות הטופס, לשלד הטעינה. */
 const FORM_FIELD_COUNT = 7;
 
-/** אורך מקסימלי לשם הרב (תואם ל-CHECK בעמודה synagogue_rabbi) */
-const SYNAGOGUE_RABBI_MAX_LENGTH = 100;
-
-/** הודעה קבועה למשתמש כששמירת הבקשה נכשלת (הפרטים הטכניים נרשמים בקונסול) */
+/** הודעות קבועות למשתמש כששמירה נכשלת (הפרטים הטכניים נרשמים בקונסול) */
 const SUBMIT_ERROR_MESSAGE = "שליחת הבקשה נכשלה, נסו שוב";
+const SAVE_ERROR_MESSAGE = "שמירת הפרופיל נכשלה, נסו שוב";
 
-const shadchanSchema = z.object({
-  bio: requiredText("ביוגרפיה"),
-  experience_years: requiredWholeNumber("שנות ניסיון"),
-  closed_matches: requiredWholeNumber("מספר השידוכים שנסגרו"),
-  specializations: optionalText(),
-  contact_phone: requiredPhone("טלפון ליצירת קשר"),
-  contact_email: optionalEmail(),
-  languages: optionalText(),
-  community: requiredChoice("קהילה / חסידות"),
-  synagogue_rabbi: requiredText("רב בית הכנסת שלך").max(
-    SYNAGOGUE_RABBI_MAX_LENGTH,
-    `שם הרב ארוך מדי (עד ${SYNAGOGUE_RABBI_MAX_LENGTH} תווים)`,
-  ),
-});
+/** PGRST116 = אין שורות */
+const NO_ROWS_ERROR_CODE = "PGRST116";
 
-type ShadchanFormData = z.infer<typeof shadchanSchema>;
+const JOIN_COPY = {
+  title: "הצטרפות כשדכן",
+  description: "מלא את הפרטים הבאים כדי להגיש בקשה להצטרפות כשדכן במערכת",
+} as const;
 
-const EMPTY_FORM: ShadchanFormData = {
-  bio: "",
-  experience_years: "",
-  closed_matches: "",
-  specializations: "",
-  contact_phone: "",
-  contact_email: "",
-  languages: "",
-  community: "",
-  synagogue_rabbi: "",
-};
+const EDIT_COPY = {
+  title: "עריכת פרופיל שדכן",
+  description: "עדכן את הפרטים שמוצגים בפרופיל שלך. הסטטוס שלך לא ישתנה.",
+} as const;
 
-/** רק מה שהטופס באמת צריך לדעת על בקשה שכבר הוגשה */
-interface ExistingShadchanApplication {
-  application_status: string | null;
-}
+/**
+ * מצב העמוד: טופס הצטרפות (עם בקשה קיימת אם יש), או עריכת הפרופיל של שדכן
+ * מאושר. מי שמוגדר שדכן בלי שורה מאושרת, ומנהל, מוּפנים להגדרות.
+ */
+type PageState =
+  | { kind: "loading" }
+  | {
+      kind: "join";
+      defaults: ShadchanFormData;
+      hasExistingApplication: boolean;
+    }
+  | { kind: "edit"; userId: string; defaults: ShadchanFormData };
 
-/** שלד עמוד הבקשה, זהה במבנה לתוכן האמיתי כדי שלא תהיה קפיצה. */
+/** שלד העמוד, זהה במבנה לתוכן האמיתי כדי שלא תהיה קפיצה. */
 function ShadchanPageSkeleton() {
   return (
     <Page width="form">
-      <PageHeader
-        title="הצטרפות כשדכן"
-        description="מלא את הפרטים הבאים כדי להגיש בקשה להצטרפות כשדכן במערכת"
-      />
+      <PageHeader title={JOIN_COPY.title} description={JOIN_COPY.description} />
       <SkeletonRegion>
         <CardSkeleton fields={FORM_FIELD_COUNT} footer />
       </SkeletonRegion>
@@ -96,29 +67,22 @@ function ShadchanPageSkeleton() {
 }
 
 /** הטופס נשען על react-hook-form, ולכן יושב מאחורי גבול Suspense. */
-export default function ShadchanApplicationPage() {
+export default function ShadchanSettingsPage() {
   return (
     <Suspense fallback={<ShadchanPageSkeleton />}>
-      <ShadchanApplicationForm />
+      <ShadchanSettingsContent />
     </Suspense>
   );
 }
 
-function ShadchanApplicationForm() {
+function ShadchanSettingsContent() {
   const router = useRouter();
-  const [isFetching, setIsFetching] = useState(true);
-  const [existingApplication, setExistingApplication] =
-    useState<ExistingShadchanApplication | null>(null);
-
-  const form = useForm<ShadchanFormData>({
-    resolver: zodResolver(shadchanSchema),
-    defaultValues: EMPTY_FORM,
-  });
-
-  const { isSubmitting } = form.formState;
+  const [state, setState] = useState<PageState>({ kind: "loading" });
 
   useEffect(() => {
-    async function fetchExistingData() {
+    let isCancelled = false;
+
+    async function load() {
       const supabase = createClient();
       const {
         data: { user },
@@ -129,58 +93,69 @@ function ShadchanApplicationForm() {
         return;
       }
 
-      // בדיקה שהמשתמש לא שדכן או אדמין
-      if (hasRole(user, "shadchan") || hasRole(user, "admin")) {
+      // מנהל: אין לו בקשה ואין פרופיל משלו לערוך כאן
+      if (hasRole(user, "admin")) {
         router.push("/app/settings");
         return;
       }
 
-      // שליפת מידע קיים אם יש
       const { data, error } = await supabase
         .from("shadchanim_info")
-        .select("*")
+        .select(`application_status, ${SHADCHAN_PROFILE_SELECT}`)
         .eq("user_id", user.id)
         .single();
 
-      if (error && error.code !== "PGRST116") {
-        console.error("Error fetching existing application:", error);
+      if (error && error.code !== NO_ROWS_ERROR_CODE) {
+        console.error("Error fetching shadchan row:", error);
+      }
+      if (isCancelled) return;
+
+      if (hasRole(user, "shadchan")) {
+        if (data?.application_status !== "approved") {
+          router.push("/app/settings");
+          return;
+        }
+        setState({ kind: "edit", userId: user.id, defaults: rowToForm(data) });
+        return;
       }
 
-      if (data) {
-        setExistingApplication(data);
-        // מילוי הטופס עם הנתונים הקיימים
-        form.reset({
-          bio: data.bio || "",
-          experience_years: data.experience_years?.toString() || "",
-          specializations: Array.isArray(data.specializations)
-            ? data.specializations.join(", ")
-            : data.specializations || "",
-          contact_phone: data.contact_phone || "",
-          contact_email: data.contact_email || "",
-          languages: Array.isArray(data.languages)
-            ? data.languages.join(", ")
-            : data.languages || "",
-          closed_matches: data.closed_matches?.toString() || "",
-          community: data.community || "",
-          // בקשות שהוגשו לפני הוספת השדה: ריק, ויידרש במילוי הבא
-          synagogue_rabbi: data.synagogue_rabbi || "",
-        });
-      }
-
-      setIsFetching(false);
+      setState({
+        kind: "join",
+        defaults: data ? rowToForm(data) : EMPTY_SHADCHAN_FORM,
+        hasExistingApplication: Boolean(data),
+      });
     }
 
-    fetchExistingData();
-  }, [router, form]);
+    load();
+    return () => {
+      isCancelled = true;
+    };
+  }, [router]);
 
-  /** "עברית, אנגלית" → ["עברית", "אנגלית"]; ריק → null */
-  const toList = (value: string) => {
-    const items = value
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
-    return items.length ? items : null;
-  };
+  if (state.kind === "loading") {
+    return <ShadchanPageSkeleton />;
+  }
+
+  if (state.kind === "edit") {
+    return <EditOwnProfile userId={state.userId} defaults={state.defaults} />;
+  }
+
+  return (
+    <JoinApplication
+      defaults={state.defaults}
+      hasExistingApplication={state.hasExistingApplication}
+    />
+  );
+}
+
+function JoinApplication({
+  defaults,
+  hasExistingApplication,
+}: {
+  defaults: ShadchanFormData;
+  hasExistingApplication: boolean;
+}) {
+  const router = useRouter();
 
   const onSubmit = async (data: ShadchanFormData) => {
     const supabase = createClient();
@@ -195,41 +170,25 @@ function ShadchanApplicationForm() {
         return;
       }
 
-      // הערכים כבר חתוכי רווחים ותקינים - הסכמה בדקה אותם
       const insertData: Record<string, unknown> = {
         user_id: user.id,
-        bio: data.bio || null,
-        experience_years: data.experience_years
-          ? parseInt(data.experience_years)
-          : null,
-        specializations: toList(data.specializations),
-        contact_phone: data.contact_phone || null,
-        contact_email: data.contact_email || null,
-        languages: toList(data.languages),
-        closed_matches: data.closed_matches
-          ? parseInt(data.closed_matches)
-          : null,
-        community: data.community,
-        synagogue_rabbi: data.synagogue_rabbi,
+        ...formToColumns(data),
       };
 
-      // אם זו בקשה חדשה, הוסף application_status = 'pending'
-      if (!existingApplication) {
+      // בקשה חדשה: סטטוס ממתין ותאריך הגשה
+      if (!hasExistingApplication) {
         insertData.application_status = "pending";
         insertData.submitted_at = new Date().toISOString();
       }
 
-      // upsert לפי user_id
       const { error } = await supabase
         .from("shadchanim_info")
-        .upsert(insertData, {
-          onConflict: "user_id",
-        });
+        .upsert(insertData, { onConflict: "user_id" });
 
       if (error) throw error;
 
       toast.success(
-        existingApplication
+        hasExistingApplication
           ? "הבקשה עודכנה בהצלחה"
           : "הבקשה נשלחה בהצלחה וממתינה לאישור",
       );
@@ -240,199 +199,71 @@ function ShadchanApplicationForm() {
     }
   };
 
-  if (isFetching) {
-    return <ShadchanPageSkeleton />;
-  }
+  return (
+    <Page width="form">
+      <PageHeader title={JOIN_COPY.title} description={JOIN_COPY.description} />
+      <ApplicationMessagesCard kind="shadchan" />
+      <ShadchanProfileFormCard
+        title="טופס הצטרפות"
+        description="אנא מלא את כל הפרטים הרלוונטיים. הבקשה תבדק על ידי מנהל המערכת."
+        defaultValues={defaults}
+        submitLabel={hasExistingApplication ? "עדכן בקשה" : "שלח בקשה"}
+        pendingLabel="שולח..."
+        cancelHref="/app/settings"
+        onSubmit={onSubmit}
+      />
+    </Page>
+  );
+}
+
+function EditOwnProfile({
+  userId,
+  defaults,
+}: {
+  userId: string;
+  defaults: ShadchanFormData;
+}) {
+  const router = useRouter();
+  const profileHref = shadchanProfileHref(userId) as Route;
+
+  const onSubmit = async (data: ShadchanFormData) => {
+    const supabase = createClient();
+
+    try {
+      // עדכון עמודות הפרופיל בלבד: הסטטוס ותאריכיו לא נשלחים (והטריגר שומר עליהם)
+      const { data: updated, error } = await supabase
+        .from("shadchanim_info")
+        .update(formToColumns(data))
+        .eq("user_id", userId)
+        .select("user_id");
+
+      if (error) throw error;
+      if (!updated || updated.length === 0) {
+        throw new Error("no shadchanim_info row updated");
+      }
+
+      toast.success("הפרופיל עודכן בהצלחה");
+      router.push(profileHref);
+      router.refresh();
+    } catch (error: unknown) {
+      toast.error(SAVE_ERROR_MESSAGE);
+      console.error("Error updating shadchan profile:", error);
+    }
+  };
 
   return (
     <Page width="form">
-      <PageHeader
-        title="הצטרפות כשדכן"
-        description="מלא את הפרטים הבאים כדי להגיש בקשה להצטרפות כשדכן במערכת"
+      <PageHeader title={EDIT_COPY.title} description={EDIT_COPY.description} />
+      <ApplicationMessagesCard kind="shadchan" />
+      <ShadchanProfileFormCard
+        title="פרטי הפרופיל"
+        description="הפרטים שיוצגו לאחרים בכרטיס ובפרופיל שלך. שם הרב והקהילה גלויים למנהל המערכת בלבד."
+        defaultValues={defaults}
+        submitLabel="שמור שינויים"
+        pendingLabel="שומר..."
+        cancelHref={profileHref}
+        onSubmit={onSubmit}
       />
-      <Card>
-        <CardHeader>
-          <CardTitle>טופס הצטרפות</CardTitle>
-          <CardDescription>
-            אנא מלא את כל הפרטים הרלוונטיים. הבקשה תבדק על ידי מנהל המערכת.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            {/* noValidate: ההודעות בעברית מגיעות מהסכמה ולא מהדפדפן */}
-            <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
-              <FormFields>
-                <FormField
-                  control={form.control}
-                  name="bio"
-                  render={({ field }) => (
-                    <FormFieldShell label="ביוגרפיה" required>
-                      <Textarea
-                        {...field}
-                        placeholder="ספר על עצמך, הרקע שלך, והניסיון שלך בשדכנות"
-                        rows={5}
-                        disabled={isSubmitting}
-                      />
-                    </FormFieldShell>
-                  )}
-                />
-
-                <FormGrid>
-                  <FormField
-                    control={form.control}
-                    name="experience_years"
-                    render={({ field }) => (
-                      <FormFieldShell label="שנות ניסיון" required>
-                        <Input
-                          {...field}
-                          type="number"
-                          min="0"
-                          placeholder="לדוגמה: 5"
-                          disabled={isSubmitting}
-                        />
-                      </FormFieldShell>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="closed_matches"
-                    render={({ field }) => (
-                      <FormFieldShell label="כמה שידוכים סגרתי" required>
-                        <Input
-                          {...field}
-                          type="number"
-                          min="0"
-                          placeholder="לדוגמה: 12"
-                          disabled={isSubmitting}
-                        />
-                      </FormFieldShell>
-                    )}
-                  />
-                </FormGrid>
-
-                <FormField
-                  control={form.control}
-                  name="specializations"
-                  render={({ field }) => (
-                    <FormFieldShell
-                      label="התמחויות"
-                      description="מופרדות בפסיקים"
-                    >
-                      <Input
-                        {...field}
-                        placeholder="לדוגמה: שידוכים צעירים, שידוכים מבוגרים"
-                        disabled={isSubmitting}
-                      />
-                    </FormFieldShell>
-                  )}
-                />
-
-                <FormGrid>
-                  <FormField
-                    control={form.control}
-                    name="contact_phone"
-                    render={({ field }) => (
-                      <FormFieldShell label="טלפון ליצירת קשר" required>
-                        <Input
-                          {...field}
-                          type="tel"
-                          placeholder="+972 50…"
-                          autoComplete="tel"
-                          dir="ltr"
-                          className="text-start"
-                          disabled={isSubmitting}
-                        />
-                      </FormFieldShell>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="contact_email"
-                    render={({ field }) => (
-                      <FormFieldShell label="אימייל ליצירת קשר">
-                        <Input
-                          {...field}
-                          type="email"
-                          placeholder="contact@example.com"
-                          autoComplete="email"
-                          disabled={isSubmitting}
-                        />
-                      </FormFieldShell>
-                    )}
-                  />
-                </FormGrid>
-
-                <FormField
-                  control={form.control}
-                  name="community"
-                  render={({ field }) => (
-                    <FormFieldShell label="קהילה / חסידות" required>
-                      <SearchSelectField
-                        {...COMMUNITY_SEARCH}
-                        id="community"
-                        value={field.value}
-                        onChange={field.onChange}
-                        disabled={isSubmitting}
-                      />
-                    </FormFieldShell>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="synagogue_rabbi"
-                  render={({ field }) => (
-                    <FormFieldShell
-                      label="רב בית הכנסת שלך"
-                      description="שם הרב של בית הכנסת שבו אתה מתפלל. הפרט נראה למנהל המערכת בלבד."
-                      required
-                    >
-                      <Input
-                        {...field}
-                        placeholder="לדוגמה: הרב יעקב כהן"
-                        maxLength={SYNAGOGUE_RABBI_MAX_LENGTH}
-                        disabled={isSubmitting}
-                      />
-                    </FormFieldShell>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="languages"
-                  render={({ field }) => (
-                    <FormFieldShell label="שפות" description="מופרדות בפסיקים">
-                      <Input
-                        {...field}
-                        placeholder="לדוגמה: עברית, אנגלית, יידיש"
-                        disabled={isSubmitting}
-                      />
-                    </FormFieldShell>
-                  )}
-                />
-
-                <FormActions>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    asChild
-                    disabled={isSubmitting}
-                  >
-                    <Link href="/app/settings">ביטול</Link>
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting
-                      ? "שולח..."
-                      : existingApplication
-                        ? "עדכן בקשה"
-                        : "שלח בקשה"}
-                  </Button>
-                </FormActions>
-              </FormFields>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
     </Page>
   );
 }

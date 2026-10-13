@@ -18,7 +18,7 @@ import { isValidPhone, PHONE_INVALID_MESSAGE } from "@/lib/phone";
 import { chooseMessage, fillMessage } from "./field-messages";
 
 /** אותו ביטוי שהיה בטפסים לפני האיחוד (פרופיל, בקשת שדכן) */
-const EMAIL_PATTERN = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+export const EMAIL_PATTERN = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 
 export const EMAIL_INVALID_MESSAGE = "אימייל לא תקין";
 

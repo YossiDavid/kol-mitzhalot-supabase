@@ -9,6 +9,9 @@ import { z } from "zod";
  *  - relation: תווית הקשר, וכשהבחירה "אחר" - הטקסט החופשי שנכתב. כך קוראים
  *    ישנים שמציגים relation ממשיכים להציג משהו הגיוני.
  *  - knowsWell: האם ממלא הכרטיס (צד שלישי) מכיר היטב את המועמד/ת. null: לא נשאל.
+ *  - email: אימייל של ממלא הכרטיס (חובה בטופס, לכל card_for). איש קשר בדיוק
+ *    כמו phone: נחתך מההצעה ומכרטיס שאין לו הרשאה לפרטי קשר (בשרת). כרטיס
+ *    ישן בלעדיו נטען כרגיל, והאימייל נדרש בשמירה הבאה בלבד.
  *  - fillReason: מדוע הכרטיס ממולא על ידי צד שלישי ולא על ידי המועמד/ההורים.
  *    מוצג למנהלים ולממלא בלבד (לא נשלח לשדכנים).
  * כרטיס שנשמר לפני השינוי נקרא דרך readAuthorInfo, שמתרגם את הטקסט החופשי.
@@ -56,6 +59,7 @@ export function relationOptions(types: readonly AuthorRelationType[]) {
 export type AuthorInfo = {
   name: string;
   phone: string;
+  email: string;
   relation: string;
   relationType: AuthorRelationType | null;
   knowsWell: boolean | null;
@@ -65,6 +69,7 @@ export type AuthorInfo = {
 export const EMPTY_AUTHOR_INFO: AuthorInfo = {
   name: "",
   phone: "",
+  email: "",
   relation: "",
   relationType: null,
   knowsWell: null,
@@ -76,6 +81,7 @@ const text = z.string().catch("");
 const storedAuthorSchema = z.object({
   name: text,
   phone: text,
+  email: text,
   relation: text,
   relationType: z.enum(RELATION_TYPES).nullable().catch(null),
   knowsWell: z.boolean().nullable().catch(null),
@@ -133,6 +139,7 @@ export function describeAuthorRelation(info: AuthorInfo): string {
 export type AuthorFormValues = {
   name?: string;
   phone?: string;
+  email?: string;
   relation?: string;
   relationType?: string;
   knowsWell?: string;
@@ -153,11 +160,16 @@ function parseKnowsWell(value: string | undefined): boolean | null {
   return null;
 }
 
-/** מתוך הטופס אל מה שנשמר. "עבור עצמי": אין ממלא נפרד, ולא נשמר מה שנשאר בשדות */
+/**
+ * מתוך הטופס אל מה שנשמר. "עבור עצמי": אין ממלא נפרד, ונשמר רק האימייל שלו
+ * (ולא מה שנשאר בשדות האחרים). כרטיס בלי card_for (ישן) לא שומר ממלא.
+ */
 export function buildAuthorInfo(
   cardFor: string | undefined,
   author: AuthorFormValues | undefined,
 ): AuthorInfo {
+  const email = (author?.email ?? "").trim();
+  if (cardFor === "self") return { ...EMPTY_AUTHOR_INFO, email };
   if (cardFor !== "child" && cardFor !== THIRD_PARTY_CARD_FOR_VALUE) {
     return EMPTY_AUTHOR_INFO;
   }
@@ -171,6 +183,7 @@ export function buildAuthorInfo(
   return {
     name: author?.name ?? "",
     phone: author?.phone ?? "",
+    email,
     relation,
     relationType,
     // "מכיר היטב" נשאל רק צד שלישי
@@ -192,6 +205,7 @@ export function toAuthorFormValues(
   return {
     name: info.name,
     phone: info.phone,
+    email: info.email,
     relation: info.relationType === OTHER_RELATION_TYPE ? info.relation : "",
     relationType: info.relationType ?? "",
     knowsWell:

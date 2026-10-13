@@ -11,8 +11,11 @@ import {
   getMyContactQuota,
   getShadchanPublicProfile,
 } from "@/features/shadchanim/lib/queries";
-import { ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { getUser } from "@/lib/user";
+import { ArrowRight, Pencil } from "lucide-react";
 import { unstable_noStore as noStore } from "next/cache";
+import type { Route } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -24,7 +27,7 @@ function TagList({ title, items }: { title: string; items: string[] }) {
   if (items.length === 0) return null;
   return (
     <div className="space-y-2">
-      <h3 className="text-body-sm font-bold">{title}</h3>
+      <h2 className="text-body font-bold">{title}</h2>
       <div className="flex flex-wrap gap-2">
         {items.map((item) => (
           <Badge key={item} variant="outline">
@@ -36,15 +39,31 @@ function TagList({ title, items }: { title: string; items: string[] }) {
   );
 }
 
-function statsLine(
+/** פריטי "ניסיון ושידוכים": רק מה שיש לו ערך חיובי. */
+function experienceItems(
   experienceYears: number | null,
   closedMatches: number | null,
 ) {
-  const parts = [
+  return [
     experienceYears ? `${experienceYears} שנות ניסיון` : null,
     closedMatches ? `${closedMatches} שידוכים שנסגרו` : null,
-  ].filter(Boolean);
-  return parts.join(" · ");
+  ].filter((item): item is string => item !== null);
+}
+
+/** סעיף עם כותרת קבועה, באותו סגנון בכל הפרופיל. */
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-2">
+      <h2 className="text-body font-bold">{title}</h2>
+      {children}
+    </div>
+  );
 }
 
 async function ShadchanProfileContent({
@@ -54,14 +73,20 @@ async function ShadchanProfileContent({
 }) {
   noStore();
   const { id } = await params;
-  const [profile, quota] = await Promise.all([
+  const [profile, quota, viewer] = await Promise.all([
     getShadchanPublicProfile(id),
     getMyContactQuota(),
+    getUser(),
   ]);
 
   if (!profile) notFound();
 
-  const stats = statsLine(profile.experienceYears, profile.closedMatches);
+  const experience = experienceItems(
+    profile.experienceYears,
+    profile.closedMatches,
+  );
+  // כפתור העריכה מוצג רק לבעל הפרופיל עצמו
+  const isOwnProfile = viewer?.id === profile.id;
 
   return (
     <Card>
@@ -75,26 +100,48 @@ async function ShadchanProfileContent({
                 שדכן משנת {profile.sinceYear}
               </p>
             )}
-            {stats && <p className="text-body-sm">{stats}</p>}
           </div>
         </div>
-        <ContactShadchanDialog
-          shadchanId={profile.id}
-          shadchanName={profile.name}
-          quota={quota}
-          triggerClassName="w-full sm:w-auto"
-        />
+        {isOwnProfile ? (
+          <Button asChild variant="outline" className="w-full sm:w-auto">
+            <Link href={"/app/settings/shadchan" as Route}>
+              <Pencil aria-hidden />
+              עריכת הפרופיל
+            </Link>
+          </Button>
+        ) : (
+          <ContactShadchanDialog
+            shadchanId={profile.id}
+            shadchanName={profile.name}
+            quota={quota}
+            triggerClassName="w-full sm:w-auto"
+          />
+        )}
       </div>
 
-      <ShadchanContactDetails shadchan={profile} />
+      {/* סדר קבוע: פרטי התקשרות, אודות, ניסיון ושידוכים, התמחויות, שפות */}
+      {(profile.phone || profile.email || profile.city) && (
+        <Section title="פרטי התקשרות">
+          <ShadchanContactDetails shadchan={profile} />
+        </Section>
+      )}
 
       {profile.description && (
-        <div className="space-y-2">
-          <h2 className="text-body font-bold">אודות</h2>
+        <Section title="אודות">
           <p className="text-body-sm whitespace-pre-line">
             {profile.description}
           </p>
-        </div>
+        </Section>
+      )}
+
+      {experience.length > 0 && (
+        <Section title="ניסיון ושידוכים">
+          <ul className="space-y-1 text-body-sm">
+            {experience.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </Section>
       )}
 
       <TagList title="התמחויות" items={profile.specializations} />
