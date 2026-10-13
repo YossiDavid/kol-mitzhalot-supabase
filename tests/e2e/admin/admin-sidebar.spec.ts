@@ -46,6 +46,7 @@ const SECTIONS: readonly SectionSpec[] = [
       ["מאמרים", "/app/admin/content/articles"],
       ["מודעות מאורסים", "/app/admin/content/engagements"],
       ["המלצות רבנים", "/app/admin/content/endorsements"],
+      ["הקדשות והנצחות", "/app/admin/content/dedications"],
       ["רשימת תפוצה", "/app/admin/content/newsletter"],
       ["פניות מהאתר", "/app/admin/content/submissions"],
     ],

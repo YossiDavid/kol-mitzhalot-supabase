@@ -1,6 +1,7 @@
 import {
   BookOpen,
   FileText,
+  Flame,
   GraduationCap,
   HeartHandshake,
   Flag,
@@ -131,6 +132,11 @@ export const ADMIN_NAV_SECTIONS: readonly AdminNavSection[] = [
         title: "המלצות רבנים",
         url: "/app/admin/content/endorsements",
         icon: Star,
+      },
+      {
+        title: "הקדשות והנצחות",
+        url: "/app/admin/content/dedications",
+        icon: Flame,
       },
       {
         title: "רשימת תפוצה",

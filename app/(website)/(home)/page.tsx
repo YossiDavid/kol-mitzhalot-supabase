@@ -3,6 +3,10 @@ import { Suspense, type FC, type SVGProps } from "react";
 import { WebStats } from "@/components/website/stats";
 import { EndorsementsCarousel } from "@/components/website/endorsements-carousel";
 import { WebCta } from "@/components/website/cta";
+import {
+  DedicationTilesFallback,
+  DedicationTilesSection,
+} from "@/components/website/dedications/dedication-tiles-section";
 import { LogoSvg } from "@/components/website/logo-svg";
 import {
   DirectoryProductPreview,
@@ -757,6 +761,11 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── 7b. DEDICATION TILES (פרנס היום/שבוע/חודש + הנצחות) — invitations when empty ── */}
+      <Suspense fallback={<DedicationTilesFallback />}>
+        <DedicationTilesSection donateHref="/donations#donate" />
+      </Suspense>
 
       {/* ── 8. RECENT ENGAGEMENTS — hidden when no data ── */}
       <Suspense>

@@ -4,6 +4,11 @@
  */
 import type { Metadata } from "next";
 import { Lock, ReceiptText } from "lucide-react";
+import { Suspense } from "react";
+import {
+  DedicationTilesFallback,
+  DedicationTilesSection,
+} from "@/components/website/dedications/dedication-tiles-section";
 import { DedicationsSection } from "@/components/website/donations/dedications-section";
 import { DonationFlow } from "@/components/website/donations/donation-flow";
 import { DonationUnavailable } from "@/components/website/donations/donation-unavailable";
@@ -49,7 +54,7 @@ export default function DonationsPage() {
 
       <section className="bg-background">
         <div className="shell-site grid grid-cols-1 gap-12 py-16 md:py-20 lg:grid-cols-[1.6fr_1fr] lg:gap-16">
-          <div>
+          <div id="donate" className="scroll-mt-24">
             <h2 className="mb-8 text-display font-bold text-primary">
               לתרום למערכת
             </h2>
@@ -82,6 +87,11 @@ export default function DonationsPage() {
           </aside>
         </div>
       </section>
+
+      {/* קוביות הפרנסים וההנצחות; "פנוי" גולל לטופס באותו עמוד */}
+      <Suspense fallback={<DedicationTilesFallback />}>
+        <DedicationTilesSection donateHref="#donate" />
+      </Suspense>
 
       <DedicationsSection />
     </>
