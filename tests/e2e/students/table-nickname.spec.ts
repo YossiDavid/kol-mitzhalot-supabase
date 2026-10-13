@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * בטבלת המיועדים, עמודת "שם פרטי" מציגה את הכינוי בסוגריים מיד אחרי השם.
@@ -52,7 +53,7 @@ test.beforeAll(async () => {
 
   const { data, error } = await admin
     .from("students")
-    .insert(rows)
+    .insert(approvedCard(rows))
     .select("id");
   if (error || !data) {
     throw new Error(`יצירת כרטיסי הבדיקה נכשלה: ${error?.message}`);

@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * בעריכת כרטיס עם קו״ח שמור, אזור הקו״ח מראה שהקובץ קיים, עם קישור לפתיחה
@@ -18,24 +19,26 @@ test.describe("קו״ח שמור בעריכת כרטיס", () => {
     const userId = await getTestUserId(admin);
     const { data, error } = await admin
       .from("students")
-      .insert({
-        user_id: userId,
-        first_name: "קו״ח",
-        last_name: `שמור${Date.now()}`,
-        identity_number: `8${String(Date.now()).slice(-8)}`,
-        // כרטיס שנוצר בלי card_for נחסם בעריכה עד שנבחר עבור מי הוא
-        card_for: "child",
-        // פרטי הממלא חובה כבר בשלב ההקדמה: בלעדיהם אי אפשר לעבור ממנו
-        author_info: { name: "ממלא", phone: "0501234567", relation: "אב" },
-        birth_date: "1998-01-01",
-        gender: "male",
-        personal_status: "single",
-        country: "ישראל",
-        city: "בני ברק",
-        cellphone_type: "kosher",
-        in_shidduchim: true,
-        cv_url: STORED_CV_URL,
-      })
+      .insert(
+        approvedCard({
+          user_id: userId,
+          first_name: "קו״ח",
+          last_name: `שמור${Date.now()}`,
+          identity_number: `8${String(Date.now()).slice(-8)}`,
+          // כרטיס שנוצר בלי card_for נחסם בעריכה עד שנבחר עבור מי הוא
+          card_for: "child",
+          // פרטי הממלא חובה כבר בשלב ההקדמה: בלעדיהם אי אפשר לעבור ממנו
+          author_info: { name: "ממלא", phone: "0501234567", relation: "אב" },
+          birth_date: "1998-01-01",
+          gender: "male",
+          personal_status: "single",
+          country: "ישראל",
+          city: "בני ברק",
+          cellphone_type: "kosher",
+          in_shidduchim: true,
+          cv_url: STORED_CV_URL,
+        }),
+      )
       .select("id")
       .single();
     if (error || !data) {

@@ -1,4 +1,5 @@
 import type { DataTableSort } from "@/components/data-table";
+import { CARD_LISTED_AT_COLUMN } from "@/features/students/lib/card-approval";
 
 /** מפתח עמודת הטבלה -> איך ממיינים אותה בשאילתה */
 type SortSpec = {
@@ -32,8 +33,12 @@ const SORT_SPECS: Readonly<Record<string, SortSpec>> = {
   community: { column: "community", isNullable: true },
   age: { column: "birth_date", isNullable: false, isReversed: true },
   height: { column: "height", isNullable: true },
-  // "עולה" בטבלה = החדש קודם: תאריך ההוספה בסדר יורד. created_at ריק בשורות ישנות
-  created: { column: "created_at", isNullable: true, isReversed: true },
+  // "עולה" בטבלה = החדש קודם: תאריך ההוספה (רגע האישור) בסדר יורד
+  created: {
+    column: CARD_LISTED_AT_COLUMN,
+    isNullable: true,
+    isReversed: true,
+  },
 };
 
 /** ללא בחירה (או אחרי הלחיצה השלישית על כותרת): א-ב לפי שם משפחה */

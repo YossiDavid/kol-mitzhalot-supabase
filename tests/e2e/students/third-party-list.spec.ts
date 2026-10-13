@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * רשימת המיועדים: תג "מולא ע״י צד שלישי" רק בכרטיסי card_for = 'other', וסינון
@@ -32,18 +33,20 @@ test.beforeAll(async () => {
   const { data, error } = await admin
     .from("students")
     .insert(
-      KEYS.map((key) => ({
-        user_id: userId,
-        first_name: "סינון",
-        last_name: lastName(key),
-        birth_date: "1999-01-01",
-        gender: SEEDS[key].gender,
-        personal_status: "single",
-        country: "ישראל",
-        city: "בני ברק",
-        in_shidduchim: true,
-        card_for: SEEDS[key].cardFor,
-      })),
+      approvedCard(
+        KEYS.map((key) => ({
+          user_id: userId,
+          first_name: "סינון",
+          last_name: lastName(key),
+          birth_date: "1999-01-01",
+          gender: SEEDS[key].gender,
+          personal_status: "single",
+          country: "ישראל",
+          city: "בני ברק",
+          in_shidduchim: true,
+          card_for: SEEDS[key].cardFor,
+        })),
+      ),
     )
     .select("id");
   if (error || !data) {

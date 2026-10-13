@@ -13,6 +13,7 @@ import {
   pageRange as sharedPageRange,
 } from "@/lib/pagination";
 import { buildStudentsOrder } from "@/features/students/lib/students-list-sort";
+import { CARD_LISTED_AT_COLUMN } from "@/features/students/lib/card-approval";
 import { STUDENT_CARDS_VIEW } from "@/features/students/lib/third-party-card";
 
 /** כמה כרטיסים בעמוד אחד ברשימת המיועדים */
@@ -41,8 +42,9 @@ const STUDENT_ROW_COLUMNS = [
   "photo_count",
   "status_changed_at",
   "in_shidduchim",
-  // לתג "חדש" ולמיון לפי תאריך הוספה
+  // לתג "חדש" ולעמודת "נוסף": רגע האישור (card-approval.ts, cardListedAt)
   "created_at",
+  CARD_LISTED_AT_COLUMN,
   // תג "מולא ע״י צד שלישי" ואישורי ההנהלה
   "card_for",
   "third_party_full_display_approved_at",
@@ -177,7 +179,7 @@ function applyFieldFilters(
   }
   const newCards = parseNewCardsFilter(query.newCards);
   if (newCards)
-    next = next.gte("created_at", newCardsSince(newCards, new Date()));
+    next = next.gte(CARD_LISTED_AT_COLUMN, newCardsSince(newCards, new Date()));
   return next;
 }
 

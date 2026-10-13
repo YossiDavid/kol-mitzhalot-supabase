@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { setShadchanApproval } from "../forums/forum-fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * עוזרים לבדיקות העימוד. כל בדיקה מקימה משתמשים ייעודיים (הורה ושדכן שלא
@@ -93,17 +94,19 @@ export async function insertCards(
   const { data, error } = await admin
     .from("students")
     .insert(
-      rows.map((row) => ({
-        user_id: row.userId,
-        first_name: row.firstName,
-        last_name: row.lastName,
-        birth_date: "1998-01-01",
-        gender: row.gender,
-        personal_status: "single",
-        country: "ישראל",
-        city: "בני ברק",
-        in_shidduchim: true,
-      })),
+      approvedCard(
+        rows.map((row) => ({
+          user_id: row.userId,
+          first_name: row.firstName,
+          last_name: row.lastName,
+          birth_date: "1998-01-01",
+          gender: row.gender,
+          personal_status: "single",
+          country: "ישראל",
+          city: "בני ברק",
+          in_shidduchim: true,
+        })),
+      ),
     )
     .select("id, last_name");
   if (error || !data) {

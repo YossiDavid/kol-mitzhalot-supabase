@@ -8,6 +8,7 @@ import {
 } from "../../../features/students/lib/favorites";
 import { THIRD_PARTY_FAVORITE_MESSAGE } from "../../../features/students/lib/third-party-card";
 import { TEST_USER_EMAIL } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * כרטיס צד שלישי שטרם אושר לקבלת הצעות אינו מועדף אפשרי: אין כוכב ברשימה,
@@ -35,18 +36,20 @@ async function setFavorites(favorites: string[]) {
 async function insertCard(lastName: string, cardFor: string) {
   const { data, error } = await admin
     .from("students")
-    .insert({
-      user_id: userId,
-      first_name: "מועדפות",
-      last_name: lastName,
-      birth_date: "1999-01-01",
-      gender: "male",
-      personal_status: "single",
-      country: "ישראל",
-      city: "בני ברק",
-      in_shidduchim: true,
-      card_for: cardFor,
-    })
+    .insert(
+      approvedCard({
+        user_id: userId,
+        first_name: "מועדפות",
+        last_name: lastName,
+        birth_date: "1999-01-01",
+        gender: "male",
+        personal_status: "single",
+        country: "ישראל",
+        city: "בני ברק",
+        in_shidduchim: true,
+        card_for: cardFor,
+      }),
+    )
     .select("id")
     .single();
   if (error || !data) throw new Error(`יצירת כרטיס נכשלה: ${error?.message}`);

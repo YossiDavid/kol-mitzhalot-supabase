@@ -31,6 +31,7 @@ const SECTIONS: readonly SectionSpec[] = [
     key: "cards",
     label: "כרטיסים והצעות",
     links: [
+      ["כרטיסים חדשים לאישור", "/app/admin/new-cards"],
       ["כרטיסי צד שלישי", "/app/admin/third-party-cards"],
       ["בקשות צפייה בתמונה", "/app/admin/photo-requests"],
       ["דיווחים על כרטיסים", "/app/admin/card-reports"],

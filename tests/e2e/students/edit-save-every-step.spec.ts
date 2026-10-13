@@ -6,6 +6,7 @@ import {
   getTestUserId,
   TEST_USER_EMAIL,
 } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * עריכת כרטיס: "שמירת שינויים" מכל שלב. השמירה מאמתת את כל הטופס, נשארת
@@ -41,54 +42,56 @@ async function createCompleteStudent(): Promise<string> {
   const userId = await getTestUserId(admin);
   const { data, error } = await admin
     .from("students")
-    .insert({
-      user_id: userId,
-      first_name: "שמירה",
-      last_name: `בכלשלב${RUN_ID}`,
-      identity_number: `7${String(RUN_ID).slice(-8)}`,
-      // כרטיס שנוצר בלי card_for נחסם בעריכה עד שנבחר עבור מי הוא
-      card_for: "child",
-      birth_date: "1997-03-03",
-      gender: "male",
-      personal_status: "single",
-      country: "ישראל",
-      city: "בני ברק",
-      street: "רבי עקיבא",
-      house: "12",
-      cellphone_type: "kosher",
-      in_shidduchim: true,
-      parents_info: {
-        father: {
-          self: nameParts(FATHER_NAME),
-          phone: "0501111111",
-          job: "מלמד",
-          email: "",
-          grandFather: nameParts("יצחק"),
-          grandMother: nameParts("שרה"),
+    .insert(
+      approvedCard({
+        user_id: userId,
+        first_name: "שמירה",
+        last_name: `בכלשלב${RUN_ID}`,
+        identity_number: `7${String(RUN_ID).slice(-8)}`,
+        // כרטיס שנוצר בלי card_for נחסם בעריכה עד שנבחר עבור מי הוא
+        card_for: "child",
+        birth_date: "1997-03-03",
+        gender: "male",
+        personal_status: "single",
+        country: "ישראל",
+        city: "בני ברק",
+        street: "רבי עקיבא",
+        house: "12",
+        cellphone_type: "kosher",
+        in_shidduchim: true,
+        parents_info: {
+          father: {
+            self: nameParts(FATHER_NAME),
+            phone: "0501111111",
+            job: "מלמד",
+            email: "",
+            grandFather: nameParts("יצחק"),
+            grandMother: nameParts("שרה"),
+          },
+          mother: {
+            self: nameParts("רחל"),
+            maidenName: "לוי",
+            phone: "0502222222",
+            job: "מורה",
+            email: "",
+            grandFather: nameParts("יעקב"),
+            grandMother: nameParts("לאה"),
+          },
         },
-        mother: {
-          self: nameParts("רחל"),
-          maidenName: "לוי",
-          phone: "0502222222",
-          job: "מורה",
-          email: "",
-          grandFather: nameParts("יעקב"),
-          grandMother: nameParts("לאה"),
+        family_info: {
+          numberOfChildren: 6,
+          currentChildPlace: 2,
+          about: "משפחה תורנית",
+          mechutanim: [],
         },
-      },
-      family_info: {
-        numberOfChildren: 6,
-        currentChildPlace: 2,
-        about: "משפחה תורנית",
-        mechutanim: [],
-      },
-      author_info: {
-        name: "כותב הבדיקה",
-        phone: "0503333333",
-        email: AUTHOR_EMAIL,
-        relation: "אב",
-      },
-    })
+        author_info: {
+          name: "כותב הבדיקה",
+          phone: "0503333333",
+          email: AUTHOR_EMAIL,
+          relation: "אב",
+        },
+      }),
+    )
     .select("id")
     .single();
 

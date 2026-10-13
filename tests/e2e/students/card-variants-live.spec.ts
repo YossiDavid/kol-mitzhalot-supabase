@@ -15,6 +15,7 @@ import {
 import { describeZodIssues } from "../../../lib/describe-zod-issues";
 import { studentRowSchemas } from "../../../features/students/lib/student-card-data";
 import { SEEDED, deleteCards, seedFullCard } from "./third-party-card-fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * כל וריאנט של כרטיס המיועד מול המסד המקומי, דרך הדפים האמיתיים ועם נתונים
@@ -75,7 +76,7 @@ async function mustInsert(
 async function insertCard(row: Record<string, unknown>): Promise<string> {
   const { data, error } = await admin
     .from("students")
-    .insert(row)
+    .insert(approvedCard(row))
     .select("id")
     .single();
   if (error || !data) throw new Error(`יצירת כרטיס נכשלה: ${error?.message}`);

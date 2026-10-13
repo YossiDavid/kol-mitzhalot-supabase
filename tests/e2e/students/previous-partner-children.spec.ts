@@ -2,6 +2,7 @@ import { test, expect, type Locator, type Page } from "@playwright/test";
 
 import calculateAge from "../../../lib/calculateAge";
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * ילדים מנישואים קודמים (גרוש/ה, אלמן/ה): רשימה בתוך כל שורת נישואים, עם
@@ -38,49 +39,55 @@ async function createDivorcedStudent(): Promise<string> {
   const userId = await getTestUserId(admin);
   const { data, error } = await admin
     .from("students")
-    .insert({
-      user_id: userId,
-      first_name: "גרוש",
-      last_name: LAST_NAME,
-      identity_number: String(RUN_ID).slice(-9),
-      // כרטיס שנוצר בלי card_for נחסם בעריכה עד שנבחר עבור מי הוא
-      card_for: "child",
-      birth_date: "1985-05-05",
-      gender: "male",
-      personal_status: "divorced",
-      country: "ישראל",
-      city: "בני ברק",
-      street: "רבי עקיבא",
-      house: "10",
-      cellphone_type: "kosher",
-      in_shidduchim: true,
-      parents_info: {
-        father: {
-          self: nameParts("אברהם"),
-          phone: "0501111111",
-          job: "מלמד",
-          email: "",
-          grandFather: nameParts("יצחק"),
-          grandMother: nameParts("שרה"),
+    .insert(
+      approvedCard({
+        user_id: userId,
+        first_name: "גרוש",
+        last_name: LAST_NAME,
+        identity_number: String(RUN_ID).slice(-9),
+        // כרטיס שנוצר בלי card_for נחסם בעריכה עד שנבחר עבור מי הוא
+        card_for: "child",
+        birth_date: "1985-05-05",
+        gender: "male",
+        personal_status: "divorced",
+        country: "ישראל",
+        city: "בני ברק",
+        street: "רבי עקיבא",
+        house: "10",
+        cellphone_type: "kosher",
+        in_shidduchim: true,
+        parents_info: {
+          father: {
+            self: nameParts("אברהם"),
+            phone: "0501111111",
+            job: "מלמד",
+            email: "",
+            grandFather: nameParts("יצחק"),
+            grandMother: nameParts("שרה"),
+          },
+          mother: {
+            self: nameParts("רחל"),
+            maidenName: "לוי",
+            phone: "0502222222",
+            job: "מורה",
+            email: "",
+            grandFather: nameParts("יעקב"),
+            grandMother: nameParts("לאה"),
+          },
         },
-        mother: {
-          self: nameParts("רחל"),
-          maidenName: "לוי",
-          phone: "0502222222",
-          job: "מורה",
-          email: "",
-          grandFather: nameParts("יעקב"),
-          grandMother: nameParts("לאה"),
+        family_info: {
+          numberOfChildren: 5,
+          currentChildPlace: 2,
+          about: "משפחה תורנית",
+          mechutanim: [],
         },
-      },
-      family_info: {
-        numberOfChildren: 5,
-        currentChildPlace: 2,
-        about: "משפחה תורנית",
-        mechutanim: [],
-      },
-      author_info: { name: "כותב הבדיקה", phone: "0503333333", relation: "אב" },
-    })
+        author_info: {
+          name: "כותב הבדיקה",
+          phone: "0503333333",
+          relation: "אב",
+        },
+      }),
+    )
     .select("id")
     .single();
 

@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * כותרת אזור הכרטיסים בדשבורד לפי card_for: כרטיס עצמי - "הכרטיס שלי" ותג
@@ -34,17 +35,19 @@ test.beforeAll(async () => {
   // כרטיס משלנו, כדי שהבדיקה לא תידלג כשלמשתמש אין כרטיסים
   const { data: created, error } = await admin
     .from("students")
-    .insert({
-      user_id: userId,
-      first_name: "דשבורד",
-      last_name: `עצמי${Date.now()}`,
-      birth_date: "1999-01-01",
-      gender: "male",
-      personal_status: "single",
-      country: "ישראל",
-      city: "בני ברק",
-      in_shidduchim: true,
-    })
+    .insert(
+      approvedCard({
+        user_id: userId,
+        first_name: "דשבורד",
+        last_name: `עצמי${Date.now()}`,
+        birth_date: "1999-01-01",
+        gender: "male",
+        personal_status: "single",
+        country: "ישראל",
+        city: "בני ברק",
+        in_shidduchim: true,
+      }),
+    )
     .select("id")
     .single();
   if (error || !created) {

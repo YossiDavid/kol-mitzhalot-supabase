@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Browser, Page } from "@playwright/test";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * עוזרים לבדיקות שרשורי הקשר בצ'אט. כמו fixtures של השידוכים, הם מקימים
@@ -71,17 +72,19 @@ export async function createCard(
 ): Promise<string> {
   const { data, error } = await admin
     .from("students")
-    .insert({
-      user_id: params.userId,
-      first_name: params.firstName,
-      last_name: params.lastName,
-      birth_date: "1998-01-01",
-      gender: params.gender,
-      personal_status: "single",
-      country: "ישראל",
-      city: "בני ברק",
-      in_shidduchim: true,
-    })
+    .insert(
+      approvedCard({
+        user_id: params.userId,
+        first_name: params.firstName,
+        last_name: params.lastName,
+        birth_date: "1998-01-01",
+        gender: params.gender,
+        personal_status: "single",
+        country: "ישראל",
+        city: "בני ברק",
+        in_shidduchim: true,
+      }),
+    )
     .select("id")
     .single();
   if (error || !data) {

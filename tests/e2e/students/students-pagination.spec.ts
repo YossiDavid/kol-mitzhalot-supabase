@@ -1,6 +1,7 @@
 import { test, expect, type Locator, type Page } from "@playwright/test";
 
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * עימוד, מיון וסינון בשרת ברשימת המיועדים: 60 כרטיסים (עמוד של 50 + 10).
@@ -55,7 +56,7 @@ test.beforeAll(async () => {
   }));
   const { data, error } = await admin
     .from("students")
-    .insert(rows)
+    .insert(approvedCard(rows))
     .select("id, last_name");
   if (error || !data) {
     throw new Error(`יצירת כרטיסי הבדיקה נכשלה: ${error?.message}`);

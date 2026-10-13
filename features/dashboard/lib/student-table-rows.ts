@@ -43,6 +43,8 @@ export const STUDENT_TABLE_SHAPE = {
   card_for: z.enum(["self", "child", "other"]).nullable(),
   third_party_full_display_approved_at: text,
   third_party_proposals_approved_at: text,
+  admin_approved_at: text,
+  admin_rejected_at: text,
   proposal_limit_count: z.number().nullable(),
   proposal_limit_period: text,
   admin_paused_at: text,
@@ -73,6 +75,9 @@ export const STUDENT_TABLE_SELECT = {
   card_for: "card_for",
   third_party_full_display_approved_at: "third_party_full_display_approved_at",
   third_party_proposals_approved_at: "third_party_proposals_approved_at",
+  // אישור ההנהלה לכרטיס: התג "ממתין לאישור" / "נדחה" בכרטיסים של המשתמש
+  admin_approved_at: "admin_approved_at",
+  admin_rejected_at: "admin_rejected_at",
   // נדרשות לבקרות של מנהל הכרטיס בטבלה: מכסת ההצעות ונעילת ההשהיה של ההנהלה
   proposal_limit_count: "proposal_limit_count",
   proposal_limit_period: "proposal_limit_period",

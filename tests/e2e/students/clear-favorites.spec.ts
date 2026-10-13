@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
 import { clearFavoritesMessage } from "../../../features/students/lib/clear-favorites";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * "ניקוי כל המועדפים": הכפתור מופיע רק כשיש מועדפים, הדיאלוג מציין כמה
@@ -31,17 +32,19 @@ test.beforeAll(async () => {
   const { data, error } = await admin
     .from("students")
     .insert(
-      Array.from({ length: FAVORITES_COUNT }, (_, index) => ({
-        user_id: userId,
-        first_name: "מועדף",
-        last_name: `ניקוי${token}${index}`,
-        birth_date: "1999-01-01",
-        gender: index % 2 === 0 ? "male" : "female",
-        personal_status: "single",
-        country: "ישראל",
-        city: "בני ברק",
-        in_shidduchim: true,
-      })),
+      approvedCard(
+        Array.from({ length: FAVORITES_COUNT }, (_, index) => ({
+          user_id: userId,
+          first_name: "מועדף",
+          last_name: `ניקוי${token}${index}`,
+          birth_date: "1999-01-01",
+          gender: index % 2 === 0 ? "male" : "female",
+          personal_status: "single",
+          country: "ישראל",
+          city: "בני ברק",
+          in_shidduchim: true,
+        })),
+      ),
     )
     .select("id");
   if (error || !data) throw new Error(`יצירת כרטיסים נכשלה: ${error?.message}`);

@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * "מיועד לשידוכים" ירד מהפרטים האישיים: כרטיס פעיל הוא בשידוכים כברירת
@@ -30,10 +31,12 @@ test.beforeAll(async () => {
 
   const { data, error } = await admin
     .from("students")
-    .insert([
-      { ...base, first_name: "פעיל", in_shidduchim: true },
-      { ...base, first_name: "מושהה", in_shidduchim: false },
-    ])
+    .insert(
+      approvedCard([
+        { ...base, first_name: "פעיל", in_shidduchim: true },
+        { ...base, first_name: "מושהה", in_shidduchim: false },
+      ]),
+    )
     .select("id, in_shidduchim");
   if (error || !data) {
     throw new Error(`יצירת כרטיסי הבדיקה נכשלה: ${error?.message}`);

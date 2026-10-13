@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * סינון "קהילה / חסידות" בסגנון אקסל: "הכל" מסומן כברירת מחדל, מבטלים סימון
@@ -28,18 +29,20 @@ async function createStudent(
 ): Promise<string> {
   const { data, error } = await admin
     .from("students")
-    .insert({
-      user_id: userId,
-      first_name: firstName,
-      last_name: LAST_NAME,
-      birth_date: "1998-01-01",
-      gender: "male",
-      personal_status: "single",
-      country: "ישראל",
-      city: "בני ברק",
-      in_shidduchim: true,
-      community,
-    })
+    .insert(
+      approvedCard({
+        user_id: userId,
+        first_name: firstName,
+        last_name: LAST_NAME,
+        birth_date: "1998-01-01",
+        gender: "male",
+        personal_status: "single",
+        country: "ישראל",
+        city: "בני ברק",
+        in_shidduchim: true,
+        community,
+      }),
+    )
     .select("id")
     .single();
   if (error || !data) throw new Error(`יצירת מיועד נכשלה: ${error?.message}`);
@@ -152,9 +155,9 @@ test.describe("סינון קהילה מרובה", () => {
     await expect(
       page.getByRole("option", { name: PLAIN_COMMUNITY }),
     ).toBeVisible();
-    await expect(page.getByRole("option", { name: TRICKY_COMMUNITY })).toHaveCount(
-      0,
-    );
+    await expect(
+      page.getByRole("option", { name: TRICKY_COMMUNITY }),
+    ).toHaveCount(0);
 
     // Act - רק הקהילה הפשוטה, ובנוסף מגדר שאינו תואם
     await page.getByRole("checkbox", { name: "הכל" }).click();

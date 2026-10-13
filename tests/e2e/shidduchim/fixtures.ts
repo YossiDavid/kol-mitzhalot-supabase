@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { approvedCard } from "../helpers/approved-card";
 
 /** אותה ברירת מחדל כמו ב-tests/e2e/auth.setup.ts */
 export const TEST_USER_EMAIL =
@@ -162,19 +163,21 @@ async function createStudent(
 ): Promise<string> {
   const { data, error } = await admin
     .from("students")
-    .insert({
-      user_id: params.userId,
-      first_name: params.firstName,
-      last_name: params.lastName,
-      birth_date: "1998-01-01",
-      gender: params.gender,
-      personal_status: "single",
-      country: "ישראל",
-      city: "בני ברק",
-      in_shidduchim: true,
-      // identity_number נשאר ריק בכוונה: הוא ייחודי, וערך קבוע היה מתנגש
-      // בין הרצות או בין קובצי בדיקה שרצים באותו מסד.
-    })
+    .insert(
+      approvedCard({
+        user_id: params.userId,
+        first_name: params.firstName,
+        last_name: params.lastName,
+        birth_date: "1998-01-01",
+        gender: params.gender,
+        personal_status: "single",
+        country: "ישראל",
+        city: "בני ברק",
+        in_shidduchim: true,
+        // identity_number נשאר ריק בכוונה: הוא ייחודי, וערך קבוע היה מתנגש
+        // בין הרצות או בין קובצי בדיקה שרצים באותו מסד.
+      }),
+    )
     .select("id")
     .single();
 

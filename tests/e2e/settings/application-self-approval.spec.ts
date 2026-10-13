@@ -6,6 +6,7 @@ import {
   createServiceClient,
   ensureCardManagerId,
 } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * הפרצה שנסגרה: בקשת ההצטרפות כאיש צוות / שדכן נכתבת מהדפדפן
@@ -102,18 +103,20 @@ test.describe("הצהרה עצמית כאיש צוות / שדכן מאושר", (
   async function createStudentIn(institution: string): Promise<string> {
     const { data, error } = await admin
       .from("students")
-      .insert({
-        user_id: ownerId,
-        first_name: "תלמיד",
-        last_name: "מוסד",
-        birth_date: "1999-01-01",
-        gender: "male",
-        personal_status: "single",
-        country: "ישראל",
-        city: "בני ברק",
-        in_shidduchim: true,
-        institution_id: institution,
-      })
+      .insert(
+        approvedCard({
+          user_id: ownerId,
+          first_name: "תלמיד",
+          last_name: "מוסד",
+          birth_date: "1999-01-01",
+          gender: "male",
+          personal_status: "single",
+          country: "ישראל",
+          city: "בני ברק",
+          in_shidduchim: true,
+          institution_id: institution,
+        }),
+      )
       .select("id")
       .single();
     if (error || !data) throw new Error(`יצירת כרטיס: ${error?.message}`);

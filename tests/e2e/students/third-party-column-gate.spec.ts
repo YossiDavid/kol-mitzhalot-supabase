@@ -91,6 +91,16 @@ const VIEW_AS_IS = [
   "card_for",
   "third_party_full_display_approved_at",
   "third_party_proposals_approved_at",
+  // רגע אישור ההנהלה: לפיו נמדד "חדש" ברשימה
+  "admin_approved_at",
+] as const;
+/**
+ * קיימות ב-view, וחוזרות רק לבעל הכרטיס ולמנהל (לשדכן ולאיש צוות - ריקות
+ * בכל כרטיס): הדחייה והסיבה שלה
+ */
+const VIEW_OWNER_AND_ADMIN_ONLY = [
+  "admin_rejected_at",
+  "admin_rejection_reason",
 ] as const;
 /** קיימות ב-view, אבל ריקות בכרטיס מוגבל */
 const VIEW_NULL_WHEN_RESTRICTED = [
@@ -116,6 +126,8 @@ const NEVER_IN_VIEW = [
   "updated_at",
   "deleted_by",
   "admin_paused_by",
+  "admin_approved_by",
+  "admin_rejected_by",
 ] as const;
 
 const SENSITIVE_CHILD_TABLES = [
@@ -390,6 +402,7 @@ test.describe("שער הכרטיס המוגבל (מסד)", () => {
     const tableColumns = Object.keys(await tableRow(restrictedId));
     const inView: string[] = [
       ...VIEW_AS_IS,
+      ...VIEW_OWNER_AND_ADMIN_ONLY,
       ...VIEW_NULL_WHEN_RESTRICTED,
       ...VIEW_REDUCED_WHEN_RESTRICTED,
     ];
@@ -421,7 +434,10 @@ test.describe("שער הכרטיס המוגבל (מסד)", () => {
       for (const column of VIEW_AS_IS) {
         expect(row[column], `${label} ${column}`).toEqual(expected[column]);
       }
-      for (const column of VIEW_NULL_WHEN_RESTRICTED) {
+      for (const column of [
+        ...VIEW_NULL_WHEN_RESTRICTED,
+        ...VIEW_OWNER_AND_ADMIN_ONLY,
+      ]) {
         expect(row[column], `${label} ${column}`).toBeNull();
       }
       expect(row.parents_info, label).toEqual({
@@ -605,6 +621,7 @@ test.describe("שער הכרטיס המוגבל (מסד)", () => {
       // וה-view מחזיר את העמודות שלו כמות שהן, בלי צמצום
       for (const column of [
         ...VIEW_AS_IS,
+        ...VIEW_OWNER_AND_ADMIN_ONLY,
         ...VIEW_NULL_WHEN_RESTRICTED,
         ...VIEW_REDUCED_WHEN_RESTRICTED,
       ]) {

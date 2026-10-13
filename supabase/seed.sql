@@ -404,3 +404,11 @@ FROM (VALUES
 WHERE NOT EXISTS (
   SELECT 1 FROM public.institutions i WHERE i.name = v.name
 );
+
+-- כרטיסי ה-seed מאושרים על ידי ההנהלה, כמו הכרטיסים שהיו קיימים בהטמעת האישור
+-- (20261019090000_card_admin_approval.sql): בלי זה הם היו ממתינים לאישור וחבויים
+-- מהשדכן המקומי.
+UPDATE public.students
+   SET admin_approved_at = COALESCE(created_at, now())
+ WHERE admin_approved_at IS NULL
+   AND admin_rejected_at IS NULL;

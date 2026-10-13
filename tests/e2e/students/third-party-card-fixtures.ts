@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { approvedCard } from "../helpers/approved-card";
 
 /** ערכים מובחנים: הבדיקות מחפשות אותם בתוכן העמוד כדי לוודא שנשלחו או לא */
 export const SEEDED = {
@@ -36,40 +37,42 @@ export async function seedFullCard(
 ): Promise<string> {
   const { data, error } = await admin
     .from("students")
-    .insert({
-      user_id: options.ownerId,
-      card_for: options.cardFor === undefined ? "other" : options.cardFor,
-      first_name: options.firstName ?? "שלישית",
-      last_name: options.lastName,
-      birth_date: "1996-03-01",
-      gender: options.gender ?? "female",
-      personal_status: "single",
-      country: "ישראל",
-      city: SEEDED.city,
-      community: "בעלזא",
-      height: 165,
-      in_shidduchim: true,
-      about: SEEDED.about,
-      parents_info: {
-        status: "married",
-        father: {
-          self: { name: SEEDED.fatherName },
-          job: SEEDED.fatherJob,
-          phone: "0501119999",
+    .insert(
+      approvedCard({
+        user_id: options.ownerId,
+        card_for: options.cardFor === undefined ? "other" : options.cardFor,
+        first_name: options.firstName ?? "שלישית",
+        last_name: options.lastName,
+        birth_date: "1996-03-01",
+        gender: options.gender ?? "female",
+        personal_status: "single",
+        country: "ישראל",
+        city: SEEDED.city,
+        community: "בעלזא",
+        height: 165,
+        in_shidduchim: true,
+        about: SEEDED.about,
+        parents_info: {
+          status: "married",
+          father: {
+            self: { name: SEEDED.fatherName },
+            job: SEEDED.fatherJob,
+            phone: "0501119999",
+          },
+          mother: { self: { name: "שרה-שם-אם" }, job: SEEDED.motherJob },
         },
-        mother: { self: { name: "שרה-שם-אם" }, job: SEEDED.motherJob },
-      },
-      family_info: { about: SEEDED.familyAbout, numberOfChildren: 7 },
-      author_info: {
-        name: FILLER_NAME,
-        phone: "0527654321",
-        email: "filler-fixture@example.test",
-        relation: "שדכן/ית",
-        relationType: "shadchan",
-        knowsWell: true,
-        fillReason: SEEDED.fillReason,
-      },
-    })
+        family_info: { about: SEEDED.familyAbout, numberOfChildren: 7 },
+        author_info: {
+          name: FILLER_NAME,
+          phone: "0527654321",
+          email: "filler-fixture@example.test",
+          relation: "שדכן/ית",
+          relationType: "shadchan",
+          knowsWell: true,
+          fillReason: SEEDED.fillReason,
+        },
+      }),
+    )
     .select("id")
     .single();
   if (error || !data) {

@@ -4,6 +4,7 @@ import {
   createServiceClient,
   ensureCardManagerId,
 } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * לחיצה על הגיל בכרטיס חושפת את תאריך הלידה בלוח העברי בלבד. הגיל מופיע
@@ -21,17 +22,19 @@ test.beforeAll(async () => {
   const ownerId = await ensureCardManagerId(admin);
   const { data, error } = await admin
     .from("students")
-    .insert({
-      user_id: ownerId,
-      first_name: "בדיקת",
-      last_name: lastName,
-      birth_date: "1998-01-01",
-      gender: "male",
-      personal_status: "single",
-      country: "ישראל",
-      city: "בני ברק",
-      in_shidduchim: true,
-    })
+    .insert(
+      approvedCard({
+        user_id: ownerId,
+        first_name: "בדיקת",
+        last_name: lastName,
+        birth_date: "1998-01-01",
+        gender: "male",
+        personal_status: "single",
+        country: "ישראל",
+        city: "בני ברק",
+        in_shidduchim: true,
+      }),
+    )
     .select("id")
     .single();
   if (error || !data) {
@@ -60,7 +63,7 @@ test.describe("תאריך לידה עברי בלחיצה על הגיל", () => {
     await expect(value).not.toHaveText(/1998|01\/01|1\.1/);
   });
 
-  test("הגיל ב\"פרטים אישיים\" פועל במקלדת", async ({ page }) => {
+  test('הגיל ב"פרטים אישיים" פועל במקלדת', async ({ page }) => {
     // Arrange
     await page.goto(`/app/students/${studentId}`);
     await expect(page.locator("h1")).toContainText(lastName);
@@ -71,9 +74,9 @@ test.describe("תאריך לידה עברי בלחיצה על הגיל", () => {
     await page.keyboard.press("Enter");
 
     // Assert
-    await expect(
-      page.locator('[data-slot="age-birth-date-value"]'),
-    ).toHaveText(HEBREW_MONTH);
+    await expect(page.locator('[data-slot="age-birth-date-value"]')).toHaveText(
+      HEBREW_MONTH,
+    );
   });
 });
 

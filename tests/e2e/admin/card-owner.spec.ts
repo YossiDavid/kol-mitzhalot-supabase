@@ -4,6 +4,7 @@ import {
   createServiceClient,
   ensureCardManagerId,
 } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * מנהל מערכת רואה בכרטיס את אימייל מנהל הכרטיס וקישור "פרטי המשתמש". הצד
@@ -26,17 +27,19 @@ test.beforeAll(async () => {
 
   const { data, error } = await admin
     .from("students")
-    .insert({
-      user_id: ownerId,
-      first_name: "בדיקת",
-      last_name: lastName,
-      birth_date: "1998-01-01",
-      gender: "female",
-      personal_status: "single",
-      country: "ישראל",
-      city: "בני ברק",
-      in_shidduchim: true,
-    })
+    .insert(
+      approvedCard({
+        user_id: ownerId,
+        first_name: "בדיקת",
+        last_name: lastName,
+        birth_date: "1998-01-01",
+        gender: "female",
+        personal_status: "single",
+        country: "ישראל",
+        city: "בני ברק",
+        in_shidduchim: true,
+      }),
+    )
     .select("id")
     .single();
   if (error || !data) {

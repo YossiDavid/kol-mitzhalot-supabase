@@ -81,6 +81,11 @@ export const ADMIN_NAV_SECTIONS: readonly AdminNavSection[] = [
     icon: IdCard,
     items: [
       {
+        title: "כרטיסים חדשים לאישור",
+        url: "/app/admin/new-cards",
+        icon: IdCard,
+      },
+      {
         title: "כרטיסי צד שלישי",
         url: "/app/admin/third-party-cards",
         icon: ShieldQuestion,

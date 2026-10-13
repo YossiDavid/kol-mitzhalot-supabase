@@ -26,6 +26,8 @@ import {
   isRecentlyEngaged,
 } from "@/features/students/lib/student-status";
 import { NewCardBadge } from "@/features/students/components/new-card-badge";
+import { CardApprovalTag } from "@/features/students/components/card-approval-tag";
+import { cardListedAt } from "@/features/students/lib/card-approval";
 import { SelfCardTag } from "@/features/students/components/self-card-tag";
 import { ThirdPartyCardTag } from "@/features/students/components/third-party-card-tag";
 import { isFavoritable } from "@/features/students/lib/third-party-card";
@@ -62,8 +64,11 @@ export type StudentTableRow = {
   /** מספר התמונות בגלריה - התמונות עצמן אינן נשלפות לרשימה */
   photo_count?: number | null;
   status_changed_at?: string | null;
-  /** מתי נוצר הכרטיס - לתג "חדש" ולעמודת "נוסף" ברשימה */
+  /** מתי נוצר הכרטיס */
   created_at?: string | null;
+  /** אישור ההנהלה: רגע האישור קובע את התג "חדש" ואת עמודת "נוסף" ברשימה */
+  admin_approved_at?: string | null;
+  admin_rejected_at?: string | null;
   /** עבור מי מולא הכרטיס. null בכרטיסים ישנים */
   card_for?: CardFor;
   /** אישורי הנהלה לכרטיס צד שלישי (null = טרם אושר) */
@@ -250,9 +255,10 @@ function NameBadges({
   return (
     <>
       {preset === "list" && (
-        <NewCardBadge createdAt={student.created_at} now={now} />
+        <NewCardBadge createdAt={cardListedAt(student)} now={now} />
       )}
       {preset === "children" && <SelfCardTag cardFor={student.card_for} />}
+      {preset === "children" && <CardApprovalTag card={student} />}
       <ThirdPartyCardTag card={student} />
     </>
   );
@@ -455,9 +461,11 @@ function addedColumns(
       header: "נוסף",
       size: "min",
       mobile: "hidden",
-      cell: (student) => formatAddedDate(student.created_at),
-      sortValue: (student) =>
-        student.created_at ? new Date(student.created_at) : null,
+      cell: (student) => formatAddedDate(cardListedAt(student)),
+      sortValue: (student) => {
+        const listedAt = cardListedAt(student);
+        return listedAt ? new Date(listedAt) : null;
+      },
     },
   ];
 }

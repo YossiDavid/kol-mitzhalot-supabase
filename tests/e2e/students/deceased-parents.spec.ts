@@ -2,6 +2,7 @@ import { chooseChildCard } from "./card-for-fixtures";
 import { test, expect, type Page } from "@playwright/test";
 
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * הורה שנפטר: "מי נפטר" נאסף בשלב "מצב ההורים", לפני "על המשפחה", ושם לא
@@ -127,38 +128,40 @@ test.describe.serial("ז״ל בכרטיס", () => {
     const userId = await getTestUserId(admin);
     const { data, error } = await admin
       .from("students")
-      .insert({
-        user_id: userId,
-        first_name: "יתום",
-        last_name: `יתום${deadParent}${RUN_ID}`,
-        birth_date: "1998-01-01",
-        gender: "male",
-        personal_status: "single",
-        country: "ישראל",
-        city: "בני ברק",
-        street: "רבי עקיבא",
-        house: "3",
-        in_shidduchim: true,
-        parents_info: {
-          status: "widowed",
-          deadParent,
-          fatherDeathDate: FATHER_DEATH_DATE,
-          motherDeathDate: MOTHER_DEATH_DATE,
-          father: {
-            self: nameParts("אברהם"),
-            ...(withLegacyContact && {
-              phone: LEGACY_PHONE,
-              job: LEGACY_JOB,
-              email: LEGACY_EMAIL,
-            }),
+      .insert(
+        approvedCard({
+          user_id: userId,
+          first_name: "יתום",
+          last_name: `יתום${deadParent}${RUN_ID}`,
+          birth_date: "1998-01-01",
+          gender: "male",
+          personal_status: "single",
+          country: "ישראל",
+          city: "בני ברק",
+          street: "רבי עקיבא",
+          house: "3",
+          in_shidduchim: true,
+          parents_info: {
+            status: "widowed",
+            deadParent,
+            fatherDeathDate: FATHER_DEATH_DATE,
+            motherDeathDate: MOTHER_DEATH_DATE,
+            father: {
+              self: nameParts("אברהם"),
+              ...(withLegacyContact && {
+                phone: LEGACY_PHONE,
+                job: LEGACY_JOB,
+                email: LEGACY_EMAIL,
+              }),
+            },
+            mother: {
+              self: nameParts("רחל"),
+              maidenName: "לוי",
+              ...(withLegacyContact && { phone: ALIVE_PHONE }),
+            },
           },
-          mother: {
-            self: nameParts("רחל"),
-            maidenName: "לוי",
-            ...(withLegacyContact && { phone: ALIVE_PHONE }),
-          },
-        },
-      })
+        }),
+      )
       .select("id")
       .single();
     if (error || !data) {

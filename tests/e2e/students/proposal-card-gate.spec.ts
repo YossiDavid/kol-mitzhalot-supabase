@@ -24,6 +24,7 @@ import {
   type ProposalDisclosure,
 } from "../../../features/students/lib/student-proposal-card";
 import { deleteCards, seedFullCard } from "./third-party-card-fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * שער הכרטיס בהצעה, בשכבת המסד: מי שקיבל הצעת שידוך אינו קורא את שורת
@@ -88,6 +89,12 @@ const NEVER_IN_PROPOSAL = [
   "admin_paused_by",
   "third_party_full_display_approved_by",
   "third_party_proposals_approved_by",
+  // אישור ההנהלה לכרטיס: לבעלים ולמנהלים בלבד (הסיבה לדחייה במיוחד)
+  "admin_approved_at",
+  "admin_approved_by",
+  "admin_rejected_at",
+  "admin_rejected_by",
+  "admin_rejection_reason",
 ] as const;
 
 const CHILD_TABLES = [
@@ -199,48 +206,50 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
 
     const { data: groom, error } = await admin
       .from("students")
-      .insert({
-        user_id: managerId,
-        card_for: "child",
-        first_name: "חתן",
-        last_name: `שער${T}`,
-        birth_date: "1999-04-12",
-        gender: "male",
-        personal_status: "divorced",
-        height: 178.5,
-        identity_number: IDENTITY_NUMBER,
-        phone: CONTACT.phone,
-        country: "ישראל",
-        city: "בית שמש",
-        street: CONTACT.street,
-        house: CONTACT.house,
-        community: "גור",
-        cellphone_type: "kosher",
-        plan_for_life: "torah_job",
-        cv_url: CONTACT.cv,
-        about: ABOUT,
-        in_shidduchim: true,
-        parents_info: {
-          father: {
-            self: { prefix: "ר'", name: "יעקב", suffix: "" },
-            phone: CONTACT.fatherPhone,
-            email: CONTACT.fatherEmail,
-            job: FATHER_JOB,
+      .insert(
+        approvedCard({
+          user_id: managerId,
+          card_for: "child",
+          first_name: "חתן",
+          last_name: `שער${T}`,
+          birth_date: "1999-04-12",
+          gender: "male",
+          personal_status: "divorced",
+          height: 178.5,
+          identity_number: IDENTITY_NUMBER,
+          phone: CONTACT.phone,
+          country: "ישראל",
+          city: "בית שמש",
+          street: CONTACT.street,
+          house: CONTACT.house,
+          community: "גור",
+          cellphone_type: "kosher",
+          plan_for_life: "torah_job",
+          cv_url: CONTACT.cv,
+          about: ABOUT,
+          in_shidduchim: true,
+          parents_info: {
+            father: {
+              self: { prefix: "ר'", name: "יעקב", suffix: "" },
+              phone: CONTACT.fatherPhone,
+              email: CONTACT.fatherEmail,
+              job: FATHER_JOB,
+            },
+            mother: { self: { prefix: "", name: "רחל", suffix: "" }, job: "" },
+            status: "married",
           },
-          mother: { self: { prefix: "", name: "רחל", suffix: "" }, job: "" },
-          status: "married",
-        },
-        family_info: { numberOfChildren: 6, about: "משפחה-שער" },
-        author_info: {
-          name: "אבא-ממלא",
-          phone: CONTACT.authorPhone,
-          email: CONTACT.authorEmail,
-          relation: "אב",
-          relationType: "father",
-          knowsWell: true,
-          fillReason: FILL_REASON,
-        },
-      })
+          family_info: { numberOfChildren: 6, about: "משפחה-שער" },
+          author_info: {
+            name: "אבא-ממלא",
+            phone: CONTACT.authorPhone,
+            email: CONTACT.authorEmail,
+            relation: "אב",
+            relationType: "father",
+            knowsWell: true,
+            fillReason: FILL_REASON,
+          },
+        }),
+      )
       .select("id")
       .single();
     if (error || !groom) throw new Error(`יצירת החתן נכשלה: ${error?.message}`);

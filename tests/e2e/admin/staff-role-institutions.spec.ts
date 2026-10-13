@@ -7,6 +7,7 @@ import {
   createServiceClient,
   ensureCardManagerId,
 } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * מנהל מעניק תפקיד "איש צוות" בעורך התפקידים: חובה לבחור מוסד, והשרת יוצר
@@ -91,18 +92,20 @@ test.describe("הענקת תפקיד צוות בעורך התפקידים", () =
   async function createStudentIn(institution: string): Promise<string> {
     const { data, error } = await admin
       .from("students")
-      .insert({
-        user_id: ownerId,
-        first_name: "תלמיד",
-        last_name: "צוות",
-        birth_date: "1999-01-01",
-        gender: "male",
-        personal_status: "single",
-        country: "ישראל",
-        city: "בני ברק",
-        in_shidduchim: true,
-        institution_id: institution,
-      })
+      .insert(
+        approvedCard({
+          user_id: ownerId,
+          first_name: "תלמיד",
+          last_name: "צוות",
+          birth_date: "1999-01-01",
+          gender: "male",
+          personal_status: "single",
+          country: "ישראל",
+          city: "בני ברק",
+          in_shidduchim: true,
+          institution_id: institution,
+        }),
+      )
       .select("id")
       .single();
     if (error || !data) throw new Error(`יצירת כרטיס: ${error?.message}`);

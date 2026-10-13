@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * כרטיס שסומן "נשוי" יוצא משידוכים (in_shidduchim=false) ונעלם מהרשימה
@@ -16,17 +17,19 @@ test.describe("כרטיס נשוי — נשאר נגיש דרך הסינון", (
     const userId = await getTestUserId(admin);
     const { data, error } = await admin
       .from("students")
-      .insert({
-        user_id: userId,
-        first_name: "בדיקה",
-        last_name: lastName,
-        birth_date: "1998-01-01",
-        gender: "male",
-        personal_status: "married",
-        country: "ישראל",
-        city: "בני ברק",
-        in_shidduchim: false,
-      })
+      .insert(
+        approvedCard({
+          user_id: userId,
+          first_name: "בדיקה",
+          last_name: lastName,
+          birth_date: "1998-01-01",
+          gender: "male",
+          personal_status: "married",
+          country: "ישראל",
+          city: "בני ברק",
+          in_shidduchim: false,
+        }),
+      )
       .select("id")
       .single();
 

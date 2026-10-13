@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 
 import { summarizeChildren } from "../../../features/students/lib/children-summary";
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * שורת הילדים בעמודת הסטטוס ברשימה: מספר ילדים, "ללא ילדים" רק כשסומן
@@ -89,17 +90,19 @@ async function createDivorced(
 ): Promise<string> {
   const { data, error } = await admin
     .from("students")
-    .insert({
-      user_id: userId,
-      first_name: firstName,
-      last_name: LAST_NAME,
-      birth_date: "1990-01-01",
-      gender: "male",
-      personal_status: "divorced",
-      country: "ישראל",
-      city: "בני ברק",
-      in_shidduchim: true,
-    })
+    .insert(
+      approvedCard({
+        user_id: userId,
+        first_name: firstName,
+        last_name: LAST_NAME,
+        birth_date: "1990-01-01",
+        gender: "male",
+        personal_status: "divorced",
+        country: "ישראל",
+        city: "בני ברק",
+        in_shidduchim: true,
+      }),
+    )
     .select("id")
     .single();
   if (error || !data) throw new Error(`יצירת מיועד נכשלה: ${error?.message}`);
@@ -146,9 +149,9 @@ test.describe("שורת הילדים ברשימה", () => {
     await expect(
       rowOf(WITH_CHILDREN).getByTestId("children-summary"),
     ).toHaveText(/2 ילדים/);
-    await expect(
-      rowOf(NO_CHILDREN).getByTestId("children-summary"),
-    ).toHaveText(/ללא ילדים/);
+    await expect(rowOf(NO_CHILDREN).getByTestId("children-summary")).toHaveText(
+      /ללא ילדים/,
+    );
     await expect(rowOf(NOT_FILLED)).toBeVisible();
     await expect(rowOf(NOT_FILLED).getByTestId("children-summary")).toHaveCount(
       0,

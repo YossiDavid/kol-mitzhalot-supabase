@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * גלריית התמונות בעמוד המיועד: בן - גלריה ו-lightbox לכל צופה. בת - נעולה
@@ -30,17 +31,19 @@ async function createStudentWithPhotos(
 ): Promise<string> {
   const { data, error } = await admin
     .from("students")
-    .insert({
-      user_id: userId,
-      first_name: gender === "male" ? "גלריה" : "גלריית",
-      last_name: `בדיקה${Date.now()}`,
-      birth_date: "1998-01-01",
-      gender,
-      personal_status: "single",
-      country: "ישראל",
-      city: "בני ברק",
-      in_shidduchim: true,
-    })
+    .insert(
+      approvedCard({
+        user_id: userId,
+        first_name: gender === "male" ? "גלריה" : "גלריית",
+        last_name: `בדיקה${Date.now()}`,
+        birth_date: "1998-01-01",
+        gender,
+        personal_status: "single",
+        country: "ישראל",
+        city: "בני ברק",
+        in_shidduchim: true,
+      }),
+    )
     .select("id")
     .single();
   if (error || !data) throw new Error(`יצירת מיועד נכשלה: ${error?.message}`);

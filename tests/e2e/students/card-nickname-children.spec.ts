@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * הדר כרטיס המיועד: הכינוי בסוגריים אחרי השם הפרטי - באותו ניסוח של טבלת
@@ -43,22 +44,24 @@ test.beforeAll(async () => {
 
   const { data, error } = await admin
     .from("students")
-    .insert([
-      {
-        ...base,
-        first_name: "משה",
-        nickname: NICKNAME,
-        birth_date: "1985-05-05",
-        personal_status: "divorced",
-      },
-      {
-        ...base,
-        first_name: "אהרן",
-        nickname: null,
-        birth_date: "1998-08-08",
-        personal_status: "single",
-      },
-    ])
+    .insert(
+      approvedCard([
+        {
+          ...base,
+          first_name: "משה",
+          nickname: NICKNAME,
+          birth_date: "1985-05-05",
+          personal_status: "divorced",
+        },
+        {
+          ...base,
+          first_name: "אהרן",
+          nickname: null,
+          birth_date: "1998-08-08",
+          personal_status: "single",
+        },
+      ]),
+    )
     .select("id, personal_status");
   if (error || !data) {
     throw new Error(`יצירת כרטיסי הבדיקה נכשלה: ${error?.message}`);

@@ -7,6 +7,7 @@ import {
   ShieldQuestion,
   UserPlus,
   HeartHandshake,
+  IdCard,
   type LucideIcon,
 } from "lucide-react";
 import type { Route } from "next";
@@ -17,6 +18,8 @@ import { createClient } from "@/lib/supabase/server";
 import { ISRAEL_TIME_ZONE } from "@/lib/time-zone";
 
 import { israelDayStartIso } from "./proposals-report";
+import { NEW_CARDS_PATH } from "@/features/students/lib/card-approval";
+import { pendingNewCards } from "./new-cards";
 import { THIRD_PARTY_PENDING_FILTER } from "./third-party-cards";
 
 /**
@@ -61,6 +64,7 @@ export type PendingQueueKey =
   | "shadchanRequests"
   | "staffRequests"
   | "photoRequests"
+  | "newCards"
   | "thirdPartyCards"
   | "cardReports"
   | "submissions"
@@ -128,6 +132,20 @@ export const PENDING_QUEUES: readonly PendingQueue[] = [
           .eq("status", "pending"),
       );
     },
+  },
+  {
+    key: "newCards",
+    title: "כרטיסים חדשים לאישור",
+    href: NEW_CARDS_PATH,
+    icon: IdCard,
+    emptyText: "אין כרטיסים ממתינים",
+    // students: לא מאושר, לא נדחה ולא נמחק (כמו ברירת המחדל של דף התור)
+    load: () =>
+      loadCount("new cards", () =>
+        pendingNewCards(
+          createAdminClient().from("students").select("id", HEAD_COUNT),
+        ),
+      ),
   },
   {
     key: "thirdPartyCards",

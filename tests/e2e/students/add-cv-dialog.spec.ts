@@ -4,6 +4,7 @@ import {
   createServiceClient,
   ensureCardManagerId,
 } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * "הוספת קו״ח" בטבלת המיועדים פותח דיאלוג העלאה (ולא מנווט לדף הבית).
@@ -26,17 +27,19 @@ test.beforeAll(async () => {
   const ownerId = await ensureCardManagerId(admin);
   const { data, error } = await admin
     .from("students")
-    .insert({
-      user_id: ownerId,
-      first_name: FIRST_NAME,
-      last_name: lastName,
-      birth_date: "1999-05-01",
-      gender: "male",
-      personal_status: "single",
-      country: "ישראל",
-      city: "בני ברק",
-      in_shidduchim: true,
-    })
+    .insert(
+      approvedCard({
+        user_id: ownerId,
+        first_name: FIRST_NAME,
+        last_name: lastName,
+        birth_date: "1999-05-01",
+        gender: "male",
+        personal_status: "single",
+        country: "ישראל",
+        city: "בני ברק",
+        in_shidduchim: true,
+      }),
+    )
     .select("id")
     .single();
 

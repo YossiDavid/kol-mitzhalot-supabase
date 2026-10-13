@@ -1,6 +1,7 @@
 import { test, expect, type Locator, type Page } from "@playwright/test";
 
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * מיון בטבלת המיועדים: בדסקטופ לחיצה על כותרת ממיינת עולה, יורד וחוזרת
@@ -72,19 +73,21 @@ test.beforeAll(async () => {
   const { data, error } = await admin
     .from("students")
     .insert(
-      STUDENT_KEYS.map((key) => ({
-        user_id: userId,
-        first_name: FIRST_NAME,
-        last_name: STUDENTS[key].lastName,
-        birth_date: STUDENTS[key].birthDate,
-        gender: "male",
-        personal_status: "single",
-        country: "ישראל",
-        city: STUDENTS[key].city,
-        community: STUDENTS[key].community,
-        height: STUDENTS[key].height,
-        in_shidduchim: true,
-      })),
+      approvedCard(
+        STUDENT_KEYS.map((key) => ({
+          user_id: userId,
+          first_name: FIRST_NAME,
+          last_name: STUDENTS[key].lastName,
+          birth_date: STUDENTS[key].birthDate,
+          gender: "male",
+          personal_status: "single",
+          country: "ישראל",
+          city: STUDENTS[key].city,
+          community: STUDENTS[key].community,
+          height: STUDENTS[key].height,
+          in_shidduchim: true,
+        })),
+      ),
     )
     .select("id");
 

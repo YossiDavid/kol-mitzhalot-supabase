@@ -1,3 +1,8 @@
+import {
+  CARD_PENDING_BLOCK_CODE,
+  CARD_PENDING_PROPOSAL_MESSAGE,
+  isCardApproved,
+} from "@/features/students/lib/card-approval";
 import { z } from "zod";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -23,7 +28,8 @@ export type ProposalSide = "groom" | "bride";
 export type ProposalBlockCode =
   | "card_paused"
   | "proposal_limit_reached"
-  | typeof THIRD_PARTY_BLOCK_CODE;
+  | typeof THIRD_PARTY_BLOCK_CODE
+  | typeof CARD_PENDING_BLOCK_CODE;
 
 export type ProposalBlock = {
   code: ProposalBlockCode;
@@ -127,7 +133,9 @@ export async function findThirdPartyBlocks(
 ): Promise<ProposalBlock[]> {
   const { data, error } = await admin
     .from("students")
-    .select("id, card_for, third_party_proposals_approved_at")
+    .select(
+      "id, card_for, third_party_proposals_approved_at, admin_approved_at",
+    )
     .in("id", [groomId, brideId]);
 
   if (error) {
@@ -138,20 +146,39 @@ export async function findThirdPartyBlocks(
     throw new Error("בדיקת סוג הכרטיס נכשלה");
   }
 
+  const cards = data ?? [];
+  // כרטיס שהנהלת המערכת עוד לא אישרה קודם לכל שאר הבדיקות (כמו בטריגר)
+  const unapproved = new Set(
+    cards.filter((card) => !isCardApproved(card)).map((card) => card.id),
+  );
   const pending = new Set(
-    (data ?? []).filter((card) => isProposalsPending(card)).map((c) => c.id),
+    cards.filter((card) => isProposalsPending(card)).map((card) => card.id),
   );
   const sides: Array<[ProposalSide, string]> = [
     ["groom", groomId],
     ["bride", brideId],
   ];
-  return sides
-    .filter(([, id]) => pending.has(id))
-    .map(([side]) => ({
-      code: THIRD_PARTY_BLOCK_CODE,
-      side,
-      message: THIRD_PARTY_PROPOSAL_MESSAGE,
-    }));
+  return sides.flatMap(([side, id]): ProposalBlock[] => {
+    if (unapproved.has(id)) {
+      return [
+        {
+          code: CARD_PENDING_BLOCK_CODE,
+          side,
+          message: CARD_PENDING_PROPOSAL_MESSAGE,
+        },
+      ];
+    }
+    if (pending.has(id)) {
+      return [
+        {
+          code: THIRD_PARTY_BLOCK_CODE,
+          side,
+          message: THIRD_PARTY_PROPOSAL_MESSAGE,
+        },
+      ];
+    }
+    return [];
+  });
 }
 
 /** הצדדים שעתידים לקבל הצעה חדשה - ההפרעות שנמצאו, לפי סדר חתן-כלה */
@@ -184,6 +211,13 @@ export function dbBlockFromError(
   const message = error?.message ?? "";
   const side: ProposalSide = error?.details === "bride" ? "bride" : "groom";
 
+  if (message.includes(CARD_PENDING_BLOCK_CODE)) {
+    return {
+      code: CARD_PENDING_BLOCK_CODE,
+      side,
+      message: CARD_PENDING_PROPOSAL_MESSAGE,
+    };
+  }
   if (message.includes(THIRD_PARTY_BLOCK_CODE)) {
     return {
       code: THIRD_PARTY_BLOCK_CODE,

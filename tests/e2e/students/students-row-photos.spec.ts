@@ -4,6 +4,7 @@ import {
   createServiceClient,
   ensureCardManagerId,
 } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * תמונה ממוזערת בשורה של טבלת המיועדים: בן - תמונה ולחיצה פותחת lightbox
@@ -39,17 +40,19 @@ async function createStudentWithPhotos(
 ): Promise<string> {
   const { data, error } = await admin
     .from("students")
-    .insert({
-      user_id: ownerId,
-      first_name: gender === "male" ? "שמעון" : "שולמית",
-      last_name: lastName,
-      birth_date: "1998-01-01",
-      gender,
-      personal_status: "single",
-      country: "ישראל",
-      city: "בני ברק",
-      in_shidduchim: true,
-    })
+    .insert(
+      approvedCard({
+        user_id: ownerId,
+        first_name: gender === "male" ? "שמעון" : "שולמית",
+        last_name: lastName,
+        birth_date: "1998-01-01",
+        gender,
+        personal_status: "single",
+        country: "ישראל",
+        city: "בני ברק",
+        in_shidduchim: true,
+      }),
+    )
     .select("id")
     .single();
   if (error || !data) throw new Error(`יצירת מיועד נכשלה: ${error?.message}`);

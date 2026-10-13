@@ -2,6 +2,7 @@ import { chooseChildCard } from "./card-for-fixtures";
 import { test, expect, type Page } from "@playwright/test";
 
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * סבים וסבתות בטופס הכרטיס: (1) התוויות מנוסחות מנקודת המבט של ההורה שבמקטע
@@ -137,31 +138,33 @@ test.describe("סבים וסבתות - רשות", () => {
     const name = (value: string) => ({ prefix: "", name: value, suffix: "" });
     const { data, error } = await admin
       .from("students")
-      .insert({
-        user_id: userId,
-        card_for: "self",
-        first_name: "עם",
-        last_name: `סבים${RUN_ID}`,
-        birth_date: "1999-01-01",
-        gender: "male",
-        personal_status: "single",
-        country: "ישראל",
-        city: "בני ברק",
-        in_shidduchim: true,
-        parents_info: {
-          status: "married",
-          father: {
-            self: name("אב"),
-            grandFather: name("סב-אב-בדיקה"),
-            grandMother: name("סבתא-אב-בדיקה"),
+      .insert(
+        approvedCard({
+          user_id: userId,
+          card_for: "self",
+          first_name: "עם",
+          last_name: `סבים${RUN_ID}`,
+          birth_date: "1999-01-01",
+          gender: "male",
+          personal_status: "single",
+          country: "ישראל",
+          city: "בני ברק",
+          in_shidduchim: true,
+          parents_info: {
+            status: "married",
+            father: {
+              self: name("אב"),
+              grandFather: name("סב-אב-בדיקה"),
+              grandMother: name("סבתא-אב-בדיקה"),
+            },
+            mother: {
+              self: name("אם"),
+              grandFather: name("סב-אם-בדיקה"),
+              grandMother: name("סבתא-אם-בדיקה"),
+            },
           },
-          mother: {
-            self: name("אם"),
-            grandFather: name("סב-אם-בדיקה"),
-            grandMother: name("סבתא-אם-בדיקה"),
-          },
-        },
-      })
+        }),
+      )
       .select("id")
       .single();
     if (error || !data) throw new Error(`יצירת כרטיס: ${error?.message}`);

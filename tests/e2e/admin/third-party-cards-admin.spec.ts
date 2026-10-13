@@ -114,6 +114,14 @@ test.describe("כרטיס צד שלישי - הנהלה", () => {
     // Assert
     expect(created.status()).toBe(201);
     cardId = (await created.json()).id;
+    // כרטיס חדש ממתין לאישור הנהלה וחבוי משדכנים עד אז. הבדיקות כאן עוסקות
+    // באישורי צד שלישי של כרטיס שכבר עבר את האישור הזה, ולכן הוא ניתן כאן
+    // במפורש (כמו שהמנהל עושה בתור הכרטיסים החדשים).
+    const approved = await svc
+      .from("students")
+      .update({ admin_approved_at: new Date().toISOString() })
+      .eq("id", cardId);
+    expect(approved.error).toBeNull();
     const { data: card } = await svc
       .from("students")
       .select(

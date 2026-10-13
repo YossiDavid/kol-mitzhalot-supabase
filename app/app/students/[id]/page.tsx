@@ -35,6 +35,12 @@ import {
 import { toPersonalStatus } from "@/features/students/lib/student-status";
 import { getCardBackLink } from "@/features/students/lib/card-back-link";
 import { getStudentCardAccess } from "@/features/students/lib/student-card-access";
+import {
+  cardApprovalStatus,
+  isCardApproved,
+} from "@/features/students/lib/card-approval";
+import { CardApprovalBanner } from "@/features/students/components/card/card-approval-banner";
+import { CardApprovalControls } from "@/features/admin/components/card-approval-controls";
 import { recordStudentCardView } from "@/features/students/lib/record-card-view";
 import {
   loadAdminDisplayName,
@@ -152,6 +158,19 @@ async function StudentPageContent({
       isOwner: approval.user_id === user?.id,
       isAdmin,
     });
+
+  // כרטיס שהנהלת המערכת עוד לא אישרה (ממתין או נדחה) גלוי לבעליו ולמנהלים
+  // בלבד. למשתמש מחובר זה נאכף במסד (רמת הגישה למטה חוזרת "none"); קישור
+  // השיתוף הציבורי נקרא ב-service role, ולכן נעצר כאן, לפני כל שליפה.
+  if (isAnonymous && approval && !isCardApproved(approval)) {
+    return (
+      <CardNotice
+        title="הכרטיס אינו זמין"
+        body="אין לך הרשאה לצפות בכרטיס הזה, או שהוא אינו קיים במערכת"
+      />
+    );
+  }
+  const approvalStatus = approval ? cardApprovalStatus(approval) : "approved";
 
   // רמת הגישה נקבעת לפני השליפה, כי היא בוחרת את ה-select. מנהל כרטיס
   // שקיבל הצעת שידוך מקבל "proposal": הכרטיס במלואו, בלי פרטי התקשרות
@@ -325,6 +344,23 @@ async function StudentPageContent({
       isBasicOnly={isBasicView}
       adminControls={
         <>
+          {approvalStatus !== "approved" &&
+            !isAdmin &&
+            student.user_id === user.id && (
+              <CardApprovalBanner
+                studentId={student.id}
+                status={approvalStatus}
+                rejectionReason={approval?.admin_rejection_reason ?? null}
+              />
+            )}
+          {isAdmin && approval && !isProposalView && (
+            <CardApprovalControls
+              studentId={student.id}
+              studentName={`${student.first_name} ${student.last_name}`}
+              status={approvalStatus}
+              rejectionReason={approval.admin_rejection_reason}
+            />
+          )}
           {isAdminPaused === true && <AdminPausedBanner />}
           {approval && approvingAdminNames ? (
             <ThirdPartyApprovalControls

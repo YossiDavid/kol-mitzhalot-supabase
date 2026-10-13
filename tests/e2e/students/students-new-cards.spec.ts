@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * סימון כרטיסים חדשים ברשימת המיועדים: תג "חדש היום" / "חדש השבוע" ליד
@@ -38,18 +39,20 @@ test.beforeAll(async () => {
   const { data, error } = await admin
     .from("students")
     .insert(
-      CARD_KEYS.map((key) => ({
-        user_id: userId,
-        first_name: FIRST_NAME,
-        last_name: LAST_NAME[key],
-        birth_date: "1999-01-01",
-        gender: "male",
-        personal_status: "single",
-        country: "ישראל",
-        city: "בני ברק",
-        in_shidduchim: true,
-        created_at: new Date(now - AGE_MS[key]).toISOString(),
-      })),
+      approvedCard(
+        CARD_KEYS.map((key) => ({
+          user_id: userId,
+          first_name: FIRST_NAME,
+          last_name: LAST_NAME[key],
+          birth_date: "1999-01-01",
+          gender: "male",
+          personal_status: "single",
+          country: "ישראל",
+          city: "בני ברק",
+          in_shidduchim: true,
+          created_at: new Date(now - AGE_MS[key]).toISOString(),
+        })),
+      ),
     )
     .select("id");
   if (error || !data) {

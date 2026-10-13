@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * שדות החיפוש המתקדם מסננים בפועל: טווח גובה (עמודת students.height)
@@ -22,18 +23,20 @@ async function createStudent(
 ): Promise<string> {
   const { data, error } = await admin
     .from("students")
-    .insert({
-      user_id: userId,
-      first_name: firstName,
-      last_name: LAST_NAME,
-      birth_date: "1998-01-01",
-      gender: "male",
-      personal_status: "single",
-      country: "ישראל",
-      city: "בני ברק",
-      in_shidduchim: true,
-      height,
-    })
+    .insert(
+      approvedCard({
+        user_id: userId,
+        first_name: firstName,
+        last_name: LAST_NAME,
+        birth_date: "1998-01-01",
+        gender: "male",
+        personal_status: "single",
+        country: "ישראל",
+        city: "בני ברק",
+        in_shidduchim: true,
+        height,
+      }),
+    )
     .select("id")
     .single();
   if (error || !data) throw new Error(`יצירת מיועד נכשלה: ${error?.message}`);

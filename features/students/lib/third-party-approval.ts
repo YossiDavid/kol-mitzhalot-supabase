@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
+import { CARD_APPROVAL_COLUMNS } from "@/features/students/lib/card-approval";
 import { STUDENT_CARDS_VIEW } from "@/features/students/lib/third-party-card";
 
 /**
@@ -14,8 +15,7 @@ import { STUDENT_CARDS_VIEW } from "@/features/students/lib/third-party-card";
  * ב-RLS) מחזיר null, וההמשך הרגיל של הדף מטפל בו.
  */
 
-const COLUMNS =
-  "user_id, card_for, third_party_full_display_approved_at, third_party_full_display_approved_by, third_party_proposals_approved_at, third_party_proposals_approved_by";
+const COLUMNS = `user_id, card_for, third_party_full_display_approved_at, third_party_full_display_approved_by, third_party_proposals_approved_at, third_party_proposals_approved_by, ${CARD_APPROVAL_COLUMNS}`;
 
 const approvalRowSchema = z.object({
   user_id: z.string(),
@@ -24,11 +24,16 @@ const approvalRowSchema = z.object({
   third_party_full_display_approved_by: z.string().nullable(),
   third_party_proposals_approved_at: z.string().nullable(),
   third_party_proposals_approved_by: z.string().nullable(),
+  // אישור ההנהלה לכרטיס עצמו (card-approval.ts). ב-view הדחייה והסיבה חוזרות
+  // רק לבעל הכרטיס ולמנהל.
+  admin_approved_at: z.string().nullable(),
+  admin_rejected_at: z.string().nullable(),
+  admin_rejection_reason: z.string().nullable(),
 });
 
 export type ThirdPartyApprovalRow = z.infer<typeof approvalRowSchema>;
 
-/** שורה שנחשבת צד שלישי לא מאושר - בכשל בקריאה */
+/** שורה שנחשבת צד שלישי לא מאושר וכרטיס שלא אושר - בכשל בקריאה */
 const FAIL_CLOSED_ROW: ThirdPartyApprovalRow = {
   user_id: "",
   card_for: "other",
@@ -36,6 +41,9 @@ const FAIL_CLOSED_ROW: ThirdPartyApprovalRow = {
   third_party_full_display_approved_by: null,
   third_party_proposals_approved_at: null,
   third_party_proposals_approved_by: null,
+  admin_approved_at: null,
+  admin_rejected_at: null,
+  admin_rejection_reason: null,
 };
 
 /**

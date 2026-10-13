@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * גלריית התמונות בעריכת כרטיס: תמונה חדשה נוספת לצד השמורה, מוגדרת
@@ -34,48 +35,50 @@ test.describe("גלריית תמונות בעריכת כרטיס", () => {
     // כל שדות החובה של הטופס מלאים, כדי שהשמירה לא תיחסם בוולידציה
     const { data, error } = await admin
       .from("students")
-      .insert({
-        user_id: userId,
-        first_name: "גלריה",
-        last_name: `בדיקה${Date.now()}`,
-        identity_number: `9${String(Date.now()).slice(-8)}`,
-        // כרטיס שנוצר בלי card_for נחסם בעריכה עד שנבחר עבור מי הוא
-        card_for: "child",
-        birth_date: "1998-01-01",
-        gender: "male",
-        personal_status: "single",
-        country: "ישראל",
-        city: "בני ברק",
-        street: "רב שך",
-        house: "5",
-        cellphone_type: "kosher",
-        in_shidduchim: true,
-        // קו״ח שמור: השמירה חייבת לעבור בלי להעלות אותו מחדש, ולא למחוק אותו
-        cv_url: EXISTING_CV_URL,
-        parents_info: {
-          father: {
-            self: NAME,
-            phone: "0501234567",
-            job: "מלמד",
-            grandFather: NAME,
-            grandMother: NAME,
+      .insert(
+        approvedCard({
+          user_id: userId,
+          first_name: "גלריה",
+          last_name: `בדיקה${Date.now()}`,
+          identity_number: `9${String(Date.now()).slice(-8)}`,
+          // כרטיס שנוצר בלי card_for נחסם בעריכה עד שנבחר עבור מי הוא
+          card_for: "child",
+          birth_date: "1998-01-01",
+          gender: "male",
+          personal_status: "single",
+          country: "ישראל",
+          city: "בני ברק",
+          street: "רב שך",
+          house: "5",
+          cellphone_type: "kosher",
+          in_shidduchim: true,
+          // קו״ח שמור: השמירה חייבת לעבור בלי להעלות אותו מחדש, ולא למחוק אותו
+          cv_url: EXISTING_CV_URL,
+          parents_info: {
+            father: {
+              self: NAME,
+              phone: "0501234567",
+              job: "מלמד",
+              grandFather: NAME,
+              grandMother: NAME,
+            },
+            mother: {
+              self: NAME,
+              maidenName: "לוי",
+              phone: "0507654321",
+              job: "מורה",
+              grandFather: NAME,
+              grandMother: NAME,
+            },
           },
-          mother: {
-            self: NAME,
-            maidenName: "לוי",
-            phone: "0507654321",
-            job: "מורה",
-            grandFather: NAME,
-            grandMother: NAME,
+          family_info: {
+            numberOfChildren: "5",
+            currentChildPlace: "3",
+            about: "משפחה",
           },
-        },
-        family_info: {
-          numberOfChildren: "5",
-          currentChildPlace: "3",
-          about: "משפחה",
-        },
-        author_info: { name: "ממלא", phone: "0521234567", relation: "אב" },
-      })
+          author_info: { name: "ממלא", phone: "0521234567", relation: "אב" },
+        }),
+      )
       .select("id")
       .single();
 

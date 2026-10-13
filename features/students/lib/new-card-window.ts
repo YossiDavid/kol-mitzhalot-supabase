@@ -73,7 +73,7 @@ export function startOfIsraelDay(now: Date): Date {
 }
 
 /**
- * הגבול התחתון (ISO) של created_at לסינון "חדשים":
+ * הגבול התחתון (ISO) של רגע ההופעה ברשימה (cardListedAt) לסינון "חדשים":
  * היום - מתחילת היום בישראל; השבוע - 7 ימים אחורה מרגע הבקשה.
  */
 export function newCardsSince(filter: NewCardsFilter, now: Date): string {
@@ -90,8 +90,8 @@ export function parseNewCardsFilter(
 }
 
 /**
- * התג של כרטיס לפי רגע היצירה: "היום" לפי יום ישראלי, "השבוע" ב-7 הימים
- * האחרונים, אחרת null. created_at ריק או לא תקין - null.
+ * התג של כרטיס לפי הרגע שבו הופיע לשדכנים (cardListedAt: רגע האישור): "היום"
+ * לפי יום ישראלי, "השבוע" ב-7 הימים האחרונים, אחרת null. ערך ריק או לא תקין - null.
  */
 export function newCardBadge(
   createdAt: string | null | undefined,
