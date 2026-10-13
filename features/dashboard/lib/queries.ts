@@ -261,7 +261,6 @@ type LastMessage = {
 type OtherUserMetadata = {
   firstName?: string;
   lastName?: string;
-  email?: string;
   avatar_url?: string;
 } | null;
 

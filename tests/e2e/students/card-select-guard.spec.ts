@@ -27,6 +27,8 @@ const CONTACT_COLUMNS = [
   "cellphone_type",
   "cv_url",
 ];
+/** פרטי ההתקשרות של המיועד/ת: אינם חלק מכרטיס בהצעה בשום פתיחה */
+const PROPOSAL_NEVER_COLUMNS = ["phone", "street", "house"];
 const IDENTITY_COLUMNS = ["identity_number", "institution_id", "user_id"];
 const SENSITIVE_EMBEDS = [
   "medical_records",
@@ -93,9 +95,9 @@ test.describe("ה-select של כל וריאנט", () => {
       ...IDENTITY_COLUMNS,
       ...SENSITIVE_EMBEDS,
     ]);
-    // הממליצים מוצגים במלואם לבקשת הלקוח
-    expect(embedColumns(ANONYMOUS_STUDENT_SELECT, "references")).toContain(
-      "phone",
+    // הכרטיס הציבורי אינו מציג פרטי קשר של אף אדם: ממליצים בלי טלפון ואימייל
+    expect(embedColumns(ANONYMOUS_STUDENT_SELECT, "references")).toBe(
+      "id, reference_type, name",
     );
   });
 
@@ -119,17 +121,20 @@ test.describe("ה-select של כל וריאנט", () => {
     }
   });
 
-  test("הצעה סגורה: בלי עמודות התקשרות, בלי הצהרה רפואית, ממליצים בלי טלפון", () => {
+  test("הצעה סגורה: בלי פרטי התקשרות, בלי קו״ח, בלי הצהרה רפואית, ממליצים בלי טלפון", () => {
     const select = buildProposalStudentSelect({
-      shareContact: false,
+      shareCv: false,
       shareMedical: false,
     });
 
     expectAbsent(select, [
-      ...CONTACT_COLUMNS,
+      ...PROPOSAL_NEVER_COLUMNS,
+      "cv_url",
       ...IDENTITY_COLUMNS,
       "medical_records",
     ]);
+    // סוג הטלפון הוא העדפה ולא פרט התקשרות: נשלף תמיד
+    expect(selectedNames(select)).toContain("cellphone_type");
     const references = embedColumns(select, "references");
     expect(references).not.toBeNull();
     expect(references).not.toContain("phone");
@@ -137,22 +142,30 @@ test.describe("ה-select של כל וריאנט", () => {
     expect(references).not.toBe("*");
   });
 
-  test("הצעה: כל פתיחה מוסיפה רק את שלה", () => {
-    const contactOnly = buildProposalStudentSelect({
-      shareContact: true,
+  test("הצעה: כל פתיחה מוסיפה רק את שלה, ואף אחת אינה מוסיפה פרטי התקשרות", () => {
+    const cvOnly = buildProposalStudentSelect({
+      shareCv: true,
       shareMedical: false,
     });
     const medicalOnly = buildProposalStudentSelect({
-      shareContact: false,
+      shareCv: false,
+      shareMedical: true,
+    });
+    const everything = buildProposalStudentSelect({
+      shareCv: true,
       shareMedical: true,
     });
 
-    expect(selectedNames(contactOnly)).toEqual(
-      expect.arrayContaining(CONTACT_COLUMNS),
-    );
-    expectAbsent(contactOnly, ["medical_records"]);
+    expect(selectedNames(cvOnly)).toContain("cv_url");
+    expectAbsent(cvOnly, ["medical_records"]);
     expect(selectedNames(medicalOnly)).toContain("medical_records");
-    expectAbsent(medicalOnly, CONTACT_COLUMNS);
+    expectAbsent(medicalOnly, ["cv_url"]);
+    for (const select of [cvOnly, medicalOnly, everything]) {
+      expectAbsent(select, [...PROPOSAL_NEVER_COLUMNS, ...IDENTITY_COLUMNS]);
+      expect(embedColumns(select, "references")).toBe(
+        "id, reference_type, name",
+      );
+    }
   });
 
   test("הכרטיס המלא הוא select כוכבית, וה-schema הוא שחותך", () => {
@@ -245,7 +258,11 @@ test.describe("ה-schema חותך מה שלא הוצהר", () => {
 
     // Act
     const parsed = parseProposalRow(row, {
-      shareContact: false,
+      shareCv: false,
+      shareMedical: false,
+    });
+    const withCv = parseProposalRow(row, {
+      shareCv: true,
       shareMedical: false,
     });
 
@@ -262,18 +279,30 @@ test.describe("ה-schema חותך מה שלא הוצהר", () => {
       expect(serialized).not.toContain(leaked);
     }
     expect(serialized).toContain("הרב");
+    // גם כשהקו״ח משותף: הוא עובר, פרטי ההתקשרות לא
+    expect(withCv.success).toBe(true);
+    const opened = JSON.stringify(withCv.success ? withCv.data : {});
+    expect(opened).toContain("cv.pdf");
+    for (const leaked of [
+      "050-9999999",
+      "הרחוב",
+      "03-7654321",
+      "rabbi@example.com",
+    ]) {
+      expect(opened).not.toContain(leaked);
+    }
   });
 
-  test("הצעה סגורה: הטיפוס אינו נושא עמודות התקשרות", () => {
+  test("הצעה: הטיפוס אינו נושא עמודות התקשרות, בשום פתיחה", () => {
     const parsed = parseProposalRow(baseRow(), {
-      shareContact: false,
+      shareCv: false,
       shareMedical: false,
     });
     if (!parsed.success) throw new Error("parse failed");
     const row: ProposalStudentRow = parsed.data;
 
     if (!("phone" in row)) {
-      // @ts-expect-error - כרטיס סגור אינו נושא phone בטיפוס
+      // @ts-expect-error - כרטיס בהצעה אינו נושא phone בטיפוס, בשום פתיחה
       expect(row.phone).toBeUndefined();
     }
     expect("phone" in row).toBe(false);
@@ -319,7 +348,7 @@ test.describe("redactProposalStudent", () => {
     const row = baseRow();
 
     // Act
-    const redacted = redactProposalStudent(row, { shareContact: false });
+    const redacted = redactProposalStudent(row);
 
     // Assert
     const parents = redacted.parents_info ?? {};
@@ -335,7 +364,7 @@ test.describe("redactProposalStudent", () => {
   });
 
   test("הטיפוס שהיא מחזירה אינו נושא phone/email אצל הממלא", () => {
-    const redacted = redactProposalStudent(baseRow(), { shareContact: false });
+    const redacted = redactProposalStudent(baseRow());
 
     // הידור בלבד: phone/email הם never, ולכן אי אפשר לקרוא בהם ערך
     const phone: undefined = redacted.author_info?.phone;

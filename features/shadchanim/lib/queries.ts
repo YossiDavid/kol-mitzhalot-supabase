@@ -23,8 +23,6 @@ const publicCardRowSchema = z.object({
   last_name: z.string().nullable(),
   avatar_url: z.string().nullable(),
   since_year: z.number().int().nullable(),
-  phone: z.string().nullable(),
-  email: z.string().nullable(),
   city: z.string().nullable(),
   description: z.string().nullable(),
 });
@@ -35,6 +33,8 @@ const activityRowSchema = publicCardRowSchema.extend({
 });
 
 const fullProfileRowSchema = publicCardRowSchema.extend({
+  phone: z.string().nullable(),
+  email: z.string().nullable(),
   experience_years: z.number().int().nullable(),
   closed_matches: z.number().int().nullable(),
   specializations: z.array(z.string()).nullable(),
@@ -63,8 +63,6 @@ function toPublicCard(row: PublicCardRow): ShadchanPublicCard {
     name: name || FALLBACK_SHADCHAN_NAME,
     avatarUrl: row.avatar_url,
     sinceYear: row.since_year,
-    phone: row.phone,
-    email: row.email,
     city: row.city,
     description: row.description,
   };
@@ -152,6 +150,8 @@ export async function getShadchanPublicProfile(
   if (!row) return null;
   return {
     ...toPublicCard(row),
+    phone: row.phone,
+    email: row.email,
     experienceYears: row.experience_years,
     closedMatches: row.closed_matches,
     specializations: row.specializations ?? [],
@@ -172,8 +172,8 @@ export type ApprovedShadchanimPage = {
 
 /**
  * One page of approved shadchanim for the directory page ("שדכנים"), without
- * phone/email (those are on the full profile and behind the daily-limited
- * contact form). The RPC sorts by last/first name only, so the order is
+ * phone/email (not shown to other users at all; contact goes through the
+ * daily-limited contact form). The RPC sorts by last/first name only, so the order is
  * re-applied here with shadchan_id as a tie-breaker, otherwise people with
  * the same name could repeat or vanish between pages. NULL names sort first,
  * like the RPC's COALESCE(..., ''). Returns null on failure so the UI can

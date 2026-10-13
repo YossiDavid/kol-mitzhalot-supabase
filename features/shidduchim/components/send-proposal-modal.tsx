@@ -25,7 +25,7 @@ type Props = {
     recipientScope: RecipientScope;
     noteForGroom: string;
     noteForBride: string;
-    shareContactDetails: boolean;
+    shareCv: boolean;
     shareMedicalInfo: boolean;
     shareGroomPhoto: boolean;
   }) => Promise<string | void>;
@@ -54,9 +54,10 @@ export default function SendProposalModal({
   const [scope, setScope] = useState<RecipientScope>("both");
   const [noteGroom, setNoteGroom] = useState(initialNoteGroom);
   const [noteBride, setNoteBride] = useState(initialNoteBride);
-  // סגור כברירת מחדל: יצירת הקשר עוברת דרך השדכן, וההצהרה הרפואית נחשפת
-  // רק כשהצדדים מתקדמים. הפתיחה היא החלטה אקטיבית לכל הצעה בנפרד.
-  const [shareContact, setShareContact] = useState(false);
+  // פרטי התקשרות אינם נפתחים לצד השני: יצירת הקשר עוברת דרך השדכן בלבד.
+  // קובץ הקו״ח וההצהרה הרפואית סגורים כברירת מחדל, והפתיחה היא החלטה אקטיבית
+  // לכל הצעה בנפרד.
+  const [shareCv, setShareCv] = useState(false);
   const [shareMedical, setShareMedical] = useState(false);
   // פתוח כברירת מחדל: תמונת הבחור נשלחה תמיד, והשדכן סוגר אותה כשצריך
   const [shareGroomPhoto, setShareGroomPhoto] = useState(true);
@@ -71,7 +72,7 @@ export default function SendProposalModal({
       setScope("both");
       setNoteGroom("");
       setNoteBride("");
-      setShareContact(false);
+      setShareCv(false);
       setShareMedical(false);
       setShareGroomPhoto(true);
     }
@@ -88,7 +89,7 @@ export default function SendProposalModal({
       recipientScope: scope,
       noteForGroom: showGroomNote ? noteGroom : "",
       noteForBride: showBrideNote ? noteBride : "",
-      shareContactDetails: shareContact,
+      shareCv,
       shareMedicalInfo: shareMedical,
       shareGroomPhoto,
     });
@@ -176,23 +177,34 @@ export default function SendProposalModal({
               מה מנהלי הכרטיסים יראו בכרטיס של הצד השני?
             </p>
             <p className="text-caption text-muted-foreground">
-              הכרטיס נפתח להם במלואו. פרטי ההתקשרות וההצהרה הרפואית סגורים
-              כברירת מחדל.
+              הכרטיס נפתח להם בלי פרטי התקשרות: טלפון, כתובת ופרטי הקשר של
+              ההורים והממליצים אינם מוצגים לצד השני, והקשר עובר דרכך. קובץ הקו״ח
+              וההצהרה הרפואית סגורים כברירת מחדל.
             </p>
 
             <div className="flex items-start gap-2">
               <Checkbox
-                id="share-contact"
-                checked={shareContact}
-                onCheckedChange={(checked) => setShareContact(checked === true)}
+                id="share-cv"
+                checked={shareCv}
+                onCheckedChange={(checked) => setShareCv(checked === true)}
                 disabled={loading}
+                aria-describedby="share-cv-hint"
               />
-              <Label
-                htmlFor="share-contact"
-                className="text-body-sm leading-snug font-normal"
-              >
-                פרטי התקשרות (טלפון, כתובת, קו״ח, טלפוני הורים וממליצים)
-              </Label>
+              <div className="space-y-1">
+                <Label
+                  htmlFor="share-cv"
+                  className="text-body-sm leading-snug font-normal"
+                >
+                  לשתף את קובץ הקו״ח
+                </Label>
+                <p
+                  id="share-cv-hint"
+                  className="text-caption text-muted-foreground"
+                >
+                  הקובץ עצמו עלול לכלול טלפון או כתובת. כדאי לשתף רק קובץ שאין
+                  בו פרטי התקשרות.
+                </p>
+              </div>
             </div>
 
             <div className="flex items-start gap-2">

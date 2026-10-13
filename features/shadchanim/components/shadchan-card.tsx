@@ -2,10 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import ContactShadchanDialog from "@/features/shadchanim/components/contact-shadchan-dialog";
-import {
-  ShadchanAvatar,
-  ShadchanContactDetails,
-} from "@/features/shadchanim/components/shadchan-identity";
+import { ShadchanAvatar } from "@/features/shadchanim/components/shadchan-identity";
 import {
   SHADCHAN_ACTION_LABELS,
   shadchanProfileHref,
@@ -13,6 +10,7 @@ import {
   type ShadchanActionType,
   type ShadchanPublicCard,
 } from "@/features/shadchanim/lib/types";
+import { MapPin } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 
@@ -23,7 +21,7 @@ type ShadchanCardProps = {
   actionTypes?: ShadchanActionType[];
 };
 
-/** Shadchan card per the dashboard design: header, contact row, bio, and "פניה לשדכן". */
+/** Shadchan card per the dashboard design: header, city, bio, and "פניה לשדכן". */
 export default function ShadchanCard({
   shadchan,
   quota,
@@ -52,7 +50,12 @@ export default function ShadchanCard({
 
       <Separator />
 
-      <ShadchanContactDetails shadchan={shadchan} />
+      {shadchan.city && (
+        <p className="flex items-center gap-1.5 text-body-sm text-muted-foreground">
+          <MapPin className="size-4 shrink-0" aria-hidden />
+          {shadchan.city}
+        </p>
+      )}
 
       {shadchan.description && (
         <p className="line-clamp-3 text-body-sm">{shadchan.description}</p>

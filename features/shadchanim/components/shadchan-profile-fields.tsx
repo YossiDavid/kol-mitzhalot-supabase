@@ -98,7 +98,11 @@ export function ShadchanProfileFields({
           control={control}
           name="contact_phone"
           render={({ field }) => (
-            <FormFieldShell label="טלפון ליצירת קשר" required>
+            <FormFieldShell
+              label="טלפון ליצירת קשר"
+              description="לא מוצג למשתמשים. גלוי רק לך ולהנהלת האתר."
+              required
+            >
               <Input
                 {...field}
                 type="tel"
@@ -115,7 +119,10 @@ export function ShadchanProfileFields({
           control={control}
           name="contact_email"
           render={({ field }) => (
-            <FormFieldShell label="אימייל ליצירת קשר">
+            <FormFieldShell
+              label="אימייל ליצירת קשר"
+              description="לא מוצג למשתמשים. גלוי רק לך ולהנהלת האתר."
+            >
               <Input
                 {...field}
                 type="email"

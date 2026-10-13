@@ -41,11 +41,12 @@ export type EmploymentEntry = {
   description?: string;
 };
 
+/** טלפון ואימייל קיימים רק בכרטיס המלא; בכרטיס הציבורי ובהצעה אינם נשלפים */
 export type ReferenceEntry = {
-  reference_type?: string;
-  name?: string;
-  phone?: string;
-  email?: string;
+  reference_type?: string | null;
+  name?: string | null;
+  phone?: string | null;
+  email?: string | null;
 };
 
 export type PreviousPartnerEntry = {

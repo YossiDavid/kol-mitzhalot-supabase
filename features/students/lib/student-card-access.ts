@@ -24,16 +24,48 @@ export type StudentCardAccess = ProposalDisclosure & {
 
 const NO_ACCESS: StudentCardAccess = {
   level: "none",
-  shareContact: false,
+  shareCv: false,
   shareMedical: false,
 };
 
 /** שורה מ-public.get_student_card_access - מאומתת כי זה מידע חיצוני */
 const accessRowSchema = z.object({
   access_level: z.enum(["none", "proposal", "full"]),
-  share_contact: z.boolean(),
   share_medical: z.boolean(),
 });
+
+/** שורה מ-public.get_proposal_cv_disclosure */
+const cvDisclosureRowSchema = z.object({ share_cv: z.boolean() });
+
+/**
+ * האם השדכן שיתף את קובץ הקו״ח עם מי שצופה בכרטיס דרך הצעה. כשל בקריאה (או
+ * מסד שעוד לא מכיר את הפונקציה) נחשב "לא שותף": הכרטיס נטען בלי הקו״ח.
+ */
+async function loadSharesCv(
+  supabase: SupabaseClient,
+  studentId: string,
+): Promise<boolean> {
+  const { data, error } = await supabase.rpc("get_proposal_cv_disclosure", {
+    p_student_id: studentId,
+  });
+  if (error) {
+    console.error(
+      "[students/access] get_proposal_cv_disclosure failed",
+      studentId,
+      describeSupabaseError(error),
+    );
+    return false;
+  }
+  const parsed = z.array(cvDisclosureRowSchema).safeParse(data ?? []);
+  if (!parsed.success) {
+    console.error(
+      "[students/access] unexpected get_proposal_cv_disclosure shape",
+      parsed.error.issues,
+    );
+    return false;
+  }
+  return parsed.data[0]?.share_cv ?? false;
+}
 
 export async function getStudentCardAccess(
   supabase: SupabaseClient,
@@ -66,7 +98,12 @@ export async function getStudentCardAccess(
 
   return {
     level: row.access_level,
-    shareContact: row.share_contact,
+    // פרטי התקשרות אינם נפתחים עוד לצד השני (share_contact אינו נקרא). מה
+    // שנשאר לבחירת השדכן: הקו״ח (נקרא רק למי שצופה דרך הצעה) וההצהרה הרפואית.
+    shareCv:
+      row.access_level === "proposal"
+        ? await loadSharesCv(supabase, studentId)
+        : false,
     shareMedical: row.share_medical,
   };
 }

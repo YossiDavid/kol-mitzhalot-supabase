@@ -22,8 +22,6 @@ export type ShadchanPublicCard = {
   name: string;
   avatarUrl: string | null;
   sinceYear: number | null;
-  phone: string | null;
-  email: string | null;
   city: string | null;
   description: string | null;
 };
@@ -33,7 +31,10 @@ export type ShadchanActivity = ShadchanPublicCard & {
   actionTypes: ShadchanActionType[];
 };
 
+/** phone/email מגיעים מה-DB רק לשדכן עצמו ולמנהל; לכל אחד אחר null. */
 export type ShadchanFullProfile = ShadchanPublicCard & {
+  phone: string | null;
+  email: string | null;
   experienceYears: number | null;
   closedMatches: number | null;
   specializations: string[];

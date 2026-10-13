@@ -1,7 +1,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import type { ShadchanPublicCard } from "@/features/shadchanim/lib/types";
+import type {
+  ShadchanFullProfile,
+  ShadchanPublicCard,
+} from "@/features/shadchanim/lib/types";
 import { cn } from "@/lib/utils";
-import { Mail, MapPin, Phone } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 
 const INITIALS_LENGTH = 2;
 
@@ -37,19 +40,26 @@ export function ShadchanAvatar({
   );
 }
 
-/** Phone / email / city row. Renders nothing when the shadchan shared none of them. */
+/**
+ * Phone / email rows of a shadchan. The DB returns them only to the shadchan
+ * and admins, so this renders nothing for anyone else.
+ */
 export function ShadchanContactDetails({
   shadchan,
 }: {
-  shadchan: Pick<ShadchanPublicCard, "phone" | "email" | "city">;
+  shadchan: Pick<ShadchanFullProfile, "phone" | "email">;
 }) {
-  if (!shadchan.phone && !shadchan.email && !shadchan.city) return null;
+  if (!shadchan.phone && !shadchan.email) return null;
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-2 text-body-sm text-muted-foreground">
       {shadchan.phone && (
         <li className="flex items-center gap-1.5">
           <Phone className="size-4 shrink-0" aria-hidden />
-          <a href={telHref(shadchan.phone)} dir="ltr" className="hover:underline">
+          <a
+            href={telHref(shadchan.phone)}
+            dir="ltr"
+            className="hover:underline"
+          >
             {shadchan.phone}
           </a>
         </li>
@@ -64,12 +74,6 @@ export function ShadchanContactDetails({
           >
             {shadchan.email}
           </a>
-        </li>
-      )}
-      {shadchan.city && (
-        <li className="flex items-center gap-1.5">
-          <MapPin className="size-4 shrink-0" aria-hidden />
-          <span>{shadchan.city}</span>
         </li>
       )}
     </ul>

@@ -3,18 +3,16 @@
 export type UserMetadata = {
   firstName?: string | null;
   lastName?: string | null;
-  email?: string | null;
   avatar_url?: string | null;
 } | null;
 
-/** כשאין שם ואין אימייל - לעולם לא מזהה (uid), שאינו אומר כלום למשתמש */
+/** כשאין שם - לעולם לא אימייל ולא מזהה (uid), שאינם אומרים כלום למשתמש */
 export const UNKNOWN_USER_NAME = "משתמש/ת";
 
 export function getDisplayName(userData: UserMetadata): string {
   if (userData?.firstName || userData?.lastName) {
     return `${userData.firstName || ""} ${userData.lastName || ""}`.trim();
   }
-  if (userData?.email) return userData.email.split("@")[0];
   return UNKNOWN_USER_NAME;
 }
 

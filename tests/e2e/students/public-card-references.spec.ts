@@ -4,9 +4,10 @@ import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
 import { approvedCard } from "../helpers/approved-card";
 
 /**
- * הממליצים מוצגים במלואם גם בכרטיס הציבורי (קישור שיתוף) - החלטת הלקוח:
- * סוג, שם, טלפון ואימייל. העמודה נכללת ב-ANONYMOUS_STUDENT_SELECT, ובדיקה
- * זו מאמתת את השליפה (עמודה שלא נשלפה פשוט נעלמת בלי שגיאה).
+ * הממליצים מוצגים בכרטיס הציבורי (קישור שיתוף) בסוג ובשם בלבד. הלקוח ביקש
+ * בעבר להציג גם טלפון ואימייל, וחזר בו: הכרטיס הציבורי אינו מציג פרטי קשר של
+ * אף אדם. ה-embed ב-ANONYMOUS_STUDENT_SELECT אינו שולף אותם, ובדיקה זו מאמתת
+ * שהם אינם מגיעים לדף - לא כקישור ולא בתוך ה-HTML.
  */
 const REF_NAME = `ממליץ${Date.now()}`;
 const REF_PHONE = "0501234567";
@@ -59,21 +60,18 @@ test.afterAll(async () => {
 test.describe("צופה לא מחובר (קישור שיתוף)", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test("הממליצים מוצגים עם שם, טלפון ואימייל", async ({ page }) => {
+  test("הממליצים מוצגים בשם בלבד, בלי טלפון ואימייל", async ({ page }) => {
     // Arrange
     await page.goto(`/app/students/${studentId}`);
 
     // Assert
     await expect(page.getByText("ממליצים", { exact: true })).toBeVisible();
     await expect(page.getByText(REF_NAME)).toBeVisible();
-    await expect(page.getByRole("link", { name: REF_PHONE })).toHaveAttribute(
-      "href",
-      `tel:${REF_PHONE}`,
-    );
-    await expect(page.getByRole("link", { name: REF_EMAIL })).toHaveAttribute(
-      "href",
-      `mailto:${REF_EMAIL}`,
-    );
+    await expect(page.getByRole("link", { name: REF_PHONE })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: REF_EMAIL })).toHaveCount(0);
+    const html = await (await page.request.get(page.url())).text();
+    expect(html).not.toContain(REF_PHONE);
+    expect(html).not.toContain(REF_EMAIL);
   });
 
   test("שאר השדות הרגישים עדיין אינם נשלפים", async ({ page }) => {

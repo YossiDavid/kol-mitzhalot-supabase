@@ -13,7 +13,7 @@ import {
 } from "@/features/shadchanim/lib/queries";
 import { Button } from "@/components/ui/button";
 import { getUser } from "@/lib/user";
-import { ArrowRight, Pencil } from "lucide-react";
+import { ArrowRight, MapPin, Pencil } from "lucide-react";
 import { unstable_noStore as noStore } from "next/cache";
 import type { Route } from "next";
 import Link from "next/link";
@@ -87,6 +87,7 @@ async function ShadchanProfileContent({
   );
   // כפתור העריכה מוצג רק לבעל הפרופיל עצמו
   const isOwnProfile = viewer?.id === profile.id;
+  const hasContactDetails = Boolean(profile.phone || profile.email);
 
   return (
     <Card>
@@ -98,6 +99,12 @@ async function ShadchanProfileContent({
             {profile.sinceYear && (
               <p className="text-body-sm text-muted-foreground">
                 שדכן משנת {profile.sinceYear}
+              </p>
+            )}
+            {profile.city && (
+              <p className="flex items-center gap-1.5 text-body-sm text-muted-foreground">
+                <MapPin className="size-4 shrink-0" aria-hidden />
+                {profile.city}
               </p>
             )}
           </div>
@@ -119,11 +126,22 @@ async function ShadchanProfileContent({
         )}
       </div>
 
-      {/* סדר קבוע: פרטי התקשרות, אודות, ניסיון ושידוכים, התמחויות, שפות */}
-      {(profile.phone || profile.email || profile.city) && (
+      {/* טלפון ואימייל מגיעים מה-DB רק לשדכן עצמו ולמנהל (אחרת null), לכן
+          אין כאן בדיקת תפקיד: אין ערך - אין סעיף. */}
+      {hasContactDetails ? (
         <Section title="פרטי התקשרות">
           <ShadchanContactDetails shadchan={profile} />
+          <p className="text-body-sm text-muted-foreground">
+            הטלפון והאימייל גלויים רק לך ולהנהלת האתר, ולא לשאר המשתמשים.
+          </p>
         </Section>
+      ) : (
+        !isOwnProfile && (
+          <p className="rounded-xl bg-muted/50 px-4 py-3 text-body-sm text-muted-foreground">
+            ליצירת קשר עם {profile.name} יש להשתמש בכפתור &quot;פניה
+            לשדכן&quot;.
+          </p>
+        )
       )}
 
       {profile.description && (

@@ -16,7 +16,8 @@ import {
 } from "../shidduchim/fixtures";
 import { withoutFillReason } from "../../../features/students/lib/author-info";
 import {
-  PROPOSAL_CONTACT_COLUMNS,
+  PROPOSAL_CV_COLUMNS,
+  PROPOSAL_NEVER_COLUMNS,
   PROPOSAL_STUDENT_COLUMNS,
   buildProposalStudentSelect,
   parseProposalRow,
@@ -57,13 +58,44 @@ const FILL_REASON = `סיבת-מילוי-שער-${T}`;
 const ABOUT = `אודות-שער-${T}`;
 const FATHER_JOB = `עיסוק-אב-שער-${T}`;
 
-const CONTACT_KEYS: readonly string[] = PROPOSAL_CONTACT_COLUMNS;
-const DISCLOSURES: readonly ProposalDisclosure[] = [
-  { shareContact: false, shareMedical: false },
-  { shareContact: true, shareMedical: false },
-  { shareContact: false, shareMedical: true },
-  { shareContact: true, shareMedical: true },
-];
+/** פרטי ההתקשרות: אסור שיחזרו למי שקיבל הצעה, בשום צירוף דגלים */
+const { cv: CV_URL, ...CONTACT_ONLY } = CONTACT;
+const CONTACT_VALUES: readonly string[] = Object.values(CONTACT_ONLY);
+
+/**
+ * הדגלים שעל ההצעה: שיתוף הקו״ח, ההצהרה הרפואית, והדגל הישן
+ * share_contact_details (הוצא משימוש; בשורות ישנות הוא נקרא רק כ"קו״ח משותף").
+ */
+type ProposalFlags = {
+  shareCv: boolean;
+  shareMedical: boolean;
+  legacyContact: boolean;
+};
+const BOOLEANS = [false, true] as const;
+const FLAG_COMBINATIONS: readonly ProposalFlags[] = BOOLEANS.flatMap(
+  (legacyContact) =>
+    BOOLEANS.flatMap((shareCv) =>
+      BOOLEANS.map((shareMedical) => ({
+        shareCv,
+        shareMedical,
+        legacyContact,
+      })),
+    ),
+);
+
+/** מה שנפתח בפועל: הצעה ישנה שנפתחה בדגל הישן שומרת על הקו״ח בלבד */
+function effectiveDisclosure(flags: ProposalFlags): ProposalDisclosure {
+  return {
+    shareCv: flags.shareCv || flags.legacyContact,
+    shareMedical: flags.shareMedical,
+  };
+}
+
+/**
+ * מפתחות שחוזרים ריקים רק בהצעה שנפתחה בדגל הישן, כדי שקוד ישן ימשיך לטעון
+ * את הכרטיס. אין בהם מידע.
+ */
+const LEGACY_PLACEHOLDER_KEYS: readonly string[] = PROPOSAL_NEVER_COLUMNS;
 
 /**
  * כל עמודה של students מסווגת כאן: או שהפונקציה רשאית להחזיר אותה, או שהיא
@@ -154,14 +186,16 @@ async function mustInsert(table: string, row: JsonRecord) {
 }
 
 async function setDisclosure({
-  shareContact,
+  shareCv,
   shareMedical,
-}: ProposalDisclosure) {
+  legacyContact,
+}: ProposalFlags) {
   const { error } = await admin
     .from("shidduchim")
     .update({
-      share_contact_details: shareContact,
+      share_cv: shareCv,
       share_medical_info: shareMedical,
+      share_contact_details: legacyContact,
     })
     .eq("id", shidduchId);
   if (error) throw new Error(`עדכון פתיחה נכשל: ${error.message}`);
@@ -190,7 +224,6 @@ async function expectedByTypeScript(
   expect(error, error?.message).toBeNull();
   const redacted = redactProposalStudent(
     asRecord(data, "שורת ה-select של ההצעה"),
-    disclosure,
   );
   return { ...redacted, author_info: withoutFillReason(redacted.author_info) };
 }
@@ -377,7 +410,7 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
   });
 
   test("קריאה ישירה של students: מי שקיבל הצעה אינו מקבל את השורה, בשום פתיחה", async () => {
-    for (const disclosure of DISCLOSURES) {
+    for (const disclosure of FLAG_COMBINATIONS) {
       // Arrange
       await setDisclosure(disclosure);
 
@@ -404,7 +437,7 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
   });
 
   test("קריאה ישירה של הטבלאות המקושרות: ריקות, גם כשהכול נפתח", async () => {
-    for (const disclosure of DISCLOSURES) {
+    for (const disclosure of FLAG_COMBINATIONS) {
       // Arrange
       await setDisclosure(disclosure);
 
@@ -456,35 +489,59 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
     expect(whenShared).toBe(true);
   });
 
-  test("הפונקציה, בכל צירוף פתיחה: בדיוק המפתחות של הווריאנט, מפתח מול מפתח מול הקוד", async () => {
-    for (const disclosure of DISCLOSURES) {
-      const label = JSON.stringify(disclosure);
+  test("הפונקציה, בכל צירוף דגלים: אף פרט התקשרות, ומפתח מול מפתח מול הקוד", async () => {
+    for (const flags of FLAG_COMBINATIONS) {
+      const label = JSON.stringify(flags);
+      const disclosure = effectiveDisclosure(flags);
       // Arrange
-      await setDisclosure(disclosure);
+      await setDisclosure(flags);
 
       // Act
       const actual = asRecord(await proposalCard(viewer, groomId), label);
       const expected = await expectedByTypeScript(disclosure);
+      const cvDisclosure = await viewer.rpc("get_proposal_cv_disclosure", {
+        p_student_id: groomId,
+      });
 
-      // Assert: אותו תוכן בדיוק כמו ה-select + החיתוך של הקוד
+      // Assert: סריקה של כל התשובה - אף ערך של פרט התקשרות אינו בה
+      const json = JSON.stringify(actual);
+      for (const value of CONTACT_VALUES) {
+        expect(json.includes(value), `${label} ${value}`).toBe(false);
+      }
+      // המפתחות של טלפון וכתובת: אינם קיימים, או ריקים (הצעה מהדגל הישן)
+      const placeholders = flags.legacyContact ? LEGACY_PLACEHOLDER_KEYS : [];
+      for (const key of LEGACY_PLACEHOLDER_KEYS) {
+        expect(actual[key] ?? null, `${label} ${key}`).toBeNull();
+        expect(key in actual, `${label} ${key}`).toBe(flags.legacyContact);
+      }
+      // אותו תוכן בדיוק כמו ה-select + החיתוך של הקוד
+      const { phone, street, house, ...card } = actual;
+      void phone;
+      void street;
+      void house;
       expect(Object.keys(actual).sort(), label).toEqual(
-        Object.keys(expected).sort(),
+        [...Object.keys(expected), ...placeholders].sort(),
       );
-      expect(normalized(actual), label).toEqual(normalized(expected));
-      // ה-schema של הווריאנט מקבל את התשובה כמות שהיא
+      expect(normalized(card), label).toEqual(normalized(expected));
+      // ה-schema של הווריאנט מקבל את התשובה, ואינו מעביר את המפתחות הריקים
       const parsed = parseProposalRow(actual, disclosure);
       expect(parsed.success, label).toBe(true);
+      for (const key of LEGACY_PLACEHOLDER_KEYS) {
+        expect(key in (parsed.success ? parsed.data : {}), label).toBe(false);
+      }
 
-      // פרטי התקשרות: המפתחות והערכים רק כשנפתחו
-      const json = JSON.stringify(actual);
-      for (const key of CONTACT_KEYS) {
-        expect(key in actual, `${label} ${key}`).toBe(disclosure.shareContact);
-      }
-      for (const value of Object.values(CONTACT)) {
-        expect(json.includes(value), `${label} ${value}`).toBe(
-          disclosure.shareContact,
-        );
-      }
+      // הקו״ח: רק כשהשדכן שיתף (או בהצעה ישנה שנפתחה בדגל הישן)
+      expect("cv_url" in actual, label).toBe(disclosure.shareCv);
+      expect(json.includes(CV_URL), label).toBe(disclosure.shareCv);
+      expect(cvDisclosure.error, label).toBeNull();
+      expect(cvDisclosure.data, label).toEqual([
+        {
+          share_cv: disclosure.shareCv,
+          legacy_share_contact: flags.legacyContact,
+        },
+      ]);
+      // סוג הטלפון הוא העדפה: מוצג תמיד
+      expect(actual.cellphone_type, label).toBe("kosher");
       // הצהרה רפואית: רק כשנפתחה
       expect("medical_records" in actual, label).toBe(disclosure.shareMedical);
       expect(json.includes(MEDICAL_DETAILS), label).toBe(
@@ -505,7 +562,11 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
 
   test("כל עמודה של students מסווגת: מוחזרת בהצעה או חסומה לתמיד", async () => {
     // Arrange
-    await setDisclosure({ shareContact: true, shareMedical: true });
+    await setDisclosure({
+      shareCv: true,
+      shareMedical: true,
+      legacyContact: false,
+    });
     const { data: fullRow, error } = await admin
       .from("students")
       .select("*")
@@ -515,9 +576,12 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
     const tableColumns = Object.keys(asRecord(fullRow, "שורת students"));
     const allowed: readonly string[] = [
       ...PROPOSAL_STUDENT_COLUMNS,
-      ...PROPOSAL_CONTACT_COLUMNS,
+      ...PROPOSAL_CV_COLUMNS,
     ];
-    const never: readonly string[] = NEVER_IN_PROPOSAL;
+    const never: readonly string[] = [
+      ...NEVER_IN_PROPOSAL,
+      ...PROPOSAL_NEVER_COLUMNS,
+    ];
 
     // Act
     const actual = asRecord(await proposalCard(viewer, groomId), "הכול פתוח");
@@ -532,6 +596,33 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
     expect(unclassified, "עמודה חדשה ב-students שלא סווגה").toEqual([]);
     expect(allowed.filter((column) => never.includes(column))).toEqual([]);
     expect([...returnedColumns].sort()).toEqual([...allowed].sort());
+  });
+
+  test("מי שאינו צופה דרך הצעה אינו מקבל דבר מ-get_proposal_cv_disclosure", async () => {
+    // Arrange
+    await setDisclosure({
+      shareCv: true,
+      shareMedical: true,
+      legacyContact: true,
+    });
+    const matchmaker = await clientAs(admin, TEST_USER_EMAIL);
+
+    // Act
+    const asMatchmaker = await matchmaker.rpc("get_proposal_cv_disclosure", {
+      p_student_id: groomId,
+    });
+    const noProposal = await viewer.rpc("get_proposal_cv_disclosure", {
+      p_student_id: strangerGroomId,
+    });
+    const otherSideOnly = await viewer.rpc("get_proposal_cv_disclosure", {
+      p_student_id: otherSideGroomId,
+    });
+
+    // Assert
+    for (const result of [asMatchmaker, noProposal, otherSideOnly]) {
+      expect(result.error, result.error?.message).toBeNull();
+      expect(result.data).toEqual([]);
+    }
   });
 
   test("בלי הצעה שחושפת את הכרטיס: לא הפונקציה ולא הטבלה מחזירות דבר", async () => {

@@ -8,7 +8,7 @@ import { withoutFillReason } from "@/features/students/lib/author-info";
 import type { LoadedStudentCard } from "@/features/students/lib/load-student-card";
 import {
   redactProposalStudent,
-  type ProposalDisclosure,
+  withoutFamilyContact,
 } from "@/features/students/lib/student-proposal-card";
 
 /**
@@ -50,19 +50,23 @@ function limitFillReason<R extends { author_info: object | null }>(
 export function shapeStudentCard(
   card: LoadedStudentCard,
   viewer: CardViewer,
-  disclosure: ProposalDisclosure | null,
 ): ShapedStudentCard {
   switch (card.variant) {
     case "anonymous":
       // גולש אנונימי אינו מנהל ואינו הממלא
+      // הכרטיס הציבורי אינו מציג פרטי קשר של אף אדם: טלפון ואימייל של
+      // ההורים ושל הממלא נחתכים כאן, לפני שהשורה מגיעה לרינדור (הממליצים
+      // נשלפים מלכתחילה בלי טלפון ואימייל)
       return {
         audience: "anonymous",
-        student: limitFillReason(card.row, false),
+        student: withoutFamilyContact(limitFillReason(card.row, false)),
       };
     case "anonymous-basic":
       return {
         audience: "anonymous",
-        student: limitFillReason(toAnonymousRowFromBasic(card.row), false),
+        student: withoutFamilyContact(
+          limitFillReason(toAnonymousRowFromBasic(card.row), false),
+        ),
       };
     case "basic": {
       const row = parentsInfoFromNames(card.row);
@@ -73,11 +77,9 @@ export function shapeStudentCard(
     }
     case "proposal": {
       // שורת הצעה אינה נושאת user_id, ולכן ההסבר גלוי רק למנהל
+      // פרטי ההתקשרות שבתוך ה-JSON נחתכים תמיד: הצד השני אינו מקבל אותם
       const row = limitFillReason(card.row, viewer.isAdmin);
-      return {
-        audience: "member",
-        student: disclosure ? redactProposalStudent(row, disclosure) : row,
-      };
+      return { audience: "member", student: redactProposalStudent(row) };
     }
     case "full":
       return {

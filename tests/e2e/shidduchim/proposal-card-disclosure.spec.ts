@@ -7,22 +7,21 @@ import {
 
 /**
  * הכרטיס כפי שמנהל כרטיס שקיבל הצעת שידוך רואה אותו: מלא, בלי פרטי
- * התקשרות ובלי הצהרה רפואית - אלא אם השדכן פתח אותם להצעה הזו.
+ * התקשרות - תמיד - ובלי קו״ח והצהרה רפואית, אלא אם השדכן פתח אותם להצעה הזו.
  *
  * בדיקות טהורות על אובייקט סינתטי, בלי מסד ובלי דפדפן.
  */
 
-const CLOSED = { shareContact: false, shareMedical: false };
-const OPEN = { shareContact: true, shareMedical: true };
+const CLOSED = { shareCv: false, shareMedical: false };
+const OPEN = { shareCv: true, shareMedical: true };
 
-/** העמודות שאסור שיישלפו כשההתקשרות סגורה */
-const CONTACT_COLUMNS = [
-  "phone",
-  "street",
-  "house",
-  "cellphone_type",
-  "cv_url",
-];
+/** פרטי ההתקשרות של המיועד/ת: אסור שיישלפו בשום פתיחה */
+const CONTACT_COLUMNS = ["phone", "street", "house"];
+
+/** שמות הפריטים ברמה העליונה של ה-select (כך "cellphone_type" אינו "phone") */
+function selectedColumns(select: string): string[] {
+  return select.split(/,\s*/).map((item) => item.trim());
+}
 
 const PARENT_PHONE = "050-0000000";
 const PARENT_EMAIL = "parent@example.com";
@@ -63,14 +62,16 @@ function buildStudentRow() {
 }
 
 test.describe("ה-select של כרטיס בהצעה", () => {
-  test("ברירת מחדל: בלי עמודות התקשרות ובלי הצהרה רפואית", () => {
+  test("ברירת מחדל: בלי עמודות התקשרות, בלי קו״ח ובלי הצהרה רפואית", () => {
     // Act
     const select = buildProposalStudentSelect(CLOSED);
 
     // Assert
-    for (const column of CONTACT_COLUMNS) {
-      expect(select).not.toContain(column);
+    for (const column of [...CONTACT_COLUMNS, "cv_url"]) {
+      expect(selectedColumns(select)).not.toContain(column);
     }
+    // סוג הטלפון הוא העדפה ולא פרט התקשרות
+    expect(selectedColumns(select)).toContain("cellphone_type");
     expect(select).not.toContain("medical_records");
     // ממליצים כן נשלפים - בלי טלפון ואימייל
     expect(select).toContain("references(id, reference_type, name)");
@@ -106,19 +107,22 @@ test.describe("ה-select של כרטיס בהצעה", () => {
     }
   });
 
-  test("כשהשדכן פותח - נוספות עמודות ההתקשרות והרפואה", () => {
+  test("כשהשדכן פותח - נוספים הקו״ח והרפואה, ופרטי ההתקשרות עדיין לא", () => {
     // Act
     const select = buildProposalStudentSelect(OPEN);
 
     // Assert
-    for (const column of CONTACT_COLUMNS) {
-      expect(select).toContain(column);
-    }
+    expect(selectedColumns(select)).toContain("cv_url");
     expect(select).toContain("medical_records(*)");
-    expect(select).toContain("references(*)");
+    for (const column of CONTACT_COLUMNS) {
+      expect(selectedColumns(select)).not.toContain(column);
+    }
+    expect(select).toContain("references(id, reference_type, name)");
+    // "partner_preferences(*)" מכיל את המחרוזת, ולכן בודקים את ה-embed עצמו
+    expect(select).not.toMatch(/(?<![a-z_])references\(\*\)/);
   });
 
-  test("ת.ז. אינה נשלפת לעולם, גם כשההתקשרות פתוחה", () => {
+  test("ת.ז. אינה נשלפת לעולם, גם כשהכול פתוח", () => {
     // Act / Assert
     expect(buildProposalStudentSelect(CLOSED)).not.toContain("identity_number");
     expect(buildProposalStudentSelect(OPEN)).not.toContain("identity_number");
@@ -131,7 +135,7 @@ test.describe("חיתוך פרטי קשר מעמודות JSON", () => {
     const row = buildStudentRow();
 
     // Act
-    const redacted = redactProposalStudent(row, CLOSED);
+    const redacted = redactProposalStudent(row);
 
     // Assert
     const serialized = JSON.stringify(redacted);
@@ -144,7 +148,7 @@ test.describe("חיתוך פרטי קשר מעמודות JSON", () => {
 
   test("טלפון הרב המלווה נחתך והשם נשאר", () => {
     // Act
-    const redacted = redactProposalStudent(buildStudentRow(), CLOSED);
+    const redacted = redactProposalStudent(buildStudentRow());
 
     // Assert
     const serialized = JSON.stringify(redacted);
@@ -155,7 +159,7 @@ test.describe("חיתוך פרטי קשר מעמודות JSON", () => {
 
   test("שורה בלי divorce_details לא נשברת", () => {
     // Act
-    const redacted = redactProposalStudent(buildStudentRow(), CLOSED) as {
+    const redacted = redactProposalStudent(buildStudentRow()) as {
       previous_partners: { divorce_details: unknown }[];
     };
 
@@ -169,7 +173,7 @@ test.describe("חיתוך פרטי קשר מעמודות JSON", () => {
     const row = buildStudentRow();
 
     // Act
-    redactProposalStudent(row, CLOSED);
+    redactProposalStudent(row);
 
     // Assert
     expect(row.author_info.phone).toBe(PARENT_PHONE);
@@ -177,14 +181,24 @@ test.describe("חיתוך פרטי קשר מעמודות JSON", () => {
     expect(row.parents_info.father.phone).toBe(PARENT_PHONE);
   });
 
-  test("כשההתקשרות פתוחה השורה עוברת כמות שהיא", () => {
+  test("אין מצב 'פתוח': החיתוך חל תמיד, ומחזיר העתק", () => {
     // Arrange
     const row = buildStudentRow();
 
     // Act
-    const result = redactProposalStudent(row, OPEN);
+    const result = redactProposalStudent(row);
 
     // Assert
-    expect(result).toBe(row);
+    expect(result).not.toBe(row);
+    const serialized = JSON.stringify(result);
+    for (const value of [
+      PARENT_PHONE,
+      PARENT_EMAIL,
+      MOTHER_PHONE,
+      RABBI_PHONE,
+      "author-disclosure@example.test",
+    ]) {
+      expect(serialized).not.toContain(value);
+    }
   });
 });

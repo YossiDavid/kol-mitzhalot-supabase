@@ -226,11 +226,10 @@ async function StudentPageContent({
 
   // חיתוך פרטי ההתקשרות שחבויים בעמודות ה-JSON וההסבר "מדוע מילאתי" (למנהלים
   // ולממלא בלבד). חייב לקרות כאן, לפני שהשורה מגיעה לרינדור.
-  const shaped = shapeStudentCard(
-    loaded.card,
-    { userId: user?.id ?? null, isAdmin },
-    isProposalView && access ? access : null,
-  );
+  const shaped = shapeStudentCard(loaded.card, {
+    userId: user?.id ?? null,
+    isAdmin,
+  });
 
   // פידבק אנשי צוות (staffFeedback, נשלף למעלה) גלוי לכל צופה בכרטיס -
   // גם בענף הציבורי (קישור השיתוף)

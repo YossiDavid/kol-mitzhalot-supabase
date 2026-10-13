@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import calculateAge from "@/lib/calculateAge";
 import {
+  REFERENCES_WITHOUT_CONTACT,
   buildSelect,
   embedFragment,
   pickColumns,
@@ -12,8 +13,10 @@ import {
 
 /**
  * העמודות שנשלפות לגולש לא מחובר. שום שדה רגיש (ת.ז./טלפון/סוג מכשיר/רחוב/
- * בית/קו"ח/user_id/institution_id) לא מופיע כאן. החריג המוסכם הוא הממליצים
- * (`references`), שמוצגים במלואם לבקשת הלקוח.
+ * בית/קו"ח/user_id/institution_id) לא מופיע כאן, והכרטיס הציבורי אינו מציג
+ * פרטי קשר של אף אדם: הממליצים נשלפים בלי טלפון ואימייל, והטלפון והאימייל
+ * שבתוך `parents_info` ו-`author_info` נחתכים לפני הרינדור
+ * (shape-student-card.ts, withoutFamilyContact).
  *
  * `nickname` נחשף בכוונה גם בתצוגה הציבורית: זהו כינוי פשוט שמסייע בזיהוי,
  * ולא פרט מזהה כמו ת.ז. או טלפון.
@@ -49,6 +52,8 @@ const ANONYMOUS_STUDENT_EMBEDS = [
 const anonymousStudentSchema = z.object({
   ...pickColumns(ANONYMOUS_STUDENT_COLUMNS),
   ...pickEmbeds(ANONYMOUS_STUDENT_EMBEDS),
+  // גם אם נשלפו בטעות, טלפון ואימייל של ממליץ נחתכים כאן
+  references: REFERENCES_WITHOUT_CONTACT,
 });
 
 export type AnonymousStudentRow = z.infer<typeof anonymousStudentSchema>;
@@ -69,7 +74,8 @@ export type PublicStudent = Omit<
 export const ANONYMOUS_STUDENT_SELECT = buildSelect(ANONYMOUS_STUDENT_COLUMNS, [
   embedFragment("education_history"),
   embedFragment("employment_history"),
-  embedFragment("references", "id, reference_type, name, phone, email"),
+  // בלי טלפון ואימייל: הכרטיס הציבורי אינו מציג פרטי קשר של אף אדם
+  embedFragment("references", "id, reference_type, name"),
 ]);
 
 /**

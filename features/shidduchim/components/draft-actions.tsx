@@ -35,14 +35,14 @@ export default function DraftActions({
     recipientScope,
     noteForGroom: groomNote,
     noteForBride: brideNote,
-    shareContactDetails,
+    shareCv,
     shareMedicalInfo,
     shareGroomPhoto,
   }: {
     recipientScope: "both" | "groom_only" | "bride_only";
     noteForGroom: string;
     noteForBride: string;
-    shareContactDetails: boolean;
+    shareCv: boolean;
     shareMedicalInfo: boolean;
     shareGroomPhoto: boolean;
   }): Promise<string | void> => {
@@ -58,7 +58,7 @@ export default function DraftActions({
           recipientScope,
           noteForGroom: groomNote,
           noteForBride: brideNote,
-          shareContactDetails,
+          shareCv,
           shareMedicalInfo,
           shareGroomPhoto,
         }),

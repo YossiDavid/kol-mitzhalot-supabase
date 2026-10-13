@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import {
   REFERENCES_WITHOUT_CONTACT,
+  STUDENT_COLUMN_SHAPE,
   buildSelect,
   embedFragment,
   pickColumns,
@@ -18,22 +19,25 @@ import {
  * האחרים: ההגבלה חייבת לקרות כבר ב-select ולא ב-JSX, כי כל מה שנשלף עלול
  * להגיע ל-HTML שנשלח ללקוח.
  *
- * ברירת המחדל: הכרטיס במלואו, בלי פרטי התקשרות ובלי הצהרה רפואית. יצירת
- * הקשר בין הצדדים עוברת דרך השדכן, והוא זה שיכול לפתוח כל אחד משני
- * הסוגים להצעה מסוימת (shidduchim.share_contact_details / share_medical_info).
+ * הצד השני בהצעה לעולם אינו מקבל פרטי התקשרות - לא של המיועד/ת (טלפון,
+ * כתובת), ולא של ההורים, הממליצים, ממלא הכרטיס או הרב שליווה גירושין. יצירת
+ * הקשר בין הצדדים עוברת דרך השדכן בלבד. מה שהשדכן כן בוחר, לכל הצעה בנפרד:
+ * לשתף את קובץ הקו״ח (shidduchim.share_cv) ולפתוח את ההצהרה הרפואית
+ * (share_medical_info).
  *
  * מה שאי אפשר לחתוך ב-select הוא מפתחות בתוך עמודות JSONB (טלפון של הורה,
- * טלפון הרב המלווה בגירושין). אותם חותכת `redactProposalStudent`, שחייבת
- * לרוץ על השורה לפני שהיא מגיעה לרינדור.
+ * טלפון הרב המלווה בגירושין). אותם חותכת `redactProposalStudent`, שרצה תמיד
+ * על השורה לפני שהיא מגיעה לרינדור.
  */
 
 /**
  * עמודות הכרטיס בלי פרטי התקשרות וזיהוי.
  *
- * מה שאינו כאן במכוון: `phone`, `street`, `house`,
- * `cellphone_type`, `cv_url` (קובץ הקו״ח מכיל פרטי קשר), וגם `user_id`,
- * `image_url`, `institution_id` ושדות הניהול הפנימיים - הכרטיס לא מציג
- * אותם, ואין סיבה שיישלפו.
+ * מה שאינו כאן במכוון: `phone`, `street`, `house` (לעולם לא), `cv_url` (רק
+ * כשהשדכן שיתף, ראו PROPOSAL_CV_COLUMNS), וגם `user_id`, `image_url`,
+ * `institution_id` ושדות הניהול הפנימיים - הכרטיס לא מציג אותם, ואין סיבה
+ * שיישלפו. `cellphone_type` (כשר / חכם) כן כאן: זו העדפה כמו כיוון החיים
+ * וכיסוי הראש, לא פרט התקשרות.
  */
 export const PROPOSAL_STUDENT_COLUMNS = [
   "id",
@@ -52,6 +56,7 @@ export const PROPOSAL_STUDENT_COLUMNS = [
   "head_cover_type",
   "about",
   "in_shidduchim",
+  "cellphone_type",
   "parents_info",
   "family_info",
   "author_info",
@@ -60,16 +65,22 @@ export const PROPOSAL_STUDENT_COLUMNS = [
   "third_party_proposals_approved_at",
 ] as const satisfies readonly StudentColumn[];
 
-/** נוספות רק כשהשדכן פתח את פרטי ההתקשרות להצעה */
-export const PROPOSAL_CONTACT_COLUMNS = [
-  "phone",
-  "street",
-  "house",
-  "cellphone_type",
+/** נוספת רק כשהשדכן בחר לשתף את קובץ הקו״ח בהצעה */
+export const PROPOSAL_CV_COLUMNS = [
   "cv_url",
 ] as const satisfies readonly StudentColumn[];
 
-/** הטבלאות שנשלפות תמיד (ממליצים והצהרה רפואית נקבעים לפי הפתיחה) */
+/**
+ * פרטי ההתקשרות של המיועד/ת: אינם חלק מכרטיס בהצעה בשום מצב. הרשימה קיימת
+ * כדי שהבדיקות יוודאו שאף אחת מהן אינה נשלפת ואינה חוזרת מהמסד.
+ */
+export const PROPOSAL_NEVER_COLUMNS = [
+  "phone",
+  "street",
+  "house",
+] as const satisfies readonly StudentColumn[];
+
+/** הטבלאות שנשלפות תמיד (ההצהרה הרפואית נקבעת לפי הפתיחה) */
 const PROPOSAL_EMBEDS = [
   "education_history",
   "employment_history",
@@ -77,53 +88,57 @@ const PROPOSAL_EMBEDS = [
   "previous_partners",
 ] as const satisfies readonly StudentEmbed[];
 
-const closedProposalSchema = z.object({
+const baseProposalSchema = z.object({
   ...pickColumns(PROPOSAL_STUDENT_COLUMNS),
+  // אופציונלי רק כדי שכרטיס ייטען גם מול מסד שעוד לא קיבל את
+  // 20261022090000_proposal_cv_flag.sql (שם הפונקציה אינה מחזירה אותו תמיד)
+  cellphone_type: STUDENT_COLUMN_SHAPE.cellphone_type.optional(),
   ...pickEmbeds(PROPOSAL_EMBEDS),
   references: REFERENCES_WITHOUT_CONTACT,
 });
 
-const closedMedicalProposalSchema = closedProposalSchema.extend(
+const medicalProposalSchema = baseProposalSchema.extend(
   pickEmbeds(["medical_records"]),
 );
 
-const openProposalSchema = closedProposalSchema.extend({
-  ...pickColumns(PROPOSAL_CONTACT_COLUMNS),
-  ...pickEmbeds(["references"]),
-});
+const cvProposalSchema = baseProposalSchema.extend(
+  pickColumns(PROPOSAL_CV_COLUMNS),
+);
 
-const openMedicalProposalSchema = openProposalSchema.extend(
+const cvMedicalProposalSchema = cvProposalSchema.extend(
   pickEmbeds(["medical_records"]),
 );
 
 /**
- * שורת הכרטיס בהצעה. עמודות ההתקשרות קיימות בטיפוס רק בווריאנטים
- * שנפתחו להן, ולכן קוד שניגש ל-`phone` על כרטיס סגור לא מתקמפל.
+ * שורת הכרטיס בהצעה. `cv_url` ו-`medical_records` קיימים בטיפוס רק בווריאנטים
+ * שנפתחו להם; טלפון, כתובת ופרטי קשר של ממליצים אינם קיימים באף אחד מהם,
+ * ולכן קוד שניגש ל-`phone` על כרטיס בהצעה לא מתקמפל. ה-schema חותך כל מפתח
+ * שלא הוצהר, גם אם המסד החזיר אותו.
  */
 export type ProposalStudentRow =
-  | z.infer<typeof closedProposalSchema>
-  | z.infer<typeof closedMedicalProposalSchema>
-  | z.infer<typeof openProposalSchema>
-  | z.infer<typeof openMedicalProposalSchema>;
+  | z.infer<typeof baseProposalSchema>
+  | z.infer<typeof medicalProposalSchema>
+  | z.infer<typeof cvProposalSchema>
+  | z.infer<typeof cvMedicalProposalSchema>;
 
 /** מאמת את השורה מול ה-schema שמתאים למה שהשדכן פתח להצעה */
 export function parseProposalRow(
   data: unknown,
-  { shareContact, shareMedical }: ProposalDisclosure,
+  { shareCv, shareMedical }: ProposalDisclosure,
 ): z.ZodSafeParseResult<ProposalStudentRow> {
-  if (shareContact) {
+  if (shareCv) {
     return shareMedical
-      ? openMedicalProposalSchema.safeParse(data)
-      : openProposalSchema.safeParse(data);
+      ? cvMedicalProposalSchema.safeParse(data)
+      : cvProposalSchema.safeParse(data);
   }
   return shareMedical
-    ? closedMedicalProposalSchema.safeParse(data)
-    : closedProposalSchema.safeParse(data);
+    ? medicalProposalSchema.safeParse(data)
+    : baseProposalSchema.safeParse(data);
 }
 
 export type ProposalDisclosure = {
-  /** השדכן פתח פרטי התקשרות (טלפון, כתובת, קו״ח) */
-  shareContact: boolean;
+  /** השדכן בחר לשתף את קובץ הקו״ח */
+  shareCv: boolean;
   /** השדכן פתח את ההצהרה הרפואית */
   shareMedical: boolean;
 };
@@ -137,24 +152,22 @@ export type ProposalDisclosure = {
  * מאותן רשימות, ו-proposal-card-gate.spec.ts משווה את תשובת הפונקציה אליו
  * מפתח מול מפתח - שינוי כאן בלי שינוי בפונקציה (או להפך) מפיל את הבדיקה.
  *
- * `references` נשלפת בלי טלפון ואימייל כשההתקשרות סגורה - השמות וסוגי
- * הממליצים הם עיקר הערך שלה, ובלעדיהם המקטע היה נעלם לגמרי.
+ * `references` נשלפת תמיד בלי טלפון ואימייל - השמות וסוגי הממליצים הם עיקר
+ * הערך שלה, ובלעדיהם המקטע היה נעלם לגמרי.
  * `medical_records` פשוט לא נשלפת כשהיא סגורה; ה-RLS חוסם אותה ממילא,
  * וזו שכבת ההגנה השנייה.
  */
 export function buildProposalStudentSelect({
-  shareContact,
+  shareCv,
   shareMedical,
 }: ProposalDisclosure): string {
-  const columns = shareContact
-    ? [...PROPOSAL_STUDENT_COLUMNS, ...PROPOSAL_CONTACT_COLUMNS]
+  const columns = shareCv
+    ? [...PROPOSAL_STUDENT_COLUMNS, ...PROPOSAL_CV_COLUMNS]
     : PROPOSAL_STUDENT_COLUMNS;
 
   const embeds = [
     ...PROPOSAL_EMBEDS.map((embed) => embedFragment(embed)),
-    shareContact
-      ? embedFragment("references")
-      : embedFragment("references", "id, reference_type, name"),
+    embedFragment("references", "id, reference_type, name"),
     shareMedical ? embedFragment("medical_records") : null,
   ].filter((embed): embed is string => embed !== null);
 
@@ -302,32 +315,40 @@ function nonRecordJson(value: unknown): NonRecordJson {
 }
 
 /**
- * חותכת מהשורה את פרטי ההתקשרות שחבויים בתוך עמודות JSON. נקראת תמיד על
- * כרטיס שנצפה דרך הצעה, וכשההתקשרות פתוחה היא מחזירה את השורה כמות שהיא.
- * כשההתקשרות סגורה בטיפוס (`shareContact: false`) התוצאה היא
- * `RedactedProposalStudent` - בלי phone/email אצל ההורים ובפרטי הממלא.
+ * חותכת את פרטי ההתקשרות (טלפון, אימייל) מ-parents_info ומפרטי הממלא. משמשת
+ * גם את הכרטיס הציבורי (קישור השיתוף), שאינו מציג פרטי קשר של אף אדם.
+ */
+export function withoutFamilyContact<
+  T extends { parents_info?: unknown; author_info?: unknown },
+>(
+  row: T,
+): Omit<T, "parents_info" | "author_info"> &
+  Pick<RedactedProposalFields, "parents_info" | "author_info"> {
+  return {
+    ...row,
+    parents_info: redactParentsInfo(row.parents_info),
+    author_info: isRecord(row.author_info)
+      ? withoutContactKeys(row.author_info)
+      : null,
+  };
+}
+
+/**
+ * חותכת מהשורה את פרטי ההתקשרות שחבויים בתוך עמודות JSON: טלפון ואימייל של
+ * כל הורה ושל ממלא הכרטיס, והטלפון של הרב שליווה גירושין. רצה תמיד על כרטיס
+ * שנצפה דרך הצעה - אין מצב שבו הצד השני מקבל אותם. המסד כבר אינו מחזיר אותם
+ * (get_proposal_student_card), וזו שכבת ההגנה השנייה.
  *
  * העתק חדש ולא שינוי במקום - השורה מגיעה מהשאילתה ואין לגעת בה.
  */
 export function redactProposalStudent<T extends JsonRecord>(
   student: T,
-  disclosure: { shareContact: false },
-): RedactedProposalStudent<T>;
-export function redactProposalStudent<T extends JsonRecord>(
-  student: T,
-  disclosure: Pick<ProposalDisclosure, "shareContact">,
-): T | RedactedProposalStudent<T>;
-export function redactProposalStudent<T extends JsonRecord>(
-  student: T,
-  { shareContact }: Pick<ProposalDisclosure, "shareContact">,
-): T | RedactedProposalStudent<T> {
-  if (shareContact) return student;
+): RedactedProposalStudent<T> {
+  const { parents_info, author_info } = withoutFamilyContact(student);
   return {
     ...student,
-    parents_info: redactParentsInfo(student.parents_info),
-    author_info: isRecord(student.author_info)
-      ? withoutContactKeys(student.author_info)
-      : null,
+    parents_info,
+    author_info,
     previous_partners: redactPreviousPartners(student.previous_partners),
   };
 }

@@ -27,8 +27,10 @@ const bodySchema = z.object({
   noteForGroom: z.string().max(8000).optional().default(""),
   noteForBride: z.string().max(8000).optional().default(""),
   // מה מנהלי הכרטיסים יראו בכרטיס של הצד השני. סגור כברירת מחדל, גם
-  // כשהלקוח לא שלח כלום - הפתיחה היא בחירה אקטיבית של השדכן.
-  shareContactDetails: z.boolean().optional().default(false),
+  // כשהלקוח לא שלח כלום - הפתיחה היא בחירה אקטיבית של השדכן. פרטי התקשרות
+  // אינם נפתחים לצד השני בשום מצב: shareContactDetails שלקוח ישן עוד שולח
+  // אינו מוצהר כאן, ולכן נזרק בלי שנקרא.
+  shareCv: z.boolean().optional().default(false),
   shareMedicalInfo: z.boolean().optional().default(false),
   // תמונות הבחור בכרטיס שרואה צד הכלה. פתוח כברירת מחדל: זו ההתנהגות
   // שהייתה תמיד, והשדכן סוגר אותה במפורש.
@@ -77,7 +79,7 @@ export async function POST(req: NextRequest) {
     recipientScope,
     noteForGroom,
     noteForBride,
-    shareContactDetails,
+    shareCv,
     shareMedicalInfo,
     shareGroomPhoto,
   } = parsed.data;
@@ -124,7 +126,7 @@ export async function POST(req: NextRequest) {
   const { data: pairRows, error: pairErr } = await admin
     .from("shidduchim")
     .select(
-      "id, status, shadchan_id, sent_at, note_for_groom, note_for_bride, recipient_scope, share_contact_details, share_medical_info, share_groom_photo",
+      "id, status, shadchan_id, sent_at, note_for_groom, note_for_bride, recipient_scope, share_cv, share_contact_details, share_medical_info, share_groom_photo",
     )
     .eq("groom_id", groomId)
     .eq("bride_id", brideId);
@@ -187,7 +189,9 @@ export async function POST(req: NextRequest) {
       note_for_bride: noteForBride || null,
       recipient_scope: null,
       sent_at: null,
-      share_contact_details: shareContactDetails,
+      share_cv: shareCv,
+      // הדגל הישן אינו נכתב עוד; טיוטה ישנה שנשמרה איתו מתאפסת כאן
+      share_contact_details: false,
       share_medical_info: shareMedicalInfo,
       share_groom_photo: shareGroomPhoto,
     };
@@ -273,7 +277,9 @@ export async function POST(req: NextRequest) {
     recipient_scope: recipientScope!,
     sent_at: null as string | null,
     updated_at: nowIso,
-    share_contact_details: shareContactDetails,
+    share_cv: shareCv,
+    // הדגל הישן אינו נכתב עוד: הצעה שנשלחת מעכשיו אינה נושאת אותו
+    share_contact_details: false,
     share_medical_info: shareMedicalInfo,
     share_groom_photo: shareGroomPhoto,
   };
@@ -291,6 +297,7 @@ export async function POST(req: NextRequest) {
         note_for_bride: rowToReuse.note_for_bride,
         recipient_scope: rowToReuse.recipient_scope,
         sent_at: rowToReuse.sent_at,
+        share_cv: rowToReuse.share_cv,
         share_contact_details: rowToReuse.share_contact_details,
         share_medical_info: rowToReuse.share_medical_info,
         share_groom_photo: rowToReuse.share_groom_photo,

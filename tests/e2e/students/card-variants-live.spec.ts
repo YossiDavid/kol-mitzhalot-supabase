@@ -43,6 +43,7 @@ const GROOM = {
   refFriendPhone: "0505555001",
   refFriendEmail: `friend-${T}@example.test`,
   rabbiPhone: "0506666001",
+  authorPhone: "0507777001",
   medical: `הצהרה-רפואית-חבויה-${T}`,
   city: "בית שמש",
   eduName: `ישיבת-לימוד-${T}`,
@@ -51,6 +52,20 @@ const GROOM = {
   refFriendName: `חבר-ממליץ-${T}`,
   about: `אודות-החתן-${T}`,
 };
+
+/** פרטי ההתקשרות של המיועד, ההורים, הממליצים, הממלא והרב: לעולם לא לצד השני ולא לציבור */
+const GROOM_CONTACT = [
+  GROOM.phone,
+  GROOM.street,
+  GROOM.fatherPhone,
+  GROOM.fatherEmail,
+  GROOM.motherPhone,
+  GROOM.refRabbiPhone,
+  GROOM.refFriendPhone,
+  GROOM.refFriendEmail,
+  GROOM.rabbiPhone,
+  GROOM.authorPhone,
+];
 
 const NOTICES = ["שגיאה בטעינת הפרופיל", "הכרטיס אינו זמין", "מיועד לא נמצא"];
 
@@ -96,12 +111,18 @@ async function readFavorites(): Promise<string[]> {
   return Array.isArray(value) ? (value as string[]) : [];
 }
 
-async function setDisclosure(shareContact: boolean, shareMedical: boolean) {
+/** legacyContact: הדגל הישן share_contact_details, כפי שנשאר על הצעות ישנות */
+async function setDisclosure(
+  shareCv: boolean,
+  shareMedical: boolean,
+  legacyContact = false,
+) {
   const { error } = await admin
     .from("shidduchim")
     .update({
-      share_contact_details: shareContact,
+      share_cv: shareCv,
       share_medical_info: shareMedical,
+      share_contact_details: legacyContact,
     })
     .eq("id", shidduchId);
   if (error) throw new Error(`עדכון פתיחה נכשל: ${error.message}`);
@@ -211,7 +232,7 @@ test.describe("וריאנטי הכרטיס מול המסד", () => {
       },
       author_info: {
         name: "אבא-ממלא",
-        phone: "0507777001",
+        phone: GROOM.authorPhone,
         email: "author-live@example.test",
         relation: "אב",
         relationType: "father",
@@ -419,23 +440,12 @@ test.describe("וריאנטי הכרטיס מול המסד", () => {
     await expect(page.getByText(GROOM.city).first()).toBeVisible();
     await expect(page.getByText(GROOM.eduName).first()).toBeVisible();
     await expect(page.getByText(GROOM.refRabbiName)).toBeVisible();
-    expectNone(html, [
-      GROOM.phone,
-      GROOM.street,
-      GROOM.cv,
-      GROOM.fatherPhone,
-      GROOM.fatherEmail,
-      GROOM.motherPhone,
-      GROOM.refRabbiPhone,
-      GROOM.refFriendPhone,
-      GROOM.refFriendEmail,
-      GROOM.rabbiPhone,
-      GROOM.medical,
-    ]);
+    expectNone(html, [...GROOM_CONTACT, GROOM.cv, GROOM.medical]);
+    await expect(page.locator(`a[href="${GROOM.cv}"]`)).toHaveCount(0);
     await page.context().close();
   });
 
-  test("3. הצעה עם פרטי התקשרות: טלפונים גלויים, רפואי עדיין לא", async ({
+  test("3. הצעה עם קו״ח משותף: קישור הקו״ח גלוי, פרטי קשר ורפואי לא", async ({
     browser,
   }) => {
     await setDisclosure(true, false);
@@ -445,17 +455,28 @@ test.describe("וריאנטי הכרטיס מול המסד", () => {
       `/app/students/${groomId}`,
     );
     const html = await expectCardRendered(page, GROOM_LAST);
-    await expect(
-      page.getByRole("link", { name: GROOM.phone }).first(),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("link", { name: GROOM.refFriendPhone }),
-    ).toBeVisible();
-    expectNone(html, [GROOM.medical]);
+    await expect(page.locator(`a[href="${GROOM.cv}"]`).first()).toBeVisible();
+    await expect(page.getByText(GROOM.refFriendName)).toBeVisible();
+    expectNone(html, [...GROOM_CONTACT, GROOM.medical]);
     await page.context().close();
   });
 
-  test("4א. הצעה עם הצהרה רפואית: רפואי גלוי, קשר עדיין לא", async ({
+  test("3ב. הצעה ישנה שנפתחה בדגל הישן: נשאר הקו״ח בלבד, בלי פרטי קשר", async ({
+    browser,
+  }) => {
+    await setDisclosure(false, false, true);
+    const page = await openAs(
+      browser,
+      SECOND_PARENT_EMAIL,
+      `/app/students/${groomId}`,
+    );
+    const html = await expectCardRendered(page, GROOM_LAST);
+    await expect(page.locator(`a[href="${GROOM.cv}"]`).first()).toBeVisible();
+    expectNone(html, [...GROOM_CONTACT, GROOM.medical]);
+    await page.context().close();
+  });
+
+  test("4א. הצעה עם הצהרה רפואית: רפואי גלוי, קו״ח ופרטי קשר לא", async ({
     browser,
   }) => {
     await setDisclosure(false, true);
@@ -466,30 +487,23 @@ test.describe("וריאנטי הכרטיס מול המסד", () => {
     );
     const html = await expectCardRendered(page, GROOM_LAST);
     await expect(page.getByText(GROOM.medical)).toBeVisible();
-    expectNone(html, [
-      GROOM.phone,
-      GROOM.street,
-      GROOM.cv,
-      GROOM.fatherPhone,
-      GROOM.fatherEmail,
-      GROOM.refFriendPhone,
-      GROOM.rabbiPhone,
-    ]);
+    expectNone(html, [...GROOM_CONTACT, GROOM.cv]);
     await page.context().close();
   });
 
-  test("4ב. הצעה עם שניהם: קשר ורפואי גלויים", async ({ browser }) => {
-    await setDisclosure(true, true);
+  test("4ב. הצעה עם שניהם: קו״ח ורפואי גלויים, פרטי קשר עדיין לא", async ({
+    browser,
+  }) => {
+    await setDisclosure(true, true, true);
     const page = await openAs(
       browser,
       SECOND_PARENT_EMAIL,
       `/app/students/${groomId}`,
     );
-    await expectCardRendered(page, GROOM_LAST);
+    const html = await expectCardRendered(page, GROOM_LAST);
     await expect(page.getByText(GROOM.medical)).toBeVisible();
-    await expect(
-      page.getByRole("link", { name: GROOM.phone }).first(),
-    ).toBeVisible();
+    await expect(page.locator(`a[href="${GROOM.cv}"]`).first()).toBeVisible();
+    expectNone(html, GROOM_CONTACT);
     await page.context().close();
   });
 
@@ -512,21 +526,25 @@ test.describe("וריאנטי הכרטיס מול המסד", () => {
   test.describe("צופה לא מחובר", () => {
     test.use({ storageState: { cookies: [], origins: [] } });
 
-    // טלפון ואימייל של ההורים מוצגים בכרטיס הציבורי בכוונה (parent-card.tsx),
-    // ולכן אינם נבדקים כאן; פרטי המיועד עצמו, הרפואי והת.ז. אסורים.
-    test("6. אנונימי: כרטיס רגיל בלי קשר, רפואי או ת.ז.", async ({ page }) => {
+    // הכרטיס הציבורי אינו מציג פרטי קשר של אף אדם: לא של המיועד, ולא של
+    // ההורים, הממליצים או הממלא. השמות עצמם מוצגים. הרפואי והת.ז. אסורים.
+    test("6. אנונימי: כרטיס רגיל בלי פרטי קשר של אף אחד, רפואי או ת.ז.", async ({
+      page,
+    }) => {
       await page.goto(`/app/students/${groomId}`);
       const html = await expectCardRendered(page, GROOM_LAST);
       await expect(page.getByText(GROOM.about)).toBeVisible();
       await expect(page.getByText(GROOM.eduName).first()).toBeVisible();
+      await expect(page.getByText(GROOM.refFriendName)).toBeVisible();
       expectNone(html, [
-        GROOM.phone,
-        GROOM.street,
+        ...GROOM_CONTACT,
         GROOM.cv,
         GROOM.medical,
-        GROOM.rabbiPhone,
         "identity_number",
       ]);
+      await expect(
+        page.locator('a[href^="tel:"], a[href^="mailto:"]'),
+      ).toHaveCount(0);
     });
 
     test("7. אנונימי בסיסי: כרטיס צד שלישי שלא אושר", async ({ page }) => {
