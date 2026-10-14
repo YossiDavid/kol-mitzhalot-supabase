@@ -104,23 +104,74 @@ export function headCoverTypeToHebrew(type: string) {
   }
 }
 
-export function employmentCategoryToHebrew(category: string) {
-  switch (category) {
-    case "yeshiva":
-      return "לומד בישיבה";
-    case "kolel":
-      return "אברך כולל";
-    case "seminar":
-      return "תלמידת סמינר";
-    case "havruta":
-      return "לומד עם חברותא";
-    case "working":
-      return "עובד";
-    case "profession":
-      return "לומד מקצוע";
-    default:
-      return category;
-  }
+/** ניסוח לפי מגדר בעל הכרטיס; neutral כשהמגדר לא ידוע (צורת "/ת") */
+type GenderedLabel = { male: string; female: string; neutral: string };
+
+/** ערך אחד לכל המגדרים (למשל "תלמידת סמינר", שקיים רק בצד הנשי) */
+function sameForAll(label: string): GenderedLabel {
+  return { male: label, female: label, neutral: label };
+}
+
+/** תוויות category של employment_history, זהות לטופס הכרטיס (employment-section.ts) */
+const EMPLOYMENT_LABELS: Record<string, GenderedLabel> = {
+  yeshiva: {
+    male: "לומד בישיבה",
+    female: "לומדת בישיבה",
+    neutral: "לומד/ת בישיבה",
+  },
+  kolel: sameForAll("אברך כולל"),
+  seminar: sameForAll("תלמידת סמינר"),
+  havruta: {
+    male: "לומד עם חברותא",
+    female: "לומדת עם חברותא",
+    neutral: "לומד/ת עם חברותא",
+  },
+  working: { male: "עובד", female: "עובדת", neutral: "עובד/ת" },
+  profession: {
+    male: "לומד מקצוע",
+    female: "לומדת מקצוע",
+    neutral: "לומד/ת מקצוע",
+  },
+  at_home: sameForAll("בבית"),
+};
+
+/** ניסוח מקוצר לשורות צפופות (שולחן שידוכים, מועדפים, התאמה) */
+const EMPLOYMENT_COMPACT_OVERRIDES: Record<string, GenderedLabel> = {
+  yeshiva: sameForAll("בחור ישיבה"),
+  kolel: sameForAll("כולל"),
+  seminar: sameForAll("לומדת בסמינר"),
+};
+
+function pickByGender(
+  label: GenderedLabel,
+  gender: string | null | undefined,
+): string {
+  if (gender === "male") return label.male;
+  if (gender === "female") return label.female;
+  return label.neutral;
+}
+
+/**
+ * התעסוקה כפי שמוצגת בכרטיס, במגדר בעל הכרטיס ("עובד" / "עובדת"). כשהמגדר לא
+ * ידוע - צורה דו-מגדרית ("עובד/ת"). קטגוריה לא מוכרת מוחזרת כמו שהיא.
+ */
+export function employmentCategoryToHebrew(
+  category: string,
+  gender?: string | null,
+): string {
+  const label = EMPLOYMENT_LABELS[category];
+  return label ? pickByGender(label, gender) : category;
+}
+
+/** כמו employmentCategoryToHebrew, בניסוח מקוצר; ריק לקטגוריה לא מוכרת */
+export function employmentCompactLabel(
+  category: string | null | undefined,
+  gender?: string | null,
+): string {
+  if (!category) return "";
+  const label =
+    EMPLOYMENT_COMPACT_OVERRIDES[category] ?? EMPLOYMENT_LABELS[category];
+  return label ? pickByGender(label, gender) : "";
 }
 
 export function referenceTypeToHebrew(type: string) {

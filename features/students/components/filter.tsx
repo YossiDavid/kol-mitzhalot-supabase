@@ -16,6 +16,7 @@ import {
   useStudentQuery,
   type StudentQuery,
 } from "@/features/students/lib/student-query-context";
+import { StudentsCountSummary } from "@/features/students/components/students-count-summary";
 import { CommunityFilterField } from "@/features/students/components/community-filter";
 import { useCommunityOptions } from "@/features/students/lib/use-community-options";
 import type { CommunityFilter } from "@/features/students/lib/community-filter";
@@ -45,7 +46,7 @@ const STATUS_OPTIONS: Option[] = [
 const EMPLOYMENT_OPTIONS: Option[] = [
   { value: "yeshiva", label: "לומד/ת בישיבה" },
   { value: "kolel", label: "אברך כולל" },
-  { value: "havruta", label: "לומד עם חברותא" },
+  { value: "havruta", label: "לומד/ת עם חברותא" },
   { value: "seminar", label: "תלמידת סמינר" },
   { value: "profession", label: "לומד/ת מקצוע" },
   { value: "working", label: "עובד/ת" },
@@ -320,7 +321,8 @@ export default function FilterSection() {
   return (
     <>
       <PageHeader
-        title="רשימת פרחי אנ״ש"
+        title="מאגר קול מצהלות"
+        description={<StudentsCountSummary />}
         actions={
           <Button asChild variant="outline" className="max-md:hidden">
             <Link href={"/app"}>חזרה לעמוד הראשי</Link>

@@ -8,15 +8,20 @@ import {
   getChatsWithLastMessage,
   getFavoriteStudents,
   getShadchanApplicationStatus,
+  getStaffApplicationStatus,
   getLatestForumPosts,
   getOwnStudents,
+  getPoolCounts,
   getRecentShidduchim,
   getSentShidduchimCount,
 } from "@/features/dashboard/lib/queries";
 import { readFavorites } from "@/features/students/lib/favorites";
 import { getMyProposals } from "@/features/shidduchim/lib/proposals-data";
 import { ShadchanJoinBanner } from "@/features/dashboard/components/user/shadchan-join-banner";
-import { shadchanJoinPrompt } from "@/features/dashboard/lib/shadchan-join-prompt";
+import {
+  shadchanJoinPrompt,
+  staffJoinPrompt,
+} from "@/features/dashboard/lib/shadchan-join-prompt";
 import { readSignupPurpose } from "@/features/auth/lib/signup-purpose";
 import { getUser, hasRole } from "@/lib/user";
 import DashboardSkeleton from "@/features/dashboard/components/dashboard-skeleton";
@@ -84,6 +89,14 @@ async function DashboardSections() {
       applicationStatus: null,
     }) !== "none";
 
+  const isStaffOrAdmin = hasRole(user, "staff") || isAdmin;
+  const needsStaffApplicationStatus =
+    staffJoinPrompt({
+      signupPurpose,
+      isStaffOrAdmin,
+      applicationStatus: null,
+    }) !== "none";
+
   // הכרטיסים של המשתמש נשלפים פעם אחת: הם גם מציגים את מקטע הכרטיסים וגם
   // מסווגים את השיחות (כרטיס שלי = שיחה אישית)
   const ownStudentsPromise = user?.id
@@ -101,6 +114,8 @@ async function DashboardSections() {
     forumResult,
     chats,
     shadchanApplicationStatus,
+    staffApplicationStatus,
+    poolCounts,
   ] = await Promise.all([
     // מיועדים שעניינו אותך והוספת ללוח העבודה - מוצגים לשדכן ולמנהל בלבד
     isShadchanView
@@ -134,6 +149,12 @@ async function DashboardSections() {
     user?.id && needsShadchanApplicationStatus
       ? getShadchanApplicationStatus(supabase, user.id)
       : null,
+    // אותו עיקרון למי שנרשם כדי להיות איש צוות
+    user?.id && needsStaffApplicationStatus
+      ? getStaffApplicationStatus(supabase, user.id)
+      : null,
+    // גודל המאגר - לשדכן/מנהל בלבד; הורים לא רואים ספירות מאגר
+    isShadchanView ? getPoolCounts(supabase) : null,
   ]);
 
   const ownCards = ownStudentsResult.students;
@@ -163,6 +184,12 @@ async function DashboardSections() {
     applicationStatus: shadchanApplicationStatus,
   });
 
+  const staffPrompt = staffJoinPrompt({
+    signupPurpose,
+    isStaffOrAdmin,
+    applicationStatus: staffApplicationStatus,
+  });
+
   const activeShidduchimCount =
     activeShidduchimCountRaw ?? activeShidduchimData.length;
 
@@ -180,9 +207,13 @@ async function DashboardSections() {
       />
 
       {joinPrompt !== "none" && <ShadchanJoinBanner prompt={joinPrompt} />}
+      {staffPrompt !== "none" && (
+        <ShadchanJoinBanner prompt={staffPrompt} track="staff" />
+      )}
 
       {isShadchanView && (
         <ShadchanArea
+          poolCounts={poolCounts}
           activeShidduchim={activeShidduchimData}
           activeShidduchimCount={activeShidduchimCount}
           activeShidduchimFailed={activeShidduchimResult.failed}

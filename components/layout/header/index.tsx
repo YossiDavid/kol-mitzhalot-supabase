@@ -216,6 +216,9 @@ export default async function Header({
             highlightShadchanJoin={
               showShadchanJoin && readSignupPurpose(user) === "shadchan"
             }
+            highlightStaffJoin={
+              showStaffJoin && readSignupPurpose(user) === "staff"
+            }
           />
         ) : (
           <Suspense>

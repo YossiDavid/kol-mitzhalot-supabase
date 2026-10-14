@@ -79,7 +79,7 @@ export default async function AppLayout({
         <main className="container flex-1 px-3 py-4 md:px-4 md:py-5">
           {children}
         </main>
-        <Footer />
+        <Footer withToaster />
       </div>
     );
   }
@@ -93,6 +93,7 @@ export default async function AppLayout({
           highlightShadchanJoin={
             !!user && readSignupPurpose(user) === "shadchan"
           }
+          highlightStaffJoin={!!user && readSignupPurpose(user) === "staff"}
         />
         <SidebarInset>
           <ImpersonationBanner />

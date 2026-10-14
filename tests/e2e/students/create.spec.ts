@@ -206,17 +206,37 @@ test.describe("יצירת תלמיד חדש", () => {
     expect(created?.author_info).toMatchObject({ email: TEST_USER_EMAIL });
   });
 
-  test("המיועד/ת בעצמו/ה: פרטי ממלא הכרטיס מוסתרים ואינם חובה", async ({
+  test("המיועד/ת בעצמו/ה: רק שם מנהל/ת הכרטיס ואימייל; שאר פרטי הממלא מוסתרים", async ({
     page,
   }) => {
     // Arrange + Act
     await page.getByRole("radio", { name: CARD_FOR_LABELS.self }).check();
 
     // Assert
-    await expect(page.locator("#author-name")).toHaveCount(0);
+    await expect(page.getByLabel("שם מנהל/ת הכרטיס")).toBeVisible();
+    await expect(page.locator("#author-email")).toBeVisible();
     await expect(page.locator("#author-phone")).toHaveCount(0);
     await expect(relationSelect(page)).toHaveCount(0);
     await expect(page.locator("#author-fillReason")).toHaveCount(0);
+  });
+
+  test("המיועד/ת בעצמו/ה: שם מנהל/ת הכרטיס מתמלא משם החשבון וחובה", async ({
+    page,
+  }) => {
+    // Arrange
+    await page.getByRole("radio", { name: CARD_FOR_LABELS.self }).check();
+    await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
+    const nameField = page.locator("#author-name");
+
+    // Assert: מילוי מראש מהחשבון (Test User)
+    await expect(nameField).toHaveValue("Test User");
+
+    // Act: ריקון וניסיון להמשיך
+    await nameField.fill("");
+    await page.getByRole("button", { name: "המשך לשלב הבא" }).click();
+
+    // Assert
+    await expect(page.getByText("נא למלא שם מנהל/ת הכרטיס")).toBeVisible();
   });
 
   test("אימייל ממלא הכרטיס: מוצג בכל card_for ומתמלא מראש באימייל המשתמש", async ({

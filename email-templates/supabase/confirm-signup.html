@@ -70,6 +70,19 @@
         </tr>
         {{ end }}{{ end }}
 
+        <!-- הבהרה לנרשם כאיש צוות בלבד (signup_purpose = staff): ההרשמה הראשונית אינה בקשת הצטרפות -->
+        {{ if .Data.signup_purpose }}{{ if eq .Data.signup_purpose "staff" }}
+        <tr>
+          <td style="padding:0 32px 24px;text-align:right;">
+            <div dir="rtl" style="background:#f0f9fa;border:1px solid #cfe7ea;border-radius:10px;padding:14px 16px;color:#254c49;font-size:14px;line-height:1.7;text-align:right;">
+              <strong>נרשמת כאיש/ת צוות.</strong>
+              ההרשמה הראשונית נקלטה. כדי להצטרף כאיש/ת צוות, יש להיכנס למערכת,
+              לעבור אל הגדרות ← &quot;הצטרפות כאיש צוות&quot;, ולמלא את טופס הבקשה.
+            </div>
+          </td>
+        </tr>
+        {{ end }}{{ end }}
+
         <!-- קוד חלופי: סורקי קישורים צורכים את הקישור מראש; את הקוד אי אפשר לצרוך כך -->
         <tr>
           <td style="padding:0 32px 20px;text-align:center;">

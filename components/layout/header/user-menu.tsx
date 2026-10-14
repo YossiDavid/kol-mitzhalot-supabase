@@ -27,12 +27,15 @@ interface UserMenuProps {
   showStaffJoin?: boolean;
   /** נרשם כדי להיות שדכן: הכניסה לטופס ההצטרפות מודגשת ועולה לראש התפריט */
   highlightShadchanJoin?: boolean;
+  /** נרשם כדי להיות איש צוות: הכניסה לטופס ההצטרפות מודגשת */
+  highlightStaffJoin?: boolean;
 }
 
 export function UserMenu({
   showShadchanJoin = false,
   showStaffJoin = false,
   highlightShadchanJoin = false,
+  highlightStaffJoin = false,
 }: UserMenuProps) {
   const router = useRouter();
 
@@ -88,13 +91,23 @@ export function UserMenu({
           </DropdownMenuItem>
         )}
         {showStaffJoin && (
-          <DropdownMenuItem asChild>
+          <DropdownMenuItem
+            asChild
+            className={
+              highlightStaffJoin
+                ? "bg-primary/10 font-bold text-primary"
+                : undefined
+            }
+          >
             <Link
               href="/app/settings/staff"
               className="flex items-center gap-2"
+              data-testid="user-menu-staff-join"
             >
               <GraduationCap className="h-4 w-4" />
-              הצטרפות כאיש צוות
+              {highlightStaffJoin
+                ? "השלמת הצטרפות כאיש צוות"
+                : "הצטרפות כאיש צוות"}
             </Link>
           </DropdownMenuItem>
         )}

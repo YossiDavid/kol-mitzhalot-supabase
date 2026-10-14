@@ -19,6 +19,7 @@ import { removeFavorite } from "@/features/students/lib/favorites";
 import { ClearFavoritesButton } from "@/features/students/components/clear-favorites-button";
 import StudentBox from "./student-box";
 import type { Student } from "./student-box";
+import { employmentCompactLabel } from "@/features/students/lib/profile-labels";
 import calculateAge from "@/lib/calculateAge";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -30,30 +31,6 @@ type Props = {
   onDragGenderChange: (gender: "male" | "female" | null) => void;
   onFavoritesChanged?: () => void;
 };
-
-function mapEmploymentToHebrew(
-  category: string,
-  gender: "male" | "female",
-): string {
-  switch (category) {
-    case "yeshiva":
-      return "בחור ישיבה";
-    case "seminar":
-      return "לומדת בסמינר";
-    case "at_home":
-      return "בבית";
-    case "havruta":
-      return "לומד עם חברותא";
-    case "kolel":
-      return "כולל";
-    case "profession":
-      return gender === "male" ? "לומד מקצוע" : "לומדת מקצוע";
-    case "working":
-      return gender === "male" ? "עובד" : "עובדת";
-    default:
-      return "";
-  }
-}
 
 export default function FavoritesGrid({
   initialFavorites,
@@ -175,7 +152,7 @@ export default function FavoritesGrid({
               age={Number(calculateAge(item.birth_date))}
               city={item.city}
               doingToday={item.employment_history?.map((emp) =>
-                mapEmploymentToHebrew(emp.category, item.gender),
+                employmentCompactLabel(emp.category, item.gender),
               )}
               father={{
                 name: `${item.parents_info?.father?.self?.name || ""} ${item.parents_info?.father?.self?.suffix || ""}`.trim(),

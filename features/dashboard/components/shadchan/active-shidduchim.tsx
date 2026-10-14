@@ -65,11 +65,14 @@ function lastInstitution(person: DetailsPerson): string | null {
   return names.at(-1) ?? null;
 }
 
-function occupation(person: DetailsPerson): string | null {
+function occupation(
+  person: DetailsPerson,
+  gender: "male" | "female",
+): string | null {
   const first = person.employment_history?.[0];
   if (first?.role?.trim()) return first.role.trim();
   if (first?.category?.trim()) {
-    return employmentCategoryToHebrew(first.category.trim());
+    return employmentCategoryToHebrew(first.category.trim(), gender);
   }
   return null;
 }
@@ -83,7 +86,7 @@ function toExtras(
   const details = [
     fatherName ? `${PARENT_PREFIX[side]} ${fatherName}` : null,
     lastInstitution(person),
-    occupation(person),
+    occupation(person, side === "groom" ? "male" : "female"),
   ].filter((item): item is string => Boolean(item));
 
   return { details, cvUrl: person.cv_url ?? null };

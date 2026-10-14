@@ -19,6 +19,7 @@ import { Save, Send, User as UserIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { getCompatibilityNotes } from "@/features/shidduchim/lib/compatibility";
 import { readFavorites } from "@/features/students/lib/favorites";
+import { employmentCompactLabel } from "@/features/students/lib/profile-labels";
 import { hasRole } from "@/lib/user-role";
 import {
   THIRD_PARTY_PROPOSAL_MESSAGE,
@@ -51,26 +52,9 @@ type Props = {
 };
 
 function mapDoingToday(person: any): string[] | undefined {
-  return person.employment_history?.map((emp: any) => {
-    switch (emp.category) {
-      case "yeshiva":
-        return "בחור ישיבה";
-      case "seminar":
-        return "לומדת בסמינר";
-      case "at_home":
-        return "בבית";
-      case "havruta":
-        return "לומד עם חברותא";
-      case "kolel":
-        return "כולל";
-      case "profession":
-        return person.gender === "male" ? "לומד מקצוע" : "לומדת מקצוע";
-      case "working":
-        return person.gender === "male" ? "עובד" : "עובדת";
-      default:
-        return "";
-    }
-  });
+  return person.employment_history?.map((emp: any) =>
+    employmentCompactLabel(emp.category, person.gender),
+  );
 }
 
 export default function ShiduchDesk({ initialFavorites }: Props) {

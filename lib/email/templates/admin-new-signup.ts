@@ -1,6 +1,6 @@
 import { getAppOrigin } from "@/lib/app-url";
 import {
-  getSignupPurposeLabel,
+  formatSignupPurposeLabel,
   isSignupPurpose,
 } from "@/features/auth/lib/signup-purpose";
 import type { EmailContent } from "@/lib/email/send-email";
@@ -13,6 +13,8 @@ export type NewSignupParams = {
   phone: string | null;
   /** הערך הגולמי של user_metadata.signup_purpose; חסר או לא מוכר = בלי שורה */
   signupPurpose?: string | null;
+  /** הטקסט החופשי כשהמטרה "אחר"; מוצג רק עם המטרה "אחר" */
+  signupPurposeOther?: string | null;
 };
 
 /** תואם ל-email-templates/sendgrid/admin-new-signup.html */
@@ -29,7 +31,7 @@ export function buildAdminNewSignupEmail(
   const email = params.email?.trim() || NOT_PROVIDED;
   const phone = params.phone?.trim() || NOT_PROVIDED;
   const purposeLabel = isSignupPurpose(params.signupPurpose)
-    ? getSignupPurposeLabel(params.signupPurpose)
+    ? formatSignupPurposeLabel(params.signupPurpose, params.signupPurposeOther)
     : null;
   const userUrl = `${getAppOrigin()}/app/admin/users/${params.userId}`;
 

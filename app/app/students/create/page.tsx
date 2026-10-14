@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { accountFullName } from "@/features/students/lib/account-full-name";
 import { createClient } from "@/lib/supabase/client";
 import {
   StudentFormWizard,
+  type LateAuthorDefaults,
   type StudentFormWizardProps,
 } from "@/features/students/lib/student-form-wizard";
 import {
@@ -25,9 +27,12 @@ const supabase = createClient();
 
 export default function CreateStudentPage() {
   const router = useRouter();
-  // האימייל מגיע אחרי שהטופס כבר מוצג (הטופס אינו ממתין לו); אם הטעינה
-  // נכשלה או שאין אימייל - השדה פשוט נשאר ריק וחובה
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  // האימייל והשם מגיעים אחרי שהטופס כבר מוצג (הטופס אינו ממתין להם); אם
+  // הטעינה נכשלה או שאין ערך - השדה פשוט נשאר ריק וחובה
+  const [authorDefaults, setAuthorDefaults] = useState<LateAuthorDefaults>({
+    email: null,
+    name: null,
+  });
 
   useEffect(() => {
     let isCancelled = false;
@@ -37,10 +42,15 @@ export default function CreateStudentPage() {
     supabase.auth
       .getSession()
       .then(({ data }) => {
-        if (!isCancelled) setUserEmail(data.session?.user.email ?? null);
+        const sessionUser = data.session?.user;
+        if (isCancelled || !sessionUser) return;
+        setAuthorDefaults({
+          email: sessionUser.email ?? null,
+          name: accountFullName(sessionUser),
+        });
       })
       .catch((error: unknown) => {
-        console.error("Loading user email for card form failed:", error);
+        console.error("Loading account details for card form failed:", error);
       });
     return () => {
       isCancelled = true;
@@ -155,7 +165,7 @@ export default function CreateStudentPage() {
 
   return (
     <StudentFormWizard
-      lateAuthorEmail={userEmail}
+      lateAuthorDefaults={authorDefaults}
       heading="הוספת קו״ח למערכת"
       submitLabel="שליחה למערכת"
       submittingLabel="שומר..."

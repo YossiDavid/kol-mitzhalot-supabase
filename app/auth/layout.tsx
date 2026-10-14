@@ -8,6 +8,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import Logo from "@/assets/images/logo.svg";
+import { ContactEmail } from "@/components/layout/contact-email";
 import Analytics from "@/components/website/google-analytics";
 
 export default function AuthLayout({
@@ -40,6 +41,7 @@ export default function AuthLayout({
         <Link href="/" className="hover:underline">
           חזרה לאתר
         </Link>
+        <ContactEmail className="mt-2 justify-center" withToaster />
       </footer>
     </div>
   );

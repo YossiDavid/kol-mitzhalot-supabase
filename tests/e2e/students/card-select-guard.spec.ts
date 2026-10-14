@@ -308,6 +308,47 @@ test.describe("ה-schema חותך מה שלא הוצהר", () => {
     expect("phone" in row).toBe(false);
   });
 
+  test("הצעה עם הצהרה רפואית: contact_info אינו נשלף ונחתך גם אם הגיע", () => {
+    // Arrange
+    const select = buildProposalStudentSelect({
+      shareCv: false,
+      shareMedical: true,
+    });
+    const row = {
+      ...baseRow(),
+      medical_records: {
+        id: "m1",
+        student_id: baseRow().id,
+        status: "littleProblem",
+        exposure_level: null,
+        details: "פירוט",
+        documents: [],
+        related_issue_preference: null,
+        contact_info: {
+          type: "other",
+          contacts: [{ name: "איש-קשר", phone: "050-4444444" }],
+        },
+      },
+    };
+
+    // Act
+    const parsed = parseProposalRow(row, {
+      shareCv: false,
+      shareMedical: true,
+    });
+
+    // Assert
+    expect(embedColumns(select, "medical_records")).not.toContain(
+      "contact_info",
+    );
+    expect(embedColumns(select, "medical_records")).not.toBe("*");
+    expect(parsed.success).toBe(true);
+    const serialized = JSON.stringify(parsed.success ? parsed.data : {});
+    expect(serialized).toContain("פירוט");
+    expect(serialized).not.toContain("050-4444444");
+    expect(serialized).not.toContain("איש-קשר");
+  });
+
   test("כרטיס בסיסי: שדות מוגבלים שנשלפו בטעות נחתכים", () => {
     const parsed = studentRowSchemas.basic.safeParse({
       ...baseRow(),

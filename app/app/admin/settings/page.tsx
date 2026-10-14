@@ -1,5 +1,8 @@
 import { LinkCard, Page, PageHeader } from "@/components/layout";
 import { Shield, FileCheck, Accessibility } from "lucide-react";
+import { Suspense } from "react";
+import { ContactEmailSetting } from "@/features/contact-email/components/contact-email-setting";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PhoneVerificationToggle } from "@/features/admin/components/phone-verification-toggle";
 
 export default function SettingsPage() {
@@ -7,6 +10,9 @@ export default function SettingsPage() {
     <Page>
       <PageHeader title="הגדרות מערכת" description="עריכת תוכן מערכת" />
       <PhoneVerificationToggle />
+      <Suspense fallback={<Skeleton className="h-36 w-full" />}>
+        <ContactEmailSetting />
+      </Suspense>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <LinkCard
           href="/app/admin/settings/privacy-policy"

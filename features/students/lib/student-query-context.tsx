@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
 
 import type { CommunityFilter } from "@/features/students/lib/community-filter";
 
@@ -37,9 +37,28 @@ export interface StudentQuery {
   communities?: CommunityFilter;
 }
 
+/**
+ * מספר הכרטיסים התואמים לסינון הנוכחי, כפי שהרשימה חישבה אותו (אותו סכום של
+ * מונה העמודים). הרשימה מפרסמת אותו כאן, והכותרת מציגה אותו - בלי שאילתה שנייה.
+ * loading גם בזמן רענון: המספר הישן אינו של הסינון החדש.
+ */
+export type StudentsListCount =
+  | { status: "loading" }
+  | { status: "error" }
+  | { status: "ready"; total: number };
+
 interface QueryContextType {
   query: StudentQuery;
   setQuery: React.Dispatch<React.SetStateAction<StudentQuery>>;
+  listCount: StudentsListCount;
+  setListCount: React.Dispatch<React.SetStateAction<StudentsListCount>>;
+}
+
+/** האם יש סינון או חיפוש פעילים (שדה שאינו ריק, או סינון קהילות) */
+export function hasActiveFilters(query: StudentQuery): boolean {
+  return Object.values(query).some(
+    (value) => value !== undefined && value !== "",
+  );
 }
 
 export const QueryContext = createContext<QueryContextType | undefined>(
@@ -62,9 +81,14 @@ export function StudentQueryProvider({
   children: React.ReactNode;
 }) {
   const [query, setQuery] = useState<StudentQuery>({});
+  const [listCount, setListCount] = useState<StudentsListCount>({
+    status: "loading",
+  });
+  const value = useMemo(
+    () => ({ query, setQuery, listCount, setListCount }),
+    [query, listCount],
+  );
   return (
-    <QueryContext.Provider value={{ query, setQuery }}>
-      {children}
-    </QueryContext.Provider>
+    <QueryContext.Provider value={value}>{children}</QueryContext.Provider>
   );
 }

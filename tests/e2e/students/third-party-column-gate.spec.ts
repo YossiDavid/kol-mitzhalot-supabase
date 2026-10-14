@@ -311,9 +311,13 @@ test.describe("שער הכרטיס המוגבל (מסד)", () => {
     // אושר לקבל הצעות, לא אושר להצגה מלאה: עדיין כרטיס מוגבל
     await mustUpdate(restrictedId, {
       third_party_proposals_approved_at: new Date().toISOString(),
-      // ייחודי בטבלה, ולכן רק בכרטיס המוגבל
+    });
+    // מספר ת.ז. שנאסף בעבר נשמר בטבלה הנפרדת (students.identity_number ריק תמיד)
+    const identity = await admin.from("student_identity_numbers").insert({
+      student_id: restrictedId,
       identity_number: HIDDEN.identityNumber,
     });
+    if (identity.error) throw new Error(identity.error.message);
     const medical = await admin.from("medical_records").insert({
       student_id: restrictedId,
       status: "littleProblem",
@@ -645,10 +649,14 @@ test.describe("שער הכרטיס המוגבל (מסד)", () => {
         .eq("id", restrictedId)
         .single();
       const row = await viewRow(client, restrictedId);
+      const identity = await client
+        .from("student_identity_numbers")
+        .select("identity_number")
+        .eq("student_id", restrictedId);
 
       // Assert
       expect(direct.error, `${email}: ${direct.error?.message}`).toBeNull();
-      const json = JSON.stringify(direct.data);
+      const json = JSON.stringify([direct.data, identity.data]);
       for (const value of [
         SEEDED.about,
         HIDDEN.phone,

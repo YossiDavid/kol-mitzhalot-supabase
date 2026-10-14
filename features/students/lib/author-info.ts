@@ -9,6 +9,7 @@ import { z } from "zod";
  *  - relation: תווית הקשר, וכשהבחירה "אחר" - הטקסט החופשי שנכתב. כך קוראים
  *    ישנים שמציגים relation ממשיכים להציג משהו הגיוני.
  *  - knowsWell: האם ממלא הכרטיס (צד שלישי) מכיר היטב את המועמד/ת. null: לא נשאל.
+ *  - name: בכרטיס "עבור עצמי" - שם מנהל/ת הכרטיס (חובה בטופס, כמו בשאר הערכים).
  *  - email: אימייל של ממלא הכרטיס (חובה בטופס, לכל card_for). איש קשר בדיוק
  *    כמו phone: נחתך מההצעה ומכרטיס שאין לו הרשאה לפרטי קשר (בשרת). כרטיס
  *    ישן בלעדיו נטען כרגיל, והאימייל נדרש בשמירה הבאה בלבד.
@@ -161,15 +162,18 @@ function parseKnowsWell(value: string | undefined): boolean | null {
 }
 
 /**
- * מתוך הטופס אל מה שנשמר. "עבור עצמי": אין ממלא נפרד, ונשמר רק האימייל שלו
- * (ולא מה שנשאר בשדות האחרים). כרטיס בלי card_for (ישן) לא שומר ממלא.
+ * מתוך הטופס אל מה שנשמר. "עבור עצמי": אין ממלא נפרד, ונשמרים רק שם מנהל/ת
+ * הכרטיס והאימייל שלו (ולא מה שנשאר בשדות האחרים: טלפון, קשר ועוד). השם אינו
+ * פרט קשר. כרטיס בלי card_for (ישן) לא שומר ממלא.
  */
 export function buildAuthorInfo(
   cardFor: string | undefined,
   author: AuthorFormValues | undefined,
 ): AuthorInfo {
   const email = (author?.email ?? "").trim();
-  if (cardFor === "self") return { ...EMPTY_AUTHOR_INFO, email };
+  if (cardFor === "self") {
+    return { ...EMPTY_AUTHOR_INFO, name: (author?.name ?? "").trim(), email };
+  }
   if (cardFor !== "child" && cardFor !== THIRD_PARTY_CARD_FOR_VALUE) {
     return EMPTY_AUTHOR_INFO;
   }

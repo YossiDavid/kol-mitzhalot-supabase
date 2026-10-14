@@ -96,7 +96,10 @@ export function PublicStudentCard({
 
         <div className="space-y-6">
           <EducationSection education={student.education_history} />
-          <EmploymentSection employment={student.employment_history} />
+          <EmploymentSection
+            employment={student.employment_history}
+            gender={student.gender}
+          />
           {!isBasicOnly && (
             <ReferencesSection references={student.references} />
           )}

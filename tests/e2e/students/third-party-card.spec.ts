@@ -128,7 +128,7 @@ test.describe("author_info", () => {
     expect(describeAuthorRelation(legacyUnmatchedParent)).toBe("סבתא");
   });
 
-  test("מילוי עצמי שומר רק אימייל, ולא את שאר פרטי הממלא", () => {
+  test("מילוי עצמי שומר רק שם ואימייל, ולא את שאר פרטי הממלא", () => {
     const stored = buildAuthorInfo("self", {
       name: "נשאר",
       phone: "0501234567",
@@ -136,8 +136,9 @@ test.describe("author_info", () => {
       relationType: "father",
     });
 
+    // שם מנהל/ת הכרטיס חובה גם בכרטיס עצמי (בקשת הלקוח); טלפון וקשר לא נשמרים
     expect(stored).toEqual({
-      name: "",
+      name: "נשאר",
       phone: "",
       email: "me@example.test",
       relation: "",

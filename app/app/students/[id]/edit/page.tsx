@@ -22,7 +22,8 @@ import {
   studentToFormValues,
   type StudentRowWithRelations,
 } from "@/features/students/lib/student-to-form";
-import { applyAuthorEmailRules } from "@/features/students/lib/author-email-rules";
+import { accountFullName } from "@/features/students/lib/account-full-name";
+import { applyAuthorRules } from "@/features/students/lib/author-email-rules";
 import { loadStudentPhotos } from "@/features/students/lib/student-photos";
 import type { StudentPhotoItem } from "@/features/students/lib/student-photo-rules";
 import EditStudentForm from "./edit-student-form";
@@ -229,9 +230,10 @@ async function EditStudentPageContent({
     <EditStudentForm
       studentId={id}
       initialValues={{
-        ...applyAuthorEmailRules(studentToFormValues(student), {
+        ...applyAuthorRules(studentToFormValues(student), {
           isOwner: student.user_id === user.id,
           accountEmail: user.email,
+          accountName: accountFullName(user),
         }),
         photos,
       }}

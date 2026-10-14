@@ -64,6 +64,42 @@ async function markRejected(
   if (error) throw new Error(`סימון הצעה כנדחתה נכשל: ${error.message}`);
 }
 
+/**
+ * יוצר משתמש עם המטא-דאטה הנתונה ומחזיר את גוף ההתראה שקיבל מנהל הבדיקות
+ * (null כשמשתמש המנהל לא קיים). המשתמש נמחק בסוף.
+ */
+async function registerAndReadAdminNotificationBody(
+  admin: SupabaseClient,
+  metadata: Record<string, string>,
+): Promise<string | null> {
+  const { data: users } = await admin.auth.admin.listUsers({ perPage: 1000 });
+  const adminUser = users?.users.find((u) => u.email === ADMIN_EMAIL);
+  if (!adminUser) return null;
+
+  const email = `playwright-purpose-${Date.now()}@kol-mitzhalot.test`;
+  const { data: created, error } = await admin.auth.admin.createUser({
+    email,
+    phone: `+9725${Date.now().toString().slice(-8)}`,
+    email_confirm: true,
+    user_metadata: { firstName: "נרשם", lastName: "מטרה", ...metadata },
+  });
+  if (error) throw new Error(`יצירת משתמש נכשלה: ${error.message}`);
+  const newUserId = created.user!.id;
+
+  try {
+    const { data: notifications } = await admin
+      .from("notifications")
+      .select("body")
+      .eq("user_id", adminUser.id)
+      .eq("type", "user_registered")
+      .eq("related_id", newUserId);
+    expect(notifications).toHaveLength(1);
+    return notifications![0].body as string;
+  } finally {
+    await admin.auth.admin.deleteUser(newUserId);
+  }
+}
+
 test.describe("התראות — טריגרים ו-routes", () => {
   let admin: SupabaseClient;
   let testUserId: string;
@@ -480,6 +516,46 @@ test.describe("התראות — טריגרים ו-routes", () => {
     } finally {
       await admin.auth.admin.deleteUser(newUserId);
     }
+  });
+
+  test("הרשמה כאיש צוות: ההתראה מציגה את תווית המטרה", async () => {
+    const body = await registerAndReadAdminNotificationBody(admin, {
+      signup_purpose: "staff",
+    });
+    test.skip(body === null, "משתמש המנהל של הבדיקות לא קיים");
+
+    expect(body).toContain("מטרת ההרשמה: אני רוצה להצטרף כאיש צוות");
+  });
+
+  test("הרשמה עם 'אחר' וטקסט חופשי: ההתראה מציגה 'אחר: <טקסט>'", async () => {
+    const body = await registerAndReadAdminNotificationBody(admin, {
+      signup_purpose: "other",
+      signup_purpose_other: "  רוצה לעזור בהתנדבות  ",
+    });
+    test.skip(body === null, "משתמש המנהל של הבדיקות לא קיים");
+
+    expect(body).toContain("מטרת ההרשמה: אחר: רוצה לעזור בהתנדבות");
+  });
+
+  test("הרשמה עם 'אחר' וטקסט ארוך: הטקסט נחתך ל-100 תווים בהתראה", async () => {
+    const body = await registerAndReadAdminNotificationBody(admin, {
+      signup_purpose: "other",
+      signup_purpose_other: "א".repeat(150),
+    });
+    test.skip(body === null, "משתמש המנהל של הבדיקות לא קיים");
+
+    expect(body).toContain(`אחר: ${"א".repeat(100)}`);
+    expect(body).not.toContain("א".repeat(101));
+  });
+
+  test("טקסט חופשי מתעלמים ממנו כשהמטרה אינה 'אחר'", async () => {
+    const body = await registerAndReadAdminNotificationBody(admin, {
+      signup_purpose: "self",
+      signup_purpose_other: "לא אמור להופיע",
+    });
+    test.skip(body === null, "משתמש המנהל של הבדיקות לא קיים");
+
+    expect(body).not.toContain("לא אמור להופיע");
   });
 
   test("הרשמה בלי מטרה מוכרת: ההתראה בלי שורת מטרה", async () => {

@@ -15,6 +15,8 @@ import {
   STUDENT_CARDS_VIEW,
   keepFavoritable,
 } from "@/features/students/lib/third-party-card";
+import { buildStudentsPoolCountQuery } from "@/features/students/lib/students-list-query";
+import { newCardsSince } from "@/features/students/lib/new-card-window";
 import { shidduchIdsOf, splitChatsBySide } from "./chat-sides";
 
 type ServerSupabase = Awaited<ReturnType<typeof createClient>>;
@@ -75,6 +77,13 @@ export async function getOwnStudents(supabase: ServerSupabase, userId: string) {
   return toStudentTableResult(data, "[dashboard/own-students]");
 }
 
+/** מיפוי ערך עמודת application_status לסטטוס מוכר; null לכל ערך אחר */
+function toApplicationStatus(value: unknown): ApplicationStatus | null {
+  return value === "pending" || value === "approved" || value === "rejected"
+    ? value
+    : null;
+}
+
 /** סטטוס בקשת ההצטרפות כשדכן של המשתמש; null כשאין שורה, או שהשליפה נכשלה */
 export async function getShadchanApplicationStatus(
   supabase: ServerSupabase,
@@ -87,10 +96,22 @@ export async function getShadchanApplicationStatus(
     .maybeSingle();
 
   if (error) console.error(error);
-  const status = data?.application_status;
-  return status === "pending" || status === "approved" || status === "rejected"
-    ? status
-    : null;
+  return toApplicationStatus(data?.application_status);
+}
+
+/** סטטוס בקשת ההצטרפות כאיש צוות (staff_info), באותו אופן כמו עמוד ההגדרות */
+export async function getStaffApplicationStatus(
+  supabase: ServerSupabase,
+  userId: string,
+): Promise<ApplicationStatus | null> {
+  const { data, error } = await supabase
+    .from("staff_info")
+    .select("application_status")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) console.error(error);
+  return toApplicationStatus(data?.application_status);
 }
 
 const SHIDDUCH_SIDE_COLUMNS = `
@@ -381,5 +402,28 @@ export async function getChatsBySide(
   return {
     ...splitChatsBySide(chats, ownStudentIds, shadchanShidduchIds),
     failed,
+  };
+}
+
+/** ספירות המאגר לשדכן/מנהל; null = הספירה נכשלה (לא מציגים 0 שגוי) */
+export type PoolCounts = { total: number | null; newThisWeek: number | null };
+
+/**
+ * מספר הכרטיסים במאגר ו"חדשים השבוע" (אותו חלון כמו סינון "חדשים" ברשימה).
+ * אותו view ואותו כלל נראות כמו /app/students, ולכן המספר זהה לרשימה.
+ */
+export async function getPoolCounts(
+  supabase: ServerSupabase,
+): Promise<PoolCounts> {
+  const weekStart = newCardsSince("week", new Date());
+  const [total, fresh] = await Promise.all([
+    buildStudentsPoolCountQuery(supabase),
+    buildStudentsPoolCountQuery(supabase, weekStart),
+  ]);
+  if (total.error) console.error("[dashboard] pool count", total.error);
+  if (fresh.error) console.error("[dashboard] pool new count", fresh.error);
+  return {
+    total: total.error ? null : (total.count ?? 0),
+    newThisWeek: fresh.error ? null : (fresh.count ?? 0),
   };
 }

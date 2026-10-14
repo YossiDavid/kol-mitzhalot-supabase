@@ -113,7 +113,10 @@ test.describe("ה-select של כרטיס בהצעה", () => {
 
     // Assert
     expect(selectedColumns(select)).toContain("cv_url");
-    expect(select).toContain("medical_records(*)");
+    // ההצהרה הרפואית בעמודות מוצהרות, בלי contact_info (פרטי הקשר שבהצהרה)
+    expect(select).toMatch(/medical_records\(id, student_id, status,/);
+    expect(select).not.toContain("contact_info");
+    expect(select).not.toContain("medical_records(*)");
     for (const column of CONTACT_COLUMNS) {
       expect(selectedColumns(select)).not.toContain(column);
     }

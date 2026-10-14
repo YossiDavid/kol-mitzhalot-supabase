@@ -20,7 +20,7 @@ const TEMPLATE = readFileSync(
   "utf8",
 );
 const SHADCHAN_CONDITION = `eq .Data.${SIGNUP_PURPOSE_METADATA_KEY} "shadchan"`;
-const NOTE = "ההרשמה הראשונית נקלטה";
+const NOTE = "נרשמת כשדכן/ית";
 
 /** מוחק הערות HTML, שמכילות דוגמאות משתנים ואינן חלק מהמייל */
 const withoutComments = (html: string) => html.replace(/<!--[\s\S]*?-->/g, "");
@@ -56,5 +56,22 @@ test.describe("תבנית מייל אישור הרשמה - הבהרה לשדכן
     expect(opens).toBe(ends);
     // מגינים על ה-eq בבדיקת קיום, כדי שמשתמש בלי המפתח לא יפיל את המייל
     expect(html).toContain(`{{ if .Data.${SIGNUP_PURPOSE_METADATA_KEY} }}`);
+  });
+
+  test("הבהרה לנרשם כאיש צוות: בתוך תנאי staff, ומפנה להצטרפות כאיש צוות", () => {
+    // Arrange
+    const html = withoutComments(TEMPLATE);
+    const staffCondition = `eq .Data.${SIGNUP_PURPOSE_METADATA_KEY} "staff"`;
+    const staffNote = "נרשמת כאיש/ת צוות";
+    const conditionAt = html.indexOf(staffCondition);
+    const noteAt = html.indexOf(staffNote);
+    const closeAt = html.indexOf("{{ end }}{{ end }}", noteAt);
+
+    // Assert
+    expect(conditionAt).toBeGreaterThan(-1);
+    expect(noteAt).toBeGreaterThan(conditionAt);
+    expect(closeAt).toBeGreaterThan(noteAt);
+    expect(html.split(staffNote)).toHaveLength(2);
+    expect(html).toContain("הצטרפות כאיש צוות");
   });
 });

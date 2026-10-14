@@ -17,6 +17,7 @@ import {
 import { withoutFillReason } from "../../../features/students/lib/author-info";
 import {
   PROPOSAL_CV_COLUMNS,
+  PROPOSAL_MEDICAL_COLUMNS,
   PROPOSAL_NEVER_COLUMNS,
   PROPOSAL_STUDENT_COLUMNS,
   buildProposalStudentSelect,
@@ -51,6 +52,9 @@ const CONTACT = {
   refPhone: `054${T}4`,
   refEmail: `ref-gate-${T}@example.test`,
   rabbiPhone: `055${T}5`,
+  // איש הקשר שבהצהרה הרפואית (medical_records.contact_info)
+  medicalContactName: `איש-קשר-רפואי-${T}`,
+  medicalContactPhone: `056${T}6`,
 } as const;
 const MEDICAL_DETAILS = `הצהרה-רפואית-שער-${T}`;
 const IDENTITY_NUMBER = `7${T}7`;
@@ -322,6 +326,15 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
       student_id: groomId,
       status: "littleProblem",
       details: MEDICAL_DETAILS,
+      contact_info: {
+        type: "other",
+        contacts: [
+          {
+            name: CONTACT.medicalContactName,
+            phone: CONTACT.medicalContactPhone,
+          },
+        ],
+      },
     });
 
     const card = (
@@ -544,6 +557,13 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
       expect(actual.cellphone_type, label).toBe("kosher");
       // הצהרה רפואית: רק כשנפתחה
       expect("medical_records" in actual, label).toBe(disclosure.shareMedical);
+      if (disclosure.shareMedical) {
+        // ההצהרה עצמה יוצאת, בלי contact_info
+        expect(
+          Object.keys(asRecord(actual.medical_records, label)).sort(),
+          label,
+        ).toEqual([...PROPOSAL_MEDICAL_COLUMNS].sort());
+      }
       expect(json.includes(MEDICAL_DETAILS), label).toBe(
         disclosure.shareMedical,
       );
@@ -682,7 +702,7 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
       const { data, error } = await client
         .from("students")
         .select(
-          "phone, street, about, references(phone), medical_records(details)",
+          "phone, street, about, references(phone), medical_records(details, contact_info)",
         )
         .eq("id", groomId)
         .single();
@@ -695,6 +715,7 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
       expect(row.street, email).toBe(CONTACT.street);
       expect(JSON.stringify(row), email).toContain(CONTACT.refPhone);
       expect(JSON.stringify(row), email).toContain(MEDICAL_DETAILS);
+      expect(JSON.stringify(row), email).toContain(CONTACT.medicalContactPhone);
       expect(card, email).toBeNull();
     }
   });

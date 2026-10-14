@@ -239,6 +239,12 @@ const WIDOWED_STATUS = "widowed";
 const INVALID_SAVE_MESSAGE =
   "השינויים לא נשמרו: יש שדות שצריך להשלים או לתקן. עברנו לשדה הראשון.";
 
+/** ערכי ברירת מחדל מהחשבון לשדות ממלא הכרטיס (יצירה) */
+export type LateAuthorDefaults = {
+  email: string | null;
+  name: string | null;
+};
+
 export type StudentFormWizardProps = {
   heading: string;
   submitLabel: string;
@@ -246,10 +252,11 @@ export type StudentFormWizardProps = {
   /** ערכי התחלה לעריכה. ביצירה נשאר undefined ומתקבל טופס ריק. */
   initialValues?: StudentFormValues;
   /**
-   * יצירה: אימייל שנודע אחרי שהטופס כבר הוצג (טעינת המשתמש). ממלא את
-   * אימייל הממלא רק אם הוא עדיין ריק ולא נערך - הטופס אינו ממתין לו.
+   * יצירה: אימייל ושם החשבון, שנודעו אחרי שהטופס כבר הוצג (טעינת המשתמש).
+   * ממלאים את אימייל ושם הממלא רק אם הם עדיין ריקים ולא נערכו - הטופס אינו
+   * ממתין להם.
    */
-  lateAuthorEmail?: string | null;
+  lateAuthorDefaults?: LateAuthorDefaults;
   onSubmit: (values: StudentFormValues) => Promise<void>;
   /**
    * עריכה בלבד: "שמירת שינויים" מכל שלב, בלי לעזוב אותו. מחזיר האם נשמר.
@@ -266,7 +273,7 @@ export function StudentFormWizard({
   submitLabel,
   submittingLabel,
   initialValues,
-  lateAuthorEmail,
+  lateAuthorDefaults,
   onSubmit,
   onSaveProgress,
   isRefreshingSavedValues = false,
@@ -298,11 +305,16 @@ export function StudentFormWizard({
   });
 
   useEffect(() => {
-    if (!lateAuthorEmail) return;
-    const isEmpty = !form.getValues("author.email")?.trim();
-    const isUntouched = !form.getFieldState("author.email").isDirty;
-    if (isEmpty && isUntouched) form.setValue("author.email", lateAuthorEmail);
-  }, [form, lateAuthorEmail]);
+    if (!lateAuthorDefaults) return;
+    for (const field of ["email", "name"] as const) {
+      const value = lateAuthorDefaults[field];
+      if (!value) continue;
+      const path = `author.${field}` as const;
+      const isEmpty = !form.getValues(path)?.trim();
+      const isUntouched = !form.getFieldState(path).isDirty;
+      if (isEmpty && isUntouched) form.setValue(path, value);
+    }
+  }, [form, lateAuthorDefaults]);
 
   // האשף צופה רק במגדר (תוויות ושמות שלבים). תנאי תצוגה נצפים בכל שדה ומקטע
   // לחוד (use-form-conditions.ts), כדי שהקלדה לא תרנדר את כל הטופס

@@ -246,3 +246,26 @@ export function buildStudentsPageQuery(
   );
   return applyOrder(filtered, sort).range(from, to);
 }
+
+/**
+ * ספירת הכרטיסים במאגר, בלי סינון המשתמש: אותו view ואותו כלל נראות כמו
+ * הרשימה (מחוק, שער האישור וצד שלישי נאכפים ב-view/RLS; מאורס/נשוי ישנים
+ * מוסתרים), ולכן הסכום זהה למה שהרשימה מציגה בלי סינון. head - בלי שורות.
+ * `listedSince` (ISO): רק כרטיסים שאושרו מאז, לספירת "חדשים".
+ */
+export function buildStudentsPoolCountQuery(
+  supabase: SupabaseBrowserClient,
+  listedSince?: string,
+) {
+  const base = supabase
+    .from(STUDENT_CARDS_VIEW)
+    .select("id", { count: "exact", head: true })
+    .is("deleted_at", null);
+  const visible = applyVisibilityRule(
+    base as unknown as StudentsQueryBuilder,
+    {},
+  );
+  return listedSince
+    ? visible.gte(CARD_LISTED_AT_COLUMN, listedSince)
+    : visible;
+}

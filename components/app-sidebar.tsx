@@ -33,10 +33,13 @@ import { isAdminPath } from "./sidebar/admin-nav-items";
 export function AppSidebar({
   roles,
   highlightShadchanJoin = false,
+  highlightStaffJoin = false,
 }: {
   roles: Role[];
   /** נרשם כדי להיות שדכן: "הצטרפות כשדכן" מודגש וקרוב לניווט הראשי */
   highlightShadchanJoin?: boolean;
+  /** נרשם כדי להיות איש צוות: "הצטרפות כאיש צוות" מודגש */
+  highlightStaffJoin?: boolean;
 }) {
   const { state, isMobile, setOpenMobile } = useSidebar();
   // ב-Sheet של המובייל תמיד מוצגים תוויות מלאות, גם כשהסרגל בדסקטופ מכווץ
@@ -177,8 +180,19 @@ export function AppSidebar({
           {showStaffJoin && (
             <SidebarMenuItem>
               {withTooltip(
-                <SidebarMenuButton asChild>
-                  <Link href="/app/settings/staff" prefetch={false}>
+                <SidebarMenuButton
+                  asChild
+                  className={
+                    highlightStaffJoin
+                      ? "bg-primary/10 font-bold text-primary hover:bg-primary/15 hover:text-primary"
+                      : undefined
+                  }
+                >
+                  <Link
+                    href="/app/settings/staff"
+                    prefetch={false}
+                    data-testid="sidebar-staff-join"
+                  >
                     <GraduationCap />
                     <span>הצטרפות כאיש צוות</span>
                   </Link>

@@ -8,7 +8,10 @@ import {
   hasRole,
   type Role,
 } from "@/lib/user";
-import { readSignupPurpose } from "@/features/auth/lib/signup-purpose";
+import {
+  readSignupPurpose,
+  readSignupPurposeOther,
+} from "@/features/auth/lib/signup-purpose";
 import { formatFullName, resolveDisplayName } from "@/lib/user-display-name";
 
 export { formatFullName, resolveDisplayName };
@@ -20,6 +23,8 @@ export type UserStatsRow = {
   email: string | null;
   /** מטרת ההרשמה מ-user_metadata; null למשתמשים קיימים ולמשתמשים שנוצרו ע"י מנהל */
   signupPurpose: string | null;
+  /** הטקסט החופשי כשמטרת ההרשמה "אחר" (מנהלים בלבד) */
+  signupPurposeOther: string | null;
   /** התפקיד הראשי — לתצוגה מקוצרת ולמיון בלבד */
   role: string;
   /** כל תפקידי המשתמש. משתמש יכול להיות שדכן וגם איש צוות */
@@ -130,6 +135,7 @@ async function buildStatsForUser(
     lastName,
     email: user.email || null,
     signupPurpose: readSignupPurpose(user),
+    signupPurposeOther: readSignupPurposeOther(user),
     role,
     roles,
     createdAt: user.created_at,

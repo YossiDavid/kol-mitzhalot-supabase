@@ -20,6 +20,9 @@ import type { Field } from "./types";
  * "מכיר היטב" והסבר מדוע הוא ממלא במקום המועמד/ההורים. הכול חובה במקום
  * (נאכף רק כשמוצג, required-fields.ts), לא בסוף הטופס.
  *
+ * בכרטיס "עבור עצמי" גם שם מנהל/ת הכרטיס (author.name) חובה; בטופס חדש הוא
+ * מתמלא מראש משם החשבון, וניתן לעריכה.
+ *
  * אימייל ממלא הכרטיס (author.email) חובה בכל שלוש האפשרויות, גם "עבור עצמי"
  * (בקשת הלקוח). בטופס חדש הוא מתמלא מראש באימייל המשתמש המחובר (create/page).
  */
@@ -27,7 +30,13 @@ import type { Field } from "./types";
 /** הודעת חוסר באימייל הממלא; נשארת על השדה גם כשהשמירה נעשית משלב אחר */
 const AUTHOR_EMAIL_REQUIRED_MESSAGE = "נא למלא אימייל של ממלא/ת הכרטיס";
 
-/** פרמטר טופס (לא נשמר): עורך שאינו הבעלים אינו חייב למלא אימייל ממלא */
+/** הודעת חוסר בשם מנהל/ת הכרטיס בכרטיס "עבור עצמי" */
+const SELF_AUTHOR_NAME_REQUIRED_MESSAGE = "נא למלא שם מנהל/ת הכרטיס";
+
+/**
+ * פרמטר טופס (לא נשמר): עורך שאינו הבעלים אינו חייב למלא אימייל ממלא, ובכרטיס
+ * "עבור עצמי" גם לא את שם מנהל/ת הכרטיס. אחד לשניהם: הוא אינו יכול לדעת אותם.
+ */
 export const AUTHOR_EMAIL_OPTIONAL_PARAM = "authorEmailOptional";
 export const AUTHOR_EMAIL_OPTIONAL_VALUE = "true";
 
@@ -50,6 +59,45 @@ function authorEmailFields(
       ...base,
       required: true,
       requiredMessage: AUTHOR_EMAIL_REQUIRED_MESSAGE,
+      condition: [
+        ...condition,
+        {
+          parameter: AUTHOR_EMAIL_OPTIONAL_PARAM,
+          operator: "!==",
+          value: AUTHOR_EMAIL_OPTIONAL_VALUE,
+        },
+      ],
+    },
+    {
+      ...base,
+      condition: [
+        ...condition,
+        {
+          parameter: AUTHOR_EMAIL_OPTIONAL_PARAM,
+          operator: "===",
+          value: AUTHOR_EMAIL_OPTIONAL_VALUE,
+        },
+      ],
+    },
+  ];
+}
+
+/**
+ * שם מנהל/ת הכרטיס בכרטיס "עבור עצמי" (בהורה ובצד שלישי השם כבר חובה). חובה,
+ * חוץ מעורך שאינו הבעלים (AUTHOR_EMAIL_OPTIONAL_PARAM). אותה צורה כמו האימייל.
+ */
+function selfAuthorNameFields(condition: FieldCondition[]): Field[] {
+  const base = {
+    name: "author.name",
+    width: "sm",
+    label: "שם מנהל/ת הכרטיס",
+    type: "text",
+  } as const;
+  return [
+    {
+      ...base,
+      required: true,
+      requiredMessage: SELF_AUTHOR_NAME_REQUIRED_MESSAGE,
       condition: [
         ...condition,
         {
@@ -109,6 +157,7 @@ const THIRD_PARTY_CONSEQUENCE_HTML = noticeHtml(THIRD_PARTY_CONSEQUENCE_TITLE, [
 
 export const authorFields: Field[] = [
   // --- עבור עצמי ---
+  ...selfAuthorNameFields(IS_SELF),
   ...authorEmailFields("האימייל שלך", IS_SELF),
   // --- הורה ---
   {

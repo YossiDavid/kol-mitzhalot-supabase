@@ -20,7 +20,9 @@ export function AuthorInfoCard({
   canSeeKnowsWell?: boolean;
 }) {
   const info = readAuthorInfo(authorInfo, cardFor);
-  if (!info.name && !info.phone) return null;
+  // "עבור עצמי": מוצג רק שם מנהל/ת הכרטיס. האימייל שנשמר שם אינו מוצג בכרטיס
+  const isSelfCard = cardFor === "self";
+  if (!info.name && (isSelfCard || !info.phone)) return null;
   const relation = describeAuthorRelation(info);
   return (
     <div
@@ -39,7 +41,7 @@ export function AuthorInfoCard({
           מכיר/ה היטב את המיועד/ת: {info.knowsWell ? "כן" : "לא"}
         </p>
       )}
-      {info.phone && (
+      {!isSelfCard && info.phone && (
         <a
           href={`tel:${info.phone}`}
           className="mt-1 flex items-center gap-1 text-caption text-muted-foreground hover:text-primary"
@@ -47,7 +49,7 @@ export function AuthorInfoCard({
           <Phone size={12} /> {info.phone}
         </a>
       )}
-      {info.email && (
+      {!isSelfCard && info.email && (
         <a
           href={`mailto:${info.email}`}
           className="mt-1 flex items-center gap-1 text-caption text-muted-foreground hover:text-primary"

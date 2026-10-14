@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import { PageTitle } from "@/components/layout/page-header";
@@ -26,12 +26,16 @@ import {
   type SignupPurpose,
   SIGNUP_PURPOSE_METADATA_KEY,
   SIGNUP_PURPOSE_OPTIONS,
+  SIGNUP_PURPOSE_OTHER_MAX_LENGTH,
+  SIGNUP_PURPOSE_OTHER_METADATA_KEY,
+  SIGNUP_PURPOSE_OTHER_MIN_LENGTH,
 } from "@/features/auth/lib/signup-purpose";
 import {
   AUTH_CONFIRM_PATH,
   getAuthRedirectUrl,
 } from "@/features/auth/lib/redirect-url";
 import { saveLastEmail } from "@/features/auth/lib/last-email";
+import { containsForbiddenLink } from "@/features/donations/lib/nedarim";
 import {
   requiredChoice,
   requiredEmail,
@@ -44,19 +48,59 @@ import { cn } from "@/lib/utils";
 /** ערך "אני רוצה להצטרף כשדכן/ית" - מציג הסבר על טופס ההצטרפות */
 const SHADCHAN_PURPOSE_VALUE = "shadchan" satisfies SignupPurpose;
 
-const signUpSchema = z.object({
-  firstName: requiredText("שם פרטי"),
-  lastName: requiredText("שם משפחה"),
-  email: requiredEmail("אימייל"),
-  // הרווחים מוסרים לפני הבדיקה ולפני השמירה, כמו קודם
-  phone: requiredText("מספר טלפון")
-    .transform((value) => value.replace(/\s/g, ""))
-    .refine(isValidPhone, PHONE_INVALID_MESSAGE),
-  // ריק = לא נבחר; הבדיקה השנייה מגינה מערך שאינו ברשימה
-  signupPurpose: requiredChoice("מטרת ההרשמה").refine(isSignupPurpose, {
-    message: "נא לבחור מטרת ההרשמה",
-  }),
-});
+/** ערך "אני רוצה להצטרף כאיש צוות" - מציג הסבר על טופס ההצטרפות */
+const STAFF_PURPOSE_VALUE = "staff" satisfies SignupPurpose;
+
+/** ערך "אחר" - מציג שדה טקסט חופשי חובה */
+const OTHER_PURPOSE_VALUE = "other" satisfies SignupPurpose;
+
+const OTHER_TEXT_MESSAGES = {
+  required: "נא לפרט את מטרת ההרשמה",
+  tooShort: `נא לפרט (לפחות ${SIGNUP_PURPOSE_OTHER_MIN_LENGTH} תווים)`,
+  tooLong: `עד ${SIGNUP_PURPOSE_OTHER_MAX_LENGTH} תווים`,
+  noLinks: "אי אפשר לכלול קישורים",
+} as const;
+
+/** בדיקת הטקסט החופשי של "אחר"; מחזירה הודעת שגיאה או null כשהטקסט תקין */
+function validateOtherText(text: string): string | null {
+  if (!text) return OTHER_TEXT_MESSAGES.required;
+  if (text.length < SIGNUP_PURPOSE_OTHER_MIN_LENGTH) {
+    return OTHER_TEXT_MESSAGES.tooShort;
+  }
+  if (text.length > SIGNUP_PURPOSE_OTHER_MAX_LENGTH) {
+    return OTHER_TEXT_MESSAGES.tooLong;
+  }
+  if (containsForbiddenLink(text)) return OTHER_TEXT_MESSAGES.noLinks;
+  return null;
+}
+
+const signUpSchema = z
+  .object({
+    firstName: requiredText("שם פרטי"),
+    lastName: requiredText("שם משפחה"),
+    email: requiredEmail("אימייל"),
+    // הרווחים מוסרים לפני הבדיקה ולפני השמירה, כמו קודם
+    phone: requiredText("מספר טלפון")
+      .transform((value) => value.replace(/\s/g, ""))
+      .refine(isValidPhone, PHONE_INVALID_MESSAGE),
+    // ריק = לא נבחר; הבדיקה השנייה מגינה מערך שאינו ברשימה
+    signupPurpose: requiredChoice("מטרת ההרשמה").refine(isSignupPurpose, {
+      message: "נא לבחור מטרת ההרשמה",
+    }),
+    // חובה רק כשנבחר "אחר" (superRefine למטה)
+    signupPurposeOther: z.string().trim(),
+  })
+  .superRefine((values, ctx) => {
+    if (values.signupPurpose !== OTHER_PURPOSE_VALUE) return;
+    const message = validateOtherText(values.signupPurposeOther);
+    if (message) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["signupPurposeOther"],
+        message,
+      });
+    }
+  });
 
 type SignUpValues = z.infer<typeof signUpSchema>;
 
@@ -74,10 +118,15 @@ export function SignUpForm({
       email: "",
       phone: "",
       signupPurpose: "",
+      signupPurposeOther: "",
     },
   });
 
   const { isSubmitting, errors } = form.formState;
+  const signupPurpose = useWatch({
+    control: form.control,
+    name: "signupPurpose",
+  });
 
   const onSubmit = async (values: SignUpValues) => {
     form.clearErrors("root");
@@ -93,6 +142,13 @@ export function SignUpForm({
             firstName: values.firstName,
             lastName: values.lastName,
             [SIGNUP_PURPOSE_METADATA_KEY]: values.signupPurpose,
+            // נשמר רק עם "אחר"; בכל מטרה אחרת אין טקסט חופשי
+            ...(values.signupPurpose === OTHER_PURPOSE_VALUE
+              ? {
+                  [SIGNUP_PURPOSE_OTHER_METADATA_KEY]:
+                    values.signupPurposeOther,
+                }
+              : {}),
           },
           emailRedirectTo: getAuthRedirectUrl(AUTH_CONFIRM_PATH),
         },
@@ -204,6 +260,17 @@ export function SignUpForm({
                             &quot;הצטרפות כשדכן&quot; ולמלא את טופס ההצטרפות.
                             הבקשה תיבדק ותאושר על ידי מנהל המערכת.
                           </span>
+                        ) : field.value === STAFF_PURPOSE_VALUE ? (
+                          <span
+                            data-testid="staff-purpose-note"
+                            className="block rounded-md border border-primary/40 bg-primary/5 p-3 text-body-sm text-foreground"
+                          >
+                            שימו לב: ההרשמה לבדה אינה מספיקה כדי להיות איש/ת
+                            צוות. אחרי הכניסה למערכת יש להיכנס
+                            ל&quot;הגדרות&quot; ← &quot;הצטרפות כאיש צוות&quot;
+                            ולמלא את טופס ההצטרפות. הבקשה תיבדק ותאושר על ידי
+                            מנהל המערכת.
+                          </span>
                         ) : undefined
                       }
                     >
@@ -218,6 +285,23 @@ export function SignUpForm({
                     </FormFieldShell>
                   )}
                 />
+
+                {signupPurpose === OTHER_PURPOSE_VALUE ? (
+                  <FormField
+                    control={form.control}
+                    name="signupPurposeOther"
+                    render={({ field }) => (
+                      <FormFieldShell label="פרטו את המטרה" required>
+                        <Input
+                          {...field}
+                          type="text"
+                          maxLength={SIGNUP_PURPOSE_OTHER_MAX_LENGTH}
+                          disabled={isSubmitting}
+                        />
+                      </FormFieldShell>
+                    )}
+                  />
+                ) : null}
 
                 <FormSubmitError>{errors.root?.message}</FormSubmitError>
                 <Button

@@ -1,6 +1,9 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { readSignupPurpose } from "@/features/auth/lib/signup-purpose";
+import {
+  readSignupPurpose,
+  readSignupPurposeOther,
+} from "@/features/auth/lib/signup-purpose";
 import { getEffectiveRole, getRoles, type Role } from "@/lib/user";
 import { resolveUserPhone } from "@/lib/phone";
 
@@ -11,6 +14,8 @@ export type UserDetails = {
   email: string | null;
   phone: string | null;
   signupPurpose: string | null;
+  /** הטקסט החופשי כשמטרת ההרשמה "אחר" (מנהלים בלבד) */
+  signupPurposeOther: string | null;
   role: string | null;
   roles: Role[];
   /** המוסדות שאיש הצוות משויך אליהם (staff_institutions) - קובע אילו כרטיסים הוא רואה */
@@ -211,6 +216,7 @@ export async function getUserDetails(
     // הטלפון מההרשמה נשמר ב-user_metadata, ורק לעיתים בעמודה של auth
     phone: resolveUserPhone(user),
     signupPurpose: readSignupPurpose(user),
+    signupPurposeOther: readSignupPurposeOther(user),
     role: getEffectiveRole(user),
     roles: getRoles(user),
     staffInstitutions,

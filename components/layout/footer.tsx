@@ -4,14 +4,18 @@ import { SITE_CONTENT_LINKS } from "@/components/layout/site-content-links";
 import { cn } from "@/lib/utils";
 import { LogoSvg } from "@/components/website/logo-svg";
 import { ENDORSEMENTS_HREF } from "@/components/website/endorsements-anchor";
+import { ContactEmail } from "@/components/layout/contact-email";
 import { NewsletterSignup } from "@/components/website/newsletter-signup";
 
 export default async function Footer({
   className,
   variant = "app",
+  withToaster = false,
 }: {
   className?: string;
   variant?: "app" | "website";
+  /** באפליקציה: להציג Toaster משלו, כשהמעטפת אינה כוללת אחד (כרטיס ציבורי) */
+  withToaster?: boolean;
 }) {
   if (variant === "website") {
     return (
@@ -87,6 +91,7 @@ export default async function Footer({
             </div>
           </div>
 
+          <ContactEmail className="mt-6" withToaster />
           <p className="mt-6 text-body-sm text-muted-foreground">
             כל הזכויות שמורות © 2026 | קול מצהלות | אפיון וקופי:{" "}
             <Link
@@ -110,7 +115,7 @@ export default async function Footer({
     );
   }
 
-  return <AppFooter className={className} />;
+  return <AppFooter className={className} withToaster={withToaster} />;
 }
 
 type FooterLink = { title: string; href: string };
@@ -170,7 +175,13 @@ function CreditLink({ href, children }: { href: string; children: string }) {
  * אין בלוק רשתות חברתיות - אין בפרויקט קישורי רשתות של הארגון.
  * מוסתר מתחת ל-md על ידי className (הסרגל התחתון מחליף אותו).
  */
-export function AppFooter({ className }: { className?: string }) {
+export function AppFooter({
+  className,
+  withToaster = false,
+}: {
+  className?: string;
+  withToaster?: boolean;
+}) {
   const year = new Date().getFullYear();
 
   return (
@@ -185,6 +196,7 @@ export function AppFooter({ className }: { className?: string }) {
           <p className="text-body-sm text-muted-foreground">
             כל הזכויות שמורות
           </p>
+          <ContactEmail withToaster={withToaster} />
           <p className="text-caption text-muted-foreground">
             אפיון וקופי:{" "}
             <CreditLink href="https://natikugler.co.il/">נתי קוגלר</CreditLink>{" "}

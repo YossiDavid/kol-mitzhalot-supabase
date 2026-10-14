@@ -89,6 +89,54 @@ test.describe("תבניות מייל", () => {
     expect(content.dynamicData.signup_purpose).toBe("אני רוצה להצטרף כשדכן/ית");
   });
 
+  test("מייל הרשמה חדשה: איש צוות מוצג בתווית שלו", () => {
+    // Act
+    const content = buildAdminNewSignupEmail({
+      userId: "00000000-0000-4000-8000-000000000001",
+      fullName: "דוד",
+      email: "a@b.co",
+      phone: null,
+      signupPurpose: "staff",
+    });
+
+    // Assert
+    expect(content.text).toContain("מטרת ההרשמה: אני רוצה להצטרף כאיש צוות");
+    expect(content.dynamicData.signup_purpose).toBe(
+      "אני רוצה להצטרף כאיש צוות",
+    );
+  });
+
+  test("מייל הרשמה חדשה: 'אחר' עם טקסט חופשי מוצג כ'אחר: <טקסט>' ועובר בריחה ב-HTML", () => {
+    // Act
+    const content = buildAdminNewSignupEmail({
+      userId: "00000000-0000-4000-8000-000000000001",
+      fullName: "דוד",
+      email: "a@b.co",
+      phone: null,
+      signupPurpose: "other",
+      signupPurposeOther: `רוצה לעזור <img src=x onerror="alert(1)">`,
+    });
+
+    // Assert
+    expect(content.text).toContain("מטרת ההרשמה: אחר: רוצה לעזור");
+    expect(content.html).toContain("אחר: רוצה לעזור &lt;img");
+    expect(content.html).not.toContain("<img src=x");
+    expect(content.dynamicData.signup_purpose).toContain("אחר: רוצה לעזור");
+  });
+
+  test("מייל הרשמה חדשה: טקסט חופשי מתעלמים ממנו כשהמטרה אינה 'אחר'", () => {
+    const content = buildAdminNewSignupEmail({
+      userId: "00000000-0000-4000-8000-000000000001",
+      fullName: "דוד",
+      email: "a@b.co",
+      phone: null,
+      signupPurpose: "self",
+      signupPurposeOther: "לא אמור להופיע",
+    });
+
+    expect(content.text).not.toContain("לא אמור להופיע");
+  });
+
   test("מייל הרשמה חדשה: מטרה חסרה או לא מוכרת - בלי שורת מטרה", () => {
     for (const signupPurpose of [null, undefined, "", "לא-מוכר"]) {
       // Act

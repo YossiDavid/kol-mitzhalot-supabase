@@ -32,7 +32,7 @@ const FAVORITES_UPDATE_ERROR = "עדכון המועדפים נכשל, נסו ש�
 export default function StudentsList() {
   const [user, setUser] = useState<User | undefined>(undefined);
   const [favorites, setFavorites] = useState<string[]>([]);
-  const { query } = useStudentQuery();
+  const { query, setListCount } = useStudentQuery();
   // המיון נשמר כאן ולא בטבלה: כל שינוי סינון או עמוד טוען מחדש, ובלי
   // זה הטבלה הייתה נבנית מחדש והמיון שבחרו היה מתאפס.
   // ברירת המחדל: א-ב לפי שם משפחה. המיון נעשה בשאילתה (על כל התוצאות,
@@ -48,6 +48,12 @@ export default function StudentsList() {
     removeStudent,
     setStudentCv,
   } = useStudentsPage(query, sort);
+
+  // מפרסם את הסכום של הרשימה לכותרת העמוד (אותו מספר כמו מונה העמודים)
+  useEffect(() => {
+    if (status === "ready") setListCount({ status: "ready", total });
+    else setListCount({ status: status === "error" ? "error" : "loading" });
+  }, [status, total, setListCount]);
 
   const supabaseRef = useRef(createClient());
   const supabase = supabaseRef.current;

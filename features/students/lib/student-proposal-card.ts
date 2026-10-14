@@ -80,6 +80,39 @@ export const PROPOSAL_NEVER_COLUMNS = [
   "house",
 ] as const satisfies readonly StudentColumn[];
 
+/**
+ * עמודות ההצהרה הרפואית שנשלפות כשהשדכן פתח אותה. מה שאינו כאן במכוון:
+ * `contact_info` - מי ליצור קשר בעניין ההצהרה (ההורים, או אנשי קשר עם שם
+ * וטלפון). זהו פרט התקשרות, ולכן אינו מגיע לצד השני גם כשההצהרה פתוחה.
+ */
+export const PROPOSAL_MEDICAL_COLUMNS = [
+  "id",
+  "student_id",
+  "status",
+  "exposure_level",
+  "details",
+  "documents",
+  "related_issue_preference",
+] as const;
+
+const nullableText = z.string().nullable();
+
+/**
+ * ההצהרה הרפואית בהצעה. אובייקט עם מפתחות מוצהרים (ולא רשומה חופשית): מפתח
+ * שלא הוצהר - ובראשם contact_info - נחתך כאן גם אם המסד החזיר אותו.
+ */
+const PROPOSAL_MEDICAL_RECORD = z
+  .object({
+    id: z.string(),
+    student_id: z.string(),
+    status: nullableText,
+    exposure_level: nullableText,
+    details: nullableText,
+    documents: z.array(z.string()).nullable(),
+    related_issue_preference: nullableText,
+  } satisfies Record<(typeof PROPOSAL_MEDICAL_COLUMNS)[number], z.ZodType>)
+  .nullable();
+
 /** הטבלאות שנשלפות תמיד (ההצהרה הרפואית נקבעת לפי הפתיחה) */
 const PROPOSAL_EMBEDS = [
   "education_history",
@@ -97,17 +130,17 @@ const baseProposalSchema = z.object({
   references: REFERENCES_WITHOUT_CONTACT,
 });
 
-const medicalProposalSchema = baseProposalSchema.extend(
-  pickEmbeds(["medical_records"]),
-);
+const medicalProposalSchema = baseProposalSchema.extend({
+  medical_records: PROPOSAL_MEDICAL_RECORD,
+});
 
 const cvProposalSchema = baseProposalSchema.extend(
   pickColumns(PROPOSAL_CV_COLUMNS),
 );
 
-const cvMedicalProposalSchema = cvProposalSchema.extend(
-  pickEmbeds(["medical_records"]),
-);
+const cvMedicalProposalSchema = cvProposalSchema.extend({
+  medical_records: PROPOSAL_MEDICAL_RECORD,
+});
 
 /**
  * שורת הכרטיס בהצעה. `cv_url` ו-`medical_records` קיימים בטיפוס רק בווריאנטים
@@ -168,7 +201,9 @@ export function buildProposalStudentSelect({
   const embeds = [
     ...PROPOSAL_EMBEDS.map((embed) => embedFragment(embed)),
     embedFragment("references", "id, reference_type, name"),
-    shareMedical ? embedFragment("medical_records") : null,
+    shareMedical
+      ? embedFragment("medical_records", PROPOSAL_MEDICAL_COLUMNS.join(", "))
+      : null,
   ].filter((embed): embed is string => embed !== null);
 
   return buildSelect(columns, embeds);

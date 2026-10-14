@@ -1,3 +1,4 @@
+import { employmentCompactLabel } from "@/features/students/lib/profile-labels";
 import calculateAge from "@/lib/calculateAge";
 
 /** שורת partner_preferences (מוטמעת ב-students). */
@@ -12,14 +13,16 @@ type PartnerPrefsRow = {
   cellphone_type?: string | null;
 };
 
-function partnerPrefs(student: Record<string, unknown>): PartnerPrefsRow | null {
+function partnerPrefs(
+  student: Record<string, unknown>,
+): PartnerPrefsRow | null {
   const p = student.partner_preferences as
     | PartnerPrefsRow
     | PartnerPrefsRow[]
     | null
     | undefined;
   if (!p) return null;
-  return Array.isArray(p) ? p[0] ?? null : p;
+  return Array.isArray(p) ? (p[0] ?? null) : p;
 }
 
 function firstToken(name: string): string {
@@ -41,25 +44,7 @@ export function employmentPrimaryLabel(student: {
 }): string {
   const row = student.employment_history?.[0];
   if (!row?.category) return "";
-  const g = student.gender;
-  switch (row.category) {
-    case "yeshiva":
-      return "בחור ישיבה";
-    case "seminar":
-      return "לומדת בסמינר";
-    case "at_home":
-      return "בבית";
-    case "havruta":
-      return "לומד עם חברותא";
-    case "kolel":
-      return "כולל";
-    case "profession":
-      return g === "male" ? "לומד מקצוע" : "לומדת מקצוע";
-    case "working":
-      return g === "male" ? "עובד" : "עובדת";
-    default:
-      return "";
-  }
+  return employmentCompactLabel(row.category, student.gender);
 }
 
 /** שם המיועד/ת זהה לשם אחד ההורים שלו/ה (טעות נפוצה בטפסים). */
@@ -135,7 +120,10 @@ export function getCompatibilityNotes(
 
   if (!groom || !bride) return notes;
 
-  if (candidateNameMatchesOwnParent(groom) || candidateNameMatchesOwnParent(bride)) {
+  if (
+    candidateNameMatchesOwnParent(groom) ||
+    candidateNameMatchesOwnParent(bride)
+  ) {
     notes.push("שם המיועד/ת זהה לשם הורה");
   }
 
@@ -161,17 +149,13 @@ export function getCompatibilityNotes(
   if (groomAge != null && !Number.isNaN(groomAge)) {
     const ok = ageWithinPartnerRange(groomAge, brideP);
     if (ok === false) {
-      notes.push(
-        "גיל המיועד מחוץ לטווח הגיל שהוגדר בהעדפות צד המיועדת",
-      );
+      notes.push("גיל המיועד מחוץ לטווח הגיל שהוגדר בהעדפות צד המיועדת");
     }
   }
   if (brideAge != null && !Number.isNaN(brideAge)) {
     const ok = ageWithinPartnerRange(brideAge, groomP);
     if (ok === false) {
-      notes.push(
-        "גיל המיועדת מחוץ לטווח הגיל שהוגדר בהעדפות צד המיועד",
-      );
+      notes.push("גיל המיועדת מחוץ לטווח הגיל שהוגדר בהעדפות צד המיועד");
     }
   }
 
@@ -189,18 +173,10 @@ export function getCompatibilityNotes(
 
   const gPlan = (groom as { plan_for_life?: string }).plan_for_life;
   const bPlan = (bride as { plan_for_life?: string }).plan_for_life;
-  if (
-    groomP?.plan_for_life &&
-    bPlan &&
-    groomP.plan_for_life !== bPlan
-  ) {
+  if (groomP?.plan_for_life && bPlan && groomP.plan_for_life !== bPlan) {
     notes.push("כיוון חיים של המיועדת אינו תואם להעדפת צד המיועד");
   }
-  if (
-    brideP?.plan_for_life &&
-    gPlan &&
-    brideP.plan_for_life !== gPlan
-  ) {
+  if (brideP?.plan_for_life && gPlan && brideP.plan_for_life !== gPlan) {
     notes.push("כיוון חיים של המיועד אינו תואם להעדפת צד המיועדת");
   }
 

@@ -12,7 +12,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { Suspense } from "react";
 import { ImpersonateButton } from "@/features/admin/components/impersonate-button";
 import { AdminUsersFilters } from "@/features/admin/components/users-filters";
-import { getSignupPurposeLabel } from "@/features/auth/lib/signup-purpose";
+import { formatSignupPurposeLabel } from "@/features/auth/lib/signup-purpose";
 import { getRoleLabel } from "@/lib/user";
 import {
   formatFullName,
@@ -81,7 +81,8 @@ const USER_COLUMNS: DataTableColumn<UserStatsRow>[] = [
     key: "purpose",
     header: "מטרת ההרשמה",
     size: "auto",
-    cell: (user) => getSignupPurposeLabel(user.signupPurpose),
+    cell: (user) =>
+      formatSignupPurposeLabel(user.signupPurpose, user.signupPurposeOther),
   },
   {
     key: "roles",

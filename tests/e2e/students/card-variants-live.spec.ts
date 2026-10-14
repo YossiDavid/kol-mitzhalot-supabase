@@ -44,6 +44,8 @@ const GROOM = {
   refFriendEmail: `friend-${T}@example.test`,
   rabbiPhone: "0506666001",
   authorPhone: "0507777001",
+  medicalContactName: `איש-קשר-רפואי-${T}`,
+  medicalContactPhone: "0508888001",
   medical: `הצהרה-רפואית-חבויה-${T}`,
   city: "בית שמש",
   eduName: `ישיבת-לימוד-${T}`,
@@ -65,6 +67,8 @@ const GROOM_CONTACT = [
   GROOM.refFriendEmail,
   GROOM.rabbiPhone,
   GROOM.authorPhone,
+  GROOM.medicalContactName,
+  GROOM.medicalContactPhone,
 ];
 
 const NOTICES = ["שגיאה בטעינת הפרופיל", "הכרטיס אינו זמין", "מיועד לא נמצא"];
@@ -320,7 +324,12 @@ test.describe("וריאנטי הכרטיס מול המסד", () => {
       exposure_level: "basic_exposure",
       details: GROOM.medical,
       documents: [],
-      contact_info: { type: "parents" },
+      contact_info: {
+        type: "other",
+        contacts: [
+          { name: GROOM.medicalContactName, phone: GROOM.medicalContactPhone },
+        ],
+      },
       related_issue_preference: null,
     });
 
@@ -414,6 +423,8 @@ test.describe("וריאנטי הכרטיס מול המסד", () => {
     await expect(page.getByText(GROOM.eduName).first()).toBeVisible();
     await expect(page.getByText(GROOM.about)).toBeVisible();
     await expect(page.getByText(GROOM.medical)).toBeVisible();
+    // הבעלים רואה גם את איש הקשר שבהצהרה הרפואית
+    await expect(page.getByText(GROOM.medicalContactName)).toBeVisible();
     await page.context().close();
   });
 
@@ -487,6 +498,11 @@ test.describe("וריאנטי הכרטיס מול המסד", () => {
     );
     const html = await expectCardRendered(page, GROOM_LAST);
     await expect(page.getByText(GROOM.medical)).toBeVisible();
+    // בלי פרטי הקשר שבהצהרה - וגם בלי כותרת ריקה שלהם
+    // (exact: רמת החשיפה עצמה מנוסחת "...עם פרטי יצירת קשר למידע נוסף")
+    await expect(
+      page.getByText("יצירת קשר למידע נוסף:", { exact: true }),
+    ).toHaveCount(0);
     expectNone(html, [...GROOM_CONTACT, GROOM.cv]);
     await page.context().close();
   });

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
 
 import { Page, PageHeader } from "@/components/layout";
-import { getSignupPurposeLabel } from "@/features/auth/lib/signup-purpose";
+import { formatSignupPurposeLabel } from "@/features/auth/lib/signup-purpose";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { CardSkeleton } from "@/components/ui/card-skeleton";
@@ -67,7 +67,10 @@ function BasicInfoCard({ userDetails }: { userDetails: UserDetails }) {
         <DetailRow label="אימייל:">{userDetails.email || "לא זמין"}</DetailRow>
         <DetailRow label="טלפון:">{userDetails.phone || "לא זמין"}</DetailRow>
         <DetailRow label="מטרת ההרשמה:">
-          {getSignupPurposeLabel(userDetails.signupPurpose)}
+          {formatSignupPurposeLabel(
+            userDetails.signupPurpose,
+            userDetails.signupPurposeOther,
+          )}
         </DetailRow>
         <DetailRow label={userDetails.roles.length > 1 ? "תפקידים:" : "תפקיד:"}>
           {userDetails.roles.map(getRoleLabel).join(" · ")}

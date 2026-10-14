@@ -282,7 +282,7 @@ test.describe("כללי שדה חובה נגזרים ממערך השדות", () 
     ]);
   });
 
-  test("מי ממלא: עצמי - רק אימייל; הורה ואדם אחר - כל פרטי הממלא חובה", () => {
+  test("מי ממלא: עצמי - שם ואימייל; הורה ואדם אחר - כל פרטי הממלא חובה", () => {
     // Arrange
     const pathsFor = (cardFor: string, author: Record<string, string> = {}) =>
       issuePaths(studentFields, { gender: "male", cardFor, author }).filter(
@@ -290,7 +290,7 @@ test.describe("כללי שדה חובה נגזרים ממערך השדות", () 
       );
 
     // Act + Assert
-    expect(pathsFor("self")).toEqual(["author.email"]);
+    expect(pathsFor("self")).toEqual(["author.email", "author.name"]);
     expect(pathsFor("child")).toEqual([
       "author.email",
       "author.name",
@@ -305,7 +305,8 @@ test.describe("כללי שדה חובה נגזרים ממערך השדות", () 
       "author.phone",
       "author.relationType",
     ]);
-    // עורך שאינו הבעלים (פרמטר טופס שהשרת קובע): האימייל אינו חובה
+    // עורך שאינו הבעלים (פרמטר טופס שהשרת קובע): האימייל אינו חובה, ובכרטיס
+    // "עבור עצמי" גם שם מנהל/ת הכרטיס
     for (const cardFor of ["self", "child", "other"]) {
       expect(
         issuePaths(studentFields, {
@@ -315,8 +316,27 @@ test.describe("כללי שדה חובה נגזרים ממערך השדות", () 
         }),
       ).not.toContain("author.email");
     }
-    // עם אימייל - אין דרישה
-    expect(pathsFor("self", { email: "a@b.co" })).toEqual([]);
+    expect(
+      issuePaths(studentFields, {
+        gender: "male",
+        cardFor: "self",
+        authorEmailOptional: "true",
+      }),
+    ).not.toContain("author.name");
+    // בהורה ובצד שלישי השם נשאר חובה גם לעורך שאינו הבעלים
+    expect(
+      issuePaths(studentFields, {
+        gender: "male",
+        cardFor: "child",
+        authorEmailOptional: "true",
+      }),
+    ).toContain("author.name");
+    // עם שם ואימייל - אין דרישה
+    expect(pathsFor("self", { email: "a@b.co", name: "ישראל" })).toEqual([]);
+    // שם של רווחים בלבד אינו שם
+    expect(pathsFor("self", { email: "a@b.co", name: "   " })).toEqual([
+      "author.name",
+    ]);
     // "אחר" דורש גם פירוט חופשי
     expect(pathsFor("other", { relationType: "other" })).toContain(
       "author.relation",

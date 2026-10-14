@@ -32,9 +32,13 @@ function cardName(row: {
   return `${row.first_name ?? ""} ${row.last_name ?? ""}`.trim() || "כרטיס";
 }
 
-/** שורת get_my_shidduch_proposals, רק השדות של הצד השני */
-const otherSideRowsSchema = z.array(
+/** שורת get_my_shidduch_proposals: הצד שלי, הכרטיס שלי והכרטיס של הצד השני */
+const myProposalRowsSchema = z.array(
   z.object({
+    side: z.enum(["groom", "bride"]),
+    my_student_id: z.string().nullable(),
+    my_first_name: z.string().nullable(),
+    my_last_name: z.string().nullable(),
     other_student_id: z.string().nullable(),
     other_first_name: z.string().nullable(),
     other_last_name: z.string().nullable(),
@@ -42,32 +46,48 @@ const otherSideRowsSchema = z.array(
 );
 
 /**
- * הכרטיס של הצד השני בהצעה שנשלחה אליי (מזהה ושם). הכרטיס עצמו אינו קריא לי
- * ישירות; הפונקציה מחזירה אותו רק אם ההצעה נשלחה לצד שלי והכרטיס לא נמחק.
+ * הכרטיסים של הצעה שנשלחה אליי, בסדר חתן-כלה. מנהל כרטיס (הורה) אינו קורא
+ * את שורת shidduchim ואת שורת הכרטיס של הצד השני; get_my_shidduch_proposals
+ * מחזירה לו בדיוק מה שמותר: ההצעה, הצד שלו ושמות שני הכרטיסים. ריק - אין
+ * הצעה כזו שנשלחה לצד שלי (או שנמחקה).
  */
-async function loadProposalOtherSide(
+async function loadMyProposalCards(
   supabase: ReturnType<typeof createClient>,
   shidduchId: string,
-): Promise<ContextCard[]> {
+): Promise<ContextCard[] | null> {
   const { data, error } = await supabase.rpc("get_my_shidduch_proposals", {
     p_shidduch_id: shidduchId,
   });
-  if (error) return [];
-  const parsed = otherSideRowsSchema.safeParse(data ?? []);
-  if (!parsed.success) return [];
-  return parsed.data.flatMap((row) =>
-    row.other_student_id
-      ? [
-          {
-            id: row.other_student_id,
-            name: cardName({
-              first_name: row.other_first_name,
-              last_name: row.other_last_name,
-            }),
-          },
-        ]
-      : [],
-  );
+  if (error) return null;
+  const parsed = myProposalRowsSchema.safeParse(data ?? []);
+  if (!parsed.success || parsed.data.length === 0) return null;
+
+  const byId = new Map<string, { name: string; isGroom: boolean }>();
+  for (const row of parsed.data) {
+    const mine = { id: row.my_student_id, isGroom: row.side === "groom" };
+    const other = { id: row.other_student_id, isGroom: row.side !== "groom" };
+    if (mine.id) {
+      byId.set(mine.id, {
+        isGroom: mine.isGroom,
+        name: cardName({
+          first_name: row.my_first_name,
+          last_name: row.my_last_name,
+        }),
+      });
+    }
+    if (other.id && !byId.has(other.id)) {
+      byId.set(other.id, {
+        isGroom: other.isGroom,
+        name: cardName({
+          first_name: row.other_first_name,
+          last_name: row.other_last_name,
+        }),
+      });
+    }
+  }
+  return [...byId.entries()]
+    .sort(([, a], [, b]) => Number(b.isGroom) - Number(a.isGroom))
+    .map(([id, card]) => ({ id, name: card.name }));
 }
 
 /**
@@ -101,29 +121,31 @@ export function useContextTargets(context: RoomContext): ContextTargets {
       }
 
       if (context.kind === "shidduch" && context.shidduchId) {
+        // שדכן ההצעה ומנהל קוראים את שורת ההצעה עצמה
         const { data: shidduch } = await supabase
           .from("shidduchim")
           .select("id, groom_id, bride_id")
           .eq("id", context.shidduchId)
           .maybeSingle();
-        if (!shidduch) return NOTHING_FOUND;
+        if (!shidduch) {
+          // מנהל כרטיס (הורה): ההצעה והכרטיסים מגיעים מהפונקציה שמחזירה לו
+          // רק את מה שמותר לו
+          const cards = await loadMyProposalCards(supabase, context.shidduchId);
+          return cards
+            ? { isLoaded: true, hasProposal: true, cards }
+            : NOTHING_FOUND;
+        }
 
         const sideIds: string[] = [shidduch.groom_id, shidduch.bride_id];
         const { data: students } = await supabase
           .from(STUDENT_CARDS_VIEW)
           .select("id, first_name, last_name")
           .in("id", sideIds);
-        const names = new Map(
+        const byId = new Map(
           (students ?? []).map((s) => [s.id as string, cardName(s)]),
         );
-        // מי שקיבל את ההצעה אינו קורא את שורת הכרטיס של הצד השני; השם שלו
-        // מגיע מ-get_my_shidduch_proposals, כמו בעמוד ההצעות.
-        const otherSide = sideIds.some((id) => !names.has(id))
-          ? await loadProposalOtherSide(supabase, context.shidduchId)
-          : [];
         const cards = sideIds.flatMap((id) => {
-          const name =
-            names.get(id) ?? otherSide.find((card) => card.id === id)?.name;
+          const name = byId.get(id);
           return name ? [{ id, name }] : [];
         });
         return { isLoaded: true, hasProposal: true, cards };

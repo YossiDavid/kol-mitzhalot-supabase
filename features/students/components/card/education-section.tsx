@@ -52,8 +52,11 @@ export function EducationSection({
 /** "תעסוקה" */
 export function EmploymentSection({
   employment,
+  gender,
 }: {
   employment: EmploymentEntry[] | null | undefined;
+  /** מגדר בעל הכרטיס - קובע "עובד" / "עובדת" */
+  gender?: string | null;
 }) {
   if (!employment || employment.length === 0) return null;
   return (
@@ -66,7 +69,7 @@ export function EmploymentSection({
           >
             {job.category && (
               <p className="mb-1 text-caption font-bold text-muted-foreground uppercase">
-                {employmentCategoryToHebrew(job.category)}
+                {employmentCategoryToHebrew(job.category, gender)}
               </p>
             )}
             {job.role && <p className="text-body-sm font-bold">{job.role}</p>}

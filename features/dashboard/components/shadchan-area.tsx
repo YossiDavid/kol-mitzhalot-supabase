@@ -7,9 +7,13 @@ import { Button } from "@/components/ui/button";
 import { DashboardArea } from "./dashboard-area";
 import type { DashboardChat } from "./chat-rooms-list";
 import { sectionHasData } from "@/features/dashboard/lib/section-has-data";
+import type { PoolCounts } from "@/features/dashboard/lib/queries";
+import { PoolCountsLink } from "./pool-counts-link";
 import { ActiveShidduchim, Chat, Favorites, Forum } from "./shadchan";
 
 export type ShadchanAreaProps = {
+  /** null - לא נטען (משתמש בלי תפקיד שדכן/מנהל) */
+  poolCounts: PoolCounts | null;
   activeShidduchim: React.ComponentProps<typeof ActiveShidduchim>["shiduchim"];
   activeShidduchimCount: number;
   /** שליפת ההצעות האחרונות נכשלה */
@@ -24,6 +28,7 @@ export type ShadchanAreaProps = {
 
 /** "כלי שדכן": ההצעות שלי, המועדפים, שיחות כשדכן והפורומים */
 export function ShadchanArea({
+  poolCounts,
   activeShidduchim,
   activeShidduchimCount,
   activeShidduchimFailed,
@@ -36,6 +41,7 @@ export function ShadchanArea({
 }: ShadchanAreaProps) {
   return (
     <DashboardArea id="dashboard-area-shadchan" title={SHADCHAN_TOOLS_LABEL}>
+      {poolCounts ? <PoolCountsLink counts={poolCounts} /> : null}
       <DashboardSection
         headingLevel="h3"
         title="שידוכים באויר"
