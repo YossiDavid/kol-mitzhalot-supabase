@@ -1,3 +1,5 @@
+import { CardProposalsSection } from "@/features/students/components/card/card-proposals-section";
+import { loadCardProposals } from "@/features/students/lib/card-proposals";
 import { Suspense } from "react";
 import { unstable_noStore as noStore } from "next/cache";
 import { after } from "next/server";
@@ -292,18 +294,32 @@ async function StudentPageContent({
   const canWriteStaffFeedback = hasRole(user, "staff") && !isProposalView;
   // פרטי מנהל הכרטיס (אימייל + קישור) נשלפים רק למנהל מערכת, ורק בכרטיס
   // המלא - לא בענף הציבורי ולא בתצוגת הצעה, ולכן לא מגיעים אליהם גם כ-props.
-  const [{ photoPrivate, studentPhotos }, shadchanNotes, owner, isAdminPaused] =
-    await Promise.all([
-      loadViewerPhotos(supabase, user, student, isProposalView),
-      isShadchan
-        ? loadMyShadchanNotes(supabase, student.id, user.id)
-        : Promise.resolve([]),
-      isAdmin && !isProposalView && student.user_id
-        ? loadCardOwnerInfo(student.user_id)
-        : Promise.resolve(null),
-      // מצב ההשהיה ע"י ההנהלה: נשלף למנהל מערכת בלבד, בנפרד מרשימות העמודות
-      isAdmin ? loadCardAdminPaused(student.id) : Promise.resolve(null),
-    ]);
+  const [
+    { photoPrivate, studentPhotos },
+    shadchanNotes,
+    owner,
+    isAdminPaused,
+    cardProposals,
+  ] = await Promise.all([
+    loadViewerPhotos(supabase, user, student, isProposalView),
+    isShadchan
+      ? loadMyShadchanNotes(supabase, student.id, user.id)
+      : Promise.resolve([]),
+    isAdmin && !isProposalView && student.user_id
+      ? loadCardOwnerInfo(student.user_id)
+      : Promise.resolve(null),
+    // מצב ההשהיה ע"י ההנהלה: נשלף למנהל מערכת בלבד, בנפרד מרשימות העמודות
+    isAdmin ? loadCardAdminPaused(student.id) : Promise.resolve(null),
+    // כמה הצעות הוצעו לכרטיס: בעלים, שדכן ומנהל, בכרטיס המלא בלבד. המסד
+    // מחזיר null לכל אחר (ולכרטיס בסיסי / צופה דרך הצעה)
+    !isProposalView && !isBasicView
+      ? loadCardProposals(supabase, student.id, {
+          userId: user.id,
+          isAdmin,
+          isShadchan,
+        })
+      : Promise.resolve(null),
+  ]);
   const currentUserName = [
     user?.user_metadata?.firstName,
     user?.user_metadata?.lastName,
@@ -361,6 +377,12 @@ async function StudentPageContent({
             />
           )}
           {isAdminPaused === true && <AdminPausedBanner />}
+          {cardProposals && (
+            <CardProposalsSection
+              studentId={student.id}
+              proposals={cardProposals}
+            />
+          )}
           {approval && approvingAdminNames ? (
             <ThirdPartyApprovalControls
               studentId={student.id}

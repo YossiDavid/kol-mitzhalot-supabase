@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { SearchSelectField } from "@/features/students/components/create-form/fields/search-select-field";
 import { COMMUNITY_SEARCH } from "@/features/students/components/create-form/fields-data/shared-options";
 import {
+  APPLICATION_NOTE_MAX_LENGTH,
   BIO_MAX_LENGTH,
   SYNAGOGUE_RABBI_MAX_LENGTH,
   type ShadchanFormData,
@@ -18,7 +19,14 @@ import {
 interface ShadchanProfileFieldsProps {
   control: Control<ShadchanFormData>;
   isSubmitting: boolean;
+  /** "למה כדאי לאשר אותי" (להנהלה בלבד): בהצטרפות ובעריכת מנהל */
+  showApplicationNote?: boolean;
 }
+
+const BIO_AUDIENCE_NOTICE = "יוצג לכל המשתמשים ברשימת השדכנים";
+const BIO_GUIDANCE =
+  "כתבו בגוף ראשון על הניסיון והתחומים שלכם, למשפחות שמחפשות שדכן.";
+const BIO_ADMIN_POINTER = " דברים שמיועדים להנהלה כתבו בשדה למטה.";
 
 /**
  * שדות פרופיל השדכן, משותפים לטופס ההצטרפות, לעריכה עצמית ולעריכת מנהל.
@@ -27,9 +35,21 @@ interface ShadchanProfileFieldsProps {
 export function ShadchanProfileFields({
   control,
   isSubmitting,
+  showApplicationNote = false,
 }: ShadchanProfileFieldsProps) {
   return (
     <>
+      <div
+        className="grid gap-1 rounded-lg border border-border bg-muted/40 p-3"
+        data-testid="bio-guidance"
+      >
+        <p className="font-semibold">{BIO_AUDIENCE_NOTICE}</p>
+        <p className="text-body-sm text-muted-foreground">
+          {BIO_GUIDANCE}
+          {showApplicationNote ? BIO_ADMIN_POINTER : ""}
+        </p>
+      </div>
+
       <FormField
         control={control}
         name="bio"
@@ -37,7 +57,7 @@ export function ShadchanProfileFields({
           <FormFieldShell label="ביוגרפיה" required>
             <Textarea
               {...field}
-              placeholder="ספר על עצמך, הרקע שלך, והניסיון שלך בשדכנות"
+              placeholder="לדוגמה: אני שדכנית כבר 8 שנים, מתמחה בשידוכים לבחורי ישיבות ומשפחות מהקהילה החרדית בירושלים"
               rows={5}
               maxLength={BIO_MAX_LENGTH}
               disabled={isSubmitting}
@@ -81,9 +101,29 @@ export function ShadchanProfileFields({
 
       <FormField
         control={control}
+        name="location"
+        render={({ field }) => (
+          <FormFieldShell
+            label="עיר"
+            description="מוצגת בכרטיס שלך ברשימת השדכנים"
+          >
+            <Input
+              {...field}
+              placeholder="לדוגמה: בני ברק"
+              disabled={isSubmitting}
+            />
+          </FormFieldShell>
+        )}
+      />
+
+      <FormField
+        control={control}
         name="specializations"
         render={({ field }) => (
-          <FormFieldShell label="התמחויות" description="מופרדות בפסיקים">
+          <FormFieldShell
+            label="התמחויות"
+            description="מופרדות בפסיקים. עד שלוש הראשונות מוצגות בכרטיס."
+          >
             <Input
               {...field}
               placeholder="לדוגמה: שידוכים צעירים, שידוכים מבוגרים"
@@ -183,6 +223,27 @@ export function ShadchanProfileFields({
           </FormFieldShell>
         )}
       />
+
+      {showApplicationNote && (
+        <FormField
+          control={control}
+          name="application_note"
+          render={({ field }) => (
+            <FormFieldShell
+              label="למה כדאי לאשר אותי? (להנהלה בלבד)"
+              description="לא יוצג למשתמשים. גלוי רק לך ולהנהלת האתר. אפשר לספר כאן על ההיכרות עם המערכת, על מי שהמליץ עליך, או על כל דבר שיעזור לנו לאשר אותך."
+            >
+              <Textarea
+                {...field}
+                value={field.value ?? ""}
+                rows={3}
+                maxLength={APPLICATION_NOTE_MAX_LENGTH}
+                disabled={isSubmitting}
+              />
+            </FormFieldShell>
+          )}
+        />
+      )}
     </>
   );
 }

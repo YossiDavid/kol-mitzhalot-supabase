@@ -24,6 +24,8 @@ export type ShadchanPublicCard = {
   sinceYear: number | null;
   city: string | null;
   description: string | null;
+  /** התמחויות (רק מה ש-list_approved_shadchanim כבר מחזירה); ריק כשאין */
+  specializations: string[];
 };
 
 export type ShadchanActivity = ShadchanPublicCard & {
@@ -37,7 +39,6 @@ export type ShadchanFullProfile = ShadchanPublicCard & {
   email: string | null;
   experienceYears: number | null;
   closedMatches: number | null;
-  specializations: string[];
   languages: string[];
 };
 

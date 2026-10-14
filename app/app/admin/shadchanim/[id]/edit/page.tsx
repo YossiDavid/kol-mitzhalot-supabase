@@ -11,7 +11,13 @@ import {
   rowToForm,
   SHADCHAN_PROFILE_SELECT,
 } from "@/features/shadchanim/lib/profile-form";
+import {
+  identityFromUser,
+  type PreviewIdentity,
+} from "@/features/shadchanim/lib/preview-card";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { formatFullName } from "@/lib/user-display-name";
 
 /** מספר שדות הטופס, לשלד הטעינה. */
 const FORM_FIELD_COUNT = 7;
@@ -40,23 +46,39 @@ async function EditContent({ params }: { params: Promise<{ id: string }> }) {
 
   if (!row) notFound();
 
-  const name =
-    `${profile?.first_name ?? ""} ${profile?.last_name ?? ""}`.trim();
+  // רק אחרי שהשורה נקראה (כלומר: מנהל), שליפת המשתמש עם הרשאות שירות
+  const authResult = await createAdminClient().auth.admin.getUserById(id);
+
+  // אותו מקור שם כמו ברשימת השדכנים: user_profiles, ואז ה-metadata של המשתמש
+  const authUser = authResult.data.user;
+  const identity: PreviewIdentity = authUser
+    ? identityFromUser(authUser, profile)
+    : {
+        id,
+        firstName: profile?.first_name ?? null,
+        lastName: profile?.last_name ?? null,
+        avatarUrl: null,
+      };
+  const name = formatFullName(identity.firstName, identity.lastName);
 
   return (
-    <Page width="form">
+    <Page width="form-aside">
       <PageHeader
         title="עריכת פרופיל שדכן"
         description={name || "עריכת פרטי השדכן"}
       />
-      <AdminShadchanProfileEditForm userId={id} defaults={rowToForm(row)} />
+      <AdminShadchanProfileEditForm
+        userId={id}
+        defaults={rowToForm(row)}
+        identity={identity}
+      />
     </Page>
   );
 }
 
 function EditFallback() {
   return (
-    <Page width="form">
+    <Page width="form-aside">
       <PageHeader title="עריכת פרופיל שדכן" description="טוען…" />
       <SkeletonRegion>
         <CardSkeleton fields={FORM_FIELD_COUNT} footer />

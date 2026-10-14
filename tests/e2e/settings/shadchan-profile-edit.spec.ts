@@ -182,7 +182,10 @@ test.describe("עריכת פרופיל שדכן מאושר - עצמית", () => 
       SEED_APPROVED_AT,
     );
     expect(row?.rejected_at).toBeNull();
-    await expect(page.locator("p", { hasText: NEW_BIO })).toBeVisible();
+    // :not([data-testid]) - בזמן המעבר עוד מוצגת התצוגה המקדימה של הטופס
+    await expect(
+      page.locator("p:not([data-testid])", { hasText: NEW_BIO }),
+    ).toBeVisible();
     await context.close();
   });
 

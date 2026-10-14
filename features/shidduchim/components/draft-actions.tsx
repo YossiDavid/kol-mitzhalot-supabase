@@ -36,6 +36,7 @@ export default function DraftActions({
     noteForGroom: groomNote,
     noteForBride: brideNote,
     shareCv,
+    shareReferences,
     shareMedicalInfo,
     shareGroomPhoto,
   }: {
@@ -43,6 +44,7 @@ export default function DraftActions({
     noteForGroom: string;
     noteForBride: string;
     shareCv: boolean;
+    shareReferences: boolean;
     shareMedicalInfo: boolean;
     shareGroomPhoto: boolean;
   }): Promise<string | void> => {
@@ -59,6 +61,7 @@ export default function DraftActions({
           noteForGroom: groomNote,
           noteForBride: brideNote,
           shareCv,
+          shareReferences,
           shareMedicalInfo,
           shareGroomPhoto,
         }),

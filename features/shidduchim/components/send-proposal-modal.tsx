@@ -26,6 +26,7 @@ type Props = {
     noteForGroom: string;
     noteForBride: string;
     shareCv: boolean;
+    shareReferences: boolean;
     shareMedicalInfo: boolean;
     shareGroomPhoto: boolean;
   }) => Promise<string | void>;
@@ -58,6 +59,7 @@ export default function SendProposalModal({
   // קובץ הקו״ח וההצהרה הרפואית סגורים כברירת מחדל, והפתיחה היא החלטה אקטיבית
   // לכל הצעה בנפרד.
   const [shareCv, setShareCv] = useState(false);
+  const [shareReferences, setShareReferences] = useState(false);
   const [shareMedical, setShareMedical] = useState(false);
   // פתוח כברירת מחדל: תמונת הבחור נשלחה תמיד, והשדכן סוגר אותה כשצריך
   const [shareGroomPhoto, setShareGroomPhoto] = useState(true);
@@ -73,6 +75,7 @@ export default function SendProposalModal({
       setNoteGroom("");
       setNoteBride("");
       setShareCv(false);
+      setShareReferences(false);
       setShareMedical(false);
       setShareGroomPhoto(true);
     }
@@ -90,6 +93,7 @@ export default function SendProposalModal({
       noteForGroom: showGroomNote ? noteGroom : "",
       noteForBride: showBrideNote ? noteBride : "",
       shareCv,
+      shareReferences,
       shareMedicalInfo: shareMedical,
       shareGroomPhoto,
     });
@@ -203,6 +207,33 @@ export default function SendProposalModal({
                 >
                   הקובץ עצמו עלול לכלול טלפון או כתובת. כדאי לשתף רק קובץ שאין
                   בו פרטי התקשרות.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="share-references"
+                checked={shareReferences}
+                onCheckedChange={(checked) =>
+                  setShareReferences(checked === true)
+                }
+                disabled={loading}
+                aria-describedby="share-references-hint"
+              />
+              <div className="space-y-1">
+                <Label
+                  htmlFor="share-references"
+                  className="text-body-sm leading-snug font-normal"
+                >
+                  לשתף את פרטי הממליצים
+                </Label>
+                <p
+                  id="share-references-hint"
+                  className="text-caption text-muted-foreground"
+                >
+                  הצד השני יראה את הטלפון והאימייל של הממליצים, כדי שיוכל לברר.
+                  פרטי הקשר של המיועד/ת ושל ההורים אינם נחשפים בכל מקרה.
                 </p>
               </div>
             </div>

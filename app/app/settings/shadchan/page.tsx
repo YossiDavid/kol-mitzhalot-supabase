@@ -8,6 +8,10 @@ import { toast } from "sonner";
 import { Page, PageHeader } from "@/components/layout";
 import { CardSkeleton } from "@/components/ui/card-skeleton";
 import { SkeletonRegion } from "@/components/ui/skeleton";
+import {
+  identityFromUser,
+  type PreviewIdentity,
+} from "@/features/shadchanim/lib/preview-card";
 import { ShadchanProfileFormCard } from "@/features/shadchanim/components/shadchan-profile-form-card";
 import {
   EMPTY_SHADCHAN_FORM,
@@ -51,13 +55,19 @@ type PageState =
       kind: "join";
       defaults: ShadchanFormData;
       hasExistingApplication: boolean;
+      identity: PreviewIdentity;
     }
-  | { kind: "edit"; userId: string; defaults: ShadchanFormData };
+  | {
+      kind: "edit";
+      userId: string;
+      defaults: ShadchanFormData;
+      identity: PreviewIdentity;
+    };
 
 /** שלד העמוד, זהה במבנה לתוכן האמיתי כדי שלא תהיה קפיצה. */
 function ShadchanPageSkeleton() {
   return (
-    <Page width="form">
+    <Page width="form-aside">
       <PageHeader title={JOIN_COPY.title} description={JOIN_COPY.description} />
       <SkeletonRegion>
         <CardSkeleton fields={FORM_FIELD_COUNT} footer />
@@ -99,11 +109,19 @@ function ShadchanSettingsContent() {
         return;
       }
 
-      const { data, error } = await supabase
-        .from("shadchanim_info")
-        .select(`application_status, ${SHADCHAN_PROFILE_SELECT}`)
-        .eq("user_id", user.id)
-        .single();
+      const [{ data, error }, { data: profile }] = await Promise.all([
+        supabase
+          .from("shadchanim_info")
+          .select(`application_status, ${SHADCHAN_PROFILE_SELECT}`)
+          .eq("user_id", user.id)
+          .single(),
+        supabase
+          .from("user_profiles")
+          .select("first_name, last_name")
+          .eq("id", user.id)
+          .maybeSingle(),
+      ]);
+      const identity = identityFromUser(user, profile);
 
       if (error && error.code !== NO_ROWS_ERROR_CODE) {
         console.error("Error fetching shadchan row:", error);
@@ -115,7 +133,12 @@ function ShadchanSettingsContent() {
           router.push("/app/settings");
           return;
         }
-        setState({ kind: "edit", userId: user.id, defaults: rowToForm(data) });
+        setState({
+          kind: "edit",
+          userId: user.id,
+          defaults: rowToForm(data),
+          identity,
+        });
         return;
       }
 
@@ -123,6 +146,7 @@ function ShadchanSettingsContent() {
         kind: "join",
         defaults: data ? rowToForm(data) : EMPTY_SHADCHAN_FORM,
         hasExistingApplication: Boolean(data),
+        identity,
       });
     }
 
@@ -137,13 +161,20 @@ function ShadchanSettingsContent() {
   }
 
   if (state.kind === "edit") {
-    return <EditOwnProfile userId={state.userId} defaults={state.defaults} />;
+    return (
+      <EditOwnProfile
+        userId={state.userId}
+        defaults={state.defaults}
+        identity={state.identity}
+      />
+    );
   }
 
   return (
     <JoinApplication
       defaults={state.defaults}
       hasExistingApplication={state.hasExistingApplication}
+      identity={state.identity}
     />
   );
 }
@@ -151,9 +182,11 @@ function ShadchanSettingsContent() {
 function JoinApplication({
   defaults,
   hasExistingApplication,
+  identity,
 }: {
   defaults: ShadchanFormData;
   hasExistingApplication: boolean;
+  identity: PreviewIdentity;
 }) {
   const router = useRouter();
 
@@ -200,7 +233,7 @@ function JoinApplication({
   };
 
   return (
-    <Page width="form">
+    <Page width="form-aside">
       <PageHeader title={JOIN_COPY.title} description={JOIN_COPY.description} />
       <ApplicationMessagesCard kind="shadchan" />
       <ShadchanProfileFormCard
@@ -210,6 +243,8 @@ function JoinApplication({
         submitLabel={hasExistingApplication ? "עדכן בקשה" : "שלח בקשה"}
         pendingLabel="שולח..."
         cancelHref="/app/settings"
+        previewIdentity={identity}
+        showApplicationNote
         onSubmit={onSubmit}
       />
     </Page>
@@ -219,9 +254,11 @@ function JoinApplication({
 function EditOwnProfile({
   userId,
   defaults,
+  identity,
 }: {
   userId: string;
   defaults: ShadchanFormData;
+  identity: PreviewIdentity;
 }) {
   const router = useRouter();
   const profileHref = shadchanProfileHref(userId) as Route;
@@ -233,7 +270,8 @@ function EditOwnProfile({
       // עדכון עמודות הפרופיל בלבד: הסטטוס ותאריכיו לא נשלחים (והטריגר שומר עליהם)
       const { data: updated, error } = await supabase
         .from("shadchanim_info")
-        .update(formToColumns(data))
+        // ההערה להנהלה היא של שלב הבקשה; בעריכה עצמית היא לא נכתבת
+        .update(formToColumns(data, { includeApplicationNote: false }))
         .eq("user_id", userId)
         .select("user_id");
 
@@ -252,7 +290,7 @@ function EditOwnProfile({
   };
 
   return (
-    <Page width="form">
+    <Page width="form-aside">
       <PageHeader title={EDIT_COPY.title} description={EDIT_COPY.description} />
       <ApplicationMessagesCard kind="shadchan" />
       <ShadchanProfileFormCard
@@ -262,6 +300,7 @@ function EditOwnProfile({
         submitLabel="שמור שינויים"
         pendingLabel="שומר..."
         cancelHref={profileHref}
+        previewIdentity={identity}
         onSubmit={onSubmit}
       />
     </Page>

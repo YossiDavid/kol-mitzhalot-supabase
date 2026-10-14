@@ -4,12 +4,14 @@ import { cn } from "@/lib/utils";
 
 /**
  * רוחב תוכן העמוד בתוך המיכל של app/app/layout.tsx.
- * full - כל הרוחב; content - תוכן לקריאה (פרופיל); form - טופס בעמודה אחת.
+ * full - כל הרוחב; content - תוכן לקריאה (פרופיל); form - טופס בעמודה אחת;
+ * form-aside - טופס עם עמודת צד (למשל תצוגה מקדימה).
  */
 const PAGE_WIDTH_CLASS = {
   full: "",
   content: "mx-auto w-full max-w-3xl",
   form: "mx-auto w-full max-w-2xl",
+  "form-aside": "mx-auto w-full max-w-5xl",
 } as const;
 
 export type PageWidth = keyof typeof PAGE_WIDTH_CLASS;

@@ -1,3 +1,5 @@
+import { ProposalDisclosureControls } from "@/features/shidduchim/components/proposal-disclosure-controls";
+import { disclosureFromRow } from "@/features/shidduchim/lib/proposal-disclosure";
 import { Box, PageHeader, PageHeaderSkeleton } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
@@ -111,7 +113,12 @@ async function ShidduchCardContent({
       recipient_scope,
       sent_at,
       created_at,
-      updated_at
+      updated_at,
+      share_cv,
+      share_contact_details,
+      share_references,
+      share_medical_info,
+      share_groom_photo
     `,
       )
       .eq("id", id)
@@ -251,6 +258,12 @@ async function ShidduchCardContent({
             )}
           </Button>
         }
+      />
+
+      <ProposalDisclosureControls
+        shidduchId={shidduch.id}
+        flags={disclosureFromRow(shidduch)}
+        isSent={currentStatus !== "draft" && Boolean(shidduch.sent_at)}
       />
 
       <div

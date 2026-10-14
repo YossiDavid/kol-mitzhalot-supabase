@@ -14,6 +14,9 @@ export type ShadchanApplicationStatus =
   | "rejected"
   | null;
 
+/** תיאור ציבורי קצר מזה (באותיות, אחרי trim) מסומן לתיקון בטבלת המנהל */
+export const SHORT_DESCRIPTION_MAX_LENGTH = 20;
+
 export type ShadchanAdminRow = {
   id: string;
   firstName: string | null;
@@ -27,6 +30,10 @@ export type ShadchanAdminRow = {
   completedShidduchim: number;
   lastShidduchCreatedAt: string | null;
   lastShidduchCompletedAt: string | null;
+  /** הפעילות האחרונה: המאוחרת מבין הצעה אחרונה להתחברות אחרונה */
+  lastActivityAt: string | null;
+  /** שדכן מאושר שהתיאור הציבורי שלו ריק או קצר מאוד (לתיקון בידי מנהל) */
+  hasMissingOrShortDescription: boolean;
 };
 
 export type AdminShadchanimListResult = {
@@ -57,7 +64,23 @@ type ShadchanListEntry = {
   userId: string;
   applicationStatus: ShadchanApplicationStatus;
   sortAt: number;
+  bio: string | null;
 };
+
+/** המאוחר מבין שני תאריכי ISO (או null כששניהם חסרים) */
+function latestOf(a: string | null, b: string | null): string | null {
+  if (!a || !b) return a ?? b;
+  return new Date(a).getTime() >= new Date(b).getTime() ? a : b;
+}
+
+/** רק שדכן מאושר מופיע ברשימה הציבורית, ולכן רק לו התיאור רלוונטי */
+function isDescriptionMissingOrShort(
+  status: ShadchanApplicationStatus,
+  bio: string | null,
+): boolean {
+  if (status !== "approved") return false;
+  return (bio ?? "").trim().length < SHORT_DESCRIPTION_MAX_LENGTH;
+}
 
 async function loadShidduchimStats(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -91,6 +114,7 @@ async function loadShidduchimStats(
 function buildRow(
   user: User,
   applicationStatus: ShadchanApplicationStatus,
+  bio: string | null,
   shidduchim: Awaited<ReturnType<typeof loadShidduchimStats>>,
 ): ShadchanAdminRow {
   const { firstName, lastName } = resolveDisplayName(user);
@@ -104,6 +128,14 @@ function buildRow(
     applicationStatus,
     applicationStatusLabel: statusLabel(applicationStatus),
     ...shidduchim,
+    lastActivityAt: latestOf(
+      shidduchim.lastShidduchCreatedAt,
+      user.last_sign_in_at || null,
+    ),
+    hasMissingOrShortDescription: isDescriptionMissingOrShort(
+      applicationStatus,
+      bio,
+    ),
   };
 }
 
@@ -113,7 +145,7 @@ async function listShadchanEntries(
 ): Promise<{ entries: ShadchanListEntry[]; pendingCount: number }> {
   const { data: applications, error: appsError } = await adminClient
     .from("shadchanim_info")
-    .select("user_id, application_status, submitted_at")
+    .select("user_id, application_status, submitted_at, bio")
     .order("submitted_at", { ascending: false, nullsFirst: false });
 
   if (appsError) {
@@ -140,6 +172,7 @@ async function listShadchanEntries(
       userId: app.user_id,
       applicationStatus: app.application_status as ShadchanApplicationStatus,
       sortAt,
+      bio: app.bio,
     });
   }
 
@@ -149,6 +182,7 @@ async function listShadchanEntries(
       userId: user.id,
       applicationStatus: null,
       sortAt: new Date(user.created_at).getTime(),
+      bio: null,
     });
     seen.add(user.id);
   }
@@ -232,7 +266,7 @@ export async function getShadchanimList(
     const user = await resolveUser(adminClient, usersById, entry.userId);
     if (!user) continue;
     const shidduchim = await loadShidduchimStats(supabase, user.id);
-    rows.push(buildRow(user, entry.applicationStatus, shidduchim));
+    rows.push(buildRow(user, entry.applicationStatus, entry.bio, shidduchim));
   }
 
   return {

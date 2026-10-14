@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { ShadchanProfileFormCard } from "@/features/shadchanim/components/shadchan-profile-form-card";
+import type { PreviewIdentity } from "@/features/shadchanim/lib/preview-card";
 import type { ShadchanFormData } from "@/features/shadchanim/lib/profile-form";
 
 const UPDATE_PROFILE_ENDPOINT = "/api/v1/admin/shadchanim/update-profile";
@@ -14,12 +15,14 @@ const FORBIDDEN_STATUSES = [401, 403];
 interface AdminShadchanProfileEditFormProps {
   userId: string;
   defaults: ShadchanFormData;
+  identity: PreviewIdentity;
 }
 
 /** עריכת פרופיל שדכן בידי מנהל, דרך נתיב השרת שמוודא הרשאת מנהל. */
 export function AdminShadchanProfileEditForm({
   userId,
   defaults,
+  identity,
 }: AdminShadchanProfileEditFormProps) {
   const router = useRouter();
 
@@ -57,6 +60,8 @@ export function AdminShadchanProfileEditForm({
       submitLabel="שמור שינויים"
       pendingLabel="שומר..."
       cancelHref="/app/admin/shadchanim"
+      previewIdentity={identity}
+      showApplicationNote
       onSubmit={onSubmit}
     />
   );

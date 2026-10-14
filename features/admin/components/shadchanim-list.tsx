@@ -21,16 +21,43 @@ type ShadchanRow = Awaited<
   ReturnType<typeof getShadchanimList>
 >["rows"][number];
 
+/** ערך חסר בטבלה (לעולם לא "לא זמין") */
+const MISSING_VALUE = "—";
+const TABLE_COLUMN_COUNT = 8;
+
+/** תאריך בלבד, בלי שעה */
 function formatDate(dateString: string | null): string {
-  if (!dateString) return "לא זמין";
-  const date = new Date(dateString);
+  if (!dateString) return MISSING_VALUE;
   return new Intl.DateTimeFormat("he-IL", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
+  }).format(new Date(dateString));
+}
+
+function fullNameOf(shadchan: ShadchanRow): string {
+  return (
+    [shadchan.firstName, shadchan.lastName].filter(Boolean).join(" ").trim() ||
+    MISSING_VALUE
+  );
+}
+
+/** שם מלא, ומתחתיו סימון לשדכן מאושר שהתיאור שלו חסר או קצר */
+function ShadchanName({ shadchan }: { shadchan: ShadchanRow }) {
+  return (
+    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+      <span>{fullNameOf(shadchan)}</span>
+      {shadchan.hasMissingOrShortDescription && (
+        <Badge
+          variant="outline"
+          className="text-muted-foreground"
+          data-testid="short-description-badge"
+        >
+          תיאור חסר/קצר
+        </Badge>
+      )}
+    </span>
+  );
 }
 
 const SHADCHAN_COLUMNS: DataTableColumn<ShadchanRow>[] = [
@@ -46,62 +73,50 @@ const SHADCHAN_COLUMNS: DataTableColumn<ShadchanRow>[] = [
     ),
   },
   {
-    key: "first-name",
-    header: "שם פרטי",
+    key: "name",
+    header: "שם",
+    // במובייל השם הוא כותרת הכרטיס (mobileTitle)
     mobile: "hidden",
-    cell: (shadchan) => shadchan.firstName || "לא זמין",
-  },
-  {
-    key: "last-name",
-    header: "שם משפחה",
-    mobile: "hidden",
-    cell: (shadchan) => shadchan.lastName || "לא זמין",
+    cell: (shadchan) => <ShadchanName shadchan={shadchan} />,
   },
   {
     key: "email",
     header: "אימייל",
     size: "grow",
     className: "wrap-anywhere",
-    cell: (shadchan) => shadchan.email || "לא זמין",
+    cell: (shadchan) => shadchan.email || MISSING_VALUE,
   },
   {
     key: "joined",
-    header: "תאריך הצטרפות",
+    header: "הצטרף",
+    size: "min",
     cell: (shadchan) => formatDate(shadchan.createdAt),
   },
   {
     key: "total",
-    header: "שידוכים נוצרו",
+    header: "הצעות שנוצרו",
     size: "min",
     align: "center",
     cell: (shadchan) => shadchan.totalShidduchim,
   },
   {
     key: "completed",
-    header: "שידוכים נסגרו",
+    header: "הצעות שנסגרו",
     size: "min",
     align: "center",
     cell: (shadchan) => shadchan.completedShidduchim,
   },
   {
-    key: "last-created",
-    header: "הצעה אחרונה",
-    cell: (shadchan) => formatDate(shadchan.lastShidduchCreatedAt),
-  },
-  {
-    key: "last-completed",
-    header: "שידוך אחרון נסגר",
-    cell: (shadchan) => formatDate(shadchan.lastShidduchCompletedAt),
-  },
-  {
-    key: "last-sign-in",
-    header: "התחברות אחרונה",
-    cell: (shadchan) => formatDate(shadchan.lastSignInAt),
+    key: "last-activity",
+    header: "פעילות אחרונה",
+    size: "min",
+    cell: (shadchan) => formatDate(shadchan.lastActivityAt),
   },
   {
     key: "edit",
-    header: "עריכה",
+    header: "פעולות",
     size: "min",
+    mobile: "actions",
     cell: (shadchan) => (
       <Button asChild variant="outline" size="sm">
         <Link href={`/app/admin/shadchanim/${shadchan.id}/edit` as Route}>
@@ -113,7 +128,13 @@ const SHADCHAN_COLUMNS: DataTableColumn<ShadchanRow>[] = [
 ];
 
 export function ShadchanimListFallback() {
-  return <DataTableSkeleton breakpoint="xl" columns={9} className="pt-2" />;
+  return (
+    <DataTableSkeleton
+      breakpoint="lg"
+      columns={TABLE_COLUMN_COUNT}
+      className="pt-2"
+    />
+  );
 }
 
 export async function ShadchanimList({
@@ -162,13 +183,11 @@ export async function ShadchanimList({
       <DataTable
         className="pt-2"
         caption="רשימת השדכנים"
-        breakpoint="xl"
+        breakpoint="lg"
         columns={SHADCHAN_COLUMNS}
         rows={stats}
         getRowKey={(shadchan) => shadchan.id}
-        mobileTitle={(shadchan) =>
-          `${shadchan.firstName || "לא זמין"} ${shadchan.lastName || "לא זמין"}`
-        }
+        mobileTitle={(shadchan) => <ShadchanName shadchan={shadchan} />}
       />
 
       <ShadchanimPagination page={page} lastPage={lastPage} perPage={perPage} />

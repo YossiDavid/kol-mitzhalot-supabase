@@ -12,8 +12,8 @@ import {
  * בדיקות טהורות על אובייקט סינתטי, בלי מסד ובלי דפדפן.
  */
 
-const CLOSED = { shareCv: false, shareMedical: false };
-const OPEN = { shareCv: true, shareMedical: true };
+const CLOSED = { shareCv: false, shareReferences: false, shareMedical: false };
+const OPEN = { shareCv: true, shareReferences: false, shareMedical: true };
 
 /** פרטי ההתקשרות של המיועד/ת: אסור שיישלפו בשום פתיחה */
 const CONTACT_COLUMNS = ["phone", "street", "house"];

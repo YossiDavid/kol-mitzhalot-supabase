@@ -143,22 +143,62 @@ const cvMedicalProposalSchema = cvProposalSchema.extend({
 });
 
 /**
- * שורת הכרטיס בהצעה. `cv_url` ו-`medical_records` קיימים בטיפוס רק בווריאנטים
- * שנפתחו להם; טלפון, כתובת ופרטי קשר של ממליצים אינם קיימים באף אחד מהם,
- * ולכן קוד שניגש ל-`phone` על כרטיס בהצעה לא מתקמפל. ה-schema חותך כל מפתח
- * שלא הוצהר, גם אם המסד החזיר אותו.
+ * ממליצים עם טלפון ואימייל: רק כשהשדכן בחר לשתף את פרטי הממליצים בהצעה.
+ * בכל מצב אחר - REFERENCES_WITHOUT_CONTACT (שם וסוג).
+ */
+export const PROPOSAL_REFERENCE_CONTACT_COLUMNS =
+  "id, reference_type, name, phone, email";
+
+const REFERENCES_WITH_CONTACT = z
+  .array(
+    z.object({
+      id: z.string(),
+      reference_type: nullableText,
+      name: nullableText,
+      phone: nullableText,
+      email: nullableText,
+    }),
+  )
+  .nullable();
+
+const withReferences = { references: REFERENCES_WITH_CONTACT };
+const refsProposalSchema = baseProposalSchema.extend(withReferences);
+const refsMedicalProposalSchema = medicalProposalSchema.extend(withReferences);
+const refsCvProposalSchema = cvProposalSchema.extend(withReferences);
+const refsCvMedicalProposalSchema =
+  cvMedicalProposalSchema.extend(withReferences);
+
+/**
+ * שורת הכרטיס בהצעה. `cv_url`, `medical_records` והטלפון והאימייל של הממליצים
+ * קיימים בטיפוס רק בווריאנטים שנפתחו להם; טלפון וכתובת של המיועד/ת אינם
+ * קיימים באף אחד מהם, ולכן קוד שניגש ל-`phone` על כרטיס בהצעה לא מתקמפל.
+ * ה-schema חותך כל מפתח שלא הוצהר, גם אם המסד החזיר אותו.
  */
 export type ProposalStudentRow =
   | z.infer<typeof baseProposalSchema>
   | z.infer<typeof medicalProposalSchema>
   | z.infer<typeof cvProposalSchema>
-  | z.infer<typeof cvMedicalProposalSchema>;
+  | z.infer<typeof cvMedicalProposalSchema>
+  | z.infer<typeof refsProposalSchema>
+  | z.infer<typeof refsMedicalProposalSchema>
+  | z.infer<typeof refsCvProposalSchema>
+  | z.infer<typeof refsCvMedicalProposalSchema>;
 
 /** מאמת את השורה מול ה-schema שמתאים למה שהשדכן פתח להצעה */
 export function parseProposalRow(
   data: unknown,
-  { shareCv, shareMedical }: ProposalDisclosure,
+  { shareCv, shareReferences, shareMedical }: ProposalDisclosure,
 ): z.ZodSafeParseResult<ProposalStudentRow> {
+  if (shareReferences) {
+    if (shareCv) {
+      return shareMedical
+        ? refsCvMedicalProposalSchema.safeParse(data)
+        : refsCvProposalSchema.safeParse(data);
+    }
+    return shareMedical
+      ? refsMedicalProposalSchema.safeParse(data)
+      : refsProposalSchema.safeParse(data);
+  }
   if (shareCv) {
     return shareMedical
       ? cvMedicalProposalSchema.safeParse(data)
@@ -172,6 +212,8 @@ export function parseProposalRow(
 export type ProposalDisclosure = {
   /** השדכן בחר לשתף את קובץ הקו״ח */
   shareCv: boolean;
+  /** השדכן בחר לשתף את הטלפון והאימייל של הממליצים */
+  shareReferences: boolean;
   /** השדכן פתח את ההצהרה הרפואית */
   shareMedical: boolean;
 };
@@ -192,6 +234,7 @@ export type ProposalDisclosure = {
  */
 export function buildProposalStudentSelect({
   shareCv,
+  shareReferences,
   shareMedical,
 }: ProposalDisclosure): string {
   const columns = shareCv
@@ -200,7 +243,12 @@ export function buildProposalStudentSelect({
 
   const embeds = [
     ...PROPOSAL_EMBEDS.map((embed) => embedFragment(embed)),
-    embedFragment("references", "id, reference_type, name"),
+    embedFragment(
+      "references",
+      shareReferences
+        ? PROPOSAL_REFERENCE_CONTACT_COLUMNS
+        : "id, reference_type, name",
+    ),
     shareMedical
       ? embedFragment("medical_records", PROPOSAL_MEDICAL_COLUMNS.join(", "))
       : null,

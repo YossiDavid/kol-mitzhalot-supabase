@@ -12,10 +12,9 @@ import {
   type ShadchanFullProfile,
   type ShadchanPublicCard,
 } from "./types";
+import { toPublicCard } from "./card-mapping";
 
 export const DASHBOARD_SHADCHANIM_LIMIT = 6;
-
-const FALLBACK_SHADCHAN_NAME = "שדכן";
 
 const publicCardRowSchema = z.object({
   shadchan_id: z.string(),
@@ -25,6 +24,8 @@ const publicCardRowSchema = z.object({
   since_year: z.number().int().nullable(),
   city: z.string().nullable(),
   description: z.string().nullable(),
+  // get_shadchanim_who_acted_for_me אינה מחזירה את העמודה
+  specializations: z.array(z.string()).nullable().optional(),
 });
 
 const activityRowSchema = publicCardRowSchema.extend({
@@ -37,7 +38,6 @@ const fullProfileRowSchema = publicCardRowSchema.extend({
   email: z.string().nullable(),
   experience_years: z.number().int().nullable(),
   closed_matches: z.number().int().nullable(),
-  specializations: z.array(z.string()).nullable(),
   languages: z.array(z.string()).nullable(),
 });
 
@@ -50,22 +50,8 @@ const quotaRowSchema = z.object({
   reply_shadchan_ids: z.array(z.string()).nullable(),
 });
 
-type PublicCardRow = z.infer<typeof publicCardRowSchema>;
-
 function isShadchanActionType(value: string): value is ShadchanActionType {
   return (SHADCHAN_ACTION_TYPES as readonly string[]).includes(value);
-}
-
-function toPublicCard(row: PublicCardRow): ShadchanPublicCard {
-  const name = [row.first_name, row.last_name].filter(Boolean).join(" ").trim();
-  return {
-    id: row.shadchan_id,
-    name: name || FALLBACK_SHADCHAN_NAME,
-    avatarUrl: row.avatar_url,
-    sinceYear: row.since_year,
-    city: row.city,
-    description: row.description,
-  };
 }
 
 /**
@@ -154,7 +140,6 @@ export async function getShadchanPublicProfile(
     email: row.email,
     experienceYears: row.experience_years,
     closedMatches: row.closed_matches,
-    specializations: row.specializations ?? [],
     languages: row.languages ?? [],
   };
 }

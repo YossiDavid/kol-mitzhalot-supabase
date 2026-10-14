@@ -63,8 +63,16 @@ const ABOUT = `אודות-שער-${T}`;
 const FATHER_JOB = `עיסוק-אב-שער-${T}`;
 
 /** פרטי ההתקשרות: אסור שיחזרו למי שקיבל הצעה, בשום צירוף דגלים */
-const { cv: CV_URL, ...CONTACT_ONLY } = CONTACT;
+const {
+  cv: CV_URL,
+  refPhone: REF_PHONE,
+  refEmail: REF_EMAIL,
+  ...CONTACT_ONLY
+} = CONTACT;
+/** פרטי התקשרות שלעולם אינם מגיעים לצד השני (המיועד, ההורים, הממלא, הרב...) */
 const CONTACT_VALUES: readonly string[] = Object.values(CONTACT_ONLY);
+/** טלפון ואימייל של הממליצים: רק כשהשדכן שיתף את פרטי הממליצים */
+const REFERENCE_CONTACT_VALUES: readonly string[] = [REF_PHONE, REF_EMAIL];
 
 /**
  * הדגלים שעל ההצעה: שיתוף הקו״ח, ההצהרה הרפואית, והדגל הישן
@@ -72,6 +80,7 @@ const CONTACT_VALUES: readonly string[] = Object.values(CONTACT_ONLY);
  */
 type ProposalFlags = {
   shareCv: boolean;
+  shareReferences: boolean;
   shareMedical: boolean;
   legacyContact: boolean;
 };
@@ -79,11 +88,14 @@ const BOOLEANS = [false, true] as const;
 const FLAG_COMBINATIONS: readonly ProposalFlags[] = BOOLEANS.flatMap(
   (legacyContact) =>
     BOOLEANS.flatMap((shareCv) =>
-      BOOLEANS.map((shareMedical) => ({
-        shareCv,
-        shareMedical,
-        legacyContact,
-      })),
+      BOOLEANS.flatMap((shareReferences) =>
+        BOOLEANS.map((shareMedical) => ({
+          shareCv,
+          shareReferences,
+          shareMedical,
+          legacyContact,
+        })),
+      ),
     ),
 );
 
@@ -91,6 +103,7 @@ const FLAG_COMBINATIONS: readonly ProposalFlags[] = BOOLEANS.flatMap(
 function effectiveDisclosure(flags: ProposalFlags): ProposalDisclosure {
   return {
     shareCv: flags.shareCv || flags.legacyContact,
+    shareReferences: flags.shareReferences,
     shareMedical: flags.shareMedical,
   };
 }
@@ -191,6 +204,7 @@ async function mustInsert(table: string, row: JsonRecord) {
 
 async function setDisclosure({
   shareCv,
+  shareReferences,
   shareMedical,
   legacyContact,
 }: ProposalFlags) {
@@ -198,6 +212,7 @@ async function setDisclosure({
     .from("shidduchim")
     .update({
       share_cv: shareCv,
+      share_references: shareReferences,
       share_medical_info: shareMedical,
       share_contact_details: legacyContact,
     })
@@ -512,7 +527,7 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
       // Act
       const actual = asRecord(await proposalCard(viewer, groomId), label);
       const expected = await expectedByTypeScript(disclosure);
-      const cvDisclosure = await viewer.rpc("get_proposal_cv_disclosure", {
+      const cardDisclosure = await viewer.rpc("get_proposal_card_disclosure", {
         p_student_id: groomId,
       });
 
@@ -520,6 +535,12 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
       const json = JSON.stringify(actual);
       for (const value of CONTACT_VALUES) {
         expect(json.includes(value), `${label} ${value}`).toBe(false);
+      }
+      // טלפון ואימייל של ממליצים: רק כשהשדכן שיתף את פרטי הממליצים
+      for (const value of REFERENCE_CONTACT_VALUES) {
+        expect(json.includes(value), `${label} ${value}`).toBe(
+          disclosure.shareReferences,
+        );
       }
       // המפתחות של טלפון וכתובת: אינם קיימים, או ריקים (הצעה מהדגל הישן)
       const placeholders = flags.legacyContact ? LEGACY_PLACEHOLDER_KEYS : [];
@@ -546,10 +567,11 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
       // הקו״ח: רק כשהשדכן שיתף (או בהצעה ישנה שנפתחה בדגל הישן)
       expect("cv_url" in actual, label).toBe(disclosure.shareCv);
       expect(json.includes(CV_URL), label).toBe(disclosure.shareCv);
-      expect(cvDisclosure.error, label).toBeNull();
-      expect(cvDisclosure.data, label).toEqual([
+      expect(cardDisclosure.error, label).toBeNull();
+      expect(cardDisclosure.data, label).toEqual([
         {
           share_cv: disclosure.shareCv,
+          share_references: disclosure.shareReferences,
           legacy_share_contact: flags.legacyContact,
         },
       ]);
@@ -584,6 +606,7 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
     // Arrange
     await setDisclosure({
       shareCv: true,
+      shareReferences: true,
       shareMedical: true,
       legacyContact: false,
     });
@@ -622,6 +645,7 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
     // Arrange
     await setDisclosure({
       shareCv: true,
+      shareReferences: true,
       shareMedical: true,
       legacyContact: true,
     });

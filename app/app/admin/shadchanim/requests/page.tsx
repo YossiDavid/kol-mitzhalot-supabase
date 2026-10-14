@@ -36,6 +36,7 @@ type ShadchanRequest = {
   location: string | null;
   community: string | null;
   synagogue_rabbi: string | null;
+  application_note: string | null;
   languages: string[] | null;
   certifications: string[] | null;
   application_status: "pending" | "approved" | "rejected" | null;
@@ -285,6 +286,19 @@ async function ShadchanRequestsContent() {
                     <h4 className="mb-1 font-semibold">רב בית הכנסת:</h4>
                     <p className="text-body-sm" data-testid="request-rabbi">
                       {request.synagogue_rabbi || MISSING_FIELD_LABEL}
+                    </p>
+                  </div>
+                  <div
+                    className="rounded-lg border border-primary/40 bg-primary/5 p-3 md:col-span-2"
+                    data-testid="request-application-note"
+                  >
+                    <h4 className="mb-1 font-semibold">
+                      למה כדאי לאשר אותי (נכתב על ידי המבקש/ת, להנהלה בלבד):
+                    </h4>
+                    <p className="text-body-sm whitespace-pre-line">
+                      {request.application_note || (
+                        <span className="text-muted-foreground">לא נכתב</span>
+                      )}
                     </p>
                   </div>
                   {request.location && (

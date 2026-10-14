@@ -15,7 +15,9 @@ import {
 } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { FormActions, FormFields } from "@/components/ui/form-layout";
+import { ShadchanCardPreview } from "@/features/shadchanim/components/shadchan-card-preview";
 import { ShadchanProfileFields } from "@/features/shadchanim/components/shadchan-profile-fields";
+import type { PreviewIdentity } from "@/features/shadchanim/lib/preview-card";
 import {
   shadchanProfileSchema,
   type ShadchanFormData,
@@ -28,6 +30,10 @@ interface ShadchanProfileFormCardProps {
   submitLabel: string;
   pendingLabel: string;
   cancelHref: Route;
+  /** מי מוצג בתצוגה המקדימה של הכרטיס (שם ותמונה אינם בטופס) */
+  previewIdentity: PreviewIdentity;
+  /** "למה כדאי לאשר אותי" - רק כשהבקשה עדיין בבדיקה, או למנהל */
+  showApplicationNote?: boolean;
   /** השמירה בפועל; אחראית להודעות ולניווט (שגיאה: להציג הודעה ולא לזרוק) */
   onSubmit: (data: ShadchanFormData) => Promise<void>;
 }
@@ -40,6 +46,8 @@ export function ShadchanProfileFormCard({
   submitLabel,
   pendingLabel,
   cancelHref,
+  previewIdentity,
+  showApplicationNote = false,
   onSubmit,
 }: ShadchanProfileFormCardProps) {
   const form = useForm<ShadchanFormData>({
@@ -58,12 +66,21 @@ export function ShadchanProfileFormCard({
         <Form {...form}>
           {/* noValidate: ההודעות בעברית מגיעות מהסכמה ולא מהדפדפן */}
           <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
-            <FormFields>
-              <ShadchanProfileFields
-                control={form.control}
-                isSubmitting={isSubmitting}
-              />
-              <FormActions>
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-x-8">
+              <FormFields className="lg:col-start-1">
+                <ShadchanProfileFields
+                  control={form.control}
+                  isSubmitting={isSubmitting}
+                  showApplicationNote={showApplicationNote}
+                />
+              </FormFields>
+              <aside className="lg:sticky lg:top-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
+                <ShadchanCardPreview
+                  control={form.control}
+                  identity={previewIdentity}
+                />
+              </aside>
+              <FormActions className="lg:col-start-1">
                 <Button
                   type="button"
                   variant="outline"
@@ -76,7 +93,7 @@ export function ShadchanProfileFormCard({
                   {isSubmitting ? pendingLabel : submitLabel}
                 </Button>
               </FormActions>
-            </FormFields>
+            </div>
           </form>
         </Form>
       </CardContent>

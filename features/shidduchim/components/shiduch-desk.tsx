@@ -307,6 +307,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
     noteForGroom,
     noteForBride,
     shareCv,
+    shareReferences,
     shareMedicalInfo,
     shareGroomPhoto,
   }: {
@@ -314,6 +315,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
     noteForGroom: string;
     noteForBride: string;
     shareCv: boolean;
+    shareReferences: boolean;
     shareMedicalInfo: boolean;
     shareGroomPhoto: boolean;
   }): Promise<string | void> => {
@@ -331,6 +333,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
           noteForGroom,
           noteForBride,
           shareCv,
+          shareReferences,
           shareMedicalInfo,
           shareGroomPhoto,
         }),

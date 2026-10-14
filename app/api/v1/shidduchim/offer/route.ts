@@ -31,6 +31,8 @@ const bodySchema = z.object({
   // אינם נפתחים לצד השני בשום מצב: shareContactDetails שלקוח ישן עוד שולח
   // אינו מוצהר כאן, ולכן נזרק בלי שנקרא.
   shareCv: z.boolean().optional().default(false),
+  // טלפון ואימייל של הממליצים לצד השני: בחירה של השדכן, סגור כברירת מחדל
+  shareReferences: z.boolean().optional().default(false),
   shareMedicalInfo: z.boolean().optional().default(false),
   // תמונות הבחור בכרטיס שרואה צד הכלה. פתוח כברירת מחדל: זו ההתנהגות
   // שהייתה תמיד, והשדכן סוגר אותה במפורש.
@@ -80,6 +82,7 @@ export async function POST(req: NextRequest) {
     noteForGroom,
     noteForBride,
     shareCv,
+    shareReferences,
     shareMedicalInfo,
     shareGroomPhoto,
   } = parsed.data;
@@ -126,7 +129,7 @@ export async function POST(req: NextRequest) {
   const { data: pairRows, error: pairErr } = await admin
     .from("shidduchim")
     .select(
-      "id, status, shadchan_id, sent_at, note_for_groom, note_for_bride, recipient_scope, share_cv, share_contact_details, share_medical_info, share_groom_photo",
+      "id, status, shadchan_id, sent_at, note_for_groom, note_for_bride, recipient_scope, share_cv, share_references, share_contact_details, share_medical_info, share_groom_photo",
     )
     .eq("groom_id", groomId)
     .eq("bride_id", brideId);
@@ -190,6 +193,7 @@ export async function POST(req: NextRequest) {
       recipient_scope: null,
       sent_at: null,
       share_cv: shareCv,
+      share_references: shareReferences,
       // הדגל הישן אינו נכתב עוד; טיוטה ישנה שנשמרה איתו מתאפסת כאן
       share_contact_details: false,
       share_medical_info: shareMedicalInfo,
@@ -278,6 +282,7 @@ export async function POST(req: NextRequest) {
     sent_at: null as string | null,
     updated_at: nowIso,
     share_cv: shareCv,
+    share_references: shareReferences,
     // הדגל הישן אינו נכתב עוד: הצעה שנשלחת מעכשיו אינה נושאת אותו
     share_contact_details: false,
     share_medical_info: shareMedicalInfo,
@@ -298,6 +303,7 @@ export async function POST(req: NextRequest) {
         recipient_scope: rowToReuse.recipient_scope,
         sent_at: rowToReuse.sent_at,
         share_cv: rowToReuse.share_cv,
+        share_references: rowToReuse.share_references,
         share_contact_details: rowToReuse.share_contact_details,
         share_medical_info: rowToReuse.share_medical_info,
         share_groom_photo: rowToReuse.share_groom_photo,

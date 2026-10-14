@@ -124,6 +124,7 @@ test.describe("ה-select של כל וריאנט", () => {
   test("הצעה סגורה: בלי פרטי התקשרות, בלי קו״ח, בלי הצהרה רפואית, ממליצים בלי טלפון", () => {
     const select = buildProposalStudentSelect({
       shareCv: false,
+      shareReferences: false,
       shareMedical: false,
     });
 
@@ -145,14 +146,17 @@ test.describe("ה-select של כל וריאנט", () => {
   test("הצעה: כל פתיחה מוסיפה רק את שלה, ואף אחת אינה מוסיפה פרטי התקשרות", () => {
     const cvOnly = buildProposalStudentSelect({
       shareCv: true,
+      shareReferences: false,
       shareMedical: false,
     });
     const medicalOnly = buildProposalStudentSelect({
       shareCv: false,
+      shareReferences: false,
       shareMedical: true,
     });
     const everything = buildProposalStudentSelect({
       shareCv: true,
+      shareReferences: false,
       shareMedical: true,
     });
 
@@ -259,10 +263,12 @@ test.describe("ה-schema חותך מה שלא הוצהר", () => {
     // Act
     const parsed = parseProposalRow(row, {
       shareCv: false,
+      shareReferences: false,
       shareMedical: false,
     });
     const withCv = parseProposalRow(row, {
       shareCv: true,
+      shareReferences: false,
       shareMedical: false,
     });
 
@@ -296,6 +302,7 @@ test.describe("ה-schema חותך מה שלא הוצהר", () => {
   test("הצעה: הטיפוס אינו נושא עמודות התקשרות, בשום פתיחה", () => {
     const parsed = parseProposalRow(baseRow(), {
       shareCv: false,
+      shareReferences: false,
       shareMedical: false,
     });
     if (!parsed.success) throw new Error("parse failed");
@@ -312,6 +319,7 @@ test.describe("ה-schema חותך מה שלא הוצהר", () => {
     // Arrange
     const select = buildProposalStudentSelect({
       shareCv: false,
+      shareReferences: false,
       shareMedical: true,
     });
     const row = {
@@ -334,6 +342,7 @@ test.describe("ה-schema חותך מה שלא הוצהר", () => {
     // Act
     const parsed = parseProposalRow(row, {
       shareCv: false,
+      shareReferences: false,
       shareMedical: true,
     });
 
