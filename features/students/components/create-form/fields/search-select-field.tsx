@@ -66,6 +66,13 @@ export type SearchSelectFieldProps = {
   "aria-describedby"?: string;
 };
 
+/**
+ * ברירת מחדל יציבה ל-options. מערך חדש (`= []`) בכל רינדור שינה את ה-deps של
+ * אפקט הטעינה, והטעינה ← setOptions ← רינדור ← מערך חדש נכנסו ללולאה אינסופית
+ * (Maximum update depth exceeded), שסגרה את חלון הבחירה.
+ */
+const NO_INITIAL_OPTIONS: Option[] = [];
+
 /** מפתח יציב ל-deps */
 function stableKey(obj: unknown) {
   try {
@@ -101,7 +108,7 @@ export function SearchSelectField({
   onChange,
   className,
   disabled,
-  options: initialOptions = [],
+  options: initialOptions = NO_INITIAL_OPTIONS,
   endpoint,
   table,
   valueColumn,
