@@ -23,7 +23,7 @@ const cell = (page: Page, field: string) =>
   page.locator(`[data-field-name="${field}"]`);
 
 /** מגיע לשלב "על המשפחה" אחרי בחירת מגדר המיועד/ת */
-async function openFamilyStep(page: Page, gender: "מיועד" | "מיועדת") {
+async function openFamilyStep(page: Page, gender: "גבר" | "אשה") {
   await page.goto("/app/students/create");
   await chooseChildCard(page);
   await page.getByRole("radio", { name: gender, exact: true }).check();
@@ -42,7 +42,7 @@ const EXPECTED_LABELS = [
 ] as const;
 
 test.describe("סבים וסבתות - תוויות", () => {
-  for (const gender of ["מיועד", "מיועדת"] as const) {
+  for (const gender of ["גבר", "אשה"] as const) {
     test(`${gender}: התוויות לפי ההורה שבמקטע, ללא כוכבית חובה`, async ({
       page,
     }) => {
@@ -81,7 +81,7 @@ test.describe("סבים וסבתות - רשות", () => {
     // Arrange - אשף היצירה, בלי למלא סבים וסבתות
     await page.goto("/app/students/create");
     await chooseChildCard(page);
-    await page.getByRole("radio", { name: "מיועד", exact: true }).click();
+    await page.getByRole("radio", { name: "גבר", exact: true }).click();
     await next(page);
     await fill(page, "firstName", "בלי");
     await fill(page, "lastName", lastName);

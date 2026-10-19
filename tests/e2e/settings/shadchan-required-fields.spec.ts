@@ -3,6 +3,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createServiceClient } from "../shidduchim/fixtures";
 import { createUserSessionClient } from "../forums/forum-fixtures";
+import {
+  COMPLETE_IDENTITY_COLUMNS,
+  fillShadchanIdentity,
+} from "../helpers/shadchan-form";
 
 /**
  * בקשת הצטרפות כשדכן: טלפון, קהילה ורב בית הכנסת הם שדות חובה - בטופס
@@ -154,6 +158,7 @@ test.describe("הצטרפות כשדכן - שדות חובה", () => {
     await page.getByLabel("טלפון ליצירת קשר").fill("0501234567");
     await page.getByLabel("רב בית הכנסת שלך").fill(RABBI_NAME);
     await pickFirstCommunity(page);
+    await fillShadchanIdentity(page);
 
     // Act
     await page.getByRole("button", { name: "שלח בקשה" }).click();
@@ -199,6 +204,7 @@ test.describe("הצטרפות כשדכן - שדות חובה", () => {
       contact_phone: "0501234567",
       community: "בעלזא",
       synagogue_rabbi: RABBI_NAME,
+      ...COMPLETE_IDENTITY_COLUMNS,
     };
 
     // Act

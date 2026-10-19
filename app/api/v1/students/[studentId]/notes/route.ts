@@ -33,6 +33,26 @@ type AuthorResult =
 
 const FORBIDDEN: AuthorResult = { error: "Forbidden", status: 403 };
 
+/**
+ * לכותרת ההערה החדשה ("השדכן הרב" / "השדכנית גב'"), כמו ב-get_student_shadchan_notes:
+ * המגדר מהשורה של הכותב עצמו (RLS: עצמי), ועמוד שדכן יש לשדכן ולמנהל.
+ */
+async function loadShadchanAuthorTitle(
+  supabase: ServerSupabase,
+  user: User,
+): Promise<{ author_gender: string | null; author_has_profile: boolean }> {
+  const { data, error } = await supabase
+    .from("shadchanim_info")
+    .select("gender")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (error) console.error("[students/notes] author gender", error);
+  return {
+    author_gender: typeof data?.gender === "string" ? data.gender : null,
+    author_has_profile: hasRole(user, "shadchan") || hasRole(user, "admin"),
+  };
+}
+
 function resolveShadchanAuthor(user: User): AuthorResult {
   if (hasRole(user, "shadchan"))
     return { role: "shadchan", institutionId: null };
@@ -149,6 +169,11 @@ export async function POST(
     ? (created.institutions[0] ?? null)
     : created.institutions;
 
+  const shadchanAuthor =
+    kind === "shadchan_note"
+      ? await loadShadchanAuthorTitle(supabase, user)
+      : null;
+
   return NextResponse.json(
     {
       note: {
@@ -159,6 +184,7 @@ export async function POST(
         institution_city: institution?.city ?? null,
         author_id: user.id,
         author_name: displayNameOf(user),
+        ...shadchanAuthor,
       },
     },
     { status: 201 },

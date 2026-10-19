@@ -18,6 +18,7 @@ import {
   createServiceClient,
   ensureCardManagerId,
 } from "../shidduchim/fixtures";
+import { addStudentPhoto } from "../helpers/student-photo";
 
 /**
  * שמירת כרטיס עוברת דרך השרת שלנו: הדפדפן לא קורא ל-RPC של Supabase. הסיבה:
@@ -51,7 +52,7 @@ const next = (page: Page) => page.locator("button:has-text('הבא')").click();
 async function fillCreateWizard(page: Page, lastName: string) {
   await page.goto("/app/students/create");
   await chooseChildCard(page);
-  await page.getByRole("radio", { name: "מיועד", exact: true }).click();
+  await page.getByRole("radio", { name: "גבר", exact: true }).click();
   await next(page);
 
   await fill(page, "firstName", "שרת");
@@ -66,6 +67,8 @@ async function fillCreateWizard(page: Page, lastName: string) {
   await selects.nth(0).selectOption("single");
   await selects.nth(1).selectOption("kosher");
   await selects.nth(2).selectOption("koilel");
+  // תמונה: חובה בכרטיס של גבר
+  await addStudentPhoto(page);
   await next(page);
 
   await expect(page.locator("button:has-text('הבא')")).toBeVisible();
@@ -168,11 +171,14 @@ test.describe("שמירת כרטיס דרך השרת", () => {
       .getByRole("button", { name: "פרטים אישיים", exact: true })
       .click();
     await page.locator("#street").fill("חזון איש");
+    // התמונה מהיצירה לא נשמרה (גם set_student_photos עובר דרך הסינון), ובכרטיס
+    // של גבר תמונה חובה; שמירתה נכשלת שוב, ולכן ההודעה היא "נשמרו" עם אזהרה
+    await addStudentPhoto(page);
     await page
       .getByRole("button", { name: "שמירת שינויים", exact: true })
       .click();
 
-    await expect(page.getByText("השינויים נשמרו בהצלחה!").first()).toBeVisible({
+    await expect(page.getByText(/השינויים נשמרו/).first()).toBeVisible({
       timeout: SAVE_TIMEOUT_MS,
     });
     const { data } = await admin

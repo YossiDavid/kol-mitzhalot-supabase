@@ -16,7 +16,9 @@ import {
   type DonationFrequency,
 } from "./nedarim";
 
-export const AMOUNT_PRESETS = [36, 72, 180, 360, 1000] as const;
+/** כל ההצעות לפחות DONATION_AMOUNT_MIN; ברירת המחדל בטופס: 180 (DEFAULT_PRESET_AMOUNT) */
+export const AMOUNT_PRESETS = [101, 180, 360, 500, 1000] as const;
+export const DEFAULT_PRESET_AMOUNT = 180;
 
 export const FREQUENCY_OPTIONS: ReadonlyArray<{
   value: DonationFrequency;
@@ -64,6 +66,8 @@ export type DonationIntentValues = Omit<DonationFormValues, "donorId">;
 export type DonationFormField =
   | "amount"
   | "dedicationName"
+  | "firstName"
+  | "lastName"
   | "phone"
   | "email"
   | "donorId";
@@ -102,12 +106,54 @@ export function validateDonorId(
   return isValidDonorId(raw) ? {} : { donorId: DONOR_ID_INVALID_MESSAGE };
 }
 
-/** כל כללי הטופס בדפדפן: הכללים המשותפים עם השרת, ובנוסף מספר הזהות */
+/** סוגי ההקדשה ברכישת פרנס: ההקדשה חובה, ולכן בלי "ללא הקדשה" */
+export const PURCHASE_DEDICATION_TYPES = DEDICATION_TYPES.filter(
+  ({ value }) => value !== NO_DEDICATION,
+);
+
+export const PURCHASE_MESSAGES = {
+  dedicationRequired: "בפרנס נדרשים סוג הקדשה ושם, כפי שיופיעו באתר.",
+  firstNameRequired: "נא להזין שם פרטי: הוא יופיע בהקדשה באתר.",
+  lastNameRequired: "נא להזין שם משפחה: הוא יופיע בהקדשה באתר.",
+} as const;
+
+/**
+ * כללים נוספים ברכישת פרנס (לקוח ושרת): ההקדשה ושם התורם מוצגים בקובייה באתר,
+ * ולכן חובה. הסכום והתדירות נקבעים מההצעה ונבדקים בשרת מול המחיר.
+ */
+export function validateDedicationPurchase(
+  values: Pick<
+    DonationIntentValues,
+    "dedicationType" | "dedicationName" | "firstName" | "lastName"
+  >,
+): DonationFormErrors {
+  const errors: DonationFormErrors = {};
+  if (
+    values.dedicationType === NO_DEDICATION ||
+    !values.dedicationName.trim()
+  ) {
+    errors.dedicationName = PURCHASE_MESSAGES.dedicationRequired;
+  }
+  if (!values.firstName.trim()) {
+    errors.firstName = PURCHASE_MESSAGES.firstNameRequired;
+  }
+  if (!values.lastName.trim()) {
+    errors.lastName = PURCHASE_MESSAGES.lastNameRequired;
+  }
+  return errors;
+}
+
+/**
+ * כל כללי הטופס בדפדפן: הכללים המשותפים עם השרת, ובנוסף מספר הזהות.
+ * ברכישת פרנס גם כללי הרכישה (שגיאת הכללים הכלליים גוברת באותו שדה).
+ */
 export function validateDonationFormClient(
   values: DonationFormValues,
   frequency: DonationFrequency,
+  isDedicationPurchase = false,
 ): DonationFormErrors {
   return {
+    ...(isDedicationPurchase ? validateDedicationPurchase(values) : {}),
     ...validateDonationForm(values),
     ...validateDonorId(values.donorId, frequency),
   };

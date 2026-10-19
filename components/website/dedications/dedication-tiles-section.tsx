@@ -2,6 +2,8 @@ import { connection } from "next/server";
 
 import { DedicationTilesView } from "@/components/website/dedications/dedication-tiles-view";
 import { listCurrentDedications } from "@/features/dedications/lib/public-dedications";
+import { listDedicationPrices } from "@/features/dedications/lib/public-dedication-prices";
+import type { DedicationPrices } from "@/features/dedications/lib/dedication-prices";
 import { israelDateOf } from "@/features/dedications/lib/israel-date";
 import type { PublicDedication } from "@/features/dedications/lib/dedication-model";
 
@@ -11,6 +13,8 @@ import type { PublicDedication } from "@/features/dedications/lib/dedication-mod
  * "היום" נקבע בזמן הבקשה (connection() מסמן את הרכיב כדינמי; בלעדיו Cache
  * Components אוסר קריאת השעה), בשעון ישראל, והוא חלק ממפתח הקאש של השליפה.
  * כישלון בשליפה נרשם ללוג, והבלוק מציג את ההזמנות במקום להפיל את הדף.
+ * סוג פרנס שיש לו מחיר: הקובייה הפנויה מפנה לרכישה (dedicationPurchaseHref);
+ * בלי מחיר (או בכשל בטעינת המחירים): ל-donateHref, תרומה רגילה.
  */
 export async function DedicationTilesSection({
   donateHref,
@@ -20,14 +24,24 @@ export async function DedicationTilesSection({
   await connection();
   const today = israelDateOf(new Date());
 
-  let items: PublicDedication[] = [];
-  try {
-    items = await listCurrentDedications(today);
-  } catch (error: unknown) {
-    console.error("[dedications] הבלוק יוצג בלי הקדשות", error);
-  }
+  const [items, prices] = await Promise.all([
+    listCurrentDedications(today).catch((error: unknown) => {
+      console.error("[dedications] הבלוק יוצג בלי הקדשות", error);
+      return [] as PublicDedication[];
+    }),
+    listDedicationPrices().catch((error: unknown) => {
+      console.error("[dedications] הקוביות יוצגו בלי מחירים", error);
+      return {} as DedicationPrices;
+    }),
+  ]);
 
-  return <DedicationTilesView items={items} donateHref={donateHref} />;
+  return (
+    <DedicationTilesView
+      items={items}
+      donateHref={donateHref}
+      prices={prices}
+    />
+  );
 }
 
 /** שלד בזמן הטעינה, בגובה דומה כדי שהעמוד לא יקפוץ. לא מציג הזמנה: עוד לא ידוע אם המשבצת פנויה */

@@ -33,6 +33,8 @@ export interface StudentQuery {
   newCards?: string;
   /** "direct" (מועמדים והורים) / "third_party" (צד שלישי). ריק = הכל */
   cardFilledBy?: string;
+  /** "true": רק כרטיסים שההנהלה סימנה "במיקוד". ריק = הכל */
+  adminFocus?: string;
   /** קהילה / חסידות (students.community). undefined = הכל מסומן, בלי סינון */
   communities?: CommunityFilter;
 }

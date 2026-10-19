@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import type { Route } from "next";
+import Link from "next/link";
 import { toast } from "sonner";
 import { MessageSquareText, Pencil, Trash2, Users } from "lucide-react";
 
@@ -13,6 +15,11 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  parseShadchanGender,
+  shadchanTitlePrefix,
+} from "@/features/shadchanim/lib/gender";
+import { shadchanProfileHref } from "@/features/shadchanim/lib/types";
 import type {
   ShadchanNote,
   StaffFeedback,
@@ -31,6 +38,9 @@ type CreatedNote = {
   institution_city: string | null;
   author_id: string;
   author_name: string | null;
+  /** הערת שדכן בלבד: המגדר של הכותב ואם יש לו עמוד שדכן */
+  author_gender?: string | null;
+  author_has_profile?: boolean;
 };
 
 function formatNoteDate(dateString: string): string {
@@ -242,6 +252,25 @@ function NoteEditor({
   );
 }
 
+/** "השדכן הרב <שם>" / "השדכנית גב' <שם>" / "השדכן/ית <שם>", השם מקשר לעמוד השדכן */
+function ShadchanNoteAuthor({ note }: { note: ShadchanNote }) {
+  return (
+    <span className="text-caption font-bold text-foreground">
+      {shadchanTitlePrefix(note.authorGender)}{" "}
+      {note.authorHasProfile ? (
+        <Link
+          href={shadchanProfileHref(note.authorId) as Route}
+          className="underline-offset-4 hover:underline"
+        >
+          {note.authorName}
+        </Link>
+      ) : (
+        note.authorName
+      )}
+    </span>
+  );
+}
+
 function ShadchanNoteItem({
   note,
   onEdit,
@@ -263,9 +292,7 @@ function ShadchanNoteItem({
     <li className="rounded-lg border border-border bg-muted/30 p-3">
       <div className="flex items-center justify-between gap-2">
         <span className="flex flex-wrap items-baseline gap-x-1.5">
-          <span className="text-caption font-bold text-foreground">
-            {note.authorName}
-          </span>
+          <ShadchanNoteAuthor note={note} />
         </span>
         <span className="flex shrink-0 items-center gap-1">
           <span className="text-caption text-muted-foreground">
@@ -343,6 +370,8 @@ export function ShadchanNotes({
         createdAt: created.created_at,
         authorId: created.author_id,
         authorName: created.author_name || "את/ה",
+        authorGender: parseShadchanGender(created.author_gender),
+        authorHasProfile: created.author_has_profile === true,
         canManage: true,
       },
       ...prev,

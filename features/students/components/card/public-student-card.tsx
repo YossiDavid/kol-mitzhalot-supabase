@@ -104,7 +104,7 @@ export function PublicStudentCard({
             <ReferencesSection references={student.references} />
           )}
           {staffFeedback.length > 0 && (
-            <CardSection title="פידבק אנשי צוות" icon={MessageSquareText}>
+            <CardSection title="מחמאות צוות" icon={MessageSquareText}>
               <StaffFeedbackList
                 studentId={studentId}
                 initialFeedback={staffFeedback}

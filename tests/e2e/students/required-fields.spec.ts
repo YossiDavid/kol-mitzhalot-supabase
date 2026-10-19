@@ -126,6 +126,8 @@ test.describe("כללי שדה חובה נגזרים ממערך השדות", () 
     const expectedWithoutGender = EXPECTED_REQUIRED_PATHS.filter(
       (path) => path !== "gender",
     ).sort();
+    // תמונה: חובה בכרטיס של גבר בלבד
+    const expectedMale = [...expectedWithoutGender, "photos"].sort();
 
     // Act
     const withoutGender = issuePaths(studentFields, {});
@@ -134,7 +136,7 @@ test.describe("כללי שדה חובה נגזרים ממערך השדות", () 
 
     // Assert
     expect(withoutGender).toEqual([...EXPECTED_REQUIRED_PATHS].sort());
-    expect(male).toEqual(expectedWithoutGender);
+    expect(male).toEqual(expectedMale);
     expect(female).toEqual(expectedWithoutGender);
   });
 
@@ -483,7 +485,7 @@ test.describe("כוכבית ואכיפה בטופס", () => {
     // Arrange
     await page.goto("/app/students/create");
     await chooseChildCard(page);
-    await page.getByRole("radio", { name: "מיועד", exact: true }).check();
+    await page.getByRole("radio", { name: "גבר", exact: true }).check();
     const nextButton = page.getByRole("button", { name: "המשך לשלב הבא" });
     await nextButton.click();
     await expect(
@@ -498,7 +500,8 @@ test.describe("כוכבית ואכיפה בטופס", () => {
 
     // Assert
     const state = await readRequiredState(page);
-    expect(state.starred).toEqual(PERSONAL_STEP_REQUIRED);
+    // כרטיס של גבר: גם התמונות חובה
+    expect(state.starred).toEqual([...PERSONAL_STEP_REQUIRED, "photos"].sort());
     expect(state.errored).toEqual(state.starred);
     expect(state.cellCount).toBeGreaterThan(state.starred.length);
   });
@@ -507,7 +510,7 @@ test.describe("כוכבית ואכיפה בטופס", () => {
     // Arrange
     await page.goto("/app/students/create");
     await chooseChildCard(page);
-    await page.getByRole("radio", { name: "מיועד", exact: true }).check();
+    await page.getByRole("radio", { name: "גבר", exact: true }).check();
     await page
       .getByRole("navigation", { name: "שלבי הטופס" })
       .getByRole("button", { name: "על המשפחה", exact: true })
@@ -546,7 +549,7 @@ test.describe("כוכבית ואכיפה בטופס", () => {
     await page.getByRole("button", { name: "המשך לשלב הבא" }).click();
 
     // Assert
-    await expect(genderCell.getByText("נא לבחור מיועד/מיועדת")).toBeVisible();
+    await expect(genderCell.getByText("נא לבחור מגדר")).toBeVisible();
     // השגיאה הראשונה לפי סדר התצוגה היא "עבור מי הכרטיס"
     await expect(page.getByText("נא לבחור מי ממלא את הכרטיס")).toBeVisible();
     await expect(
@@ -558,7 +561,7 @@ test.describe("כוכבית ואכיפה בטופס", () => {
     // Arrange
     await page.goto("/app/students/create");
     await chooseChildCard(page);
-    await page.getByRole("radio", { name: "מיועד", exact: true }).check();
+    await page.getByRole("radio", { name: "גבר", exact: true }).check();
     const nextButton = page.getByRole("button", { name: "המשך לשלב הבא" });
     await nextButton.click();
     const dateInput = page.locator("#birthDate");

@@ -93,4 +93,8 @@ export type PersonalDetails = {
   country?: string | null;
   phone?: string | null;
   cellphone_type?: string | null;
+  /** כהן - לגבר בלבד. null = לא צוין */
+  is_kohen?: boolean | null;
+  /** "מוכן/ה לגור ב:" - שמות ארצות */
+  willing_to_live_countries?: string[] | null;
 };

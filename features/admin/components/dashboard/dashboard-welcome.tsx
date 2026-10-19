@@ -12,7 +12,7 @@ type QuickAction = { label: string; href: Route; isPrimary?: boolean };
 const QUICK_ACTIONS: readonly QuickAction[] = [
   { label: "יצירת משתמש", href: "/app/admin/users/create", isPrimary: true },
   { label: "מאמר חדש", href: "/app/admin/content/articles/new" as Route },
-  { label: "דוח הצעות", href: "/app/admin/proposals" },
+  { label: "כל ההצעות", href: "/app/admin/proposals" },
   { label: "הגדרות מערכת", href: "/app/admin/settings" },
 ];
 

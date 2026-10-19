@@ -117,6 +117,8 @@ test.describe("כניסה עם קוד מהמייל", () => {
       .getByLabel("מספר טלפון")
       .fill(`050${String(Date.now()).slice(-7)}`);
     await page.getByLabel("מטרת ההרשמה").selectOption("self");
+    await page.getByLabel("עיר").fill("ירושלים");
+    await page.getByRole("checkbox", { name: "קראתי ואני מסכים/ה לתקנון" }).check();
 
     // Act
     await page.getByRole("button", { name: "הירשם" }).click();

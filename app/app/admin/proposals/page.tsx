@@ -20,10 +20,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select";
+import { shadchanProfileHref } from "@/features/shadchanim/lib/types";
+import {
   loadProposalsReport,
   type ProposalEventRow,
 } from "@/features/admin/lib/proposals-report";
 import {
+  DELETED_STATUS_FILTER,
   PROPOSALS_PAGE_SIZE,
   PROPOSALS_REPORT_PATH,
   parseProposalsReportQuery,
@@ -33,8 +39,25 @@ import {
 import {
   SHIDDUCH_STATUS_BADGE_VARIANT,
   SHIDDUCH_STATUS_LABELS,
+  SHIDDUCH_STATUS_OPTIONS,
   isShidduchStatus,
 } from "@/features/shidduchim/lib/status";
+
+const PAGE_TITLE = "כל ההצעות";
+const PAGE_DESCRIPTION =
+  "כל הצעה שנשלחה במערכת: לאיזה כרטיס, מי שלח אותה, למי היא נשלחה ומה מצבה כיום";
+
+/** היקף השליחה הנוכחי של ההצעה (recipient_scope) */
+const SCOPE_LABELS: Record<string, string> = {
+  both: "שני הצדדים",
+  groom_only: "צד המיועד בלבד",
+  bride_only: "צד המיועדת בלבד",
+};
+
+/** טיוטה אינה נשלחה ולכן אינה ביומן - לא מוצעת בסינון */
+const STATUS_FILTER_OPTIONS = SHIDDUCH_STATUS_OPTIONS.filter(
+  (option) => option.value !== "draft",
+);
 
 // מספר שורות השלד בזמן הטעינה - מקרב את גובה הטבלה האמיתית
 const FALLBACK_ROW_COUNT = 6;
@@ -100,12 +123,22 @@ const COLUMNS: DataTableColumn<ProposalEventRow>[] = [
     key: "shadchan",
     header: "מי הציע",
     cell: (row) => (
-      <Link
-        href={`/app/admin/users/${row.shadchanId}` as Route}
-        className="font-medium underline-offset-2 hover:underline"
-      >
-        {row.shadchanName ?? "משתמש ללא שם"}
-      </Link>
+      <div className="flex flex-wrap items-baseline gap-x-2">
+        <Link
+          href={shadchanProfileHref(row.shadchanId) as Route}
+          className="font-medium underline-offset-2 hover:underline"
+          data-testid="proposal-shadchan-link"
+        >
+          {row.shadchanName ?? "משתמש ללא שם"}
+        </Link>
+        <Link
+          href={`/app/admin/users/${row.shadchanId}` as Route}
+          className="text-caption text-muted-foreground underline-offset-2 hover:underline"
+          aria-label={`ניהול המשתמש ${row.shadchanName ?? ""}`.trim()}
+        >
+          ניהול
+        </Link>
+      </div>
     ),
   },
   {
@@ -123,6 +156,13 @@ const COLUMNS: DataTableColumn<ProposalEventRow>[] = [
     header: "צד",
     size: "min",
     cell: (row) => SIDE_LABELS[row.side],
+  },
+  {
+    key: "scope",
+    header: "נשלחה ל",
+    size: "min",
+    cell: (row) =>
+      row.recipientScope ? (SCOPE_LABELS[row.recipientScope] ?? "-") : "-",
   },
   {
     key: "status",
@@ -157,6 +197,24 @@ function Filters({ query }: { query: ProposalsReportQuery }) {
           defaultValue={query.card}
           placeholder="שם הכרטיס"
         />
+      </div>
+      <div className="grid min-w-40 gap-2">
+        <Label htmlFor="filter-status">סטטוס</Label>
+        <NativeSelect
+          id="filter-status"
+          name="status"
+          defaultValue={query.status}
+        >
+          <NativeSelectOption value="">כל הסטטוסים</NativeSelectOption>
+          {STATUS_FILTER_OPTIONS.map((option) => (
+            <NativeSelectOption key={option.value} value={option.value}>
+              {option.label}
+            </NativeSelectOption>
+          ))}
+          <NativeSelectOption value={DELETED_STATUS_FILTER}>
+            נמחקה
+          </NativeSelectOption>
+        </NativeSelect>
       </div>
       <div className="grid gap-2">
         <Label htmlFor="filter-from">מתאריך</Label>
@@ -224,7 +282,7 @@ async function ProposalsContent({ searchParams }: ReportPageProps) {
     console.error("[admin/proposals]", err);
     return (
       <Page>
-        <PageHeader title="דוח הצעות" description="אירעה שגיאה בטעינת הדוח" />
+        <PageHeader title={PAGE_TITLE} description="אירעה שגיאה בטעינת הדוח" />
         <div className="rounded-lg border border-destructive bg-destructive/10 p-6">
           <p className="text-body-sm">טעינת הדוח נכשלה. נסו לרענן את הדף.</p>
         </div>
@@ -238,11 +296,7 @@ async function ProposalsContent({ searchParams }: ReportPageProps) {
 
   return (
     <Page>
-      <PageHeader
-        title="דוח הצעות"
-        count={total}
-        description="כל פעם שכרטיס קיבל הצעה, מי שלח אותה ומה מצבה כיום"
-      />
+      <PageHeader title={PAGE_TITLE} count={total} description={PAGE_DESCRIPTION} />
       <Filters query={query} />
       {rows.length === 0 ? (
         <Empty>
@@ -265,7 +319,7 @@ async function ProposalsContent({ searchParams }: ReportPageProps) {
           </div>
           <DataTable
             className="pt-2"
-            caption="יומן ההצעות"
+            caption="כל ההצעות"
             breakpoint="xl"
             columns={COLUMNS}
             rows={rows}
@@ -281,10 +335,7 @@ async function ProposalsContent({ searchParams }: ReportPageProps) {
 function ProposalsFallback() {
   return (
     <Page>
-      <PageHeader
-        title="דוח הצעות"
-        description="כל פעם שכרטיס קיבל הצעה, מי שלח אותה ומה מצבה כיום"
-      />
+      <PageHeader title={PAGE_TITLE} description={PAGE_DESCRIPTION} />
       <DataTableSkeleton
         breakpoint="xl"
         rows={FALLBACK_ROW_COUNT}

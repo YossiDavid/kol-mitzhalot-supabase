@@ -36,7 +36,50 @@ export type DonationRow = {
   lastError: string | null;
   /** הוראת קבע חודשית שהוקמה אצל הספק ועדיין ממתינה לחיוב הראשון */
   isAwaitingFirstCharge: boolean;
+  /** פרנס שנרכש בתרומה והתקופה שלו; null = תרומה רגילה */
+  dedicationPurchase: {
+    kind: "sponsor_day" | "sponsor_week" | "sponsor_month";
+    startsOn: string;
+    endsOn: string;
+    /** ההקדשה נוצרה לא מפורסמת כי המשבצת כבר הייתה תפוסה */
+    needsReview: boolean;
+  } | null;
 };
+
+type LinkedDedication = { needs_review: boolean } | null;
+
+/** הקדשה מקושרת (donation_id ייחודי): PostgREST מחזיר אובייקט או מערך */
+function firstLinked(
+  value: LinkedDedication | LinkedDedication[] | undefined,
+): LinkedDedication {
+  return Array.isArray(value) ? (value[0] ?? null) : (value ?? null);
+}
+
+const PURCHASE_KINDS = [
+  "sponsor_day",
+  "sponsor_week",
+  "sponsor_month",
+] as const;
+
+function toDedicationPurchase(donation: {
+  dedication_kind: string | null;
+  dedication_starts_on: string | null;
+  dedication_ends_on: string | null;
+  dedication?: LinkedDedication | LinkedDedication[];
+}): DonationRow["dedicationPurchase"] {
+  const kind = PURCHASE_KINDS.find(
+    (value) => value === donation.dedication_kind,
+  );
+  if (!kind || !donation.dedication_starts_on || !donation.dedication_ends_on) {
+    return null;
+  }
+  return {
+    kind,
+    startsOn: donation.dedication_starts_on,
+    endsOn: donation.dedication_ends_on,
+    needsReview: firstLinked(donation.dedication)?.needs_review ?? false,
+  };
+}
 
 export type UnmatchedPaymentRow = {
   id: string;
@@ -135,7 +178,7 @@ export async function loadDonationsReport(
   let builder = supabase
     .from("donations")
     .select(
-      "id, created_at, amount, frequency, status, dedication_text, donor_first_name, donor_last_name, donor_phone, donor_email, last_error, provider_keva_id",
+      "id, created_at, amount, frequency, status, dedication_text, donor_first_name, donor_last_name, donor_phone, donor_email, last_error, provider_keva_id, dedication_kind, dedication_starts_on, dedication_ends_on, dedication:dedications(needs_review)",
       { count: "exact" },
     );
   if (query.status) builder = builder.eq("status", query.status);
@@ -172,6 +215,7 @@ export async function loadDonationsReport(
         donation.frequency === "monthly" &&
         donation.provider_keva_id !== null &&
         (charge?.count ?? 0) === 0,
+      dedicationPurchase: toDedicationPurchase(donation),
     };
   });
 

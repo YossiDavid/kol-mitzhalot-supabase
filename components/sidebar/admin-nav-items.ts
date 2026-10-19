@@ -18,6 +18,7 @@ import {
   UsersRound,
   Users,
   Heart,
+  History,
   Settings,
   IdCard,
   Database,
@@ -102,7 +103,7 @@ export const ADMIN_NAV_SECTIONS: readonly AdminNavSection[] = [
         icon: Flag,
       },
       {
-        title: "דוח הצעות",
+        title: "כל ההצעות",
         url: "/app/admin/proposals",
         icon: ListChecks,
       },
@@ -181,6 +182,11 @@ export const ADMIN_NAV_SECTIONS: readonly AdminNavSection[] = [
         title: "הגדרות מערכת",
         url: "/app/admin/settings",
         icon: Settings,
+      },
+      {
+        title: "יומן פעילות",
+        url: "/app/admin/activity",
+        icon: History,
       },
     ],
   },

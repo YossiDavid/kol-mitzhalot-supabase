@@ -11,8 +11,10 @@ import {
 import {
   AMOUNT_PRESETS,
   DEDICATION_TYPES,
+  DEFAULT_PRESET_AMOUNT,
   FREQUENCY_OPTIONS,
   NO_DEDICATION,
+  PURCHASE_DEDICATION_TYPES,
   composeDedication,
   resolveAmount,
   validateDonationFormClient,
@@ -33,7 +35,9 @@ import {
   type StartPaymentValue,
 } from "@/features/donations/lib/start-payment";
 import type { ProviderFieldError } from "@/features/donations/lib/provider-errors";
+import type { DedicationOffer } from "@/features/dedications/lib/dedication-prices";
 import { ChoiceCard } from "./choice-card";
+import { DedicationOfferHeader } from "./dedication-offer-header";
 import { FormField, fieldDescriptionId } from "./form-field";
 
 interface DonationFormProps {
@@ -44,10 +48,15 @@ interface DonationFormProps {
   onContinue: (value: StartPaymentValue, intentId: string) => void;
   /** סירוב מהספק שממופה לשדה: מציג את ההודעה ומעביר אליו מיקוד. אובייקט חדש בכל סירוב */
   providerError?: ProviderFieldError | null;
+  /**
+   * רכישת פרנס: הסכום נעול למחיר, התדירות חד־פעמית, וההקדשה ושם התורם חובה
+   * (הם מופיעים בקובייה באתר). null = תרומה רגילה.
+   */
+  offer?: DedicationOffer | null;
 }
 
 const INITIAL_VALUES: DonationFormValues = {
-  presetAmount: 180,
+  presetAmount: DEFAULT_PRESET_AMOUNT,
   customAmount: "",
   dedicationType: NO_DEDICATION,
   dedicationName: "",
@@ -67,6 +76,8 @@ const DONOR_ID_INPUT_MAX_LENGTH = DONOR_ID_MAX_DIGITS + 6;
 const FIELD_IDS: Record<DonationFormField, string> = {
   amount: "donation-custom-amount",
   dedicationName: "donation-dedication-name",
+  firstName: "donation-first-name",
+  lastName: "donation-last-name",
   phone: "donation-phone",
   email: "donation-email",
   donorId: "donation-donor-id",
@@ -75,12 +86,24 @@ const FIELD_IDS: Record<DonationFormField, string> = {
 const FIELD_ORDER: DonationFormField[] = [
   "amount",
   "dedicationName",
+  "firstName",
+  "lastName",
   "donorId",
   "phone",
   "email",
 ];
 
 const formatShekels = (amount: number) => `${amount.toLocaleString("he-IL")} ₪`;
+
+/** ערכי הפתיחה: ברכישת פרנס הסכום הוא המחיר וההקדשה מתחילה בסוג הראשון */
+function initialValuesFor(offer: DedicationOffer | null): DonationFormValues {
+  if (!offer) return INITIAL_VALUES;
+  return {
+    ...INITIAL_VALUES,
+    presetAmount: offer.amount,
+    dedicationType: PURCHASE_DEDICATION_TYPES[0].value,
+  };
+}
 
 /** אינדיקציה נגישה לשדה עם שגיאה */
 const fieldA11y = (field: DonationFormField, errors: DonationFormErrors) => ({
@@ -95,9 +118,15 @@ export function DonationForm({
   apiValid,
   onContinue,
   providerError = null,
+  offer = null,
 }: DonationFormProps) {
-  const [values, setValues] = useState<DonationFormValues>(INITIAL_VALUES);
-  const [frequency, setFrequency] = useState<DonationFrequency>("once");
+  const [values, setValues] = useState<DonationFormValues>(() =>
+    initialValuesFor(offer),
+  );
+  const [selectedFrequency, setFrequency] = useState<DonationFrequency>("once");
+  const isPurchase = offer !== null;
+  // פרנס: תשלום אחד לתקופה; הוראת קבע אינה אפשרית
+  const frequency: DonationFrequency = isPurchase ? "once" : selectedFrequency;
   const [errors, setErrors] = useState<DonationFormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -118,12 +147,19 @@ export function DonationForm({
   }, [providerError]);
 
   const isIdRequired = isDonorIdRequired(frequency);
-  const hasDedication = values.dedicationType !== NO_DEDICATION;
+  const hasDedication = isPurchase || values.dedicationType !== NO_DEDICATION;
+  const dedicationTypes = isPurchase
+    ? PURCHASE_DEDICATION_TYPES
+    : DEDICATION_TYPES;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isSubmittingRef.current) return;
-    const nextErrors = validateDonationFormClient(values, frequency);
+    const nextErrors = validateDonationFormClient(
+      values,
+      frequency,
+      isPurchase,
+    );
     setErrors(nextErrors);
     setSubmitError(null);
 
@@ -135,7 +171,8 @@ export function DonationForm({
 
     isSubmittingRef.current = true;
     setIsSubmitting(true);
-    const amount = resolveAmount(values);
+    // ברכישת פרנס: תמיד המחיר הנעול, לא ערכי הטופס
+    const amount = offer ? offer.amount : resolveAmount(values);
     const dedication = composeDedication(
       values.dedicationType,
       values.dedicationName,
@@ -151,6 +188,7 @@ export function DonationForm({
       lastName: values.lastName,
       phone: values.phone,
       email: values.email,
+      ...(offer ? { dedicationKind: offer.kind } : {}),
     });
     isSubmittingRef.current = false;
     setIsSubmitting(false);
@@ -178,80 +216,85 @@ export function DonationForm({
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-10">
-      <fieldset className="flex flex-col gap-3">
-        <legend className="mb-1 text-subtitle font-bold text-foreground">
-          סכום התרומה
-        </legend>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-          {AMOUNT_PRESETS.map((preset) => (
-            <ChoiceCard
-              key={preset}
-              name="donation-preset"
-              value={String(preset)}
-              checked={
-                !values.customAmount.trim() && values.presetAmount === preset
-              }
-              onSelect={() =>
-                update({ presetAmount: preset, customAmount: "" })
-              }
-              className="text-body font-bold"
-            >
-              {formatShekels(preset)}
-            </ChoiceCard>
-          ))}
-        </div>
-        <FormField
-          id={FIELD_IDS.amount}
-          label="סכום אחר (בש״ח)"
-          error={errors.amount}
-          optional
-        >
-          <Input
+      {offer ? <DedicationOfferHeader offer={offer} /> : null}
+      {!offer && (
+        <fieldset className="flex flex-col gap-3">
+          <legend className="mb-1 text-subtitle font-bold text-foreground">
+            סכום התרומה
+          </legend>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            {AMOUNT_PRESETS.map((preset) => (
+              <ChoiceCard
+                key={preset}
+                name="donation-preset"
+                value={String(preset)}
+                checked={
+                  !values.customAmount.trim() && values.presetAmount === preset
+                }
+                onSelect={() =>
+                  update({ presetAmount: preset, customAmount: "" })
+                }
+                className="text-body font-bold"
+              >
+                {formatShekels(preset)}
+              </ChoiceCard>
+            ))}
+          </div>
+          <FormField
             id={FIELD_IDS.amount}
-            inputMode="numeric"
-            autoComplete="off"
-            placeholder="למשל 500"
-            value={values.customAmount}
-            onChange={(event) =>
-              update({
-                customAmount: event.target.value,
-                presetAmount: null,
-              })
-            }
-            {...fieldA11y("amount", errors)}
-          />
-        </FormField>
-      </fieldset>
+            label="סכום אחר (בש״ח)"
+            error={errors.amount}
+            optional
+          >
+            <Input
+              id={FIELD_IDS.amount}
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="למשל 500"
+              value={values.customAmount}
+              onChange={(event) =>
+                update({
+                  customAmount: event.target.value,
+                  presetAmount: null,
+                })
+              }
+              {...fieldA11y("amount", errors)}
+            />
+          </FormField>
+        </fieldset>
+      )}
 
-      <fieldset className="flex flex-col gap-3">
-        <legend className="mb-1 text-subtitle font-bold text-foreground">
-          תדירות
-        </legend>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {FREQUENCY_OPTIONS.map(({ value, label, hint }) => (
-            <ChoiceCard
-              key={value}
-              name="donation-frequency"
-              value={value}
-              checked={frequency === value}
-              onSelect={() => setFrequency(value)}
-            >
-              <span className="flex flex-col gap-1">
-                <span className="text-body font-bold">{label}</span>
-                <span className="text-caption font-normal text-muted-foreground">
-                  {hint}
+      {!offer && (
+        <fieldset className="flex flex-col gap-3">
+          <legend className="mb-1 text-subtitle font-bold text-foreground">
+            תדירות
+          </legend>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {FREQUENCY_OPTIONS.map(({ value, label, hint }) => (
+              <ChoiceCard
+                key={value}
+                name="donation-frequency"
+                value={value}
+                checked={frequency === value}
+                onSelect={() => setFrequency(value)}
+              >
+                <span className="flex flex-col gap-1">
+                  <span className="text-body font-bold">{label}</span>
+                  <span className="text-caption font-normal text-muted-foreground">
+                    {hint}
+                  </span>
                 </span>
-              </span>
-            </ChoiceCard>
-          ))}
-        </div>
-      </fieldset>
+              </ChoiceCard>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
       <fieldset className="flex flex-col gap-4">
         <legend className="mb-1 text-subtitle font-bold text-foreground">
           הקדשה{" "}
           <span className="text-body-sm font-normal text-muted-foreground">
-            (לא חובה)
+            {isPurchase ? "(חובה, תופיע באתר)" : "(לא חובה)"}
           </span>
         </legend>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_1.5fr]">
@@ -267,7 +310,7 @@ export function DonationForm({
                 }));
               }}
             >
-              {DEDICATION_TYPES.map(({ value, label }) => (
+              {dedicationTypes.map(({ value, label }) => (
                 <NativeSelectOption key={value} value={value}>
                   {label}
                 </NativeSelectOption>
@@ -299,7 +342,11 @@ export function DonationForm({
         <legend className="mb-1 text-subtitle font-bold text-foreground">
           פרטי התורם{" "}
           <span className="text-body-sm font-normal text-muted-foreground">
-            {isIdRequired ? "(תעודת זהות נדרשת, השאר לא חובה)" : "(לא חובה)"}
+            {isPurchase
+              ? "(שם פרטי ושם משפחה חובה, יופיעו בהקדשה)"
+              : isIdRequired
+                ? "(תעודת זהות נדרשת, השאר לא חובה)"
+                : "(לא חובה)"}
           </span>
         </legend>
         <p className="text-body-sm text-muted-foreground">
@@ -307,22 +354,34 @@ export function DonationForm({
           הפרטים אפשר להשאיר ריקים ולמלא שם.
         </p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <FormField id="donation-first-name" label="שם פרטי">
+          <FormField
+            id={FIELD_IDS.firstName}
+            label="שם פרטי"
+            error={errors.firstName}
+          >
             <Input
-              id="donation-first-name"
+              id={FIELD_IDS.firstName}
               autoComplete="given-name"
               maxLength={DONOR_NAME_MAX_LENGTH}
+              required={isPurchase}
               value={values.firstName}
               onChange={(event) => update({ firstName: event.target.value })}
+              {...fieldA11y("firstName", errors)}
             />
           </FormField>
-          <FormField id="donation-last-name" label="שם משפחה">
+          <FormField
+            id={FIELD_IDS.lastName}
+            label="שם משפחה"
+            error={errors.lastName}
+          >
             <Input
-              id="donation-last-name"
+              id={FIELD_IDS.lastName}
               autoComplete="family-name"
               maxLength={DONOR_NAME_MAX_LENGTH}
+              required={isPurchase}
               value={values.lastName}
               onChange={(event) => update({ lastName: event.target.value })}
+              {...fieldA11y("lastName", errors)}
             />
           </FormField>
           <FormField

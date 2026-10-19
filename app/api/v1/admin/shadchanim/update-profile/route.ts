@@ -4,15 +4,18 @@ import { z } from "zod";
 
 import {
   formToColumns,
-  shadchanProfileSchema,
+  refineShadchanProfile,
+  shadchanProfileBaseSchema,
 } from "@/features/shadchanim/lib/profile-form";
 import { createClient } from "@/lib/supabase/server";
 import { hasRole } from "@/lib/user";
 
 /** גוף הבקשה: מזהה השדכן + אותם שדות וחוקים כמו בטופס */
-const updateProfileBodySchema = shadchanProfileSchema.extend({
-  userId: z.guid(),
-});
+const updateProfileBodySchema = shadchanProfileBaseSchema
+  .extend({
+    userId: z.guid(),
+  })
+  .superRefine(refineShadchanProfile);
 
 /**
  * עריכת פרופיל שדכן בידי מנהל. מעדכן עמודות פרופיל בלבד - לעולם לא את

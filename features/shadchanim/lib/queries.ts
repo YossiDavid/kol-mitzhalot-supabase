@@ -13,6 +13,8 @@ import {
   type ShadchanPublicCard,
 } from "./types";
 import { toPublicCard } from "./card-mapping";
+import { withSignedAvatars } from "./avatar-server";
+import { parseShadchanGender } from "./gender";
 
 export const DASHBOARD_SHADCHANIM_LIMIT = 6;
 
@@ -39,6 +41,7 @@ const fullProfileRowSchema = publicCardRowSchema.extend({
   experience_years: z.number().int().nullable(),
   closed_matches: z.number().int().nullable(),
   languages: z.array(z.string()).nullable(),
+  gender: z.string().nullable(),
 });
 
 const quotaRowSchema = z.object({
@@ -77,11 +80,13 @@ export async function getShadchanimWhoActedForMe(
     return null;
   }
 
-  return parsed.data.map((row) => ({
-    ...toPublicCard(row),
-    lastActionAt: row.last_action_at,
-    actionTypes: row.action_types.filter(isShadchanActionType),
-  }));
+  return withSignedAvatars(
+    parsed.data.map((row) => ({
+      ...toPublicCard(row),
+      lastActionAt: row.last_action_at,
+      actionTypes: row.action_types.filter(isShadchanActionType),
+    })),
+  );
 }
 
 /** Daily contact quota of the current user. Null when unknown (the DB still enforces it). */
@@ -134,8 +139,10 @@ export async function getShadchanPublicProfile(
 
   const row = parsed.data[0];
   if (!row) return null;
+  const [card] = await withSignedAvatars([toPublicCard(row)]);
   return {
-    ...toPublicCard(row),
+    ...card,
+    gender: parseShadchanGender(row.gender),
     phone: row.phone,
     email: row.email,
     experienceYears: row.experience_years,
@@ -200,7 +207,7 @@ export async function listApprovedShadchanimPage(
   );
   if (result.failed) return null;
   return {
-    shadchanim: result.rows,
+    shadchanim: await withSignedAvatars(result.rows),
     total: result.total,
     page: result.page,
   };

@@ -19,12 +19,15 @@ interface AvailableDedicationTileProps {
   kind: SponsorKind;
   /** יעד ההזמנה: טופס התרומה (בדף התרומות עצמו: עוגן באותו עמוד) */
   donateHref: string;
+  /** מחיר הרכישה (מוצג ליד הכפתור); חסר = תרומה רגילה */
+  price?: number;
 }
 
 /** משבצת פנויה: במקום חור בעמוד, הזמנה להקדיש את היום / השבוע / החודש */
 export function AvailableDedicationTile({
   kind,
   donateHref,
+  price,
 }: AvailableDedicationTileProps) {
   return (
     <article
@@ -38,7 +41,7 @@ export function AvailableDedicationTile({
       <p className={cn("leading-snug text-balance", AVAILABLE_HEADLINE[kind])}>
         {AVAILABLE_SLOT_TEXT[kind]}
       </p>
-      <div>
+      <div className="flex flex-wrap items-center gap-3">
         <Button
           asChild
           variant="outline"
@@ -46,6 +49,14 @@ export function AvailableDedicationTile({
         >
           <Link href={donateHref as Route}>{AVAILABLE_SLOT_CTA[kind]}</Link>
         </Button>
+        {price !== undefined ? (
+          <span
+            className="text-body font-bold text-foreground"
+            data-testid={`dedication-price-${kind}`}
+          >
+            {price.toLocaleString("he-IL")} ₪
+          </span>
+        ) : null}
       </div>
     </article>
   );

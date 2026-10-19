@@ -7,17 +7,14 @@ import {
 } from "@/components/ui/empty";
 import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
-import { DESK_STUDENT_SELECT } from "@/features/shidduchim/lib/desk-student-select";
+import { loadDeskFavorites } from "@/features/shidduchim/lib/desk-favorites";
+import type { Student } from "@/features/shidduchim/components/student-box";
 import { readFavorites } from "@/features/students/lib/favorites";
 import ShiduchDesk from "@/features/shidduchim/components/shiduch-desk";
 import { createClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/user";
 import { unstable_noStore as noStore } from "next/cache";
 import { Suspense } from "react";
-import {
-  STUDENT_CARDS_VIEW,
-  keepFavoritable,
-} from "@/features/students/lib/third-party-card";
 
 /** כמה כרטיסי מועדפים מסומנים בשלד שולחן העבודה. */
 const SKELETON_FAVORITE_COUNT = 4;
@@ -28,13 +25,13 @@ async function ShiduchDeskContent() {
 
   const user = await getUser();
 
-  const favorites = await supabase
-    .from(STUDENT_CARDS_VIEW)
-    .select(DESK_STUDENT_SELECT)
-    .in("id", readFavorites(user));
+  const favorites = await loadDeskFavorites<Student>(
+    supabase,
+    readFavorites(user),
+  );
 
   // שליפה שנכשלה אינה "אין מועדפים": הלוח עצמו תלוי במועדפים, ולכן מציגים שגיאה
-  if (favorites.error) {
+  if (!favorites.ok) {
     console.error(
       "[canvas] favorites select failed",
       describeSupabaseError(favorites.error),
@@ -51,8 +48,8 @@ async function ShiduchDeskContent() {
     );
   }
 
-  // צד שלישי שטרם אושר להצעות לא עולה ללוח (נשאר במטא-דאטה וחוזר באישור)
-  return <ShiduchDesk initialFavorites={keepFavoritable(favorites.data)} />;
+  // צד שלישי שטרם אושר להצעות לא עולה ללוח (מסונן ב-loadDeskFavorites)
+  return <ShiduchDesk initialFavorites={favorites.data} />;
 }
 
 /** שלד שולחן העבודה: אזור השידוך למעלה, ורצועת המועדפים בתחתית. */

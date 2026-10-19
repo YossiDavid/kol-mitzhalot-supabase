@@ -9,6 +9,8 @@ import {
   DataTableSkeleton,
   type DataTableColumn,
 } from "@/components/data-table";
+import { Eye } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -21,6 +23,7 @@ import {
   NEW_CARDS_FILTER_LABELS,
   NEW_CARDS_PAGE_SIZE,
   loadNewCards,
+  loadNewCardsCounts,
   newCardsHref,
   parseNewCardsQuery,
   type NewCardRow,
@@ -46,7 +49,7 @@ type PageProps = {
 
 const PAGE_TITLE = "כרטיסים חדשים לאישור";
 const PAGE_DESCRIPTION =
-  "כל כרטיס חדש ממתין כאן לאישור. עד האישור הוא גלוי לבעליו ולמנהלים בלבד, ואי אפשר לשלוח עליו הצעות. דחייה דורשת סיבה, שנשלחת לבעל הכרטיס.";
+  'כל כרטיס חדש ממתין כאן לאישור. עד האישור הוא גלוי לבעליו ולמנהלים בלבד, ואי אפשר לשלוח עליו הצעות. דחייה דורשת סיבה, שנשלחת לבעל הכרטיס (אפשר גם לדחות בלי הודעה). כרטיס שנדחה אינו נמחק: הוא בלשונית "נדחו", ואפשר לאשר אותו או להחזיר אותו להמתנה.';
 
 const CARD_FOR_LABELS: Record<string, string> = {
   self: "המועמד/ת עצמו/ה",
@@ -163,16 +166,33 @@ const COLUMNS: DataTableColumn<NewCardRow>[] = [
     header: "פעולות",
     mobile: "actions",
     cell: (row) => (
-      <CardApprovalButtons
-        studentId={row.id}
-        studentName={row.candidateName}
-        status={row.status}
-      />
+      <div className="flex flex-wrap gap-2">
+        <Button asChild size="sm" variant="outline">
+          <Link
+            href={`/app/students/${row.id}` as Route}
+            aria-label={`צפייה בכרטיס של ${row.candidateName}`}
+          >
+            <Eye aria-hidden />
+            צפייה בכרטיס
+          </Link>
+        </Button>
+        <CardApprovalButtons
+          studentId={row.id}
+          studentName={row.candidateName}
+          status={row.status}
+        />
+      </div>
     ),
   },
 ];
 
-function FilterLinks({ query }: { query: NewCardsQuery }) {
+function FilterLinks({
+  query,
+  counts,
+}: {
+  query: NewCardsQuery;
+  counts: Record<NewCardsFilter, number | null>;
+}) {
   return (
     <div
       className="flex flex-wrap gap-2"
@@ -186,8 +206,12 @@ function FilterLinks({ query }: { query: NewCardsQuery }) {
           size="sm"
           variant={query.filter === filter ? "default" : "outline"}
         >
-          <Link href={newCardsHref({ page: 1, filter }) as Route}>
+          <Link
+            href={newCardsHref({ page: 1, filter }) as Route}
+            data-testid={`new-cards-filter-${filter}`}
+          >
             {NEW_CARDS_FILTER_LABELS[filter]}
+            {counts[filter] !== null && ` (${counts[filter]})`}
           </Link>
         </Button>
       ))}
@@ -234,7 +258,10 @@ const EMPTY_TEXT: Record<NewCardsFilter, string> = {
 async function NewCardsContent({ searchParams }: PageProps) {
   noStore();
   const query = parseNewCardsQuery(await searchParams);
-  const { rows, total } = await loadNewCards(query);
+  const [{ rows, total }, counts] = await Promise.all([
+    loadNewCards(query),
+    loadNewCardsCounts(),
+  ]);
 
   return (
     <Page>
@@ -243,7 +270,7 @@ async function NewCardsContent({ searchParams }: PageProps) {
         count={total}
         description={PAGE_DESCRIPTION}
       />
-      <FilterLinks query={query} />
+      <FilterLinks query={query} counts={counts} />
       <DataTable
         caption={PAGE_TITLE}
         columns={COLUMNS}

@@ -1,24 +1,37 @@
 "use client";
 
-import type { Control } from "react-hook-form";
+import { useWatch, type Control } from "react-hook-form";
 
-import { FormField } from "@/components/ui/form";
+import { FormControl, FormField } from "@/components/ui/form";
 import { FormFieldShell } from "@/components/ui/form-field-shell";
 import { FormGrid } from "@/components/ui/form-layout";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { SearchSelectField } from "@/features/students/components/create-form/fields/search-select-field";
 import { COMMUNITY_SEARCH } from "@/features/students/components/create-form/fields-data/shared-options";
+import { ShadchanAvatarField } from "@/features/shadchanim/components/shadchan-avatar-field";
+import { SHADCHAN_GENDER_OPTIONS } from "@/features/shadchanim/lib/gender";
 import {
+  ageFromBirthDate,
   APPLICATION_NOTE_MAX_LENGTH,
   BIO_MAX_LENGTH,
+  SHADCHAN_MAX_AGE,
+  SHADCHAN_MIN_AGE,
   SYNAGOGUE_RABBI_MAX_LENGTH,
   type ShadchanFormData,
 } from "@/features/shadchanim/lib/profile-form";
 
+/** תמונת הפרופיל בטופס: בעל התיקייה והתצוגה */
+export interface AvatarFieldState {
+  ownerId: string;
+  previewUrl: string | null;
+  onPreviewChange: (url: string | null) => void;
+}
+
 interface ShadchanProfileFieldsProps {
   control: Control<ShadchanFormData>;
   isSubmitting: boolean;
+  avatar: AvatarFieldState;
   /** "למה כדאי לאשר אותי" (להנהלה בלבד): בהצטרפות ובעריכת מנהל */
   showApplicationNote?: boolean;
 }
@@ -28,6 +41,112 @@ const BIO_GUIDANCE =
   "כתבו בגוף ראשון על הניסיון והתחומים שלכם, למשפחות שמחפשות שדכן.";
 const BIO_ADMIN_POINTER = " דברים שמיועדים להנהלה כתבו בשדה למטה.";
 
+/** "גיל: 45" מתחת לתאריך הלידה, כשהתאריך תקין */
+function ageDescription(birthDate: string): string {
+  const age = ageFromBirthDate(birthDate);
+  const range = `גיל ${SHADCHAN_MIN_AGE}-${SHADCHAN_MAX_AGE}. לא מוצג למשתמשים - גלוי רק לך ולהנהלת האתר.`;
+  return age === null ? range : `גיל: ${age}. ${range}`;
+}
+
+/** מגדר, תאריך לידה ותמונה - בראש הטופס */
+function IdentityFields({
+  control,
+  isSubmitting,
+  avatar,
+}: Pick<ShadchanProfileFieldsProps, "control" | "isSubmitting" | "avatar">) {
+  const [gender, birthDate] = useWatch({
+    control,
+    name: ["gender", "birth_date"],
+  });
+  const isAvatarRequired = gender === "male";
+
+  return (
+    <>
+      <FormGrid>
+        <FormField
+          control={control}
+          name="gender"
+          render={({ field }) => (
+            <FormFieldShell label="שדכן / שדכנית" required isComposite>
+              <FormControl>
+                <div
+                  role="radiogroup"
+                  aria-label="שדכן / שדכנית"
+                  className="flex min-h-10 flex-wrap items-center gap-6"
+                >
+                  {SHADCHAN_GENDER_OPTIONS.map(({ value, label }) => (
+                    <label
+                      key={value}
+                      className="flex cursor-pointer items-center gap-2"
+                    >
+                      <input
+                        type="radio"
+                        name={field.name}
+                        value={value}
+                        checked={field.value === value}
+                        onChange={() => field.onChange(value)}
+                        onBlur={field.onBlur}
+                        disabled={isSubmitting}
+                        className="size-4 accent-primary"
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </FormControl>
+            </FormFieldShell>
+          )}
+        />
+        <FormField
+          control={control}
+          name="birth_date"
+          render={({ field }) => (
+            <FormFieldShell
+              label="תאריך לידה"
+              required
+              description={ageDescription(birthDate ?? "")}
+            >
+              <Input
+                {...field}
+                type="date"
+                dir="ltr"
+                className="text-start"
+                disabled={isSubmitting}
+              />
+            </FormFieldShell>
+          )}
+        />
+      </FormGrid>
+
+      <FormField
+        control={control}
+        name="avatar_path"
+        render={({ field }) => (
+          <FormFieldShell
+            label="תמונה"
+            required={isAvatarRequired}
+            description={
+              isAvatarRequired
+                ? "חובה לשדכנים. מוצגת בכרטיס ובפרופיל שלך למשתמשים המחוברים. JPG, PNG או WEBP, עד 5MB."
+                : "רשות. מוצגת בכרטיס ובפרופיל שלך למשתמשים המחוברים. JPG, PNG או WEBP, עד 5MB."
+            }
+            isComposite
+          >
+            <ShadchanAvatarField
+              ownerId={avatar.ownerId}
+              value={field.value}
+              onChange={field.onChange}
+              previewUrl={avatar.previewUrl}
+              onPreviewChange={avatar.onPreviewChange}
+              disabled={isSubmitting}
+            />
+          </FormFieldShell>
+        )}
+      />
+    </>
+  );
+}
+
 /**
  * שדות פרופיל השדכן, משותפים לטופס ההצטרפות, לעריכה עצמית ולעריכת מנהל.
  * חייבים לשבת בתוך <Form> (react-hook-form).
@@ -35,10 +154,17 @@ const BIO_ADMIN_POINTER = " דברים שמיועדים להנהלה כתבו ב
 export function ShadchanProfileFields({
   control,
   isSubmitting,
+  avatar,
   showApplicationNote = false,
 }: ShadchanProfileFieldsProps) {
   return (
     <>
+      <IdentityFields
+        control={control}
+        isSubmitting={isSubmitting}
+        avatar={avatar}
+      />
+
       <div
         className="grid gap-1 rounded-lg border border-border bg-muted/40 p-3"
         data-testid="bio-guidance"

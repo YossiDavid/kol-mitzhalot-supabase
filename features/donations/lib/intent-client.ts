@@ -29,6 +29,8 @@ export interface IntentRequest {
   lastName: string;
   phone: string;
   email: string;
+  /** רכישת פרנס: השרת בודק שהסכום הוא המחיר ושהמשבצת פנויה */
+  dedicationKind?: "sponsor_day" | "sponsor_week" | "sponsor_month";
 }
 
 export type IntentResult =
@@ -50,7 +52,7 @@ export async function createDonationIntent(
     if (response.ok) {
       const parsed = intentResponseSchema.safeParse(body);
       if (parsed.success) return { ok: true, intent: parsed.data };
-    } else if (response.status === 400 || response.status === 429) {
+    } else if ([400, 409, 429].includes(response.status)) {
       // שגיאות שהשרת כתב לתורם בעברית
       const parsedError = errorBodySchema.safeParse(body);
       if (parsedError.success) {

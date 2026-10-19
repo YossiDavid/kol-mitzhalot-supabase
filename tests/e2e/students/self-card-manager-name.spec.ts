@@ -41,7 +41,8 @@ async function createCard(options: {
         last_name: `${options.tag}${RUN_ID}`,
         card_for: options.cardFor,
         birth_date: "1997-03-03",
-        gender: "male",
+        // אשה: בכרטיס של גבר התמונה חובה, והבדיקה אינה עוסקת בתמונות
+        gender: "female",
         personal_status: "single",
         country: "ישראל",
         city: "בני ברק",

@@ -28,6 +28,8 @@ import {
   type DonationRow,
   type UnmatchedPaymentRow,
 } from "@/features/admin/lib/donations-report";
+import { DedicationPeriodText } from "@/features/dedications/components/dedication-period-text";
+import { KIND_LABELS as DEDICATION_KIND_LABELS } from "@/features/dedications/lib/dedication-model";
 import {
   AWAITING_CLEARANCE_LABEL,
   DONATION_STATUSES,
@@ -126,6 +128,31 @@ const COLUMNS: DataTableColumn<DonationRow>[] = [
     key: "dedication",
     header: "הקדשה",
     cell: (row) => dash(row.dedicationText),
+  },
+  {
+    key: "purchase",
+    header: "פרנס",
+    cell: (row) =>
+      row.dedicationPurchase ? (
+        <span className="flex flex-col" data-testid="donation-purchase">
+          <span className="font-medium">
+            {DEDICATION_KIND_LABELS[row.dedicationPurchase.kind]}
+          </span>
+          <span className="text-caption text-muted-foreground">
+            <DedicationPeriodText
+              startsOn={row.dedicationPurchase.startsOn}
+              endsOn={row.dedicationPurchase.endsOn}
+            />
+          </span>
+          {row.dedicationPurchase.needsReview && (
+            <span className="text-caption text-destructive">
+              המשבצת הייתה תפוסה: ההקדשה ממתינה לבדיקה
+            </span>
+          )}
+        </span>
+      ) : (
+        "—"
+      ),
   },
   {
     key: "donor",

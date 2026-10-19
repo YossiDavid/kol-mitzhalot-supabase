@@ -13,6 +13,11 @@ import {
   THIRD_PARTY_PROPOSAL_MESSAGE,
   isProposalsPending,
 } from "@/features/students/lib/third-party-card";
+import {
+  KOHEN_DIVORCED_BLOCK_CODE,
+  KOHEN_DIVORCED_MESSAGE,
+  isKohenDivorcedPair,
+} from "@/features/shidduchim/lib/kohen-rule";
 
 /**
  * האם כרטיס רשאי לקבל הצעה חדשה: לא מושהה, ולא מיצה את המכסה שקבע מנהל
@@ -29,7 +34,8 @@ export type ProposalBlockCode =
   | "card_paused"
   | "proposal_limit_reached"
   | typeof THIRD_PARTY_BLOCK_CODE
-  | typeof CARD_PENDING_BLOCK_CODE;
+  | typeof CARD_PENDING_BLOCK_CODE
+  | typeof KOHEN_DIVORCED_BLOCK_CODE;
 
 export type ProposalBlock = {
   code: ProposalBlockCode;
@@ -122,63 +128,87 @@ async function blockForCard(
   return null;
 }
 
+/** הסירוב של כלל "לכהן לא מציעים גרושה" (תמיד בצד המיועדת) */
+export const KOHEN_DIVORCED_BLOCK: ProposalBlock = {
+  code: KOHEN_DIVORCED_BLOCK_CODE,
+  side: "bride",
+  message: KOHEN_DIVORCED_MESSAGE,
+};
+
+export type PairBlockOptions = {
+  /** מנהל מערכת רשאי להציע גם כרטיס שטרם אושר על ידי ההנהלה (כמו בטריגר) */
+  isAdmin?: boolean;
+};
+
+type PairCardRow = {
+  id: string;
+  card_for: string | null;
+  third_party_proposals_approved_at: string | null;
+  admin_approved_at: string | null;
+  is_kohen: boolean | null;
+  personal_status: string | null;
+};
+
+/** החסימה של כרטיס אחד בצמד: אישור ההנהלה קודם לכל (כמו בטריגר), ואז צד שלישי */
+function cardBlock(
+  card: PairCardRow | undefined,
+  side: ProposalSide,
+  options: PairBlockOptions,
+): ProposalBlock | null {
+  if (!card) return null;
+  if (!options.isAdmin && !isCardApproved(card)) {
+    return {
+      code: CARD_PENDING_BLOCK_CODE,
+      side,
+      message: CARD_PENDING_PROPOSAL_MESSAGE,
+    };
+  }
+  if (isProposalsPending(card)) {
+    return {
+      code: THIRD_PARTY_BLOCK_CODE,
+      side,
+      message: THIRD_PARTY_PROPOSAL_MESSAGE,
+    };
+  }
+  return null;
+}
+
 /**
- * כרטיס שמולא על ידי צד שלישי וטרם אושר לקבלת הצעות. נבדקים שני הכרטיסים של
- * ההצעה, בלי קשר להיקף השליחה: אם אחד מהם חסום, כל השליחה נדחית (כמו הטריגר).
+ * חסימות שתלויות בשני הכרטיסים של ההצעה, בלי קשר להיקף השליחה: כרטיס שטרם
+ * אושר על ידי ההנהלה (למעט מנהל), כרטיס צד שלישי שטרם אושר לקבלת הצעות, והכלל
+ * "לכהן לא מציעים גרושה". אם אחת מהן חלה, כל השליחה נדחית (כמו הטריגרים).
  */
-export async function findThirdPartyBlocks(
+export async function findPairBlocks(
   admin: SupabaseClient,
   groomId: string,
   brideId: string,
+  options: PairBlockOptions = {},
 ): Promise<ProposalBlock[]> {
   const { data, error } = await admin
     .from("students")
     .select(
-      "id, card_for, third_party_proposals_approved_at, admin_approved_at",
+      "id, card_for, third_party_proposals_approved_at, admin_approved_at, is_kohen, personal_status",
     )
     .in("id", [groomId, brideId]);
 
   if (error) {
     console.error(
-      "[shidduchim/gate] third-party lookup failed",
+      "[shidduchim/gate] pair cards lookup failed",
       describeSupabaseError(error),
     );
     throw new Error("בדיקת סוג הכרטיס נכשלה");
   }
 
-  const cards = data ?? [];
-  // כרטיס שהנהלת המערכת עוד לא אישרה קודם לכל שאר הבדיקות (כמו בטריגר)
-  const unapproved = new Set(
-    cards.filter((card) => !isCardApproved(card)).map((card) => card.id),
-  );
-  const pending = new Set(
-    cards.filter((card) => isProposalsPending(card)).map((card) => card.id),
-  );
-  const sides: Array<[ProposalSide, string]> = [
-    ["groom", groomId],
-    ["bride", brideId],
+  const cards = (data ?? []) as PairCardRow[];
+  const groom = cards.find((card) => card.id === groomId);
+  const bride = cards.find((card) => card.id === brideId);
+
+  const blocks = [
+    cardBlock(groom, "groom", options),
+    cardBlock(bride, "bride", options),
+    isKohenDivorcedPair(groom, bride) ? KOHEN_DIVORCED_BLOCK : null,
   ];
-  return sides.flatMap(([side, id]): ProposalBlock[] => {
-    if (unapproved.has(id)) {
-      return [
-        {
-          code: CARD_PENDING_BLOCK_CODE,
-          side,
-          message: CARD_PENDING_PROPOSAL_MESSAGE,
-        },
-      ];
-    }
-    if (pending.has(id)) {
-      return [
-        {
-          code: THIRD_PARTY_BLOCK_CODE,
-          side,
-          message: THIRD_PARTY_PROPOSAL_MESSAGE,
-        },
-      ];
-    }
-    return [];
-  });
+  return blocks.filter((block): block is ProposalBlock => block !== null);
 }
 
 /** הצדדים שעתידים לקבל הצעה חדשה - ההפרעות שנמצאו, לפי סדר חתן-כלה */
@@ -203,7 +233,7 @@ export function proposalBlocksBody(blocks: readonly ProposalBlock[]) {
 
 /**
  * סירוב שהטריגר במסד העלה (race בין הבדיקה ב-route לכתיבה), כהודעה למשתמש.
- * null כשהשגיאה אינה סירוב מכסה/השהיה.
+ * null כשהשגיאה אינה סירוב של כללי הכרטיס או הצמד.
  */
 export function dbBlockFromError(
   error: { message?: string; details?: string | null } | null,
@@ -211,6 +241,9 @@ export function dbBlockFromError(
   const message = error?.message ?? "";
   const side: ProposalSide = error?.details === "bride" ? "bride" : "groom";
 
+  if (message.includes(KOHEN_DIVORCED_BLOCK_CODE)) {
+    return KOHEN_DIVORCED_BLOCK;
+  }
   if (message.includes(CARD_PENDING_BLOCK_CODE)) {
     return {
       code: CARD_PENDING_BLOCK_CODE,

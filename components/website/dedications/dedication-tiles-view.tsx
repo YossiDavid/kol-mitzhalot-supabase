@@ -1,6 +1,10 @@
 import { DedicationSlot } from "@/components/website/dedications/dedication-slot";
 import { MemorialGrid } from "@/components/website/dedications/memorial-grid";
 import {
+  dedicationPurchaseHref,
+  type DedicationPrices,
+} from "@/features/dedications/lib/dedication-prices";
+import {
   type PublicDedication,
   type SponsorKind,
 } from "@/features/dedications/lib/dedication-model";
@@ -8,8 +12,10 @@ import {
 interface DedicationTilesViewProps {
   /** הקוביות שבתוקף היום (כל הסוגים) */
   items: readonly PublicDedication[];
-  /** יעד כפתורי "פנוי": טופס התרומה */
+  /** יעד כפתורי "פנוי" לסוג בלי מחיר: טופס התרומה */
   donateHref: string;
+  /** מחירי הפרנס; סוג עם מחיר מפנה לרכישה בדף התרומות */
+  prices?: DedicationPrices;
 }
 
 function itemsOfKind(
@@ -30,14 +36,21 @@ const MEMORIALS_HEADING_ID = "dedication-memorials-heading";
 export function DedicationTilesView({
   items,
   donateHref,
+  prices = {},
 }: DedicationTilesViewProps) {
-  const slot = (kind: SponsorKind) => (
-    <DedicationSlot
-      kind={kind}
-      items={itemsOfKind(items, kind)}
-      donateHref={donateHref}
-    />
-  );
+  const slot = (kind: SponsorKind) => {
+    const price = prices[kind];
+    return (
+      <DedicationSlot
+        kind={kind}
+        items={itemsOfKind(items, kind)}
+        donateHref={
+          price === undefined ? donateHref : dedicationPurchaseHref(kind)
+        }
+        price={price}
+      />
+    );
+  };
   const memorials = itemsOfKind(items, "memorial");
 
   return (

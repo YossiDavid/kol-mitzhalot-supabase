@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, X } from "lucide-react";
+import { Plus, Tag, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -24,6 +24,12 @@ import {
 import { ListSkeleton } from "@/components/ui/skeleton";
 import { DedicationForm } from "@/features/dedications/components/dedication-form";
 import { DedicationListSection } from "@/features/dedications/components/dedication-list-section";
+import { DedicationPricesForm } from "@/features/dedications/components/dedication-prices-form";
+import {
+  toDedicationPrices,
+  type DedicationPrices,
+} from "@/features/dedications/lib/dedication-prices";
+import { DedicationPricesSummary } from "@/features/dedications/components/dedication-prices-summary";
 import {
   DEDICATION_KINDS,
   KIND_LABELS,
@@ -56,8 +62,11 @@ const KIND_DISPLAY_ORDER: readonly DedicationKind[] = [
 
 export default function DedicationsAdminPage() {
   const [items, setItems] = useState<AdminDedication[]>([]);
+  const [prices, setPrices] = useState<DedicationPrices | null>(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  // טופס המחירים וטופס ההקדשה לא פתוחים יחד
+  const [showPrices, setShowPrices] = useState(false);
   const [editing, setEditing] = useState<AdminDedication | null>(null);
   const [deleting, setDeleting] = useState<AdminDedication | null>(null);
   const [kindFilter, setKindFilter] = useState<string>(ALL);
@@ -68,13 +77,20 @@ export default function DedicationsAdminPage() {
   const load = useCallback(async () => {
     setLoading(true);
     // כתיבה רק בפעולות השרת; הקריאה ישירה, ו-RLS מאפשר למנהל לראות הכול
-    const { data, error } = await createClient()
-      .from("dedications")
-      .select(
-        "id, kind, dedication_type, honoree, donor_line, note, starts_on, ends_on, sort_order, is_published",
-      );
-    if (error) toast.error("שגיאה בטעינה");
-    else setItems((data ?? []) as AdminDedication[]);
+    const supabase = createClient();
+    const [dedications, priceRows] = await Promise.all([
+      supabase
+        .from("dedications")
+        .select(
+          "id, kind, dedication_type, honoree, donor_line, note, starts_on, ends_on, sort_order, is_published, donation_id, needs_review",
+        ),
+      supabase.from("dedication_prices").select("kind, amount"),
+    ]);
+    if (dedications.error || priceRows.error) toast.error("שגיאה בטעינה");
+    if (!dedications.error) {
+      setItems((dedications.data ?? []) as AdminDedication[]);
+    }
+    if (!priceRows.error) setPrices(toDedicationPrices(priceRows.data ?? []));
     setLoading(false);
   }, []);
 
@@ -101,6 +117,7 @@ export default function DedicationsAdminPage() {
   }
 
   function startEdit(item: AdminDedication) {
+    setShowPrices(false);
     setEditing(item);
     setShowForm(true);
   }
@@ -132,22 +149,52 @@ export default function DedicationsAdminPage() {
         title="הקדשות והנצחות"
         description="קוביות פרנס היום, השבוע והחודש והנצחות, כפי שמוצגות בדף הבית ובדף התרומות. קובייה מוצגת רק בתקופתה"
         actions={
-          <Button
-            onClick={() => {
-              const next = !showForm;
-              resetForm();
-              setShowForm(next);
-            }}
-          >
-            {showForm ? (
-              <X className="me-1 h-4 w-4" />
-            ) : (
-              <Plus className="me-1 h-4 w-4" />
-            )}
-            {showForm ? "ביטול" : "הוסף הקדשה"}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              aria-expanded={showPrices}
+              onClick={() => {
+                resetForm();
+                setShowPrices((current) => !current);
+              }}
+            >
+              <Tag className="me-1 h-4 w-4" />
+              מחירי פרנס
+            </Button>
+            <Button
+              onClick={() => {
+                const next = !showForm;
+                resetForm();
+                setShowPrices(false);
+                setShowForm(next);
+              }}
+            >
+              {showForm ? (
+                <X className="me-1 h-4 w-4" />
+              ) : (
+                <Plus className="me-1 h-4 w-4" />
+              )}
+              {showForm ? "ביטול" : "הוסף הקדשה"}
+            </Button>
+          </div>
         }
       />
+
+      {prices && !showPrices ? (
+        <DedicationPricesSummary prices={prices} />
+      ) : null}
+
+      {prices && showPrices && (
+        // key: אחרי טעינה מחדש הטופס מתחיל מהמחירים השמורים
+        <DedicationPricesForm
+          key={JSON.stringify(prices)}
+          prices={prices}
+          onSaved={() => {
+            setShowPrices(false);
+            void load();
+          }}
+        />
+      )}
 
       {showForm && (
         // key: מעבר בין "הוספה" לעריכת פריט מאפס את ערכי הטופס

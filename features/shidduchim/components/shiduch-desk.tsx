@@ -17,17 +17,18 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Save, Send, User as UserIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { getCompatibilityNotes } from "@/features/shidduchim/lib/compatibility";
+import {
+  getCompatibilityBlockers,
+  getCompatibilityNotes,
+} from "@/features/shidduchim/lib/compatibility";
 import { readFavorites } from "@/features/students/lib/favorites";
 import { employmentCompactLabel } from "@/features/students/lib/profile-labels";
 import { hasRole } from "@/lib/user-role";
 import {
   THIRD_PARTY_PROPOSAL_MESSAGE,
   isProposalsPending,
-  keepFavoritable,
-  STUDENT_CARDS_VIEW,
 } from "@/features/students/lib/third-party-card";
-import { DESK_STUDENT_SELECT } from "@/features/shidduchim/lib/desk-student-select";
+import { loadDeskFavorites } from "@/features/shidduchim/lib/desk-favorites";
 
 type Gender = "male" | "female";
 
@@ -47,6 +48,12 @@ type PairRow = {
   created_at: string;
 };
 
+/** חסימת צמד שהשרת החזיר (pair-status): אישור הנהלה, צד שלישי, כהן וגרושה */
+type PairBlock = { code: string; side: "groom" | "bride"; message: string };
+
+/** צד שלישי חוסם שליחה בלבד; שאר החסימות חוסמות גם שמירת טיוטה (כמו במסד) */
+const SEND_ONLY_BLOCK_CODES = new Set(["card_third_party"]);
+
 type Props = {
   initialFavorites: Student[];
 };
@@ -65,6 +72,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
   const [female, setFemale] = useState<Student | null>(null);
 
   const [pairRows, setPairRows] = useState<PairRow[] | null>(null);
+  const [pairBlocks, setPairBlocks] = useState<PairBlock[]>([]);
   const [pairLoading, setPairLoading] = useState(false);
   const [draggingGender, setDraggingGender] = useState<Gender | null>(null);
   // המשבצת שהכרטיס שובץ בה זה עתה (לחיצה כפולה/כפתור), להדגשה קצרה
@@ -111,12 +119,8 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
       return;
     }
 
-    const { data, error } = await supabase
-      .from(STUDENT_CARDS_VIEW)
-      .select(DESK_STUDENT_SELECT)
-      .in("id", favIds);
-
-    if (!error) setFavorites(keepFavoritable(data || []));
+    const result = await loadDeskFavorites<Student>(supabase, favIds);
+    if (result.ok) setFavorites(result.data);
   };
 
   const handleFavoritesChanged = async () => {
@@ -127,6 +131,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
   const clearPairStatus = () => {
     pairReq.current += 1;
     setPairRows(null);
+    setPairBlocks([]);
     setPairLoading(false);
   };
 
@@ -149,6 +154,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
     const seq = ++pairReq.current;
     setPairLoading(true);
     setPairRows(null);
+    setPairBlocks([]);
 
     try {
       const res = await fetch(
@@ -162,6 +168,7 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
         return;
       }
       setPairRows(data.rows || []);
+      setPairBlocks(Array.isArray(data.blocks) ? data.blocks : []);
     } catch (e) {
       console.error(e);
       if (seq === pairReq.current) setPairRows([]);
@@ -189,6 +196,16 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
       hasNonDraftPair: hasBlockingPair,
     });
   }, [male, female, hasBlockingPair]);
+
+  // התאמה שאסור להציע: מהבדיקה בצד הלקוח (אם הנתונים נטענו) ומהשרת
+  const compatibilityBlockers = useMemo(() => {
+    const serverMessages = pairBlocks
+      .filter((block) => block.code === "kohen_divorced")
+      .map((block) => block.message);
+    return Array.from(
+      new Set([...getCompatibilityBlockers(male, female), ...serverMessages]),
+    );
+  }, [male, female, pairBlocks]);
 
   useEffect(
     () => () => {
@@ -373,6 +390,19 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
     (male && isProposalsPending(male)) || (female && isProposalsPending(female))
       ? THIRD_PARTY_PROPOSAL_MESSAGE
       : null;
+  // חסימות שהשרת מצא (כרטיס שטרם אושר, כהן וגרושה...) - מוצגות לפני הלחיצה
+  const serverBlockedReason =
+    Array.from(
+      new Set(
+        pairBlocks
+          .filter((block) => block.code !== "kohen_divorced")
+          .map((block) => block.message),
+      ),
+    ).join(" ") || null;
+  const sendBlockedReason = thirdPartyBlockedReason ?? serverBlockedReason;
+  const isDraftBlocked =
+    compatibilityBlockers.length > 0 ||
+    pairBlocks.some((block) => !SEND_ONLY_BLOCK_CODES.has(block.code));
   const actionsDisabled = hasBlockingPair || !canOffer;
 
   return (
@@ -528,10 +558,11 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
 
       {pairReady && (
         <>
-          {!hideDiagnosis && (
+          {(!hideDiagnosis || compatibilityBlockers.length > 0) && (
             <div className="mt-6">
               <CompatibilityDiagnosis
                 issues={compatibilityIssues}
+                blockers={compatibilityBlockers}
                 onDismiss={() => setHideDiagnosis(true)}
               />
             </div>
@@ -546,7 +577,8 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
                     actionsDisabled ||
                     sendLoading ||
                     draftLoading ||
-                    Boolean(thirdPartyBlockedReason)
+                    isDraftBlocked ||
+                    Boolean(sendBlockedReason)
                   }
                 >
                   שלח הצעה
@@ -555,19 +587,24 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
                 <Button
                   variant="outline"
                   onClick={handleSaveDraft}
-                  disabled={actionsDisabled || sendLoading || draftLoading}
+                  disabled={
+                    actionsDisabled ||
+                    sendLoading ||
+                    draftLoading ||
+                    isDraftBlocked
+                  }
                 >
                   {draftLoading ? "שומר…" : "שמירה ללא שליחה"}
                   <Save className="size-4" />
                 </Button>
               </div>
 
-              {thirdPartyBlockedReason && (
+              {sendBlockedReason && (
                 <p
                   className="mt-3 text-center text-body-sm text-warning-muted-foreground"
                   data-testid="third-party-send-blocked"
                 >
-                  {thirdPartyBlockedReason}
+                  {sendBlockedReason}
                 </p>
               )}
 
@@ -594,7 +631,11 @@ export default function ShiduchDesk({ initialFavorites }: Props) {
         loading={sendLoading}
         initialNoteGroom={maleNote}
         initialNoteBride={femaleNote}
-        blockedReason={thirdPartyBlockedReason}
+        blockedReason={
+          compatibilityBlockers.length > 0
+            ? compatibilityBlockers.join(" ")
+            : sendBlockedReason
+        }
       />
 
       <FavoritesGrid

@@ -26,7 +26,7 @@ import { createClient } from "@/lib/supabase/client";
 import { hasRole } from "@/lib/user-role";
 
 /** מספר שדות הטופס, לשלד הטעינה. */
-const FORM_FIELD_COUNT = 7;
+const FORM_FIELD_COUNT = 10;
 
 /** הודעות קבועות למשתמש כששמירה נכשלת (הפרטים הטכניים נרשמים בקונסול) */
 const SUBMIT_ERROR_MESSAGE = "שליחת הבקשה נכשלה, נסו שוב";

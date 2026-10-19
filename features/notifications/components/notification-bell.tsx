@@ -30,6 +30,15 @@ export type Notification = {
 /** כמה התראות נטענות לפופאובר. מעבר לזה אין ערך — זו לא רשימה מלאה. */
 const FETCH_LIMIT = 20;
 
+/**
+ * הפעמון מציג רק התראות שלא נקראו. בפתיחה הן מסומנות כנקראו אבל נשארות
+ * גלויות כל עוד הפופאובר פתוח; בסגירה הנקראות יורדות מהרשימה. התראה שמגיעה
+ * ב-Realtime נכנסת כלא נקראה.
+ */
+function withoutRead(items: readonly Notification[]): Notification[] {
+  return items.filter((n) => !n.read_at);
+}
+
 function formatRelative(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
   const minutes = Math.floor(diffMs / 60000);
@@ -62,6 +71,7 @@ export function NotificationBell({ userId }: { userId: string }) {
         .from("notifications")
         .select("id, type, title, body, link, created_at, read_at")
         .eq("user_id", userId)
+        .is("read_at", null)
         .order("created_at", { ascending: false })
         .limit(FETCH_LIMIT);
 
@@ -73,7 +83,7 @@ export function NotificationBell({ userId }: { userId: string }) {
     return () => {
       isMounted = false;
     };
-  }, [supabase]);
+  }, [supabase, userId]);
 
   // Realtime — מסונן בצד השרת לפי הנמען, בניגוד לסינון בצד הלקוח
   // שנעשה ב-room-list. כאן זה גם חוסך תעבורה וגם מדויק יותר.
@@ -128,7 +138,12 @@ export function NotificationBell({ userId }: { userId: string }) {
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
-    if (next) void markAllRead();
+    if (next) {
+      void markAllRead();
+      return;
+    }
+    // בסגירה: מה שנקרא יורד מהרשימה (כשל בסימון כבר החזיר אותן ללא נקראו)
+    setItems(withoutRead);
   };
 
   return (
@@ -166,7 +181,7 @@ export function NotificationBell({ userId }: { userId: string }) {
         {items.length === 0 ? (
           <Empty size="compact" surface={false}>
             <EmptyHeader>
-              <EmptyTitle>אין התראות</EmptyTitle>
+              <EmptyTitle>אין התראות חדשות</EmptyTitle>
             </EmptyHeader>
           </Empty>
         ) : (
@@ -214,7 +229,7 @@ export function NotificationBell({ userId }: { userId: string }) {
                     {n.link ? (
                       <Link
                         href={n.link as Route}
-                        onClick={() => setOpen(false)}
+                        onClick={() => handleOpenChange(false)}
                         className="block transition-colors hover:bg-muted"
                       >
                         {row}

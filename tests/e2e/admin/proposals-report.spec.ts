@@ -26,7 +26,7 @@ const REPORT_PATH = "/app/admin/proposals";
 const ADMIN_NAV_LINKS_SCOPE =
   '[data-testid="admin-sidebar-nav"], [data-testid^="admin-flyout-"]';
 
-test.describe("דוח הצעות (ניהול)", () => {
+test.describe("כל ההצעות (ניהול)", () => {
   let admin: SupabaseClient;
   let fx: ShidduchFixtures;
   let shadchanId: string;
@@ -82,8 +82,17 @@ test.describe("דוח הצעות (ניהול)", () => {
     const liveRow = page.getByRole("row").filter({ hasText: "מיועדת" }).first();
     await expect(liveRow).toContainText("צד המיועדת");
     await expect(liveRow).toContainText("נשלחה");
+    // היקף השליחה הנוכחי
+    await expect(liveRow).toContainText("צד המיועדת בלבד");
+    // שם השדכן מקושר לדף השדכן, וקישור "ניהול" לעמוד המשתמש בניהול
+    const shadchanLink = liveRow.getByTestId("proposal-shadchan-link");
+    await expect(shadchanLink).toContainText("Test User");
+    await expect(shadchanLink).toHaveAttribute(
+      "href",
+      `/app/shadchanim/${shadchanId}`,
+    );
     await expect(
-      liveRow.getByRole("link", { name: /Test User/ }),
+      liveRow.getByRole("link", { name: /ניהול המשתמש/ }),
     ).toHaveAttribute("href", `/app/admin/users/${shadchanId}`);
 
     // Act - הצעה שנמחקה
@@ -91,7 +100,10 @@ test.describe("דוח הצעות (ניהול)", () => {
     await page.goto(`${REPORT_PATH}?card=${fx.brideFirst}`);
 
     // Assert
-    await expect(page.getByText("נמחקה").first()).toBeVisible();
+    // (בתוך הטבלה: "נמחקה" הוא גם אפשרות בבורר הסטטוס)
+    await expect(
+      page.getByRole("row").getByText("נמחקה", { exact: true }).first(),
+    ).toBeVisible();
   });
 
   test("סינון לפי כרטיס, שדכן ותאריכים", async ({ page }) => {
@@ -134,6 +146,50 @@ test.describe("דוח הצעות (ניהול)", () => {
     await page.goto(`${REPORT_PATH}?card=${fx.groomSecond}&from=${from}`);
     await expect(page.getByText("יצחק השני").first()).toHaveCount(0);
     await expect(page.getByText("לא נמצאו הצעות לפי הסינון")).toBeVisible();
+  });
+
+  test("סינון לפי הסטטוס הנוכחי, כולל הצעות שנמחקו", async ({ page }) => {
+    // Arrange - הצעה פעילה (נשלחה) ואירוע של הצעה שנמחקה, לאותו כרטיס
+    const { data: live } = await admin
+      .from("shidduchim")
+      .insert({
+        groom_id: fx.groomFirst,
+        bride_id: fx.brideFirst,
+        shadchan_id: shadchanId,
+        status: "sent",
+        recipient_scope: "both",
+        sent_at: hoursAgo(1).toISOString(),
+      })
+      .select("id")
+      .single();
+    expect(live).not.toBeNull();
+    await seedEvent(admin, {
+      shadchanId: fx.otherShadchanId,
+      shadchanName: "שדכן ההצעה שנמחקה",
+      studentId: fx.brideFirst,
+      otherStudentId: fx.groomSecond,
+      side: "bride",
+      createdAt: hoursAgo(4),
+    });
+
+    // Act + Assert - נשלחה
+    await page.goto(`${REPORT_PATH}?card=${fx.brideFirst}&status=sent`);
+    await expect(page.getByText("שדכן ההצעה שנמחקה")).toHaveCount(0);
+    await expect(
+      page.getByRole("row").filter({ hasText: "שני הצדדים" }).first(),
+    ).toBeVisible();
+
+    // נמחקה
+    await page.goto(`${REPORT_PATH}?card=${fx.brideFirst}&status=deleted`);
+    await expect(page.getByText("שדכן ההצעה שנמחקה").first()).toBeVisible();
+    await expect(
+      page.getByRole("row").filter({ hasText: "שני הצדדים" }),
+    ).toHaveCount(0);
+
+    // סטטוס שאין לו שורות
+    await page.goto(`${REPORT_PATH}?card=${fx.brideFirst}&status=completed`);
+    await expect(page.getByText("לא נמצאו הצעות לפי הסינון")).toBeVisible();
+    await expect(page.getByLabel("סטטוס")).toHaveValue("completed");
   });
 
   test("עימוד בשרת: 25 בעמוד, והשאר בעמוד הבא", async ({ page }) => {
@@ -205,13 +261,13 @@ test.describe("דוח הצעות (ניהול)", () => {
     await page.getByTestId("admin-nav-section-cards").click();
     await page
       .locator(ADMIN_NAV_LINKS_SCOPE)
-      .getByRole("link", { name: "דוח הצעות" })
+      .getByRole("link", { name: "כל ההצעות" })
       .click();
 
     // Assert
     await expect(page).toHaveURL(new RegExp(`${REPORT_PATH}$`));
     await expect(
-      page.getByRole("heading", { name: "דוח הצעות" }),
+      page.getByRole("heading", { name: "כל ההצעות" }),
     ).toBeVisible();
   });
 });

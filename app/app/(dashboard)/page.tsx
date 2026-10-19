@@ -18,6 +18,8 @@ import {
 import { readFavorites } from "@/features/students/lib/favorites";
 import { getMyProposals } from "@/features/shidduchim/lib/proposals-data";
 import { ShadchanJoinBanner } from "@/features/dashboard/components/user/shadchan-join-banner";
+import { ContinueSignupCta } from "@/features/dashboard/components/user/continue-signup-cta";
+import { continueSignupTarget } from "@/features/dashboard/lib/continue-signup";
 import {
   shadchanJoinPrompt,
   staffJoinPrompt,
@@ -190,6 +192,15 @@ async function DashboardSections() {
     applicationStatus: staffApplicationStatus,
   });
 
+  // "המשך הרשמה": בקשת הצטרפות שעוד לא הוגשה, או הורה/מחפש בלי כרטיס
+  const signupTarget = continueSignupTarget({
+    signupPurpose,
+    shadchanPrompt: joinPrompt,
+    staffPrompt,
+    ownCardsCount: ownStudentsResult.failed ? null : ownCards.length,
+    isShadchanView,
+  });
+
   const activeShidduchimCount =
     activeShidduchimCountRaw ?? activeShidduchimData.length;
 
@@ -206,8 +217,11 @@ async function DashboardSections() {
         description={`ברוך הבא למערכת קול מצהלות · ${roleLabel}`}
       />
 
-      {joinPrompt !== "none" && <ShadchanJoinBanner prompt={joinPrompt} />}
-      {staffPrompt !== "none" && (
+      {/* כשיש "המשך הרשמה", הכרטיס הגדול מחליף את באנר ההצטרפות; "אחר כך"
+          מקטין אותו חזרה לבאנר */}
+      {signupTarget && <ContinueSignupCta target={signupTarget} />}
+      {joinPrompt === "pending" && <ShadchanJoinBanner prompt={joinPrompt} />}
+      {staffPrompt === "pending" && (
         <ShadchanJoinBanner prompt={staffPrompt} track="staff" />
       )}
 

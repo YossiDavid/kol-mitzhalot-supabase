@@ -1,8 +1,16 @@
 import { randomUUID } from "node:crypto";
 
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { createAdminClient, deleteTestUserByEmail } from "./auth-test-helpers";
+
+const TERMS_CHECKBOX = { name: "קראתי ואני מסכים/ה לתקנון" } as const;
+
+/** שדות החובה שנוספו: עיר ואישור התקנון */
+async function fillCityAndTerms(page: Page, city = "בני ברק") {
+  await page.getByLabel("עיר").fill(city);
+  await page.getByRole("checkbox", TERMS_CHECKBOX).check();
+}
 
 /**
  * טופס ההרשמה אחרי המעבר ל-react-hook-form + zod
@@ -27,6 +35,8 @@ test.describe("טופס הרשמה", () => {
     await expect(page.getByText("נא למלא שם משפחה")).toBeVisible();
     await expect(page.getByText("נא למלא אימייל")).toBeVisible();
     await expect(page.getByText("נא למלא מספר טלפון")).toBeVisible();
+    await expect(page.getByText("נא למלא עיר")).toBeVisible();
+    await expect(page.getByText("יש לאשר את התקנון כדי להירשם")).toBeVisible();
     await expect(page).toHaveURL(/\/auth\/sign-up/);
   });
 
@@ -184,6 +194,7 @@ test.describe("טופס הרשמה", () => {
       });
     }).toPass();
     await page.getByLabel("פרטו את המטרה").fill("  רוצה להתנדב  ");
+    await fillCityAndTerms(page);
 
     try {
       // Act
@@ -220,6 +231,7 @@ test.describe("טופס הרשמה", () => {
         timeout: 1000,
       });
     }).toPass();
+    await fillCityAndTerms(page);
 
     try {
       // Act
@@ -233,6 +245,81 @@ test.describe("טופס הרשמה", () => {
       const user = data?.users.find((candidate) => candidate.email === email);
       expect(user?.user_metadata.signup_purpose).toBe("staff");
       expect(user?.user_metadata).not.toHaveProperty("signup_purpose_other");
+    } finally {
+      await deleteTestUserByEmail(email);
+    }
+  });
+  test("עיר חובה, ואישור התקנון חובה - עם קישור לתקנון", async ({ page }) => {
+    // Arrange
+    await page.goto("/auth/sign-up");
+    await page.getByLabel("שם פרטי").fill("ישראל");
+    await page.getByLabel("שם משפחה").fill("כהן");
+    await page.getByLabel("אימייל").fill("israel@example.com");
+    await page.getByLabel("מספר טלפון").fill("050-0000000");
+    await page
+      .getByLabel("מטרת ההרשמה")
+      .selectOption({ label: "אני מחפש/ת שידוך לעצמי" });
+
+    // Act - בלי עיר ובלי סימון
+    await page.getByRole("button", { name: "הירשם" }).click();
+
+    // Assert
+    await expect(page.getByText("נא למלא עיר")).toBeVisible();
+    await expect(page.getByText("יש לאשר את התקנון כדי להירשם")).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "לקריאת התקנון" }),
+    ).toHaveAttribute("href", "/legal/terms-of-service");
+
+    // Act - עיר בלי אישור עדיין נחסם
+    await page.getByLabel("עיר").fill("ירושלים");
+    await page.getByRole("button", { name: "הירשם" }).click();
+
+    // Assert
+    await expect(page.getByText("נא למלא עיר")).toHaveCount(0);
+    await expect(page.getByText("יש לאשר את התקנון כדי להירשם")).toBeVisible();
+    await expect(page).toHaveURL(/\/auth\/sign-up/);
+  });
+
+  test("הרשמה: העיר וגרסת התקנון שאושרה נשמרות, והעיר מועתקת ל-user_profiles", async ({
+    page,
+  }) => {
+    // Arrange
+    const email = `signup-city-${randomUUID()}@kol-mitzhalot.test`;
+    const phone = `05${String(Math.floor(Math.random() * 1e8)).padStart(8, "0")}`;
+    const admin = createAdminClient();
+    const { data: terms } = await admin
+      .from("system_content")
+      .select("version")
+      .eq("key", "terms-of-service")
+      .single();
+    await page.goto("/auth/sign-up");
+    await page.getByLabel("שם פרטי").fill("עיר");
+    await page.getByLabel("שם משפחה").fill("בדיקה");
+    await page.getByLabel("אימייל").fill(email);
+    await page.getByLabel("מספר טלפון").fill(phone);
+    await page
+      .getByLabel("מטרת ההרשמה")
+      .selectOption({ label: "אני מחפש/ת שידוך לבני/בתי" });
+    await fillCityAndTerms(page, "  צפת  ");
+
+    try {
+      // Act
+      await page.getByRole("button", { name: "הירשם" }).click();
+      await expect(page).toHaveURL(/\/auth\/check-email/, { timeout: 15_000 });
+
+      // Assert
+      const { data } = await admin.auth.admin.listUsers({ perPage: 1000 });
+      const user = data?.users.find((candidate) => candidate.email === email);
+      expect(user?.user_metadata).toMatchObject({
+        city: "צפת",
+        terms_accepted_version: terms?.version,
+      });
+      const { data: profile } = await admin
+        .from("user_profiles")
+        .select("city")
+        .eq("id", user!.id)
+        .single();
+      expect(profile?.city).toBe("צפת");
     } finally {
       await deleteTestUserByEmail(email);
     }

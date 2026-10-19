@@ -22,6 +22,7 @@ import {
 } from "@/features/students/lib/third-party-card";
 import { AdminPausedBanner } from "@/features/students/components/card/admin-paused-banner";
 import { loadCardAdminPaused } from "@/features/students/lib/card-admin-pause";
+import { loadCardAdminFocus } from "@/features/students/lib/card-admin-focus";
 import { loadThirdPartyApproval } from "@/features/students/lib/third-party-approval";
 import { ThirdPartyApprovalControls } from "@/features/admin/components/third-party-approval-controls";
 import {
@@ -233,7 +234,7 @@ async function StudentPageContent({
     isAdmin,
   });
 
-  // פידבק אנשי צוות (staffFeedback, נשלף למעלה) גלוי לכל צופה בכרטיס -
+  // מחמאות צוות (staffFeedback, נשלף למעלה) גלויות לכל צופה בכרטיס -
   // גם בענף הציבורי (קישור השיתוף)
 
   // --- ענף ציבורי (משתמש לא מחובר) --------------------------------------
@@ -300,6 +301,7 @@ async function StudentPageContent({
     owner,
     isAdminPaused,
     cardProposals,
+    adminFocus,
   ] = await Promise.all([
     loadViewerPhotos(supabase, user, student, isProposalView),
     isShadchan
@@ -318,6 +320,10 @@ async function StudentPageContent({
           isAdmin,
           isShadchan,
         })
+      : Promise.resolve(null),
+    // סימון "במיקוד" של ההנהלה: לשדכן ולמנהל (ה-view מחזיר null לכל אחר)
+    isShadchan && !isProposalView
+      ? loadCardAdminFocus(supabase, student.id)
       : Promise.resolve(null),
   ]);
   const currentUserName = [
@@ -357,6 +363,7 @@ async function StudentPageContent({
       showMedical={!isProposalView || !!access?.shareMedical}
       owner={owner}
       isBasicOnly={isBasicView}
+      adminFocus={adminFocus}
       adminControls={
         <>
           {approvalStatus !== "approved" &&
@@ -425,6 +432,7 @@ async function StudentPageContent({
           adminPause={
             isAdminPaused === null ? null : { isPaused: isAdminPaused }
           }
+          adminFocus={isAdmin ? adminFocus : null}
         />
       }
     />

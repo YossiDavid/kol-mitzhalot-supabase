@@ -52,15 +52,15 @@ export const introStep: FormSteps = {
         {
           name: "gender",
           width: "full",
-          label: "מגדר המיועד/ת:",
+          label: "מגדר:",
           type: "radio",
           options: [
-            { value: "male", label: "מיועד" },
-            { value: "female", label: "מיועדת" },
+            { value: "male", label: "גבר" },
+            { value: "female", label: "אשה" },
           ],
           required: true,
-          // התווית היא משפט שלם, ולכן הודעה מפורשת
-          requiredMessage: "נא לבחור מיועד/מיועדת",
+          // התווית מסתיימת בנקודתיים, ולכן הודעה מפורשת
+          requiredMessage: "נא לבחור מגדר",
         },
       ],
     },

@@ -144,6 +144,8 @@ const NEVER_IN_PROPOSAL = [
   "admin_rejected_at",
   "admin_rejected_by",
   "admin_rejection_reason",
+  // דחייה / החזרה להמתנה בלי הודעה לבעל הכרטיס: פרט ניהולי
+  "admin_review_silent",
 ] as const;
 
 const CHILD_TABLES = [
@@ -718,6 +720,9 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
   });
 
   test("בעלים, שדכן ומנהל: הקריאה הישירה בלי שינוי, והפונקציה אינה בשבילם", async () => {
+    // את medical_records עצמה קוראים רק בעלים ומנהל; שדכן מקבל את ההצהרה
+    // דרך get_student_medical_record (medical-exposure-gate.spec.ts)
+    const readsMedicalDirectly = new Set([CARD_MANAGER_EMAIL, ADMIN_EMAIL]);
     for (const email of [CARD_MANAGER_EMAIL, TEST_USER_EMAIL, ADMIN_EMAIL]) {
       // Arrange
       const client = await clientAs(admin, email);
@@ -738,8 +743,14 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
       expect(row.phone, email).toBe(CONTACT.phone);
       expect(row.street, email).toBe(CONTACT.street);
       expect(JSON.stringify(row), email).toContain(CONTACT.refPhone);
-      expect(JSON.stringify(row), email).toContain(MEDICAL_DETAILS);
-      expect(JSON.stringify(row), email).toContain(CONTACT.medicalContactPhone);
+      const isMedicalReader = readsMedicalDirectly.has(email);
+      expect(JSON.stringify(row).includes(MEDICAL_DETAILS), email).toBe(
+        isMedicalReader,
+      );
+      expect(
+        JSON.stringify(row).includes(CONTACT.medicalContactPhone),
+        email,
+      ).toBe(isMedicalReader);
       expect(card, email).toBeNull();
     }
   });

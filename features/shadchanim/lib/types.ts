@@ -1,5 +1,7 @@
 /** Client-safe types for the shadchan public card, activity and contact quota. */
 
+import type { ShadchanGender } from "./gender";
+
 export const SHADCHAN_ACTION_TYPES = [
   "proposal",
   "view",
@@ -35,6 +37,8 @@ export type ShadchanActivity = ShadchanPublicCard & {
 
 /** phone/email מגיעים מה-DB רק לשדכן עצמו ולמנהל; לכל אחד אחר null. */
 export type ShadchanFullProfile = ShadchanPublicCard & {
+  /** null - לא מולא (שדכנים ותיקים) */
+  gender: ShadchanGender | null;
   phone: string | null;
   email: string | null;
   experienceYears: number | null;

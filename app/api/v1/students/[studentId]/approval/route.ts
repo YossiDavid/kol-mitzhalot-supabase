@@ -5,6 +5,7 @@ import { sendCardApprovalEmail } from "@/features/notifications/lib/send-card-ap
 import {
   REJECTION_REASON_MAX_LENGTH,
   REJECTION_REASON_MIN_LENGTH,
+  SILENT_REJECTION_DEFAULT_REASON,
 } from "@/features/students/lib/card-approval";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
@@ -13,14 +14,20 @@ import { hasRole } from "@/lib/user";
 
 const bodySchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("approve") }),
-  z.object({
-    action: z.literal("reject"),
-    reason: z
-      .string()
-      .trim()
-      .min(REJECTION_REASON_MIN_LENGTH)
-      .max(REJECTION_REASON_MAX_LENGTH),
-  }),
+  z
+    .object({
+      action: z.literal("reject"),
+      // "ללא שליחת הודעה לבעל הכרטיס": בלי התראה ובלי מייל, והסיבה רשות
+      silent: z.boolean().default(false),
+      reason: z.string().trim().max(REJECTION_REASON_MAX_LENGTH).default(""),
+    })
+    .refine(
+      (body) =>
+        body.silent || body.reason.length >= REJECTION_REASON_MIN_LENGTH,
+      { path: ["reason"] },
+    ),
+  // החזרה להמתנה של כרטיס שנדחה (למשל דחייה בטעות), בלי הודעה לבעליו
+  z.object({ action: z.literal("reset") }),
 ]);
 
 const RETURNED_COLUMNS =
@@ -38,9 +45,39 @@ function jsonError(error: string, status: number) {
   return NextResponse.json({ error }, { status });
 }
 
+type ApprovalBody = z.infer<typeof bodySchema>;
+
+/**
+ * העדכון לכל פעולה. admin_review_silent נכתב תמיד, באותו עדכון: הטריגרים של
+ * ההתראות (20261027130000_admin_review_silent.sql) קוראים אותו מהשורה החדשה.
+ */
+function buildPatch(body: ApprovalBody, adminId: string) {
+  const now = new Date().toISOString();
+  if (body.action === "approve") {
+    return {
+      ...CLEARED_APPROVAL,
+      admin_approved_at: now,
+      admin_approved_by: adminId,
+      admin_review_silent: false,
+    };
+  }
+  if (body.action === "reset") {
+    return { ...CLEARED_APPROVAL, admin_review_silent: true };
+  }
+  return {
+    ...CLEARED_APPROVAL,
+    admin_rejected_at: now,
+    admin_rejected_by: adminId,
+    admin_rejection_reason: body.reason || SILENT_REJECTION_DEFAULT_REASON,
+    admin_review_silent: body.silent,
+  };
+}
+
 /**
  * אישור או דחייה (עם סיבה) של כרטיס על ידי מנהל מערכת. דחייה חלה גם על כרטיס
- * שכבר אושר, וזו הדרך להסיר אותו מהשדכנים עם הסבר לבעליו. הכתיבה ב-service
+ * שכבר אושר, וזו הדרך להסיר אותו מהשדכנים עם הסבר לבעליו. דחייה "שקטה" (silent)
+ * אינה שולחת התראה ומייל, והסיבה בה רשות. "reset" מחזיר כרטיס שנדחה להמתנה,
+ * בלי הודעה לאיש. הכתיבה ב-service
  * role, והמסד (enforce_student_admin_approval_lock) מונע מכל כותב אחר לשנות
  * את עמודות האישור. ההתראה לבעל הכרטיס נוצרת במסד; המייל נשלח מכאן.
  */
@@ -94,21 +131,12 @@ export async function PATCH(
   if (body.action === "approve" && current.admin_approved_at) {
     return jsonError("הכרטיס כבר מאושר", 409);
   }
+  if (body.action === "reset" && !current.admin_rejected_at) {
+    return jsonError("אפשר להחזיר להמתנה רק כרטיס שנדחה", 409);
+  }
 
-  const now = new Date().toISOString();
-  const patch =
-    body.action === "approve"
-      ? {
-          ...CLEARED_APPROVAL,
-          admin_approved_at: now,
-          admin_approved_by: user.id,
-        }
-      : {
-          ...CLEARED_APPROVAL,
-          admin_rejected_at: now,
-          admin_rejected_by: user.id,
-          admin_rejection_reason: body.reason,
-        };
+  const patch = buildPatch(body, user.id);
+  const isSilent = patch.admin_review_silent;
 
   const { data: updated, error: updateError } = await admin
     .from("students")
@@ -125,8 +153,9 @@ export async function PATCH(
     return jsonError("עדכון האישור נכשל", 500);
   }
 
-  // מנהל שמכריע על כרטיס שלו עצמו אינו מקבל מייל על כך
-  if (updated.user_id !== user.id) {
+  // מנהל שמכריע על כרטיס שלו עצמו אינו מקבל מייל על כך; הכרעה שקטה והחזרה
+  // להמתנה - אין מייל (גם ההתראה בפעמון מושתקת במסד, admin_review_silent)
+  if (updated.user_id !== user.id && !isSilent && body.action !== "reset") {
     await sendCardApprovalEmail({
       ownerId: updated.user_id,
       studentId,
@@ -167,9 +196,11 @@ export async function POST(
   } = await supabase.auth.getUser();
   if (!user) return jsonError("נדרשת התחברות", 401);
 
+  // admin_review_silent מתאפס: שליחה לאישור מחדש מודיעה למנהלים, גם אחרי
+  // דחייה שקטה
   const { data, error } = await supabase
     .from("students")
-    .update(CLEARED_APPROVAL)
+    .update({ ...CLEARED_APPROVAL, admin_review_silent: false })
     .eq("id", studentId)
     .eq("user_id", user.id)
     .not("admin_rejected_at", "is", null)

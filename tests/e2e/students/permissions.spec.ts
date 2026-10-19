@@ -47,7 +47,7 @@ test.describe("תאריך לידה — חישוב גיל תקין", () => {
 
     // בחר מגדר
     await chooseChildCard(page);
-    await page.getByRole("radio", { name: "מיועד", exact: true }).click();
+    await page.getByRole("radio", { name: "גבר", exact: true }).click();
     await page.locator("button:has-text('הבא')").click();
 
     // שלב 1 — שדה תאריך לידה צריך להיות קיים
@@ -66,7 +66,7 @@ test.describe("מספר טלפון — קבלת פורמטים שונים", () =
 
     // נווט לשלב 1
     await chooseChildCard(page);
-    await page.getByRole("radio", { name: "מיועד", exact: true }).click();
+    await page.getByRole("radio", { name: "גבר", exact: true }).click();
     await page.locator("button:has-text('הבא')").click();
 
     // מלא שדה הטלפון עם מספר בינלאומי

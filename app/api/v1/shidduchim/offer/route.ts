@@ -8,11 +8,13 @@ import { sendShidduchOfferEmails } from "@/features/shidduchim/lib/send-offer-em
 import {
   cardsInScope,
   dbBlockFromError,
+  findPairBlocks,
   findProposalBlocks,
-  findThirdPartyBlocks,
+  KOHEN_DIVORCED_BLOCK,
   proposalBlocksBody,
   type ProposalBlock,
 } from "@/features/shidduchim/lib/proposal-gate";
+import { isKohenDivorcedPair } from "@/features/shidduchim/lib/kohen-rule";
 import { hasRole } from "@/lib/user";
 
 const recipientScopeSchema = z.enum(["both", "groom_only", "bride_only"]);
@@ -55,7 +57,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!hasRole(user, "shadchan") && !hasRole(user, "admin")) {
+  const isAdmin = hasRole(user, "admin");
+  if (!hasRole(user, "shadchan") && !isAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -100,13 +103,13 @@ export async function POST(req: NextRequest) {
     await Promise.all([
       admin
         .from("students")
-        .select("id, gender, user_id, first_name, last_name")
+        .select("id, gender, user_id, first_name, last_name, is_kohen, personal_status")
         .eq("id", groomId)
         .is("deleted_at", null)
         .single(),
       admin
         .from("students")
-        .select("id, gender, user_id, first_name, last_name")
+        .select("id, gender, user_id, first_name, last_name, is_kohen, personal_status")
         .eq("id", brideId)
         .is("deleted_at", null)
         .single(),
@@ -124,6 +127,13 @@ export async function POST(req: NextRequest) {
       { error: "יש לבחור מיועד (זכר) ומיועדת (נקבה) בהתאמה" },
       { status: 400 },
     );
+  }
+
+  // לכהן לא מציעים גרושה - גם לא כטיוטה. הטריגר במסד אוכף זאת גם בכתיבה.
+  if (isKohenDivorcedPair(groom, bride)) {
+    return NextResponse.json(proposalBlocksBody([KOHEN_DIVORCED_BLOCK]), {
+      status: 409,
+    });
   }
 
   const { data: pairRows, error: pairErr } = await admin
@@ -211,6 +221,12 @@ export async function POST(req: NextRequest) {
         .select("id")
         .single();
 
+      const draftBlock = dbBlockFromError(uErr);
+      if (draftBlock) {
+        return NextResponse.json(proposalBlocksBody([draftBlock]), {
+          status: 409,
+        });
+      }
       if (uErr || !updated) {
         console.error(uErr);
         return NextResponse.json(
@@ -227,6 +243,12 @@ export async function POST(req: NextRequest) {
       .select("id")
       .single();
 
+    const draftBlock = dbBlockFromError(iErr);
+    if (draftBlock) {
+      return NextResponse.json(proposalBlocksBody([draftBlock]), {
+        status: 409,
+      });
+    }
     if (iErr || !inserted) {
       console.error(iErr);
       return NextResponse.json(
@@ -242,14 +264,12 @@ export async function POST(req: NextRequest) {
   // ולפני המייל; הטריגר במסד אוכף את אותו כלל גם אם הבדיקה הזו נעקפה.
   let blocks: ProposalBlock[];
   try {
-    const thirdPartyBlocks = await findThirdPartyBlocks(
-      admin,
-      groomId,
-      brideId,
-    );
+    const pairBlocks = await findPairBlocks(admin, groomId, brideId, {
+      isAdmin,
+    });
     blocks =
-      thirdPartyBlocks.length > 0
-        ? thirdPartyBlocks
+      pairBlocks.length > 0
+        ? pairBlocks
         : await findProposalBlocks(
             admin,
             cardsInScope(recipientScope!, groomId, brideId),

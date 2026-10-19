@@ -10,6 +10,8 @@ interface DedicationSlotProps {
   /** הקוביות שבתוקף לסוג הזה, כבר בסדר התצוגה */
   items: readonly PublicDedication[];
   donateHref: string;
+  /** מחיר הרכישה, כשהוגדר */
+  price?: number;
 }
 
 /**
@@ -20,9 +22,16 @@ export function DedicationSlot({
   kind,
   items,
   donateHref,
+  price,
 }: DedicationSlotProps) {
   if (items.length === 0) {
-    return <AvailableDedicationTile kind={kind} donateHref={donateHref} />;
+    return (
+      <AvailableDedicationTile
+        kind={kind}
+        donateHref={donateHref}
+        price={price}
+      />
+    );
   }
 
   return (

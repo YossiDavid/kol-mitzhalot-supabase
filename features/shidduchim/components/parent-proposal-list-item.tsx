@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import ProposalThreadLink from "@/features/shidduchim/components/proposal-thread-link";
 import ProposalResponseDialog from "@/features/shidduchim/components/proposal-response-dialog";
+import ShadchanNameLink from "@/features/shidduchim/components/shadchan-name-link";
 import type { ParentProposal } from "@/features/shidduchim/lib/proposals-data";
 import {
   SHIDDUCH_RESPONSE_BADGE_VARIANT,
@@ -73,7 +74,12 @@ export default function ParentProposalListItem({
         </div>
 
         <p className="text-body-sm text-muted-foreground">
-          מאת {shadchanName} | התקבלה: {formatDate(receivedAt)}
+          מאת{" "}
+          <ShadchanNameLink
+            shadchanId={proposal.shadchanId}
+            name={shadchanName}
+          />{" "}
+          | התקבלה: {formatDate(receivedAt)}
         </p>
 
         {showNote && proposal.note?.trim() ? (

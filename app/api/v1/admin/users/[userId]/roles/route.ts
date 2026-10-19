@@ -6,7 +6,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { hasRole, primaryRole } from "@/lib/user";
 import { updateUserRoles } from "@/lib/supabase/user-roles";
-import type { Role } from "@/lib/user";
+import { getRoles, type Role } from "@/lib/user";
+import { recordActivity } from "@/features/admin/lib/record-activity";
+import { formatFullName, resolveDisplayName } from "@/lib/user-display-name";
 import {
   findInvalidInstitutionsError,
   restoreStaffInstitutions,
@@ -125,7 +127,11 @@ export async function PATCH(
 
   // התפקידים נכתבים ל-app_metadata.roles (לא user_metadata - את זה המשתמש עצמו
   // יכול לכתוב). updateUserRoles ממזג את app_metadata הקיים ולא דורס אותו.
-  const roleUpdate = await updateUserRoles(admin, userId, () => nextRoles);
+  let previousRoles: Role[] = [];
+  const roleUpdate = await updateUserRoles(admin, userId, (existing) => {
+    previousRoles = existing;
+    return nextRoles;
+  });
 
   if (!roleUpdate.ok) {
     console.error("[admin/users/roles]", roleUpdate.message);
@@ -152,6 +158,17 @@ export async function PATCH(
       );
     }
   }
+
+  const { firstName, lastName } = resolveDisplayName(roleUpdate.user, null);
+  await recordActivity(admin, {
+    actorId: currentUser.id,
+    action: "user.roles",
+    entityType: "user",
+    entityId: userId,
+    summary:
+      formatFullName(firstName, lastName) || roleUpdate.user.email || "משתמש",
+    details: { roles_from: previousRoles, roles_to: getRoles(roleUpdate.user) },
+  });
 
   return NextResponse.json({
     ok: true,

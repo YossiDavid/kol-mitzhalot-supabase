@@ -48,11 +48,39 @@ function ContactList({ contacts }: { contacts: MedicalContact[] }) {
   );
 }
 
+/** רמת החשיפה "להנהלת קול מצהלות בלבד" */
+const MANAGEMENT_ONLY_EXPOSURE = "only_for_kol_mitzhalot";
+
+/**
+ * ההצהרה הגיעה מוסתרת: בעל הכרטיס בחר שהפרטים יחשפו להנהלה בלבד, והצופה
+ * אינו בעליו ואינו מנהל - המסד החזיר רק את רמת החשיפה (masked_medical_record)
+ */
+function isManagementOnlyMasked(medical: MedicalRecords): boolean {
+  return (
+    !!medical &&
+    medical.exposure_level === MANAGEMENT_ONLY_EXPOSURE &&
+    !medical.status
+  );
+}
+
 /**
  * "הצהרה רפואית". המקטע מוצג תמיד למשתמש מחובר - גם כשאין רשומה רפואית,
  * ואז מוצגת שורת "תקין". בענף הציבורי הטבלה לא נשלפת כלל.
  */
 export function MedicalSection({ medical }: { medical: MedicalRecords }) {
+  if (isManagementOnlyMasked(medical)) {
+    return (
+      <CardSection title="הצהרה רפואית" icon={Stethoscope}>
+        <p
+          className="rounded-lg bg-muted/40 p-3 text-caption leading-relaxed text-foreground"
+          data-testid="medical-management-only"
+        >
+          קיים מידע רפואי שחשוף להנהלה בלבד
+        </p>
+      </CardSection>
+    );
+  }
+
   const hasMedicalIssue =
     !!medical &&
     (medical.status === "littleProblem" || medical.status === "hugeProblem");

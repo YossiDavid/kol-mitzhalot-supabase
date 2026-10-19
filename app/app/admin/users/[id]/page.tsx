@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { LastSeen } from "@/features/admin/components/last-seen";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { unstable_noStore as noStore } from "next/cache";
@@ -66,6 +67,7 @@ function BasicInfoCard({ userDetails }: { userDetails: UserDetails }) {
         </DetailRow>
         <DetailRow label="אימייל:">{userDetails.email || "לא זמין"}</DetailRow>
         <DetailRow label="טלפון:">{userDetails.phone || "לא זמין"}</DetailRow>
+        <DetailRow label="עיר:">{userDetails.city || "לא זמין"}</DetailRow>
         <DetailRow label="מטרת ההרשמה:">
           {formatSignupPurposeLabel(
             userDetails.signupPurpose,
@@ -80,6 +82,17 @@ function BasicInfoCard({ userDetails }: { userDetails: UserDetails }) {
         </DetailRow>
         <DetailRow label="התחברות אחרונה:">
           {formatUserDate(userDetails.lastSignInAt)}
+        </DetailRow>
+        <DetailRow label="נראה לאחרונה:">
+          <LastSeen
+            lastSeenAt={userDetails.lastSeenAt}
+            lastSignInAt={userDetails.lastSignInAt}
+          />
+        </DetailRow>
+        <DetailRow label="אישור תקנון:">
+          {userDetails.termsAcceptance
+            ? `גרסה ${userDetails.termsAcceptance.version} · ${formatUserDate(userDetails.termsAcceptance.acceptedAt)}`
+            : "טרם אושר"}
         </DetailRow>
       </div>
     </Card>

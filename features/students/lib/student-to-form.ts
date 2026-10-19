@@ -267,6 +267,9 @@ export function studentToFormValues(
     shtible: text(student.shtible),
     institutionId: text(student.institution_id),
     personalStatus: text(student.personal_status),
+    isKohen:
+      typeof student.is_kohen === "boolean" ? String(student.is_kohen) : "",
+    willingToLiveCountries: toStringArray(student.willing_to_live_countries),
     height:
       student.height === null || student.height === undefined
         ? ""

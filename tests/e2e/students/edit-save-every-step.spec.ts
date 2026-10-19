@@ -51,7 +51,8 @@ async function createCompleteStudent(): Promise<string> {
         // כרטיס שנוצר בלי card_for נחסם בעריכה עד שנבחר עבור מי הוא
         card_for: "child",
         birth_date: "1997-03-03",
-        gender: "male",
+        // אשה: בכרטיס של גבר התמונה חובה, והבדיקה אינה עוסקת בתמונות
+        gender: "female",
         personal_status: "single",
         country: "ישראל",
         city: "בני ברק",

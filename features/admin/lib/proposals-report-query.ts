@@ -1,5 +1,10 @@
+import {
+  SHIDDUCH_STATUS_VALUES,
+  type ShidduchStatus,
+} from "@/features/shidduchim/lib/status";
+
 /**
- * הפרמטרים של דוח ההצעות (/app/admin/proposals), כמקור אמת אחד לדף,
+ * הפרמטרים של "כל ההצעות" (/app/admin/proposals), כמקור אמת אחד לדף,
  * לקישורים אליו ולטופס הסינון.
  */
 
@@ -20,7 +25,27 @@ export type ProposalsReportQuery = {
   from: string;
   /** YYYY-MM-DD, כולל */
   to: string;
+  /** הסטטוס הנוכחי של ההצעה, "deleted" להצעות שנמחקו, או ריק = הכול */
+  status: ProposalsStatusFilter;
 };
+
+/** ערך הסינון להצעות שנמחקו (אין להן שורת shidduchim) */
+export const DELETED_STATUS_FILTER = "deleted";
+
+export type ProposalsStatusFilter =
+  | ""
+  | ShidduchStatus
+  | typeof DELETED_STATUS_FILTER;
+
+function pickStatus(
+  raw: Record<string, string | string[] | undefined>,
+): ProposalsStatusFilter {
+  const value = pick(raw, "status");
+  if (value === DELETED_STATUS_FILTER) return value;
+  return (SHIDDUCH_STATUS_VALUES as readonly string[]).includes(value)
+    ? (value as ShidduchStatus)
+    : "";
+}
 
 export const isUuid = (value: string) => UUID_PATTERN.test(value);
 
@@ -52,6 +77,7 @@ export function parseProposalsReportQuery(
     card: pick(raw, "card").slice(0, 100),
     from: pickDate(raw, "from"),
     to: pickDate(raw, "to"),
+    status: pickStatus(raw),
   };
 }
 
@@ -61,7 +87,7 @@ export function proposalsReportHref(
 ): string {
   const params = new URLSearchParams();
   if (query.page && query.page > 1) params.set("page", String(query.page));
-  for (const key of ["shadchan", "card", "from", "to"] as const) {
+  for (const key of ["shadchan", "card", "from", "to", "status"] as const) {
     const value = query[key];
     if (value) params.set(key, value);
   }

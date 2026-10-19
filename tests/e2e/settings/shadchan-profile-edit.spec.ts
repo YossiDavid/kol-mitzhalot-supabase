@@ -2,6 +2,7 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
 
 import { createUserSessionClient } from "../forums/forum-fixtures";
 import { createServiceClient } from "../shidduchim/fixtures";
+import { COMPLETE_IDENTITY_COLUMNS } from "../helpers/shadchan-form";
 
 /**
  * עריכת פרופיל שדכן מאושר בידי עצמו (הגדרות > עריכת פרופיל שדכן):
@@ -54,6 +55,7 @@ async function createShadchan(email: string, phoneTail: string, name: string) {
     contact_email: CONTACT_EMAIL,
     community: "בעלזא",
     synagogue_rabbi: SEED_RABBI,
+    ...COMPLETE_IDENTITY_COLUMNS,
   });
   if (infoError) throw new Error(`שורת שדכן: ${infoError.message}`);
   return id;

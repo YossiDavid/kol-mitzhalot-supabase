@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { COMPLETE_IDENTITY_COLUMNS } from "../helpers/shadchan-form";
 import { createServiceClient } from "../shidduchim/fixtures";
 
 /**
@@ -23,6 +24,9 @@ const VALID_BODY = {
   languages: "עברית",
   community: "בעלזא",
   synagogue_rabbi: "הרב מתוקן",
+  gender: COMPLETE_IDENTITY_COLUMNS.gender,
+  birth_date: COMPLETE_IDENTITY_COLUMNS.birth_date,
+  avatar_path: "",
 };
 
 const service = createServiceClient();
@@ -56,6 +60,7 @@ test.beforeAll(async () => {
     contact_phone: "0501234567",
     community: "בעלזא",
     synagogue_rabbi: "הרב מקורי",
+    ...COMPLETE_IDENTITY_COLUMNS,
   });
   if (infoError) throw new Error(`שורת שדכן: ${infoError.message}`);
 });

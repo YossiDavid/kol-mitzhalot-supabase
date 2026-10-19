@@ -7,11 +7,41 @@ import { Button } from "@/components/ui/button";
 
 type Props = {
   issues: string[];
+  /** התאמה שאסור להציע (למשל כהן וגרושה): מוצגת כאזהרה חמורה ואינה נסגרת */
+  blockers?: string[];
   /** כשמוגדר, מוצג כפתור סגירה (למשל אחרי רענון) */
   onDismiss?: () => void;
 };
 
-export default function CompatibilityDiagnosis({ issues, onDismiss }: Props) {
+function BlockersAlert({ blockers }: { blockers: string[] }) {
+  return (
+    <div className="flex w-full justify-center px-4">
+      <div
+        role="alert"
+        data-testid="compatibility-blockers"
+        className="flex w-full max-w-lg gap-2 rounded-md border border-destructive bg-destructive/10 p-4 text-destructive"
+      >
+        <AlertTriangleIcon className="mt-0.5 size-5 shrink-0" />
+        <div className="min-w-0 flex-1 space-y-1">
+          <h3 className="text-body font-bold">לא ניתן להציע את הצמד הזה</h3>
+          <ul className="list-disc space-y-1 ps-5 text-body-sm leading-relaxed">
+            {blockers.map((blocker) => (
+              <li key={blocker}>{blocker}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function CompatibilityDiagnosis({
+  issues,
+  blockers = [],
+  onDismiss,
+}: Props) {
+  if (blockers.length > 0) return <BlockersAlert blockers={blockers} />;
+
   const hasIssues = issues.length > 0;
 
   return (

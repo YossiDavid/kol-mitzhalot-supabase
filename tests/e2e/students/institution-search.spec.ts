@@ -58,7 +58,7 @@ test.describe("חיפוש מוסד ברשומות ההשכלה", () => {
     });
     await page.goto("/app/students/create");
     await chooseChildCard(page);
-    await page.getByRole("radio", { name: "מיועד", exact: true }).check();
+    await page.getByRole("radio", { name: "גבר", exact: true }).check();
     await page
       .getByRole("navigation", { name: "שלבי הטופס" })
       .getByRole("button", { name: "פרטים נוספים", exact: true })

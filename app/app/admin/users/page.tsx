@@ -11,6 +11,7 @@ import type { Route } from "next";
 import { unstable_noStore as noStore } from "next/cache";
 import { Suspense } from "react";
 import { ImpersonateButton } from "@/features/admin/components/impersonate-button";
+import { LastSeen } from "@/features/admin/components/last-seen";
 import { AdminUsersFilters } from "@/features/admin/components/users-filters";
 import { formatSignupPurposeLabel } from "@/features/auth/lib/signup-purpose";
 import { getRoleLabel } from "@/lib/user";
@@ -102,7 +103,11 @@ const USER_COLUMNS: DataTableColumn<UserStatsRow>[] = [
     header: "שידוכים הוצעו",
     size: "min",
     align: "center",
-    cell: (user) => user.shidduchimOfferedCount,
+    cell: (user) => (
+      <span data-testid={`offered-count-${user.id}`}>
+        {user.shidduchimOfferedCount}
+      </span>
+    ),
   },
   {
     key: "completed",
@@ -120,6 +125,17 @@ const USER_COLUMNS: DataTableColumn<UserStatsRow>[] = [
       <span title={formatDateTime(user.createdAt)}>
         {formatDate(user.createdAt)}
       </span>
+    ),
+  },
+  {
+    key: "lastSeen",
+    header: "נראה לאחרונה",
+    size: "min",
+    cell: (user) => (
+      <LastSeen
+        lastSeenAt={user.lastSeenAt}
+        lastSignInAt={user.lastSignInAt}
+      />
     ),
   },
   {
@@ -373,7 +389,7 @@ function UsersPageFallback() {
       <DataTableSkeleton
         breakpoint="xl"
         rows={FALLBACK_ROW_COUNT}
-        columns={9}
+        columns={USER_COLUMNS.length}
       />
     </Page>
   );

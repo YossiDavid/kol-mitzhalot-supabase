@@ -64,6 +64,27 @@ export const COMMUNITY_SEARCH = {
   empty: "לא נמצאה קהילה בשם הזה",
 } as const;
 
+/**
+ * "מוכן/ה לגור ב:" - ארצות לבחירה מרובה. הערך הנשמר הוא שם הארץ עצמו
+ * (students.willing_to_live_countries), כמו בשדה "ארץ" של הכרטיס.
+ */
+export const WILLING_TO_LIVE_COUNTRY_OPTIONS: FieldOptionDefinition[] =
+  sameValueAndLabel([
+    "ישראל",
+    "ארצות הברית",
+    "אנגליה",
+    "בלגיה",
+    "צרפת",
+    "שווייץ",
+    "אוסטריה",
+    "קנדה",
+    "ארגנטינה",
+    "מקסיקו",
+    "ברזיל",
+    "אוסטרליה",
+    "דרום אפריקה",
+  ]);
+
 /** קבצים שמתקבלים בקו״ח ובמסמכים רפואיים */
 export const DOCUMENT_ACCEPT: UploadField["accept"] = {
   "application/pdf": [".pdf"],

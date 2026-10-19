@@ -18,7 +18,7 @@ test("שורת מחותן: בלי חיפוש במאגר, והשדות פתוחי
   });
   await page.goto("/app/students/create");
   await chooseChildCard(page);
-  await page.getByRole("radio", { name: "מיועד", exact: true }).check();
+  await page.getByRole("radio", { name: "גבר", exact: true }).check();
   await page
     .getByRole("navigation", { name: "שלבי הטופס" })
     .getByRole("button", { name: "על המשפחה", exact: true })

@@ -19,7 +19,7 @@ test.describe("דילוג על ולידציית שלבים ב-development", () =
 
     // Assert
     await expect(devSwitch).not.toBeChecked();
-    await expect(page.getByText("נא לבחור מיועד/מיועדת")).toBeVisible();
+    await expect(page.getByText("נא לבחור מגדר")).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "פרטים אישיים" }),
     ).toHaveCount(0);

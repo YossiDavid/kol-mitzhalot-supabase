@@ -76,6 +76,10 @@ export interface PublicDedication {
 /** שורה בניהול: הנתונים הציבוריים + פרסום */
 export interface AdminDedication extends PublicDedication {
   is_published: boolean;
+  /** התרומה שממנה נוצרה (רכישת פרנס); null = הוזנה ידנית */
+  donation_id?: string | null;
+  /** נוצרה מתשלום במשבצת שכבר הייתה תפוסה: לא פורסמה, ממתינה למנהל */
+  needs_review?: boolean;
 }
 
 /** העמודות שהאתר הציבורי רשאי לבקש (תואם GRANT SELECT ל-anon) */

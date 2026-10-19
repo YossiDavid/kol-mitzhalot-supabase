@@ -56,6 +56,12 @@ setup("authenticate test user", async ({ page }) => {
     .from("system_settings")
     .upsert({ key: "phone_verification_enabled", value: false });
 
+  // חסימת אישור התקנון כבויה בסביבת הבדיקות (כמו אימות הטלפון). הבדיקה
+  // של החסימה עצמה (terms-gate.spec.ts) מדליקה אותה ומחזירה למצב הזה.
+  await admin
+    .from("system_settings")
+    .upsert({ key: "terms_gate_enabled", value: false });
+
   // Generate a magic link token
   const { data: linkData, error: linkError } =
     await admin.auth.admin.generateLink({

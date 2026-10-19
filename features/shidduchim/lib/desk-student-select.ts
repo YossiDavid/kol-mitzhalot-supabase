@@ -9,7 +9,8 @@ import { THIRD_PARTY_APPROVAL_COLUMNS } from "@/features/students/lib/third-part
  * שלא אושר להצגה מלאה ה-view מחזיר נתונים בסיסיים בלבד - parents_info עם
  * שמות הורים בלבד, כיוון חיים וכיסוי ראש ריקים - ו-partner_preferences נחסמת
  * ב-RLS, כך שלבדיקת ההתאמה פשוט אין מה להשוות. card_for והאישורים מזינים את
- * התג ואת חסימת השליחה בלוח.
+ * התג ואת חסימת השליחה בלוח. is_kohen מזין את כלל הכהן והגרושה; in_shidduchim, admin_paused_at ו-personal_status
+ * מזינים גם את תגי מצב המועמד (candidate-status.ts).
  */
 export const DESK_STUDENT_SELECT = `
   id,
@@ -20,6 +21,9 @@ export const DESK_STUDENT_SELECT = `
   city,
   country,
   personal_status,
+  is_kohen,
+  in_shidduchim,
+  admin_paused_at,
   height,
   plan_for_life,
   head_cover_type,

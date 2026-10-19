@@ -8,7 +8,11 @@
  * הספק שולח כל עדכון פעם אחת ומתריע בדוא"ל על כל תשובה שאינה 2xx. 400 רק לגוף חתום שאינו
  * JSON, ו-401 לחתימה שגויה. רץ ב-Node (ברירת המחדל; export runtime אסור עם
  * cacheComponents), כי האימות משתמש ב-node:crypto.
+ * תרומה שעברה עכשיו ל-paid ונרכש בה פרנס: הטריגר במסד יוצר את ההקדשה, וכאן
+ * מפקיעים את תג הקאש של הקוביות כדי שתופיע באתר מיד. ב-Route Handler אין updateTag
+ * (רק ב-Server Actions), ולכן revalidateTag עם expire: 0 (בלי הגשת תוכן ישן).
  */
+import { revalidateTag } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 import { getClientIp } from "@/lib/client-ip";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -23,6 +27,7 @@ import {
   verifyNedarimSignature,
 } from "@/features/donations/lib/verify-webhook";
 import { isKnownNedarimIp } from "@/features/donations/lib/webhook-ips";
+import { DEDICATIONS_CACHE_TAG } from "@/features/dedications/lib/dedications-cache";
 
 const LOG_TAG = "[donations/webhook]";
 /** גוף עדכון אמיתי הוא כמה KB; מעל זה אין טעם אפילו לחשב חתימה */
@@ -161,8 +166,13 @@ export async function POST(request: NextRequest) {
       matched: boolean;
       duplicate: boolean;
       temporary: boolean;
+      status: string | null;
       reason: string | null;
     };
+    // עדכון חדש שסימן paid (לא כפילות, לא mismatch ולא זמני): ייתכן שנוצרה הקדשה
+    if (!result.duplicate && result.matched && result.status === "paid") {
+      revalidateTag(DEDICATIONS_CACHE_TAG, { expire: 0 });
+    }
     if (result.duplicate || !result.matched) {
       console.warn(LOG_TAG, {
         event: result.duplicate ? "duplicate_delivery" : "not_matched",

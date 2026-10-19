@@ -30,9 +30,12 @@ const FILTER_DEBOUNCE_MS = 300;
 type Option = { value: string; label: string };
 
 const GENDER_OPTIONS: Option[] = [
-  { value: "male", label: "זכר" },
-  { value: "female", label: "נקבה" },
+  { value: "male", label: "גבר" },
+  { value: "female", label: "אשה" },
 ];
+
+/** "כרטיסים במיקוד": מה שהנהלת המערכת סימנה (הסינון בשרת) */
+const ADMIN_FOCUS_OPTIONS: Option[] = [{ value: "true", label: "במיקוד בלבד" }];
 
 const STATUS_OPTIONS: Option[] = [
   { value: "single", label: "רווק/ה" },
@@ -202,6 +205,13 @@ function BasicFields({
         name="cardFilledBy"
         label="מילוי הכרטיס"
         options={CARD_FILLED_BY_OPTIONS}
+        className="md:col-span-2"
+      />
+      <SelectFilter
+        {...props}
+        name="adminFocus"
+        label="כרטיסים במיקוד"
+        options={ADMIN_FOCUS_OPTIONS}
         className="md:col-span-2"
       />
       <TextFilter

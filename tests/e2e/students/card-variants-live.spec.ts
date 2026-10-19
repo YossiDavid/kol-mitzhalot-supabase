@@ -321,7 +321,9 @@ test.describe("וריאנטי הכרטיס מול המסד", () => {
     await mustInsert("medical_records", {
       student_id: groomId,
       status: "littleProblem",
-      exposure_level: "basic_exposure",
+      // חשיפה מלאה: הבדיקות כאן על פתיחת ההצהרה בהצעה. ההסתרה לפי רמת החשיפה
+      // נבדקת ב-medical-exposure-gate.spec.ts
+      exposure_level: "full_exposure",
       details: GROOM.medical,
       documents: [],
       contact_info: {

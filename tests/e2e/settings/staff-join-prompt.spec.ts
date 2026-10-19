@@ -118,14 +118,24 @@ test.describe("באנר וסרגל הצד למי שנרשם כאיש צוות", 
     }
   });
 
-  test("הבאנר מוביל להגדרות, והפריט בסרגל הצד מודגש", async ({ browser }) => {
+  test("'המשך הרשמה' מוביל להגדרות, 'אחר כך' מקטין לבאנר, והפריט בסרגל הצד מודגש", async ({
+    browser,
+  }) => {
     // Arrange
     const user = await createSignupUser("staff");
     created.push(user);
     const page = await openAsUser(browser, user);
 
     try {
-      // Assert
+      // Assert - הכרטיס הגדול במרכז מחליף את הבאנר עד "אחר כך"
+      const cta = page.getByTestId("continue-signup-cta");
+      await expect(cta).toHaveAttribute("data-target", "staff", LOAD);
+      await expect(
+        cta.getByRole("link", { name: "המשך הרשמה" }),
+      ).toHaveAttribute("href", "/app/settings/staff");
+      await cta.getByRole("button", { name: "אחר כך" }).click();
+      await expect(cta).toHaveCount(0);
+
       const banner = page.getByTestId("staff-join-banner");
       await expect(banner).toBeVisible(LOAD);
       await expect(banner).toHaveAttribute("data-prompt", "complete");
@@ -178,7 +188,11 @@ test.describe("באנר וסרגל הצד למי שנרשם כאיש צוות", 
 
     try {
       // Assert
-      await expect(page.getByTestId("shadchan-join-banner")).toBeVisible(LOAD);
+      await expect(page.getByTestId("continue-signup-cta")).toHaveAttribute(
+        "data-target",
+        "shadchan",
+        LOAD,
+      );
       await expect(page.getByTestId("staff-join-banner")).toHaveCount(0);
       await expect(page.getByTestId("sidebar-staff-join")).not.toHaveClass(
         /bg-primary\/10/,

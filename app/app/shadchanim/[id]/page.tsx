@@ -12,6 +12,10 @@ import {
   getShadchanPublicProfile,
 } from "@/features/shadchanim/lib/queries";
 import { Button } from "@/components/ui/button";
+import {
+  formatShadchanTitle,
+  shadchanRoleLabel,
+} from "@/features/shadchanim/lib/gender";
 import { getUser } from "@/lib/user";
 import { ArrowRight, MapPin, Pencil } from "lucide-react";
 import { unstable_noStore as noStore } from "next/cache";
@@ -95,10 +99,12 @@ async function ShadchanProfileContent({
         <div className="flex min-w-0 items-center gap-4">
           <ShadchanAvatar shadchan={profile} className="size-20" />
           <div className="min-w-0">
-            <PageTitle className="truncate">{profile.name}</PageTitle>
+            <PageTitle className="truncate">
+              {formatShadchanTitle(profile.name, profile.gender)}
+            </PageTitle>
             {profile.sinceYear && (
               <p className="text-body-sm text-muted-foreground">
-                שדכן משנת {profile.sinceYear}
+                {shadchanRoleLabel(profile.gender)} משנת {profile.sinceYear}
               </p>
             )}
             {profile.city && (

@@ -423,6 +423,14 @@ export function missingRequiredStudentFields(
   );
 }
 
+/** כהן: לגבר בלבד (CHECK במסד). "" - לא צוין */
+function buildIsKohen(values: StudentFormValues): boolean | null {
+  if (values.gender !== "male") return null;
+  if (values.isKohen === "true") return true;
+  if (values.isKohen === "false") return false;
+  return null;
+}
+
 export function buildStudentPayload(
   values: StudentFormValues,
   options: BuildStudentPayloadOptions = {},
@@ -439,6 +447,8 @@ export function buildStudentPayload(
     birth_date: formatDateToISO(values.birthDate),
     gender: values.gender,
     personal_status: mapPersonalStatus(values.personalStatus),
+    is_kohen: buildIsKohen(values),
+    willing_to_live_countries: values.willingToLiveCountries ?? [],
     height: values.height ? parseFloat(values.height) : null,
     phone: values.phone,
     country: values.country,

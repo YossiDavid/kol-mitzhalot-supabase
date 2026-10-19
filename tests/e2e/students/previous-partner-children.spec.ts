@@ -15,8 +15,8 @@ const RUN_ID = Date.now();
 const LAST_NAME = `ילדים${RUN_ID}`;
 const LEGACY_CHILDREN_COUNT = 3;
 const STEP_TITLE = "פרטים נוספים";
-// המיועד זכר: שלב "מי שמחפשים" מנוסח לפי המיועדת
-const LAST_STEP_TITLE = "קצת על המיועדת שאתם מחפשים";
+// המיועדת אשה: שלב "מי שמחפשים" מנוסח לפי המיועד
+const LAST_STEP_TITLE = "קצת על המיועד שאתם מחפשים";
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const CHILDREN_LIST = "previousPartners.0.children";
 // שנים עבריות בבורר התאריכים: תש"ף (2019-2020) ותש"ע (2009-2010)
@@ -48,7 +48,8 @@ async function createDivorcedStudent(): Promise<string> {
         // כרטיס שנוצר בלי card_for נחסם בעריכה עד שנבחר עבור מי הוא
         card_for: "child",
         birth_date: "1985-05-05",
-        gender: "male",
+        // אשה: בכרטיס של גבר התמונה חובה, והבדיקה אינה עוסקת בתמונות
+        gender: "female",
         personal_status: "divorced",
         country: "ישראל",
         city: "בני ברק",
@@ -277,7 +278,7 @@ test.describe.serial("ילדים מנישואים קודמים", () => {
     // Assert - בכרטיס, עם הגיל שמחושב מתאריך הלידה
     await expect(page.getByText("2 ילדים", { exact: true })).toBeVisible();
     await expect(
-      page.getByText(`בן · ${ageText(son.birth_date)} · גר אצל האם`, {
+      page.getByText(`בן · ${ageText(son.birth_date)} · גר אצל האב`, {
         exact: true,
       }),
     ).toBeVisible();

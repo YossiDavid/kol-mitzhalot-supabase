@@ -114,6 +114,8 @@ export const FULL_STUDENT_COLUMNS = [
   "third_party_full_display_approved_at",
   "third_party_proposals_approved_at",
   "deleted_at",
+  "is_kohen",
+  "willing_to_live_countries",
 ] as const satisfies readonly StudentColumn[];
 
 const FULL_STUDENT_EMBEDS = [
@@ -164,8 +166,8 @@ export function buildPublicStudent(row: AnonymousStudentRow): PublicStudent {
 
 /** תווית המגדר בשורת המטא ובמקטע הפרטים האישיים */
 export function genderToHebrew(gender: string | null | undefined) {
-  if (gender === "male") return "זכר";
-  if (gender === "female") return "נקבה";
+  if (gender === "male") return "גבר";
+  if (gender === "female") return "אשה";
   return null;
 }
 

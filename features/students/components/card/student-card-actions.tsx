@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
+  Crosshair,
   Ellipsis,
   FileText,
   Flag,
@@ -23,15 +24,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { CardAdminFocusDialog } from "@/features/admin/components/card-admin-focus-dialog";
 import { CardAdminPauseDialog } from "@/features/admin/components/card-admin-pause-dialog";
 import { ReportCardDialog } from "@/features/students/components/card/report-card-dialog";
 import { StudentDeleteDialog } from "@/features/students/components/delete-student-button";
 import { StudentChatButton } from "@/features/students/components/message-button";
 import { shareStudentCard } from "@/features/students/lib/share-student-card";
+import type { CardAdminFocus } from "@/features/students/lib/card-admin-focus";
 
 import { StudentStatusMenu, type PersonalStatus } from "./student-status-menu";
 
-type OpenDialog = "delete" | "report" | "pause" | null;
+type OpenDialog = "delete" | "report" | "pause" | "focus" | null;
 
 /**
  * שורת הפעולות של הכרטיס: פעולה ראשית אחת ("עריכה"), כפתור "צ'אט" גלוי ותפריט
@@ -56,6 +59,7 @@ export function StudentCardActions({
   ownerUserId,
   canReport = false,
   adminPause = null,
+  adminFocus = null,
 }: {
   studentId: string;
   studentName: string;
@@ -75,6 +79,8 @@ export function StudentCardActions({
   canReport?: boolean;
   /** מנהל מערכת בלבד: מצב ההשהיה ע"י הנהלה. null - אין בקרת השהיה */
   adminPause?: { isPaused: boolean } | null;
+  /** מנהל מערכת בלבד: סימון "במיקוד". null - אין בקרת מיקוד */
+  adminFocus?: CardAdminFocus | null;
 }) {
   const [openDialog, setOpenDialog] = useState<OpenDialog>(null);
 
@@ -162,6 +168,13 @@ export function StudentCardActions({
             </DropdownMenuItem>
           )}
 
+          {adminFocus && (
+            <DropdownMenuItem onSelect={() => setOpenDialog("focus")}>
+              <Crosshair />
+              {adminFocus.focusedAt ? "עריכת סימון במיקוד" : "סימון במיקוד"}
+            </DropdownMenuItem>
+          )}
+
           {canManage && (
             <StudentStatusMenu
               studentId={studentId}
@@ -201,6 +214,16 @@ export function StudentCardActions({
           isPaused={adminPause.isPaused}
           open={openDialog === "pause"}
           onOpenChange={(open) => setOpenDialog(open ? "pause" : null)}
+        />
+      )}
+
+      {adminFocus && (
+        <CardAdminFocusDialog
+          studentId={studentId}
+          studentName={studentName}
+          focus={adminFocus}
+          open={openDialog === "focus"}
+          onOpenChange={(open) => setOpenDialog(open ? "focus" : null)}
         />
       )}
 

@@ -1,6 +1,7 @@
 /**
  * עמוד ציבורי: תרומות והנצחות. התשלום מתבצע בתוך iframe מאובטח של נדרים פלוס
- * (שיטה 3), בלי מפתח API בצד הלקוח. Callers: כפתור התרומות בהדר, בפוטר ובתפריט המערכת.
+ * (שיטה 3), בלי מפתח API בצד הלקוח. Callers: כפתור התרומות בהדר, בפוטר ובתפריט המערכת,
+ * וקוביות הפרנס הפנויות (?dedication=sponsor_day#donate: רכישה בסכום המחיר).
  */
 import type { Metadata } from "next";
 import { Lock, ReceiptText } from "lucide-react";
@@ -10,7 +11,10 @@ import {
   DedicationTilesSection,
 } from "@/components/website/dedications/dedication-tiles-section";
 import { DedicationsSection } from "@/components/website/donations/dedications-section";
-import { DonationFlow } from "@/components/website/donations/donation-flow";
+import {
+  DonationFlowFallback,
+  DonationFlowSection,
+} from "@/components/website/donations/donation-flow-section";
 import { DonationUnavailable } from "@/components/website/donations/donation-unavailable";
 import { resolveNedarimConfig } from "@/features/donations/lib/nedarim";
 
@@ -33,7 +37,11 @@ const REASSURANCES = [
   },
 ] as const;
 
-export default function DonationsPage() {
+type DonationsPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default function DonationsPage({ searchParams }: DonationsPageProps) {
   const config = resolveNedarimConfig({
     mosadId: process.env.NEXT_PUBLIC_NEDARIM_MOSAD_ID,
     apiValid: process.env.NEXT_PUBLIC_NEDARIM_API_VALID,
@@ -59,10 +67,13 @@ export default function DonationsPage() {
               לתרום למערכת
             </h2>
             {config ? (
-              <DonationFlow
-                mosadId={config.mosadId}
-                apiValid={config.apiValid}
-              />
+              <Suspense fallback={<DonationFlowFallback />}>
+                <DonationFlowSection
+                  searchParams={searchParams}
+                  mosadId={config.mosadId}
+                  apiValid={config.apiValid}
+                />
+              </Suspense>
             ) : (
               <DonationUnavailable />
             )}

@@ -7,6 +7,7 @@ import {
 import { test, expect, Page } from "@playwright/test";
 
 import { createServiceClient, TEST_USER_EMAIL } from "../shidduchim/fixtures";
+import { addStudentPhoto } from "../helpers/student-photo";
 
 const fill = (page: Page, fieldName: string, value: string) =>
   page.locator(`#${fieldName.replace(/[^a-zA-Z0-9]+/g, "-")}`).fill(value);
@@ -58,17 +59,17 @@ test.describe("יצירת תלמיד חדש", () => {
     // Step 0 should be visible
     await expect(page.locator("text=ברוכים הבאים")).toBeVisible();
     await expect(
-      page.getByRole("radio", { name: "מיועד", exact: true }),
+      page.getByRole("radio", { name: "גבר", exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByRole("radio", { name: "מיועדת", exact: true }),
+      page.getByRole("radio", { name: "אשה", exact: true }),
     ).toBeVisible();
   });
 
   test("ניווט בין שלבים עובד", async ({ page }) => {
     // Step 0 — select gender
     await chooseChildCard(page);
-    await page.getByRole("radio", { name: "מיועד", exact: true }).click();
+    await page.getByRole("radio", { name: "גבר", exact: true }).click();
     await page.locator("button:has-text('הבא')").click();
 
     // Step 1 — basic information should appear
@@ -91,7 +92,7 @@ test.describe("יצירת תלמיד חדש", () => {
 
     // ── Step 0: Gender ─────────────────────────────────────────────
     await chooseChildCard(page);
-    await page.getByRole("radio", { name: "מיועד", exact: true }).click();
+    await page.getByRole("radio", { name: "גבר", exact: true }).click();
     await page.locator("button:has-text('הבא')").click();
 
     // ── Step 1: Basic information ───────────────────────────────────
@@ -117,6 +118,8 @@ test.describe("יצירת תלמיד חדש", () => {
     await selects.nth(0).selectOption("single"); // personalStatus
     await selects.nth(1).selectOption("kosher"); // cellphoneType
     await selects.nth(2).selectOption("koilel"); // planForLife (male only)
+    // תמונה: חובה בכרטיס של גבר
+    await addStudentPhoto(page);
 
     await page.locator("button:has-text('הבא')").click();
 
@@ -225,7 +228,7 @@ test.describe("יצירת תלמיד חדש", () => {
   }) => {
     // Arrange
     await page.getByRole("radio", { name: CARD_FOR_LABELS.self }).check();
-    await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
+    await page.getByRole("radio", { name: "אשה", exact: true }).check();
     const nameField = page.locator("#author-name");
 
     // Assert: מילוי מראש מהחשבון (Test User)
@@ -263,7 +266,7 @@ test.describe("יצירת תלמיד חדש", () => {
     ]) {
       // Arrange
       await choose();
-      await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
+      await page.getByRole("radio", { name: "אשה", exact: true }).check();
       await page.locator("#author-email").fill("");
 
       // Act
@@ -277,7 +280,7 @@ test.describe("יצירת תלמיד חדש", () => {
   test("אימייל ממלא הכרטיס לא תקין נחסם", async ({ page }) => {
     // Arrange
     await page.getByRole("radio", { name: CARD_FOR_LABELS.self }).check();
-    await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
+    await page.getByRole("radio", { name: "אשה", exact: true }).check();
     await page.locator("#author-email").fill("not-an-email");
 
     // Act
@@ -307,7 +310,7 @@ test.describe("יצירת תלמיד חדש", () => {
   }) => {
     // Arrange
     await page.getByRole("radio", { name: CARD_FOR_LABELS.other }).check();
-    await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
+    await page.getByRole("radio", { name: "אשה", exact: true }).check();
 
     // Act
     await page.getByRole("button", { name: "המשך לשלב הבא" }).click();
@@ -356,7 +359,7 @@ test.describe("יצירת תלמיד חדש", () => {
   test("טלפון ממלא לא תקין נחסם", async ({ page }) => {
     // Arrange
     await chooseChildCard(page);
-    await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
+    await page.getByRole("radio", { name: "אשה", exact: true }).check();
     await page.locator("#author-phone").fill("abc");
 
     // Act
@@ -373,7 +376,7 @@ test.describe("יצירת תלמיד חדש", () => {
   }) => {
     // Arrange
     await chooseThirdPartyCard(page);
-    await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
+    await page.getByRole("radio", { name: "אשה", exact: true }).check();
     const stepsNav = page.getByRole("navigation", { name: "שלבי הטופס" });
 
     // Act - מעבר לשלב "פרטים נוספים"
@@ -398,7 +401,7 @@ test.describe("יצירת תלמיד חדש", () => {
 
   test("אי אפשר להמשיך מההקדמה בלי לבחור עבור מי הכרטיס", async ({ page }) => {
     // Arrange
-    await page.getByRole("radio", { name: "מיועד", exact: true }).check();
+    await page.getByRole("radio", { name: "גבר", exact: true }).check();
 
     // Act
     await page.getByRole("button", { name: "המשך לשלב הבא" }).click();

@@ -15,6 +15,8 @@ import { readSignupPurpose } from "@/features/auth/lib/signup-purpose";
 import { getPhoneVerificationEnabled } from "@/lib/system-settings";
 import { UnreadChatsProvider } from "@/features/chats/lib/unread-chats-context";
 import Analytics from "@/components/website/google-analytics";
+import { TermsGateDialog } from "@/features/auth/components/terms-gate-dialog";
+import { resolveTermsGate } from "@/features/auth/lib/terms-gate";
 
 // כרטיס מיועד ציבורי: נתיב של בדיוק /app/students/<מזהה> ללא סגמנטים נוספים.
 // ה-lookahead השלילי מוציא במפורש את /app/students/create, כדי שדף יצירת
@@ -66,6 +68,10 @@ export default async function AppLayout({
     }
   }
 
+  // אישור התקנון: עד שהמשתמש מאשר את הגרסה הנוכחית, כל דפי /app מוחלפים
+  // בדיאלוג חוסם. בקשה רגילה עולה שאילתה אחת קטנה (ממוזכרת לבקשה).
+  const termsGate = user ? await resolveTermsGate(user) : null;
+
   const roles = user ? getRoles(user) : [];
 
   // גולש לא מחובר בכרטיס ציבורי מקבל מעטפת מינימלית: אין sidebar, אין
@@ -101,7 +107,15 @@ export default async function AppLayout({
             <Header variant="app" />
             {/* 5.5rem = גובה הסרגל התחתון (4rem) + רווח, מעל ה-safe-area */}
             <main className="container flex-1 px-3 py-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:px-4 md:py-5 md:pb-5">
-              {children}
+              {termsGate ? (
+                <TermsGateDialog
+                  version={termsGate.version}
+                  title={termsGate.title}
+                  content={termsGate.content}
+                />
+              ) : (
+                children
+              )}
             </main>
             <Footer className="hidden md:block" />
           </div>

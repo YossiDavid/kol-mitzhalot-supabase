@@ -5,10 +5,13 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { ApplicationTextDialog } from "@/features/admin/components/application-text-dialog";
+import {
+  CardRejectDialog,
+  type CardRejection,
+} from "@/features/admin/components/card-reject-dialog";
 import {
   CARD_APPROVAL_LABELS,
-  REJECTION_REASON_MAX_LENGTH,
+  type CardApprovalAction,
   type CardApprovalStatus,
 } from "@/features/students/lib/card-approval";
 
@@ -22,7 +25,7 @@ type Props = {
 
 async function sendDecision(
   studentId: string,
-  body: { action: "approve" } | { action: "reject"; reason: string },
+  body: CardApprovalAction,
 ): Promise<string | null> {
   try {
     const response = await fetch(`/api/v1/students/${studentId}/approval`, {
@@ -40,32 +43,49 @@ async function sendDecision(
 
 /**
  * אישור או דחייה של כרטיס על ידי מנהל מערכת: בתור הכרטיסים החדשים ובדף הכרטיס.
- * דחייה דורשת סיבה, שנשלחת לבעל הכרטיס. דחייה אפשרית גם לכרטיס מאושר.
+ * דחייה דורשת סיבה, שנשלחת לבעל הכרטיס - אלא אם סומן "ללא שליחת הודעה", ואז
+ * הסיבה רשות ואין התראה ומייל. דחייה אפשרית גם לכרטיס מאושר. כרטיס שנדחה אפשר
+ * להחזיר להמתנה (בלי הודעה לבעליו) או לאשר.
  */
 export function CardApprovalButtons({ studentId, studentName, status }: Props) {
   const router = useRouter();
-  const [isApproving, setIsApproving] = useState(false);
+  const [pendingAction, setPendingAction] = useState<
+    "approve" | "reset" | null
+  >(null);
   const [isRejectOpen, setIsRejectOpen] = useState(false);
 
-  async function handleApprove() {
-    setIsApproving(true);
-    const failure = await sendDecision(studentId, { action: "approve" });
-    setIsApproving(false);
+  async function runAction(action: "approve" | "reset", success: string) {
+    setPendingAction(action);
+    const failure = await sendDecision(studentId, { action });
+    setPendingAction(null);
     if (failure) {
       toast.error(failure);
       return;
     }
-    toast.success(`הכרטיס של ${studentName} אושר`);
+    toast.success(success);
     router.refresh();
   }
 
-  async function handleReject(reason: string): Promise<string | null> {
-    const failure = await sendDecision(studentId, { action: "reject", reason });
+  async function handleReject({
+    reason,
+    silent,
+  }: CardRejection): Promise<string | null> {
+    const failure = await sendDecision(studentId, {
+      action: "reject",
+      reason,
+      silent,
+    });
     if (failure) return failure;
-    toast.success(`הכרטיס של ${studentName} נדחה, והסיבה נשלחה לבעל הכרטיס`);
+    toast.success(
+      silent
+        ? `הכרטיס של ${studentName} נדחה, בלי הודעה לבעל הכרטיס`
+        : `הכרטיס של ${studentName} נדחה, והסיבה נשלחה לבעל הכרטיס`,
+    );
     router.refresh();
     return null;
   }
+
+  const isBusy = pendingAction !== null;
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -73,11 +93,30 @@ export function CardApprovalButtons({ studentId, studentName, status }: Props) {
         <Button
           type="button"
           size="sm"
-          onClick={handleApprove}
-          disabled={isApproving}
+          onClick={() =>
+            void runAction("approve", `הכרטיס של ${studentName} אושר`)
+          }
+          disabled={isBusy}
           aria-label={`אישור הכרטיס של ${studentName}`}
         >
-          {isApproving ? "מאשר..." : "אישור"}
+          {pendingAction === "approve" ? "מאשר..." : "אישור"}
+        </Button>
+      )}
+      {status === "rejected" && (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() =>
+            void runAction(
+              "reset",
+              `הכרטיס של ${studentName} הוחזר להמתנה לאישור`,
+            )
+          }
+          disabled={isBusy}
+          aria-label={`החזרה להמתנה של הכרטיס של ${studentName}`}
+        >
+          {pendingAction === "reset" ? "מחזיר..." : "החזרה להמתנה"}
         </Button>
       )}
       {status !== "rejected" && (
@@ -86,23 +125,16 @@ export function CardApprovalButtons({ studentId, studentName, status }: Props) {
           size="sm"
           variant="outline"
           onClick={() => setIsRejectOpen(true)}
-          disabled={isApproving}
+          disabled={isBusy}
           aria-label={`דחיית הכרטיס של ${studentName}`}
         >
           דחייה
         </Button>
       )}
-      <ApplicationTextDialog
+      <CardRejectDialog
         open={isRejectOpen}
         onOpenChange={setIsRejectOpen}
-        title="דחיית הכרטיס"
-        description={`הכרטיס של ${studentName} לא יוצג לשדכנים. הסיבה תישלח לבעל הכרטיס בהתראה ובמייל, והוא יוכל לתקן ולשלוח לאישור מחדש.`}
-        fieldLabel="סיבת הדחייה (חובה)"
-        submitLabel="דחיית הכרטיס"
-        pendingLabel="דוחה..."
-        maxLength={REJECTION_REASON_MAX_LENGTH}
-        isRequired
-        isDestructive
+        studentName={studentName}
         onSubmit={handleReject}
       />
     </div>

@@ -1,6 +1,8 @@
 import { Lock, MessageSquareText, NotebookPen } from "lucide-react";
 
+import { AdminFocusBadge } from "@/features/students/components/admin-focus-badge";
 import { ThirdPartyCardTag } from "@/features/students/components/third-party-card-tag";
+import type { CardAdminFocus } from "@/features/students/lib/card-admin-focus";
 import { THIRD_PARTY_HIDDEN_PARTS_NOTE } from "@/features/students/lib/third-party-card";
 
 import {
@@ -53,6 +55,7 @@ export function StudentCard({
   owner = null,
   isBasicOnly = false,
   adminControls = null,
+  adminFocus = null,
   backLink,
   actions,
 }: {
@@ -79,6 +82,8 @@ export function StudentCard({
   isBasicOnly?: boolean;
   /** בקרות האישור - למנהל מערכת בלבד, בכרטיס צד שלישי */
   adminControls?: React.ReactNode;
+  /** סימון "במיקוד" של ההנהלה - נמסר לשדכן ולמנהל בלבד */
+  adminFocus?: CardAdminFocus | null;
   /** יעד החזרה לפי הצופה (נקבע בעמוד); בלעדיו לא מוצג קישור */
   backLink?: CardBackLink;
   actions: React.ReactNode;
@@ -111,7 +116,15 @@ export function StudentCard({
             photos={photos}
           />
         }
-        tag={<ThirdPartyCardTag card={student} />}
+        tag={
+          <>
+            <ThirdPartyCardTag card={student} />
+            <AdminFocusBadge
+              focusedAt={adminFocus?.focusedAt}
+              note={adminFocus?.note}
+            />
+          </>
+        }
         backLink={backLink ? <StudentCardBackLink {...backLink} /> : undefined}
         actions={actions}
       />
@@ -146,25 +159,6 @@ export function StudentCard({
         ageHebrewDate={ageHebrewDate}
         owner={owner}
       />
-
-      {/* פידבק אנשי צוות - גלוי לכל צופה בכרטיס, וגם בשיתוף */}
-      {(staffFeedback.length > 0 || canWriteStaffFeedback) && (
-        <CardSection title="פידבק אנשי צוות" icon={MessageSquareText}>
-          <StaffFeedbackList
-            studentId={student.id}
-            initialFeedback={staffFeedback}
-            canWrite={canWriteStaffFeedback}
-            currentUserName={currentUserName}
-          />
-        </CardSection>
-      )}
-
-      {/* הערות שדכן - לעיני השדכן שכתב אותן בלבד, לא בשיתוף */}
-      {isShadchan && (
-        <CardSection title="הערות שדכן" icon={NotebookPen}>
-          <ShadchanNotes studentId={student.id} initialNotes={shadchanNotes} />
-        </CardSection>
-      )}
 
       {isBasicOnly && (
         <p
@@ -215,6 +209,27 @@ export function StudentCard({
           />
         </div>
       </div>
+
+      {/* בסוף הכרטיס, אחרי כל המקטעים: מחמאות צוות ואחריהן הערות השדכנים */}
+      {/* מחמאות צוות (פידבק של אנשי צוות במוסד) - לכל מי שרואה את הכרטיס המלא.
+          הכרטיס הציבורי (קישור השיתוף) מציג אותן ברכיב משלו */}
+      {(staffFeedback.length > 0 || canWriteStaffFeedback) && (
+        <CardSection title="מחמאות צוות" icon={MessageSquareText}>
+          <StaffFeedbackList
+            studentId={student.id}
+            initialFeedback={staffFeedback}
+            canWrite={canWriteStaffFeedback}
+            currentUserName={currentUserName}
+          />
+        </CardSection>
+      )}
+
+      {/* הערות שדכן - לשדכנים ולמנהלים בלבד; אינן מוצגות בקישור השיתוף */}
+      {isShadchan && (
+        <CardSection title="הערות שדכן" icon={NotebookPen}>
+          <ShadchanNotes studentId={student.id} initialNotes={shadchanNotes} />
+        </CardSection>
+      )}
     </div>
   );
 }

@@ -50,6 +50,12 @@ export const STUDENT_COLUMN_SHAPE = {
   third_party_full_display_approved_at: text,
   third_party_proposals_approved_at: text,
   deleted_at: text,
+  // אופציונליות: כרטיס נטען גם מול מסד שעוד לא קיבל את
+  // 20261027100000_card_countries_and_admin_focus.sql
+  /** כהן - לגבר בלבד. null = לא צוין */
+  is_kohen: z.boolean().nullable().optional(),
+  /** "מוכן/ה לגור ב:" - שמות ארצות. null = לא צוין */
+  willing_to_live_countries: z.array(z.string()).nullable().optional(),
   /** כינויים של נתיבי JSON ב-BASIC (ראו COLUMN_SELECT_FRAGMENTS) */
   parents_father: jsonObject,
   parents_mother: jsonObject,

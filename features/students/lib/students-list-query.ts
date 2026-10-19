@@ -49,6 +49,9 @@ const STUDENT_ROW_COLUMNS = [
   "card_for",
   "third_party_full_display_approved_at",
   "third_party_proposals_approved_at",
+  // תג "במיקוד" וההערה שלו (לשדכן ולמנהל; לאחרים ריקות ב-view)
+  "admin_focus_at",
+  "admin_focus_note",
 ];
 
 type SupabaseBrowserClient = ReturnType<typeof createClient>;
@@ -177,6 +180,9 @@ function applyFieldFilters(
   if (cardFilledBy === "direct") {
     next = next.or("card_for.is.null,card_for.neq.other");
   }
+  // "כרטיסים במיקוד": רק מה שההנהלה סימנה
+  if (query.adminFocus === "true")
+    next = next.not("admin_focus_at", "is", null);
   const newCards = parseNewCardsFilter(query.newCards);
   if (newCards)
     next = next.gte(CARD_LISTED_AT_COLUMN, newCardsSince(newCards, new Date()));

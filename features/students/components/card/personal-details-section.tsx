@@ -20,6 +20,20 @@ export type CardOwnerInfo = {
   email: string | null;
 };
 
+/** "כן" / "לא" לשדה כהן; null כשלא צוין, או בכרטיס שאינו של גבר */
+function kohenLabel(student: PersonalDetails): string | null {
+  if (student.gender !== "male" || typeof student.is_kohen !== "boolean") {
+    return null;
+  }
+  return student.is_kohen ? "כן" : "לא";
+}
+
+function willingToLiveLabel(gender: string | null | undefined): string {
+  if (gender === "male") return "מוכן לגור ב";
+  if (gender === "female") return "מוכנה לגור ב";
+  return "מוכן/ה לגור ב";
+}
+
 /**
  * "פרטים אישיים". אותו רכיב משרת את הגולש המחובר ואת התצוגה הציבורית:
  * בענף הציבורי השדות הרגישים (טלפון, סוג מכשיר, רחוב, מספר בית)
@@ -74,6 +88,15 @@ export function PersonalDetailsSection({
                   student.personal_status,
                   student.gender ?? undefined,
                 )
+              : null
+          }
+        />
+        <InfoTag label="כהן" value={kohenLabel(student)} />
+        <InfoTag
+          label={willingToLiveLabel(student.gender)}
+          value={
+            student.willing_to_live_countries?.length
+              ? student.willing_to_live_countries.join(", ")
               : null
           }
         />

@@ -22,6 +22,12 @@ export type UserDetails = {
   staffInstitutions: Array<{ id: string; name: string; city: string | null }>;
   createdAt: string;
   lastSignInAt: string | null;
+  /** הפעם האחרונה שהמשתמש נראה באפליקציה (user_profiles.last_seen_at) */
+  lastSeenAt: string | null;
+  /** העיר שנמסרה בהרשמה (user_profiles.city) */
+  city: string | null;
+  /** אישור התקנון האחרון (terms_acceptances) */
+  termsAcceptance: { version: number; acceptedAt: string } | null;
   children: Array<{
     id: string;
     firstName: string;
@@ -106,6 +112,26 @@ export async function getUserDetails(
   }
 
   const supabase = await createClient();
+
+  const { data: profile, error: profileError } = await adminClient
+    .from("user_profiles")
+    .select("last_seen_at, city")
+    .eq("id", userId)
+    .maybeSingle();
+  if (profileError) {
+    console.error("Error fetching user_profiles:", profileError);
+  }
+
+  const { data: termsRow, error: termsError } = await adminClient
+    .from("terms_acceptances")
+    .select("version, accepted_at")
+    .eq("user_id", userId)
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (termsError) {
+    console.error("Error fetching terms_acceptances:", termsError);
+  }
 
   // שיוכי המוסדות של איש הצוות: ממלאים מראש את הבורר ב-UserRolesEditor ומראים
   // למנהל למה המשתמש רואה (או לא רואה) כרטיסים. admin client כי מדובר בשורות
@@ -222,6 +248,11 @@ export async function getUserDetails(
     staffInstitutions,
     createdAt: user.created_at,
     lastSignInAt: user.last_sign_in_at || null,
+    lastSeenAt: profile?.last_seen_at ?? null,
+    city: profile?.city ?? null,
+    termsAcceptance: termsRow
+      ? { version: termsRow.version, acceptedAt: termsRow.accepted_at }
+      : null,
     children: childrenData.map((c) => ({
       id: c.id,
       firstName: c.first_name,

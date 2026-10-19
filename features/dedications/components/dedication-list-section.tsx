@@ -58,6 +58,20 @@ export function DedicationListSection({
               {item.donor_line}
             </p>
           ) : null}
+          {item.donation_id || item.needs_review ? (
+            <div className="flex flex-wrap gap-1 pt-1">
+              {item.donation_id ? (
+                <Badge variant="info" data-testid="dedication-purchased">
+                  נרכש בתרומה
+                </Badge>
+              ) : null}
+              {item.needs_review ? (
+                <Badge variant="warning" data-testid="dedication-needs-review">
+                  נדרשת בדיקה: המשבצת כבר הייתה תפוסה
+                </Badge>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       ),
     },

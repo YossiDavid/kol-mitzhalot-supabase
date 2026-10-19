@@ -93,6 +93,8 @@ const VIEW_AS_IS = [
   "third_party_proposals_approved_at",
   // רגע אישור ההנהלה: לפיו נמדד "חדש" ברשימה
   "admin_approved_at",
+  // כהן: פרט בסיסי, כמו הסטטוס האישי
+  "is_kohen",
 ] as const;
 /**
  * קיימות ב-view, וחוזרות רק לבעל הכרטיס ולמנהל (לשדכן ולאיש צוות - ריקות
@@ -111,7 +113,13 @@ const VIEW_NULL_WHEN_RESTRICTED = [
   "admin_paused_at",
   "third_party_full_display_approved_by",
   "third_party_proposals_approved_by",
+  "willing_to_live_countries",
 ] as const;
+/**
+ * קיימות ב-view ואינן עמודות של students (student_admin_focus): לשדכן ולמנהל
+ * בלבד, ובשאר המקרים ריקות
+ */
+const VIEW_ONLY_COLUMNS = ["admin_focus_at", "admin_focus_note"] as const;
 /** קיימות ב-view, ומצומצמות בכרטיס מוגבל (שמות הורים; בלי ההסבר של הממלא) */
 const VIEW_REDUCED_WHEN_RESTRICTED = ["parents_info", "author_info"] as const;
 /** אינן ב-view בכלל, לאף כרטיס */
@@ -128,6 +136,7 @@ const NEVER_IN_VIEW = [
   "admin_paused_by",
   "admin_approved_by",
   "admin_rejected_by",
+  "admin_review_silent",
 ] as const;
 
 const SENSITIVE_CHILD_TABLES = [
@@ -409,6 +418,7 @@ test.describe("שער הכרטיס המוגבל (מסד)", () => {
       ...VIEW_OWNER_AND_ADMIN_ONLY,
       ...VIEW_NULL_WHEN_RESTRICTED,
       ...VIEW_REDUCED_WHEN_RESTRICTED,
+      ...VIEW_ONLY_COLUMNS,
     ];
     const never: readonly string[] = NEVER_IN_VIEW;
 

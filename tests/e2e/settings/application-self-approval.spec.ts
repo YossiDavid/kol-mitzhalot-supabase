@@ -7,6 +7,7 @@ import {
   ensureCardManagerId,
 } from "../shidduchim/fixtures";
 import { approvedCard } from "../helpers/approved-card";
+import { COMPLETE_IDENTITY_COLUMNS } from "../helpers/shadchan-form";
 
 /**
  * הפרצה שנסגרה: בקשת ההצטרפות כאיש צוות / שדכן נכתבת מהדפדפן
@@ -28,11 +29,12 @@ const ADMIN_EMAIL =
 const INSTITUTION_GENDER = "male";
 const INSTITUTION_TYPE = "yeshiva_gedola";
 
-/** שדות החובה של בקשת שדכן (טלפון, קהילה, רב) - בלעדיהם הטריגר דוחה הגשה */
+/** שדות החובה של בקשת שדכן (טלפון, קהילה, רב, מגדר, גיל) - בלעדיהם הטריגר דוחה הגשה */
 const COMPLETE_SHADCHAN_FIELDS = {
   contact_phone: "0501234567",
   community: "בעלזא",
   synagogue_rabbi: "הרב בדיקה",
+  ...COMPLETE_IDENTITY_COLUMNS,
 };
 
 test.describe("הצהרה עצמית כאיש צוות / שדכן מאושר", () => {

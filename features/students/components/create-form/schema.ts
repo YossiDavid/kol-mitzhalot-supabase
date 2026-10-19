@@ -53,6 +53,10 @@ const studentFormBaseSchema = z.object({
   shtible: opt,
   institutionId: opt,
   personalStatus: opt,
+  // כהן: "true" / "false" / "" (לא צוין). לגבר בלבד
+  isKohen: opt,
+  // "מוכן/ה לגור ב:" - שמות ארצות
+  willingToLiveCountries: z.array(z.string()).default([]),
   // גובה בס״מ. ריק מותר, אבל ערך שהוזן חייב להיות סביר —
   // מתחת ל-50 זה כמעט תמיד טעות הקלדה.
   height: opt.refine((v) => v === "" || Number(v) >= MIN_HEIGHT_CM, {

@@ -1,5 +1,9 @@
 import { employmentCompactLabel } from "@/features/students/lib/profile-labels";
 import calculateAge from "@/lib/calculateAge";
+import {
+  KOHEN_DIVORCED_MESSAGE,
+  isKohenDivorcedPair,
+} from "@/features/shidduchim/lib/kohen-rule";
 
 /** שורת partner_preferences (מוטמעת ב-students). */
 type PartnerPrefsRow = {
@@ -105,6 +109,22 @@ export type CompatibilityOptions = {
 function normalizeWorkStatus(value: string[] | string | null | undefined) {
   if (Array.isArray(value)) return value.join(" ").trim();
   return (value || "").trim();
+}
+
+/**
+ * התאמות שאסור להציע בכלל (בניגוד להערות, שהן אזהרה בלבד). השליחה והשמירה
+ * נחסמות גם בשרת ובמסד; כאן זה מוצג כאזהרה חמורה כבר בלוח.
+ */
+export function getCompatibilityBlockers(
+  groom: Record<string, unknown> | null | undefined,
+  bride: Record<string, unknown> | null | undefined,
+): string[] {
+  return isKohenDivorcedPair(
+    groom as { is_kohen?: boolean | null } | null | undefined,
+    bride as { personal_status?: string | null } | null | undefined,
+  )
+    ? [KOHEN_DIVORCED_MESSAGE]
+    : [];
 }
 
 export function getCompatibilityNotes(

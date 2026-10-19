@@ -7,9 +7,33 @@ import {
   COMMUNITY_SEARCH,
   DOCUMENT_ACCEPT,
   PLAN_FOR_LIFE_OPTIONS,
+  WILLING_TO_LIVE_COUNTRY_OPTIONS,
   genderIs,
 } from "./shared-options";
-import type { FormSteps, SelectField } from "./types";
+import type { FormSteps, PhotoGalleryField, SelectField } from "./types";
+
+const PHOTO_RULES_TEXT = `עד ${MAX_STUDENT_PHOTOS} תמונות (JPG, PNG או WebP). תמונות גדולות מוקטנות אוטומטית לעד ${MAX_STUDENT_PHOTO_MB}MB. התמונה הראשונה היא התמונה הראשית.`;
+
+/**
+ * התמונות, שדה לכל מגדר (כמו המוסד הנוכחי): בכרטיס של גבר חובה - לפחות
+ * תמונה אחת, ותמונה שמורה נחשבת (גם בעריכה). בכרטיס של אשה רשות, עם המלצה:
+ * התמונות של מיועדת חסויות, ונחשפות רק לפי בקשת צפייה שאושרה.
+ */
+function photosField(gender: "male" | "female"): PhotoGalleryField {
+  const isMale = gender === "male";
+  return {
+    name: "photos",
+    width: "full",
+    label: "תמונות",
+    type: "photos",
+    description: isMale
+      ? `${PHOTO_RULES_TEXT} התמונות יישלחו לצד השני רק לאחר הסכמתכם.`
+      : `${PHOTO_RULES_TEXT} מומלץ להעלות תמונה: התמונות חסויות - הן אינן מוצגות לשדכנים ולצד השני, ונחשפות רק לאחר בקשה שאושרה.`,
+    required: isMale,
+    requiredMessage: isMale ? "יש להעלות לפחות תמונה אחת" : undefined,
+    condition: genderIs(gender),
+  };
+}
 
 /** מוסד הלימודים הנוכחי, מתוך מאגר המוסדות לפי מגדר המיועד/ת */
 function currentInstitutionField(gender: "male" | "female"): SelectField {
@@ -65,15 +89,8 @@ export const basicInformationStep: FormSteps = {
           type: "date",
           required: true,
         },
-        {
-          name: "photos",
-          width: "full",
-          label: "תמונות",
-          type: "photos",
-          description: `עד ${MAX_STUDENT_PHOTOS} תמונות (JPG, PNG או WebP). תמונות גדולות מוקטנות אוטומטית לעד ${MAX_STUDENT_PHOTO_MB}MB. התמונה הראשונה היא התמונה הראשית. התמונות יישלחו לצד השני רק לאחר הסכמתכם.`,
-          // לא חובה בכוונה: כרטיס קיים בלי תמונות חייב להמשיך להישמר.
-          // עם required: true - לפחות תמונה אחת; תמונה שמורה נחשבת
-        },
+        photosField("male"),
+        photosField("female"),
         {
           name: "country",
           width: "sm",
@@ -180,6 +197,19 @@ export const basicInformationStep: FormSteps = {
           condition: genderIs("male"),
         },
         {
+          // לגבר בלבד (students_is_kohen_male_only). רשות: כרטיס ישן בלי תשובה
+          // ממשיך להישמר
+          name: "isKohen",
+          width: "sm",
+          label: "האם כהן?",
+          type: "select",
+          options: [
+            { value: "true", label: "כן" },
+            { value: "false", label: "לא" },
+          ],
+          condition: genderIs("male"),
+        },
+        {
           name: "headCoverType",
           width: "sm",
           label: "סוג כיסוי ראש נהוג",
@@ -192,6 +222,13 @@ export const basicInformationStep: FormSteps = {
             { value: "other", label: "לא משנה" },
           ],
           condition: genderIs("female"),
+        },
+        {
+          name: "willingToLiveCountries",
+          width: "full",
+          label: "מוכן/ה לגור ב:",
+          type: "chips",
+          options: WILLING_TO_LIVE_COUNTRY_OPTIONS,
         },
         {
           name: "about",

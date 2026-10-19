@@ -41,6 +41,16 @@ const SORT_SPECS: Readonly<Record<string, SortSpec>> = {
   },
 };
 
+/**
+ * כרטיסים שההנהלה סימנה "במיקוד" - ראשונים, כשלא נבחר מיון אחר. העמודה ריקה
+ * לכל מי שאינו שדכן או מנהל (student_cards), ואז הסדר אינו משתנה.
+ */
+const FOCUS_FIRST_TERM: StudentsOrderTerm = {
+  column: "admin_focus_at",
+  ascending: false,
+  nullsFirst: false,
+};
+
 /** ללא בחירה (או אחרי הלחיצה השלישית על כותרת): א-ב לפי שם משפחה */
 export const DEFAULT_STUDENTS_SORT: DataTableSort = {
   key: "last-name",
@@ -56,7 +66,8 @@ export type StudentsOrderTerm = {
 
 /**
  * רצף ה-order של השאילתה למיון נתון: העמודה, ואז id כשובר שוויון קבוע
- * כדי שעמודים לא יתערבבו כשיש ערכים זהים.
+ * כדי שעמודים לא יתערבבו כשיש ערכים זהים. במיון ברירת המחדל - כרטיסים
+ * "במיקוד" קודם.
  */
 export function buildStudentsOrder(
   sort: DataTableSort | null,
@@ -65,7 +76,11 @@ export function buildStudentsOrder(
   const effective = requested ?? DEFAULT_STUDENTS_SORT;
   const spec = SORT_SPECS[effective.key];
   const isAscending = (effective.direction === "asc") !== !!spec.isReversed;
+  const isDefaultSort =
+    effective.key === DEFAULT_STUDENTS_SORT.key &&
+    effective.direction === DEFAULT_STUDENTS_SORT.direction;
   return [
+    ...(isDefaultSort ? [FOCUS_FIRST_TERM] : []),
     {
       column: spec.column,
       ascending: isAscending,

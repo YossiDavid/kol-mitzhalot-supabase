@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { StartPaymentValue } from "@/features/donations/lib/start-payment";
+import type { DedicationOffer } from "@/features/dedications/lib/dedication-prices";
 import {
   resolveProviderError,
   type ProviderFieldError,
@@ -17,6 +18,8 @@ type Step = "form" | "pay" | "thanks";
 interface DonationFlowProps {
   mosadId: string;
   apiValid: string;
+  /** רכישת פרנס מהקובייה (?dedication=...); null = תרומה רגילה */
+  offer?: DedicationOffer | null;
 }
 
 /**
@@ -25,7 +28,11 @@ interface DonationFlowProps {
  * ב-Back, וה-iframe כדי שלא ייטען מחדש). לפני ה-iframe נוצרת כוונת תרומה בשרת, וה-id
  * שלה הוא ה-Param2; אחרי ההצלחה נבדק ברקע אם השרת קיבל אישור חתום מהספק.
  */
-export function DonationFlow({ mosadId, apiValid }: DonationFlowProps) {
+export function DonationFlow({
+  mosadId,
+  apiValid,
+  offer = null,
+}: DonationFlowProps) {
   const [step, setStep] = useState<Step>("form");
   // ה-id של הכוונה הנוכחית (Param2); כל המשך מהטופס יוצר כוונה חדשה
   const [donationId, setDonationId] = useState<string | null>(null);
@@ -77,6 +84,7 @@ export function DonationFlow({ mosadId, apiValid }: DonationFlowProps) {
           apiValid={apiValid}
           onContinue={handleContinue}
           providerError={providerError}
+          offer={offer}
         />
       </div>
       <PaymentFrame
@@ -91,6 +99,7 @@ export function DonationFlow({ mosadId, apiValid }: DonationFlowProps) {
         <DonationThanks
           confirmation={confirmation}
           onAnotherDonation={handleReset}
+          isDedicationPurchase={offer !== null}
         />
       )}
     </>

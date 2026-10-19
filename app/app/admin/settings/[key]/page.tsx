@@ -10,6 +10,8 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import Link from "next/link";
+import { TermsVersionPanel } from "@/features/auth/components/terms-version-panel";
+import { TERMS_CONTENT_KEY } from "@/features/auth/lib/terms";
 
 const CONTENT_KEYS: Record<string, { title: string; description: string }> = {
   "privacy-policy": {
@@ -36,6 +38,8 @@ export default function EditContentPage({
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  // גרסת התוכן שפורסמה (רלוונטית לתקנון: עלייה בה מחייבת אישור מחדש)
+  const [version, setVersion] = useState(0);
   const router = useRouter();
   const supabase = createClient();
 
@@ -66,6 +70,7 @@ export default function EditContentPage({
         toast.error("שגיאה בטעינת התוכן");
       } else if (data) {
         setContent(data.content);
+        setVersion(typeof data.version === "number" ? data.version : 0);
       }
 
       setLoading(false);
@@ -74,10 +79,9 @@ export default function EditContentPage({
     loadContent();
   }, [params, router, supabase]);
 
-  const handleSave = async () => {
-    if (!key) return;
-
-    setSaving(true);
+  /** שמירת התוכן. true = נשמר (ההודעה למשתמש כבר הוצגה) */
+  const saveContent = async (): Promise<boolean> => {
+    if (!key) return false;
 
     const contentInfo = CONTENT_KEYS[key];
     const { error } = await supabase
@@ -97,11 +101,37 @@ export default function EditContentPage({
       console.error("Error saving content:", error);
       console.error("Error details:", JSON.stringify(error, null, 2));
       toast.error(`שגיאה בשמירת התוכן: ${error.message || "שגיאה לא ידועה"}`);
-    } else {
-      toast.success("התוכן נשמר בהצלחה");
+      return false;
     }
+    return true;
+  };
 
+  const handleSave = async () => {
+    setSaving(true);
+    if (await saveContent()) toast.success("התוכן נשמר בהצלחה");
     setSaving(false);
+  };
+
+  /** שמירה ואז פרסום גרסה חדשה - כך הגרסה שמאשרים היא הנוסח שבעורך */
+  const handlePublishVersion = async (): Promise<boolean> => {
+    setSaving(true);
+    try {
+      if (!(await saveContent())) return false;
+      const { data, error } = await supabase.rpc(
+        "publish_system_content_version",
+        { p_key: key },
+      );
+      if (error || typeof data !== "number") {
+        console.error("Error publishing content version:", error);
+        toast.error("פרסום הגרסה נכשל, נסו שוב");
+        return false;
+      }
+      setVersion(data);
+      toast.success(`גרסה ${data} פורסמה. המשתמשים יתבקשו לאשר אותה`);
+      return true;
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -134,6 +164,13 @@ export default function EditContentPage({
           </div>
         }
       />
+        {key === TERMS_CONTENT_KEY && (
+          <TermsVersionPanel
+            version={version}
+            onPublish={handlePublishVersion}
+            isDisabled={saving}
+          />
+        )}
         <Box className="space-y-4">
           <div>
             <Label htmlFor="content">תוכן</Label>

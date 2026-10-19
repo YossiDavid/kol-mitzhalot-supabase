@@ -31,6 +31,7 @@ import {
   isProposalsPending,
 } from "@/features/students/lib/third-party-card";
 import SendOtherSideButton from "@/features/shidduchim/components/send-other-side-button";
+import ShadchanNameLink from "@/features/shidduchim/components/shadchan-name-link";
 import ProposalThreadPanel from "@/features/shidduchim/components/proposal-thread-panel";
 import SideResponsesPanel from "@/features/shidduchim/components/side-responses-panel";
 import StatusSelector from "@/features/shidduchim/components/status-selector";
@@ -78,6 +79,27 @@ const idSchema = z.guid();
  *
  * הכותרת וכפתור החזרה תלויים בתצוגה שנבחרת, ולכן כל הדף יושב מאחורי הגבול.
  */
+
+/** שם השדכן של ההצעה (למנהל שצופה בהצעה של שדכן אחר) */
+async function loadShadchanName(
+  admin: ReturnType<typeof createAdminClient>,
+  shadchanId: string,
+): Promise<string> {
+  const { data, error } = await admin
+    .from("user_profiles")
+    .select("first_name, last_name")
+    .eq("id", shadchanId)
+    .maybeSingle();
+  if (error) {
+    console.error("[shidduchim/page] shadchan name", error.message);
+  }
+  const name = [data?.first_name, data?.last_name]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(" ");
+  return name || "שדכן";
+}
+
 async function ShidduchCardContent({
   params,
 }: {
@@ -205,6 +227,9 @@ async function ShidduchCardContent({
   const brideName = brideSummary.fullName;
   // מנהל שצופה בהצעה של שדכן אחר חוזר לעמוד הראשי, לא לרשימה שאינה שלו
   const isOwnShidduch = shidduch.shadchan_id === user.id;
+  const otherShadchanName = isOwnShidduch
+    ? null
+    : await loadShadchanName(admin, shidduch.shadchan_id);
   const currentStatus: ShidduchStatus = isShidduchStatus(shidduch.status)
     ? shidduch.status
     : "draft";
@@ -309,6 +334,19 @@ async function ShidduchCardContent({
             }}
           />
 
+          {otherShadchanName && (
+            <div>
+              <p className="text-body-sm font-medium text-muted-foreground">
+                השדכן
+              </p>
+              <p className="text-body-sm font-semibold">
+                <ShadchanNameLink
+                  shadchanId={shidduch.shadchan_id}
+                  name={otherShadchanName}
+                />
+              </p>
+            </div>
+          )}
           {scopeLabel && (
             <div>
               <p className="text-body-sm font-medium text-muted-foreground">

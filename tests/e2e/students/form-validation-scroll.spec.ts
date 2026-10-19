@@ -22,7 +22,7 @@ for (const viewport of VIEWPORTS) {
     });
     await page.goto("/app/students/create");
     await chooseChildCard(page);
-    await page.getByRole("radio", { name: "מיועד", exact: true }).check();
+    await page.getByRole("radio", { name: "גבר", exact: true }).check();
     const nextButton = page.getByRole("button", { name: "המשך לשלב הבא" });
     await nextButton.click();
 
@@ -53,7 +53,7 @@ test("הודעות שדה חובה ספציפיות לפי תווית וסוג �
   // Arrange
   await page.goto("/app/students/create");
   await chooseChildCard(page);
-  await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
+  await page.getByRole("radio", { name: "אשה", exact: true }).check();
   const nextButton = page.getByRole("button", { name: "המשך לשלב הבא" });
   await nextButton.click();
   await expect(
@@ -77,7 +77,7 @@ test("שם עם תוארים מקבל הודעה עם התווית המגדרי�
   // Arrange
   await page.goto("/app/students/create");
   await chooseChildCard(page);
-  await page.getByRole("radio", { name: "מיועדת", exact: true }).check();
+  await page.getByRole("radio", { name: "אשה", exact: true }).check();
   await page
     .getByRole("navigation", { name: "שלבי הטופס" })
     .getByRole("button", { name: "על המשפחה", exact: true })

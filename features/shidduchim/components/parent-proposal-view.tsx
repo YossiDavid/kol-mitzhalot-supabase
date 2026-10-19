@@ -11,6 +11,7 @@ import {
   proposalThreadAnchor,
 } from "@/features/shidduchim/lib/proposal-thread-anchor";
 import ProposalResponseForm from "@/features/shidduchim/components/proposal-response-form";
+import ShadchanNameLink from "@/features/shidduchim/components/shadchan-name-link";
 import type { ParentProposal } from "@/features/shidduchim/lib/proposals-data";
 import {
   SHIDDUCH_RESPONSE_BADGE_VARIANT,
@@ -121,7 +122,12 @@ export default function ParentProposalView({
           )}
         </Field>
         <Field label="השדכן">
-          <p className="font-semibold">{shadchanName}</p>
+          <p className="font-semibold">
+            <ShadchanNameLink
+              shadchanId={proposal.shadchanId}
+              name={shadchanName}
+            />
+          </p>
           {proposal.sentAt && (
             <p className="text-body-sm text-muted-foreground">
               נשלח: {formatDateTime(proposal.sentAt)}

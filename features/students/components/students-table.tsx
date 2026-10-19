@@ -12,11 +12,21 @@ import {
 } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { AdminFocusBadge } from "@/features/students/components/admin-focus-badge";
 import { AddCvDialog } from "@/features/students/components/add-cv-dialog";
 import DeleteStudentButton from "@/features/students/components/delete-student-button";
 import { StudentRowPhoto } from "@/features/students/components/student-row-photo";
 import { ISRAEL_TIME_ZONE } from "@/lib/time-zone";
 import { useStudentThumbnails } from "@/features/students/lib/use-student-thumbnails";
+import {
+  useCardProposalCounts,
+  type CardProposalCounts,
+} from "@/features/students/lib/use-card-proposal-counts";
 import {
   formatFirstNameWithNickname,
   personalStatusToHebrew,
@@ -82,6 +92,9 @@ export type StudentTableRow = {
   proposal_limit_period?: string | null;
   /** נישואים קודמים (children, children_number, no_children) - רק ברשימה */
   previous_partners?: unknown;
+  /** סימון "במיקוד" של ההנהלה (לשדכן ולמנהל; לאחרים null) - רק ברשימה */
+  admin_focus_at?: string | null;
+  admin_focus_note?: string | null;
 };
 
 /** רשימת המיועדים: כוכב מועדפים, ומחיקה למנהל */
@@ -207,7 +220,46 @@ function StarToggle({
   );
 }
 
-function StatusCell({ student }: { student: StudentTableRow }) {
+/**
+ * מצב המועמד/ת במועדפים: למה אי אפשר להציע כרגע. סדר העדיפויות: נשוי/אה,
+ * מאורס/ת, השהיית ההנהלה, ואחר כך "לא פעיל/ה בשידוכים". null - פעיל/ה.
+ */
+function favoriteCandidateStatus(student: StudentTableRow): string | null {
+  if (student.personal_status === "married") {
+    return student.gender === "female" ? "נשואה" : "נשוי";
+  }
+  if (student.personal_status === "engaged") {
+    return student.gender === "female" ? "מאורסת" : "מאורס";
+  }
+  if (student.admin_paused_at) return "מושהה";
+  if (student.in_shidduchim === false) {
+    return student.gender === "female"
+      ? "לא פעילה בשידוכים"
+      : "לא פעיל בשידוכים";
+  }
+  return null;
+}
+
+function FavoriteStatusNote({ student }: { student: StudentTableRow }) {
+  const status = favoriteCandidateStatus(student);
+  if (!status) return null;
+  return (
+    <span
+      className="text-caption font-medium text-warning-muted-foreground"
+      data-testid="favorite-candidate-status"
+    >
+      {status}
+    </span>
+  );
+}
+
+function StatusCell({
+  student,
+  preset,
+}: {
+  student: StudentTableRow;
+  preset: StudentsTablePreset;
+}) {
   const childrenSummary = summarizeChildren(
     student.personal_status,
     student.previous_partners,
@@ -235,7 +287,30 @@ function StatusCell({ student }: { student: StudentTableRow }) {
           aria-label="יש קובץ קו״ח"
         />
       )}
+      {preset === "favorites" && <FavoriteStatusNote student={student} />}
     </span>
+  );
+}
+
+const PROPOSAL_COUNT_TOOLTIP = "מספר ההצעות שנשלחו לכרטיס זה";
+
+/** מספר ההצעות לכרטיס, קטן ועם הסבר בריחוף. אין מספר (אין הרשאה) - כלום */
+function ProposalCountCell({ count }: { count: number | undefined }) {
+  if (count === undefined) return null;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className="text-caption text-muted-foreground tabular-nums"
+          tabIndex={0}
+          aria-label={`${PROPOSAL_COUNT_TOOLTIP}: ${count}`}
+          data-testid="card-proposal-count"
+        >
+          {count}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{PROPOSAL_COUNT_TOOLTIP}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -260,6 +335,10 @@ function NameBadges({
       {preset === "children" && <SelfCardTag cardFor={student.card_for} />}
       {preset === "children" && <CardApprovalTag card={student} />}
       <ThirdPartyCardTag card={student} />
+      <AdminFocusBadge
+        focusedAt={student.admin_focus_at}
+        note={student.admin_focus_note}
+      />
     </>
   );
 }
@@ -450,6 +529,25 @@ function proposalLimitColumns(
   ];
 }
 
+/** עמודת מספר ההצעות - ברשימה בלבד, צרה, בלי כותרת ארוכה */
+function proposalCountColumns(
+  props: StudentsTableProps,
+  proposalCounts: CardProposalCounts,
+): DataTableColumn<StudentTableRow>[] {
+  if (props.preset !== "list") return [];
+  return [
+    {
+      key: "proposal-count",
+      header: <span title={PROPOSAL_COUNT_TOOLTIP}>הצעות</span>,
+      size: "min",
+      mobileLabel: "הצעות",
+      cell: (student) => (
+        <ProposalCountCell count={proposalCounts.get(student.id)} />
+      ),
+    },
+  ];
+}
+
 /** עמודת "נוסף" (תאריך הוספה, ממוינת בשרת) - ברשימה בלבד */
 function addedColumns(
   props: StudentsTableProps,
@@ -474,6 +572,7 @@ function buildColumns(
   props: StudentsTableProps,
   renderPhoto: RenderPhoto,
   now: Date,
+  proposalCounts: CardProposalCounts,
 ): DataTableColumn<StudentTableRow>[] {
   return [
     leadingColumn(props),
@@ -490,7 +589,7 @@ function buildColumns(
       key: "status",
       header: "סטטוס",
       size: "min",
-      cell: (student) => <StatusCell student={student} />,
+      cell: (student) => <StatusCell student={student} preset={props.preset} />,
       sortValue: (student) =>
         personalStatusToHebrew(student.personal_status, student.gender),
     },
@@ -547,6 +646,7 @@ function buildColumns(
       sortValue: (student) => student.height,
     },
     ...addedColumns(props),
+    ...proposalCountColumns(props, proposalCounts),
     {
       key: "actions",
       header: <span className="sr-only">פעולות</span>,
@@ -587,6 +687,13 @@ export function StudentsTable(props: StudentsTableProps) {
     [students],
   );
   const getPhotoState = useStudentThumbnails(idsWithPhotos);
+  // מספר ההצעות - רק ברשימה הראשית
+  const listIds = useMemo(
+    () =>
+      props.preset === "list" ? students.map((student) => student.id) : [],
+    [props.preset, students],
+  );
+  const proposalCounts = useCardProposalCounts(listIds);
   // רגע אחד לכל השורות: התג נקבע מחדש עם כל טעינה של שורות חדשות
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const now = useMemo(() => new Date(), [students]);
@@ -604,7 +711,7 @@ export function StudentsTable(props: StudentsTableProps) {
       className={className}
       caption={caption}
       breakpoint="lg"
-      columns={buildColumns(props, renderPhoto, now)}
+      columns={buildColumns(props, renderPhoto, now, proposalCounts)}
       rows={students}
       sort={sort}
       onSortChange={onSortChange}

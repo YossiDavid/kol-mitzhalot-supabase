@@ -54,6 +54,11 @@ setup("authenticate admin test user", async ({ page }) => {
     .from("user_profiles")
     .upsert({ id: userId, first_name: "Admin", last_name: "Test" });
 
+  // חסימת אישור התקנון כבויה בסביבת הבדיקות (ראו auth.setup.ts)
+  await admin
+    .from("system_settings")
+    .upsert({ key: "terms_gate_enabled", value: false });
+
   // Generate magic link
   const { data: linkData, error: linkError } =
     await admin.auth.admin.generateLink({

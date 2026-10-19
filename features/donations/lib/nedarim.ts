@@ -11,7 +11,7 @@ const MOSAD_ID_PATTERN = /^\d{7}$/;
 export const API_VALID_MAX_LENGTH = 100;
 
 /** גבולות סכום התרומה בשקלים */
-export const DONATION_AMOUNT_MIN = 10;
+export const DONATION_AMOUNT_MIN = 101;
 export const DONATION_AMOUNT_MAX = 50_000;
 
 /** מגבלות אורך לטקסט חופשי */

@@ -53,6 +53,10 @@ export async function createTestUser(): Promise<TestUser> {
   await admin
     .from("system_settings")
     .upsert({ key: "phone_verification_enabled", value: false });
+  // חסימת אישור התקנון כבויה בסביבת הבדיקות (ראו auth.setup.ts)
+  await admin
+    .from("system_settings")
+    .upsert({ key: "terms_gate_enabled", value: false });
 
   return { id: data.user.id, email };
 }

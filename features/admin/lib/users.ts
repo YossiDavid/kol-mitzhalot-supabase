@@ -31,6 +31,8 @@ export type UserStatsRow = {
   roles: Role[];
   createdAt: string;
   lastSignInAt: string | null;
+  /** הפעם האחרונה שהמשתמש נראה באפליקציה (user_profiles.last_seen_at) */
+  lastSeenAt: string | null;
   childrenCount: number;
   shidduchimOfferedCount: number;
   shidduchimCompletedCount: number;
@@ -45,6 +47,12 @@ export type AdminUsersQuery = {
   order: "asc" | "desc";
 };
 
+type ProfileRow = {
+  first_name: string | null;
+  last_name: string | null;
+  last_seen_at?: string | null;
+};
+
 function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
 }
@@ -52,17 +60,12 @@ function clamp(n: number, min: number, max: number) {
 async function loadProfilesMap(
   admin: ReturnType<typeof createAdminClient>,
   ids: string[],
-): Promise<
-  Map<string, { first_name: string | null; last_name: string | null }>
-> {
-  const map = new Map<
-    string,
-    { first_name: string | null; last_name: string | null }
-  >();
+): Promise<Map<string, ProfileRow>> {
+  const map = new Map<string, ProfileRow>();
   if (ids.length === 0) return map;
   const { data, error } = await admin
     .from("user_profiles")
-    .select("id, first_name, last_name")
+    .select("id, first_name, last_name, last_seen_at")
     .in("id", ids);
   if (error) {
     console.warn("[admin-users] user_profiles:", error.message);
@@ -72,15 +75,61 @@ async function loadProfilesMap(
     map.set(row.id, {
       first_name: row.first_name,
       last_name: row.last_name,
+      last_seen_at: row.last_seen_at,
     });
   }
   return map;
 }
 
+/**
+ * "שידוכים הוצעו" לפי יומן השליחות (shidduch_events), כמו בעמוד פרטי המשתמש:
+ * כל כרטיס שקיבל הצעה בפועל נספר, והצעה שנשלחה לצד אחד בלבד נספרת רק לצד
+ * שקיבל אותה. "נסגרו" - הצעות בסטטוס completed על כרטיסי המשתמש. הקריאה
+ * בסשן של המנהל (RLS: היומן נקרא למנהל בלבד).
+ */
+async function countProposalStats(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  studentIds: readonly string[],
+): Promise<{ offered: number; completed: number }> {
+  if (studentIds.length === 0) return { offered: 0, completed: 0 };
+  const ids = [...studentIds];
+
+  const [offeredResult, groomCompleted, brideCompleted] = await Promise.all([
+    supabase
+      .from("shidduch_events")
+      .select("id", { count: "exact", head: true })
+      .in("student_id", ids),
+    supabase
+      .from("shidduchim")
+      .select("id")
+      .eq("status", "completed")
+      .in("groom_id", ids),
+    supabase
+      .from("shidduchim")
+      .select("id")
+      .eq("status", "completed")
+      .in("bride_id", ids),
+  ]);
+
+  const failed = [offeredResult, groomCompleted, brideCompleted].find(
+    (result) => result.error,
+  );
+  if (failed?.error) {
+    console.error("[admin-users] proposal stats:", failed.error.message);
+  }
+
+  const completedIds = new Set(
+    [...(groomCompleted.data ?? []), ...(brideCompleted.data ?? [])].map(
+      (row) => row.id,
+    ),
+  );
+  return { offered: offeredResult.count ?? 0, completed: completedIds.size };
+}
+
 async function buildStatsForUser(
   supabase: Awaited<ReturnType<typeof createClient>>,
   user: User,
-  profile: { first_name: string | null; last_name: string | null } | null,
+  profile: ProfileRow | null,
 ): Promise<UserStatsRow> {
   const role = getEffectiveRole(user);
   const roles = getRoles(user);
@@ -98,36 +147,7 @@ async function buildStatsForUser(
 
   const studentIds = userStudents?.map((s) => s.id) || [];
 
-  let shidduchimOfferedCount = 0;
-  let shidduchimCompletedCount = 0;
-
-  if (studentIds.length > 0) {
-    const { data: groomShidduchim } = await supabase
-      .from("shidduchim")
-      .select("id, status")
-      .in("groom_id", studentIds);
-
-    const { data: brideShidduchim } = await supabase
-      .from("shidduchim")
-      .select("id, status")
-      .in("bride_id", studentIds);
-
-    const allShidduchim = [
-      ...(groomShidduchim || []),
-      ...(brideShidduchim || []),
-    ];
-    const uniqueShidduchim = allShidduchim.filter(
-      (s, index, self) => index === self.findIndex((t) => t.id === s.id),
-    );
-
-    const offeredNonDraft = uniqueShidduchim.filter(
-      (s) => s.status !== "draft",
-    );
-    shidduchimOfferedCount = offeredNonDraft.length;
-    shidduchimCompletedCount = offeredNonDraft.filter(
-      (s) => s.status === "completed",
-    ).length;
-  }
+  const { offered, completed } = await countProposalStats(supabase, studentIds);
 
   return {
     id: user.id,
@@ -141,8 +161,9 @@ async function buildStatsForUser(
     createdAt: user.created_at,
     lastSignInAt: user.last_sign_in_at || null,
     childrenCount: childrenCount || 0,
-    shidduchimOfferedCount,
-    shidduchimCompletedCount,
+    shidduchimOfferedCount: offered,
+    shidduchimCompletedCount: completed,
+    lastSeenAt: profile?.last_seen_at ?? null,
   };
 }
 
@@ -171,10 +192,7 @@ function userMatchesRole(user: User, role: AdminUsersQuery["role"]): boolean {
 
 function sortUsers(
   users: User[],
-  profiles: Map<
-    string,
-    { first_name: string | null; last_name: string | null }
-  >,
+  profiles: Map<string, ProfileRow>,
   sort: AdminUsersQuery["sort"],
   order: AdminUsersQuery["order"],
 ): User[] {

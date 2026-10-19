@@ -53,6 +53,8 @@ export const emptyStudentFormValues: StudentFormValues = {
   shtible: "",
   institutionId: "",
   personalStatus: "",
+  isKohen: "",
+  willingToLiveCountries: [] as string[],
   height: "",
   cellphoneType: "",
   phone: "",
@@ -205,6 +207,10 @@ const genderLabelOverrides: Record<string, { male: string; female: string }> = {
     male: "מספר טלפון של המיועד",
     female: "מספר טלפון של המיועדת",
   },
+  willingToLiveCountries: {
+    male: "מוכן לגור ב:",
+    female: "מוכנה לגור ב:",
+  },
   about: {
     male: "כמה מילים על אופי וסגנון המיועד",
     female: "כמה מילים על אופי וסגנון המיועדת",
@@ -235,6 +241,45 @@ const genderedStepTitles: Record<string, { male: string; female: string }> = {
 };
 
 const WIDOWED_STATUS = "widowed";
+
+/**
+ * אופן הפרידה שנבחר מראש בנישואים קודמים, לפי הסטטוס האישי: לגרוש/ה - גירושין
+ * (ואז מוצגים תאריך הגירושין ופרטיהם), לאלמן/ה - פטירה. משנים רק שורה שעוד
+ * לא נבחר בה אופן פרידה.
+ */
+const SEPARATION_BY_PERSONAL_STATUS: Record<string, "divorce" | "death"> = {
+  divorced: "divorce",
+  widowed: "death",
+};
+
+type PreviousPartnerRow = { separationType?: unknown };
+
+/** מבחר מראש את אופן הפרידה בשורות הנישואים הקודמים שעוד לא נבחר בהן */
+function usePreselectSeparationType(
+  form: ReturnType<typeof useForm<FormValues>>,
+) {
+  const personalStatus =
+    useWatch({ control: form.control, name: "personalStatus" }) ?? "";
+  const partners = (useWatch({
+    control: form.control,
+    name: "previousPartners",
+  }) ?? []) as PreviousPartnerRow[];
+  const separationType = SEPARATION_BY_PERSONAL_STATUS[personalStatus];
+  const unsetIndexes = partners
+    .map((partner, index) => (partner?.separationType ? -1 : index))
+    .filter((index) => index >= 0)
+    .join(",");
+
+  useEffect(() => {
+    if (!separationType || !unsetIndexes) return;
+    for (const index of unsetIndexes.split(",")) {
+      form.setValue(
+        `previousPartners.${Number(index)}.separationType` as FieldPath<FormValues>,
+        separationType,
+      );
+    }
+  }, [form, separationType, unsetIndexes]);
+}
 
 const INVALID_SAVE_MESSAGE =
   "השינויים לא נשמרו: יש שדות שצריך להשלים או לתקן. עברנו לשדה הראשון.";
@@ -334,6 +379,8 @@ export function StudentFormWizard({
     if (form.getValues("parents.deadParent") === "") return;
     form.setValue("parents.deadParent", "");
   }, [form, parentsStatus]);
+
+  usePreselectSeparationType(form);
 
   const steps = studentFields;
   const currentStep = steps[currentStepIndex];

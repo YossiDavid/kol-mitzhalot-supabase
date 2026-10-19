@@ -166,7 +166,7 @@ async function readNotesAs(client: SupabaseClient) {
 
 async function openCard(page: Page): Promise<void> {
   await page.goto(`/app/students/${fixtures.groomFirst}`);
-  await expect(page.getByText("פידבק אנשי צוות").first()).toBeVisible({
+  await expect(page.getByText("מחמאות צוות").first()).toBeVisible({
     timeout: 15_000,
   });
 }
@@ -250,6 +250,79 @@ test.describe("שדכן מחובר", () => {
       .getByRole("button", { name: "מחיקה", exact: true })
       .click();
     await expect(editedItem).toHaveCount(0);
+  });
+
+  test("כותרת ההערה לפי מגדר הכותב, והשם מקשר לעמוד השדכן", async ({
+    page,
+  }) => {
+    // Arrange - המגדר של הכותב בשורת השדכן שלו (נשמר/מוחזר בסוף)
+    const { data: before } = await admin
+      .from("shadchanim_info")
+      .select("user_id, gender")
+      .eq("user_id", fixtures.otherShadchanId)
+      .maybeSingle();
+    const setGender = async (gender: string | null) => {
+      const { error } = await admin
+        .from("shadchanim_info")
+        .upsert(
+          { user_id: fixtures.otherShadchanId, gender },
+          { onConflict: "user_id" },
+        );
+      if (error) throw new Error(`עדכון מגדר נכשל: ${error.message}`);
+    };
+    const othersItem = page
+      .getByRole("listitem")
+      .filter({ hasText: OTHER_SHADCHAN_NOTE });
+    // קישור רק לכותב שיש לו עמוד שדכן (תפקיד shadchan) - מוענק זמנית
+    const { data: authorAuth } = await admin.auth.admin.getUserById(
+      fixtures.otherShadchanId,
+    );
+    const originalAppMetadata = authorAuth.user?.app_metadata ?? {};
+    await admin.auth.admin.updateUserById(fixtures.otherShadchanId, {
+      app_metadata: { ...originalAppMetadata, roles: ["shadchan"] },
+    });
+
+    try {
+      // Act + Assert - שדכן
+      await setGender("male");
+      await openCard(page);
+      await expect(othersItem).toContainText(
+        `השדכן הרב ${SHADCHAN_AUTHOR_NAME}`,
+      );
+      await expect(
+        othersItem.getByRole("link", { name: SHADCHAN_AUTHOR_NAME }),
+      ).toHaveAttribute("href", `/app/shadchanim/${fixtures.otherShadchanId}`);
+
+      // שדכנית
+      await setGender("female");
+      await openCard(page);
+      await expect(othersItem).toContainText(
+        `השדכנית גב' ${SHADCHAN_AUTHOR_NAME}`,
+      );
+
+      // לא ידוע
+      await setGender(null);
+      await openCard(page);
+      await expect(othersItem).toContainText(
+        `השדכן/ית ${SHADCHAN_AUTHOR_NAME}`,
+      );
+    } finally {
+      await admin.auth.admin.updateUserById(fixtures.otherShadchanId, {
+        // app_metadata ממוזג, ולכן roles מוחזר במפורש (גם כשלא היה)
+        app_metadata: {
+          ...originalAppMetadata,
+          roles: originalAppMetadata.roles ?? [],
+        },
+      });
+      if (before) {
+        await setGender(before.gender ?? null);
+      } else {
+        await admin
+          .from("shadchanim_info")
+          .delete()
+          .eq("user_id", fixtures.otherShadchanId);
+      }
+    }
   });
 
   test("שדכן אינו יכול לערוך הערה של שדכן אחר דרך ה-API", async ({

@@ -69,6 +69,20 @@ export const CARD_REJECTED_EXPLANATION =
 export const REJECTION_REASON_MIN_LENGTH = 3;
 export const REJECTION_REASON_MAX_LENGTH = 500;
 
+/**
+ * דחייה "ללא שליחת הודעה לבעל הכרטיס" בלי סיבה: המסד דורש סיבה לכל כרטיס
+ * שנדחה (students_admin_approval_state_check), ולכן נשמר הנוסח הזה. בעל הכרטיס
+ * רואה אותו רק אם ייכנס לכרטיס - לא נשלחת אליו התראה או מייל.
+ */
+export const SILENT_REJECTION_DEFAULT_REASON = "לא צוינה סיבה";
+
+/** פעולות המנהל בנתיב האישור (PATCH /api/v1/students/:id/approval) */
+export type CardApprovalAction =
+  | { action: "approve" }
+  | { action: "reject"; reason: string; silent?: boolean }
+  /** כרטיס שנדחה חוזר ל"ממתין", בלי הודעה לבעליו */
+  | { action: "reset" };
+
 /** קוד הסירוב של הטריגר enforce_shidduch_card_gates ושל תשובת ה-routes */
 export const CARD_PENDING_BLOCK_CODE = "card_pending_approval";
 

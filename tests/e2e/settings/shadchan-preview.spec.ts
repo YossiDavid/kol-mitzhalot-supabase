@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { createUserSessionClient } from "../forums/forum-fixtures";
 import { createServiceClient } from "../shidduchim/fixtures";
+import { fillShadchanIdentity } from "../helpers/shadchan-form";
 
 /**
  * טופס ההצטרפות כשדכן: תצוגה מקדימה חיה של כרטיס הרשימה, הנחיית הכתיבה
@@ -193,6 +194,7 @@ test.describe("הצטרפות כשדכן - תצוגה מקדימה והערה ל
     await page.getByRole("option").first().click();
     await page.getByLabel("רב בית הכנסת שלך").fill("הרב בדיקה");
     await page.getByLabel(/למה כדאי לאשר אותי/).fill(OWN_NOTE);
+    await fillShadchanIdentity(page);
 
     // Act
     await page.getByRole("button", { name: "שלח בקשה" }).click();

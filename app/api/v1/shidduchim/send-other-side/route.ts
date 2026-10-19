@@ -3,8 +3,8 @@ import { z } from "zod";
 
 import {
   dbBlockFromError,
+  findPairBlocks,
   findProposalBlocks,
-  findThirdPartyBlocks,
   proposalBlocksBody,
   type ProposalBlock,
 } from "@/features/shidduchim/lib/proposal-gate";
@@ -118,14 +118,14 @@ export async function POST(req: NextRequest) {
   // המייל; הטריגר במסד אוכף זאת גם בכתיבה עצמה.
   let blocks: ProposalBlock[];
   try {
-    const thirdPartyBlocks = await findThirdPartyBlocks(
-      admin,
-      groom.id,
-      bride.id,
-    );
+    // מנהל עוקף את שער אישור ההנהלה רק בהצעה שלו - כמו הטריגר, שמזהה מנהל
+    // לפי בעל ההצעה כשהכתיבה ב-service role
+    const pairBlocks = await findPairBlocks(admin, groom.id, bride.id, {
+      isAdmin: isAdmin && shidduch.shadchan_id === user.id,
+    });
     blocks =
-      thirdPartyBlocks.length > 0
-        ? thirdPartyBlocks
+      pairBlocks.length > 0
+        ? pairBlocks
         : await findProposalBlocks(admin, [
             missingScope === "groom_only"
               ? { side: "groom", studentId: groom.id }

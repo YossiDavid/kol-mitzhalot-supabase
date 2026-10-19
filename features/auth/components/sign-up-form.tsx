@@ -9,7 +9,15 @@ import { z } from "zod";
 import { PageTitle } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Form, FormField } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { FormFieldShell } from "@/components/ui/form-field-shell";
 import {
   FormFields,
@@ -35,6 +43,12 @@ import {
   getAuthRedirectUrl,
 } from "@/features/auth/lib/redirect-url";
 import { saveLastEmail } from "@/features/auth/lib/last-email";
+import {
+  SIGNUP_TERMS_VERSION_METADATA_KEY,
+  TERMS_CHECKBOX_LABEL,
+  TERMS_CONTENT_KEY,
+  TERMS_PAGE_PATH,
+} from "@/features/auth/lib/terms";
 import { containsForbiddenLink } from "@/features/donations/lib/nedarim";
 import {
   requiredChoice,
@@ -74,10 +88,17 @@ function validateOtherText(text: string): string | null {
   return null;
 }
 
+/** אורך מקסימלי לשם העיר (תואם ל-CHECK בעמודה user_profiles.city) */
+const CITY_MAX_LENGTH = 100;
+
 const signUpSchema = z
   .object({
     firstName: requiredText("שם פרטי"),
     lastName: requiredText("שם משפחה"),
+    city: requiredText("עיר").max(
+      CITY_MAX_LENGTH,
+      `שם העיר ארוך מדי (עד ${CITY_MAX_LENGTH} תווים)`,
+    ),
     email: requiredEmail("אימייל"),
     // הרווחים מוסרים לפני הבדיקה ולפני השמירה, כמו קודם
     phone: requiredText("מספר טלפון")
@@ -89,6 +110,9 @@ const signUpSchema = z
     }),
     // חובה רק כשנבחר "אחר" (superRefine למטה)
     signupPurposeOther: z.string().trim(),
+    acceptTerms: z.boolean().refine((value) => value, {
+      message: "יש לאשר את התקנון כדי להירשם",
+    }),
   })
   .superRefine((values, ctx) => {
     if (values.signupPurpose !== OTHER_PURPOSE_VALUE) return;
@@ -104,6 +128,24 @@ const signUpSchema = z
 
 type SignUpValues = z.infer<typeof signUpSchema>;
 
+/**
+ * גרסת התקנון שהמשתמש אישר בטופס. נשמרת במטא-דאטה ונרשמת כאישור בכניסה
+ * הראשונה ל-/app (אם עדיין הנוכחית). בכשל - null, ואז המשתמש יאשר שוב בכניסה.
+ */
+async function fetchCurrentTermsVersion(
+  supabase: ReturnType<typeof createClient>,
+): Promise<number | null> {
+  const { data, error } = await supabase
+    .from("system_content")
+    .select("version")
+    .eq("key", TERMS_CONTENT_KEY)
+    .maybeSingle();
+  if (error || typeof data?.version !== "number" || data.version < 1) {
+    return null;
+  }
+  return data.version;
+}
+
 export function SignUpForm({
   className,
   ...props
@@ -115,10 +157,12 @@ export function SignUpForm({
     defaultValues: {
       firstName: "",
       lastName: "",
+      city: "",
       email: "",
       phone: "",
       signupPurpose: "",
       signupPurposeOther: "",
+      acceptTerms: false,
     },
   });
 
@@ -134,6 +178,7 @@ export function SignUpForm({
     const supabase = createClient();
 
     try {
+      const termsVersion = await fetchCurrentTermsVersion(supabase);
       const { error } = await supabase.auth.signInWithOtp({
         email: values.email,
         options: {
@@ -141,6 +186,10 @@ export function SignUpForm({
             phone: values.phone,
             firstName: values.firstName,
             lastName: values.lastName,
+            city: values.city,
+            ...(termsVersion
+              ? { [SIGNUP_TERMS_VERSION_METADATA_KEY]: termsVersion }
+              : {}),
             [SIGNUP_PURPOSE_METADATA_KEY]: values.signupPurpose,
             // נשמר רק עם "אחר"; בכל מטרה אחרת אין טקסט חופשי
             ...(values.signupPurpose === OTHER_PURPOSE_VALUE
@@ -203,6 +252,23 @@ export function SignUpForm({
                     )}
                   />
                 </FormGrid>
+
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormFieldShell label="עיר" required>
+                      <Input
+                        {...field}
+                        type="text"
+                        placeholder="לדוגמה: בני ברק"
+                        autoComplete="address-level2"
+                        maxLength={CITY_MAX_LENGTH}
+                        disabled={isSubmitting}
+                      />
+                    </FormFieldShell>
+                  )}
+                />
 
                 <FormField
                   control={form.control}
@@ -302,6 +368,38 @@ export function SignUpForm({
                     )}
                   />
                 ) : null}
+
+                <FormField
+                  control={form.control}
+                  name="acceptTerms"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center gap-3">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={(checked) =>
+                              field.onChange(checked === true)
+                            }
+                            onBlur={field.onBlur}
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormLabel className="cursor-pointer font-normal">
+                          {TERMS_CHECKBOX_LABEL}
+                        </FormLabel>
+                        <Link
+                          href={TERMS_PAGE_PATH}
+                          target="_blank"
+                          className="text-body-sm underline underline-offset-4"
+                        >
+                          לקריאת התקנון
+                        </Link>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormSubmitError>{errors.root?.message}</FormSubmitError>
                 <Button

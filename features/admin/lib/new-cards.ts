@@ -133,6 +133,65 @@ export function pendingNewCards<
     .is("admin_rejected_at", null);
 }
 
+type FilterableQuery<B> = {
+  is(column: string, value: null): B;
+  not(column: string, operator: string, value: null): B;
+};
+
+/** הכרטיסים של כל לשונית. משמש גם את הרשימה וגם את הספירה שעל הלשוניות */
+function applyNewCardsFilter<B extends FilterableQuery<B>>(
+  builder: B,
+  filter: NewCardsFilter,
+): B {
+  if (filter === "pending") return pendingNewCards(builder);
+  if (filter === "rejected") {
+    return builder.is("deleted_at", null).not("admin_rejected_at", "is", null);
+  }
+  // רק כרטיסים שמנהל אישר בפועל; כרטיסים מלפני ההטמעה אושרו בלי מאשר
+  return builder.is("deleted_at", null).not("admin_approved_by", "is", null);
+}
+
+/** עמודת המיון של כל לשונית: החדש קודם */
+const ORDER_COLUMN: Record<NewCardsFilter, string> = {
+  pending: "created_at",
+  rejected: "admin_rejected_at",
+  approved: "admin_approved_at",
+};
+
+const NEW_CARDS_FILTERS: readonly NewCardsFilter[] = [
+  "pending",
+  "rejected",
+  "approved",
+];
+
+/**
+ * כמה כרטיסים בכל לשונית - כדי שכרטיס שנדחה לא "ייעלם" מעיני המנהל: הוא
+ * ממתין בלשונית "נדחו", והמספר שעליה מראה זאת. null - הספירה נכשלה.
+ */
+export async function loadNewCardsCounts(): Promise<
+  Record<NewCardsFilter, number | null>
+> {
+  const admin = createAdminClient();
+  const counts = await Promise.all(
+    NEW_CARDS_FILTERS.map(async (filter) => {
+      const { count, error } = await applyNewCardsFilter(
+        admin.from("students").select("id", { count: "exact", head: true }),
+        filter,
+      );
+      if (error) {
+        console.error(
+          "[admin/new-cards] count failed",
+          filter,
+          describeSupabaseError(error),
+        );
+        return [filter, null] as const;
+      }
+      return [filter, count ?? 0] as const;
+    }),
+  );
+  return Object.fromEntries(counts) as Record<NewCardsFilter, number | null>;
+}
+
 export async function loadNewCards(
   query: NewCardsQuery,
 ): Promise<NewCardsPage> {
@@ -143,19 +202,10 @@ export async function loadNewCards(
     .from("students")
     .select(COLUMNS, { count: "exact" });
 
-  const request =
-    query.filter === "pending"
-      ? pendingNewCards(base).order("created_at", { ascending: false })
-      : query.filter === "rejected"
-        ? base
-            .is("deleted_at", null)
-            .not("admin_rejected_at", "is", null)
-            .order("admin_rejected_at", { ascending: false })
-        : base
-            .is("deleted_at", null)
-            // רק כרטיסים שמנהל אישר בפועל; כרטיסים מלפני ההטמעה אושרו בלי מאשר
-            .not("admin_approved_by", "is", null)
-            .order("admin_approved_at", { ascending: false });
+  const request = applyNewCardsFilter(base, query.filter).order(
+    ORDER_COLUMN[query.filter],
+    { ascending: false },
+  );
 
   const { data, error, count } = await request.range(from, to);
 

@@ -6,6 +6,8 @@ import { CirclePlus, FileCheck, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { ThirdPartyCardTag } from "@/features/students/components/third-party-card-tag";
+import { Badge } from "@/components/ui/badge";
+import { candidateStatuses } from "@/features/shidduchim/lib/candidate-status";
 
 type Student = {
   id: string;
@@ -27,7 +29,34 @@ type Student = {
   card_for?: string | null;
   third_party_full_display_approved_at?: string | null;
   third_party_proposals_approved_at?: string | null;
+  /** מצב המועמד (candidate-status.ts) */
+  personal_status?: string | null;
+  in_shidduchim?: boolean | null;
+  admin_paused_at?: string | null;
+  is_in_process?: boolean;
 };
+
+/** תגי מצב המועמד: נשוי/מאורס, מושהה, לא פעיל, בתהליך */
+function CandidateStatusTags({ item }: { item: Student }) {
+  const statuses = candidateStatuses(item);
+  if (statuses.length === 0) return null;
+  return (
+    <div
+      className="mt-1 flex flex-wrap gap-1"
+      data-testid="candidate-status-tags"
+    >
+      {statuses.map((status) => (
+        <Badge
+          key={status.key}
+          variant={status.tone}
+          data-status={status.key}
+        >
+          {status.label}
+        </Badge>
+      ))}
+    </div>
+  );
+}
 
 type StudentBoxContextValue = { item?: Student };
 
@@ -140,6 +169,8 @@ function StudentBox({
             <ThirdPartyCardTag card={item} />
           </div>
         )}
+
+        {item && <CandidateStatusTags item={item} />}
 
         {subtitleParts.length > 0 && (
           <div className="mt-0.5 text-body-sm text-muted-foreground">

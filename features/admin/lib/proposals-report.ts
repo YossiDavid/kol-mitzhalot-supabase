@@ -1,16 +1,20 @@
+import { z } from "zod";
+
 import { createClient } from "@/lib/supabase/server";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
 import { ISRAEL_TIME_ZONE } from "@/lib/time-zone";
 import {
+  DELETED_STATUS_FILTER,
   PROPOSALS_PAGE_SIZE,
   isUuid,
   type ProposalsReportQuery,
 } from "@/features/admin/lib/proposals-report-query";
 
 /**
- * דוח ההצעות לניהול: שורה לכל כרטיס שקיבל הצעה (shidduch_events), עם הסטטוס
- * הנוכחי של ההצעה אם היא עדיין קיימת. הקריאה בסשן של המשתמש - מדיניות ה-RLS
- * על shidduch_events מחזירה שורות למנהל בלבד.
+ * "כל ההצעות" לניהול: שורה לכל כרטיס שקיבל הצעה (shidduch_events), עם הסטטוס
+ * הנוכחי והיקף השליחה של ההצעה אם היא עדיין קיימת - מה-view
+ * shidduch_events_report. הקריאה בסשן של המשתמש - מדיניות ה-RLS על
+ * shidduch_events (security_invoker) מחזירה שורות למנהל בלבד.
  */
 
 const MS_PER_MINUTE = 60_000;
@@ -29,6 +33,8 @@ export type ProposalEventRow = {
   side: "groom" | "bride";
   /** null = ההצעה נמחקה */
   currentStatus: string | null;
+  /** למי ההצעה נשלחה כיום (both/groom_only/bride_only); null = נמחקה */
+  recipientScope: string | null;
 };
 
 export type ProposalsReport = {
@@ -63,34 +69,69 @@ function escapeIlike(value: string): string {
   return value.replace(/[\\%_]/g, (char) => `\\${char}`);
 }
 
+/** שורת shidduch_events_report - מאומתת כי היא מידע חיצוני */
+const reportRowSchema = z.object({
+  id: z.string(),
+  created_at: z.string(),
+  shidduch_id: z.string(),
+  shadchan_id: z.string(),
+  shadchan_name: z.string().nullable(),
+  student_id: z.string(),
+  student_name: z.string().nullable(),
+  other_student_id: z.string(),
+  other_student_name: z.string().nullable(),
+  side: z.enum(["groom", "bride"]),
+  current_status: z.string().nullable(),
+  recipient_scope: z.string().nullable(),
+});
+
+type ReportBuilder = ReturnType<
+  ReturnType<Awaited<ReturnType<typeof createClient>>["from"]>["select"]
+>;
+
+function applyFilters(
+  builder: ReportBuilder,
+  query: ProposalsReportQuery,
+): ReportBuilder {
+  let next = builder;
+  if (query.shadchan) {
+    next = isUuid(query.shadchan)
+      ? next.eq("shadchan_id", query.shadchan)
+      : next.ilike("shadchan_name", `%${escapeIlike(query.shadchan)}%`);
+  }
+  if (query.card) {
+    next = isUuid(query.card)
+      ? next.eq("student_id", query.card)
+      : next.ilike("student_name", `%${escapeIlike(query.card)}%`);
+  }
+  if (query.from) {
+    next = next.gte("created_at", israelDayStartIso(query.from));
+  }
+  if (query.to) {
+    next = next.lt("created_at", israelDayStartIso(query.to, 1));
+  }
+  if (query.status === DELETED_STATUS_FILTER) {
+    next = next.is("current_status", null);
+  } else if (query.status) {
+    next = next.eq("current_status", query.status);
+  }
+  return next;
+}
+
 export async function loadProposalsReport(
   query: ProposalsReportQuery,
 ): Promise<ProposalsReport> {
   const supabase = await createClient();
 
-  let builder = supabase
-    .from("shidduch_events")
-    .select(
-      "id, created_at, shidduch_id, shadchan_id, shadchan_name, student_id, student_name, other_student_id, other_student_name, side",
-      { count: "exact" },
-    );
-
-  if (query.shadchan) {
-    builder = isUuid(query.shadchan)
-      ? builder.eq("shadchan_id", query.shadchan)
-      : builder.ilike("shadchan_name", `%${escapeIlike(query.shadchan)}%`);
-  }
-  if (query.card) {
-    builder = isUuid(query.card)
-      ? builder.eq("student_id", query.card)
-      : builder.ilike("student_name", `%${escapeIlike(query.card)}%`);
-  }
-  if (query.from) {
-    builder = builder.gte("created_at", israelDayStartIso(query.from));
-  }
-  if (query.to) {
-    builder = builder.lt("created_at", israelDayStartIso(query.to, 1));
-  }
+  const builder = applyFilters(
+    supabase
+      .from("shidduch_events_report")
+      .select(
+        "id, created_at, shidduch_id, shadchan_id, shadchan_name, student_id, student_name, other_student_id, other_student_name, side, current_status, recipient_scope",
+        { count: "exact" },
+      ),
+    query,
+  );
 
   const rangeStart = (query.page - 1) * PROPOSALS_PAGE_SIZE;
   const { data, count, error } = await builder
@@ -105,31 +146,15 @@ export async function loadProposalsReport(
     throw new Error("טעינת יומן ההצעות נכשלה");
   }
 
-  const events = data ?? [];
-  const shidduchIds = [...new Set(events.map((event) => event.shidduch_id))];
-
-  const statusById = new Map<string, string>();
-  if (shidduchIds.length > 0) {
-    const { data: shidduchim, error: statusError } = await supabase
-      .from("shidduchim")
-      .select("id, status")
-      .in("id", shidduchIds);
-
-    if (statusError) {
-      console.error(
-        "[admin/proposals] status load",
-        describeSupabaseError(statusError),
-      );
-      throw new Error("טעינת סטטוס ההצעות נכשלה");
-    }
-    for (const row of shidduchim ?? []) {
-      statusById.set(row.id, row.status);
-    }
+  const parsed = z.array(reportRowSchema).safeParse(data ?? []);
+  if (!parsed.success) {
+    console.error("[admin/proposals] unexpected shape", parsed.error.issues);
+    throw new Error("טעינת יומן ההצעות נכשלה");
   }
 
   return {
     total: count ?? 0,
-    rows: events.map((event) => ({
+    rows: parsed.data.map((event) => ({
       id: event.id,
       createdAt: event.created_at,
       shidduchId: event.shidduch_id,
@@ -140,7 +165,8 @@ export async function loadProposalsReport(
       otherStudentId: event.other_student_id,
       otherStudentName: event.other_student_name,
       side: event.side,
-      currentStatus: statusById.get(event.shidduch_id) ?? null,
+      currentStatus: event.current_status,
+      recipientScope: event.recipient_scope,
     })),
   };
 }

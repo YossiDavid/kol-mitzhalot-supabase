@@ -53,6 +53,13 @@ export type LoadStudentCardInput = {
 /** הפונקציה שמחזירה את הכרטיס למי שצופה בו דרך הצעת שידוך */
 const PROPOSAL_CARD_RPC = "get_proposal_student_card";
 
+/**
+ * ההצהרה הרפואית לפי רמת החשיפה שבחר בעל הכרטיס. את medical_records עצמה
+ * קוראים רק בעל הכרטיס ומנהל; שדכן מקבל ממנה את מה שרמת החשיפה מתירה
+ * (20261027110000_medical_exposure_and_card_fields_rpcs.sql).
+ */
+export const STUDENT_MEDICAL_RECORD_RPC = "get_student_medical_record";
+
 /** השאילתה עצמה לפי הווריאנט; הנתונים חוזרים כ-unknown ומאומתים אחר כך */
 async function fetchRow(input: LoadStudentCardInput) {
   const { supabase, studentId, isAnonymous, isBasicOnly, proposal } = input;
@@ -138,6 +145,29 @@ function parseCard(
   }));
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * בכרטיס המלא (וגם במסך העריכה): כשה-embed של medical_records חזר ריק (הצופה אינו בעל הכרטיס
+ * ואינו מנהל, וה-RLS חסם), ההצהרה נשלפת מהפונקציה - מוסתרת לפי רמת החשיפה.
+ * העתק חדש של השורה, לא שינוי במקום.
+ */
+export async function withViewerMedical(
+  supabase: SupabaseClient,
+  studentId: string,
+  data: unknown,
+): Promise<{ data: unknown; error: unknown }> {
+  if (!isRecord(data) || data.medical_records) return { data, error: null };
+  const { data: medical, error } = await supabase.rpc(
+    STUDENT_MEDICAL_RECORD_RPC,
+    { p_student_id: studentId },
+  );
+  if (error) return { data, error: describeSupabaseError(error) };
+  return { data: { ...data, medical_records: medical ?? null }, error: null };
+}
+
 /**
  * שולף כרטיס ומאמת אותו. הנתונים מה-DB נכנסים כ-unknown (ל-supabase-js אין
  * טיפוסים שנוצרו, והוא אינו יכול להסיק שורה ממחרוזת select שנבנית בזמן ריצה)
@@ -149,5 +179,13 @@ export async function loadStudentCard(
   const { data, error } = await fetchRow(input);
   if (error) return { status: "error", detail: describeSupabaseError(error) };
   if (!data) return { status: "missing" };
-  return parseCard(data, input);
+  const isFull = !input.isAnonymous && !input.proposal && !input.isBasicOnly;
+  if (!isFull) return parseCard(data, input);
+  const medical = await withViewerMedical(
+    input.supabase,
+    input.studentId,
+    data,
+  );
+  if (medical.error) return { status: "error", detail: medical.error };
+  return parseCard(medical.data, input);
 }

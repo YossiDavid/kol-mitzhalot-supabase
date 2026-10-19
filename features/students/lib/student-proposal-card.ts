@@ -63,6 +63,8 @@ export const PROPOSAL_STUDENT_COLUMNS = [
   "card_for",
   "third_party_full_display_approved_at",
   "third_party_proposals_approved_at",
+  "is_kohen",
+  "willing_to_live_countries",
 ] as const satisfies readonly StudentColumn[];
 
 /** נוספת רק כשהשדכן בחר לשתף את קובץ הקו״ח בהצעה */

@@ -26,6 +26,7 @@ import { accountFullName } from "@/features/students/lib/account-full-name";
 import { applyAuthorRules } from "@/features/students/lib/author-email-rules";
 import { loadStudentPhotos } from "@/features/students/lib/student-photos";
 import type { StudentPhotoItem } from "@/features/students/lib/student-photo-rules";
+import { withViewerMedical } from "@/features/students/lib/load-student-card";
 import EditStudentForm from "./edit-student-form";
 
 /** PostgREST: `.single()` ללא שורה תואמת - כרטיס שאינו קיים, לא תקלה */
@@ -202,7 +203,26 @@ async function EditStudentPageContent({
     );
   }
 
-  const student = data as StudentRowWithRelations;
+  // שדכן שאינו בעל הכרטיס אינו קורא את medical_records ישירות: ההצהרה מגיעה
+  // מוסתרת לפי רמת החשיפה, וה-RPC של העדכון אינו משנה הצהרה מוסתרת
+  const withMedical = await withViewerMedical(
+    supabase,
+    id,
+    Array.isArray(data.medical_records) && data.medical_records.length === 0
+      ? { ...data, medical_records: null }
+      : data,
+  );
+  if (withMedical.error) {
+    console.error("[students/edit] medical load failed", withMedical.error);
+    return (
+      <EditNotice
+        title="לא הצלחנו לטעון את הכרטיס"
+        body="אירעה תקלה בשליפת הנתונים. אנא רעננו את הדף או נסו שוב בעוד מספר דקות."
+        backLink={backLink}
+      />
+    );
+  }
+  const student = withMedical.data as StudentRowWithRelations;
 
   // בדיוק אותה הרשאה שה-RPC אוכף (בעלים / שדכן / מנהל), כדי שמסך שנפתח
   // לעולם לא ייפול על not_allowed בשמירה.

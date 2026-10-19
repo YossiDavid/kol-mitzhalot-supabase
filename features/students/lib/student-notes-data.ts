@@ -2,6 +2,10 @@ import { z } from "zod";
 
 import type { createClient } from "@/lib/supabase/server";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
+import {
+  parseShadchanGender,
+  type ShadchanGender,
+} from "@/features/shadchanim/lib/gender";
 
 /**
  * שליפת "הערות שדכן" ו"פידבק אנשי צוות" לכרטיס מיועד. לקוד שרת בלבד, עם
@@ -22,6 +26,8 @@ const shadchanNoteRowSchema = z.object({
   updated_at: z.string().nullable(),
   author_id: z.string(),
   author_name: z.string().nullable(),
+  author_gender: z.string().nullable(),
+  author_has_profile: z.boolean(),
 });
 
 const staffFeedbackRowSchema = z.object({
@@ -43,6 +49,10 @@ export type ShadchanNote = {
   createdAt: string;
   authorId: string;
   authorName: string;
+  /** לכותרת "השדכן הרב" / "השדכנית גב'"; null - לא ידוע */
+  authorGender: ShadchanGender | null;
+  /** לכותב יש עמוד שדכן - השם מקשר אליו */
+  authorHasProfile: boolean;
   canManage: boolean;
 };
 
@@ -106,6 +116,8 @@ export async function loadShadchanNotes(
     createdAt: row.created_at,
     authorId: row.author_id,
     authorName: row.author_name ?? FALLBACK_SHADCHAN_NAME,
+    authorGender: parseShadchanGender(row.author_gender),
+    authorHasProfile: row.author_has_profile,
     canManage: isAdmin || row.author_id === userId,
   }));
 }
