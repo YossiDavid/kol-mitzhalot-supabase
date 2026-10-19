@@ -201,10 +201,9 @@ test.describe("אישור הנהלה לכרטיס חדש (דפים)", () => {
     // הכרטיס בתור, עם קישור לכרטיס המלא
     const row = admin.getByRole("row", { name: new RegExp(LAST) });
     await expect(row).toBeVisible({ timeout: LOAD_TIMEOUT });
-    await expect(row.getByRole("link", { name: FULL_NAME })).toHaveAttribute(
-      "href",
-      `/app/students/${cardId}`,
-    );
+    await expect(
+      row.getByRole("link", { name: FULL_NAME, exact: true }),
+    ).toHaveAttribute("href", `/app/students/${cardId}`);
     await expect(row.getByTestId(`approval-status-${cardId}`)).toHaveAttribute(
       "data-status",
       "pending",

@@ -7,6 +7,9 @@
  * הזריעה ישירה במסד (בלי פעולת ניהול), ולכן הדפים נטענים שוב עד שהקאש
  * (revalidate של 10 שניות) מתרענן. מבנה הבדיקות טורי: השלב האחרון מוחק הכול
  * ובודק את מצב ההזמנות. כל טקסט כולל מזהה ריצה ייחודי, והכול נמחק ב-afterAll.
+ * ההזמנות מפנות לתרומה רגילה רק כשאין מחירי פרנס: המחירים נשמרים, נמחקים לזמן
+ * הריצה ומוחזרים בסופה. גם הם נכתבים ישירות במסד (בלי הפקעת תג), ולכן הקישור
+ * נבדק בטעינות חוזרות עד שקאש המחירים (revalidate של דקה) מתרענן.
  */
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
@@ -15,6 +18,7 @@ import {
   deleteDedicationsByPrefix,
   israelToday,
   seedDedications,
+  serviceClient,
   type SeedRow,
 } from "../helpers/dedications";
 
@@ -22,6 +26,8 @@ const RUN = `pub${Date.now()}`;
 const PREFIX = `בדיקה ${RUN}`;
 const today = israelToday();
 const CACHE_POLL_TIMEOUT_MS = 60_000;
+/** קאש מחירי הפרנס: revalidate של 60 שניות (public-dedication-prices.ts), ועוד מרווח */
+const PRICES_CACHE_POLL_TIMEOUT_MS = 90_000;
 const STREAM_WAIT_MS = 3_000;
 const DESKTOP = { width: 1440, height: 900 };
 const MOBILE = { width: 390, height: 844 };
@@ -109,6 +115,7 @@ async function openUntilVisible(
   page: Page,
   path: string,
   marker: Locator | ((p: Page) => Locator),
+  timeout = CACHE_POLL_TIMEOUT_MS,
 ) {
   await expect
     .poll(
@@ -124,7 +131,7 @@ async function openUntilVisible(
             () => false,
           );
       },
-      { timeout: CACHE_POLL_TIMEOUT_MS, intervals: [500, 1000, 2000] },
+      { timeout, intervals: [500, 1000, 2000] },
     )
     .toBe(true);
 }
@@ -142,14 +149,23 @@ test.describe.configure({
   timeout: CACHE_POLL_TIMEOUT_MS + 30_000,
 });
 
+const db = serviceClient();
+let savedPrices: { kind: string; amount: number }[] = [];
+
 test.describe("קוביות הקדשה באתר הציבורי", () => {
   test.beforeAll(async () => {
+    const { data } = await db.from("dedication_prices").select("kind, amount");
+    savedPrices = data ?? [];
+    await db.from("dedication_prices").delete().neq("kind", "");
     await deleteDedicationsByPrefix(PREFIX);
     await seedDedications(SEEDS);
   });
 
   test.afterAll(async () => {
     await deleteDedicationsByPrefix(PREFIX);
+    if (savedPrices.length > 0) {
+      await db.from("dedication_prices").insert(savedPrices);
+    }
   });
 
   for (const path of ["/", "/donations"]) {
@@ -270,6 +286,7 @@ test.describe("קוביות הקדשה באתר הציבורי", () => {
   test("אחרי מחיקת הכול: שלוש הזמנות, בלי רשת הנצחות, והקישור מוביל לטופס", async ({
     page,
   }) => {
+    test.setTimeout(CACHE_POLL_TIMEOUT_MS + PRICES_CACHE_POLL_TIMEOUT_MS);
     await deleteDedicationsByPrefix(PREFIX);
     await page.setViewportSize(DESKTOP);
 
@@ -288,7 +305,16 @@ test.describe("קוביות הקדשה באתר הציבורי", () => {
       page.getByRole("heading", { name: "הנצחות באתר" }),
     ).toHaveCount(0);
 
-    // בבית: קישור לדף התרומות, אל הטופס
+    // בבית: קישור לדף התרומות, אל הטופס (בלי מחיר: לא לרכישה)
+    await openUntilVisible(
+      page,
+      "/",
+      (p) =>
+        byTestId(p, "dedication-available-sponsor_week").locator(
+          'a[href="/donations#donate"]',
+        ),
+      PRICES_CACHE_POLL_TIMEOUT_MS,
+    );
     const homeCta = byTestId(
       page,
       "dedication-available-sponsor_week",

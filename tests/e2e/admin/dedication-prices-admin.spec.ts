@@ -19,6 +19,11 @@ const LOAD = { timeout: 15_000 };
 const DESKTOP = { width: 1440, height: 900 };
 /** הפקעת תג הקאש: שניות בודדות, לא ה-revalidate של דקה */
 const PUBLIC_PROPAGATION_MS = 6_000;
+/**
+ * מחיקת המחירים ב-beforeAll ישירה במסד (בלי הפקעת תג), ומחירים שספק אחר כתב
+ * כך (dedication-purchase) עשויים להישאר בקאש עד ה-revalidate של דקה ועוד מרווח
+ */
+const PRICES_CACHE_POLL_TIMEOUT_MS = 90_000;
 const PRICE = 540;
 const today = israelToday();
 
@@ -43,7 +48,11 @@ async function openAdmin(page: Page) {
 }
 
 /** ה-href של כפתור "פנוי" של פרנס היום בדף הבית, אחרי טעינה מחדש עד שמתקבל הצפוי */
-async function expectDayTileHref(page: Page, expected: string) {
+async function expectDayTileHref(
+  page: Page,
+  expected: string,
+  timeout = PUBLIC_PROPAGATION_MS,
+) {
   await expect
     .poll(
       async () => {
@@ -52,7 +61,7 @@ async function expectDayTileHref(page: Page, expected: string) {
         await tile.waitFor({ state: "visible" });
         return tile.getByRole("link").getAttribute("href");
       },
-      { timeout: PUBLIC_PROPAGATION_MS, intervals: [300, 700, 1000] },
+      { timeout, intervals: [300, 700, 1000] },
     )
     .toBe(expected);
 }
@@ -78,11 +87,16 @@ test.describe("מחירי פרנס (ניהול)", () => {
   test("בלי מחירים: הודעה בניהול, והקובייה בדף הבית מפנה לתרומה רגילה", async ({
     page,
   }) => {
+    test.setTimeout(PRICES_CACHE_POLL_TIMEOUT_MS + 30_000);
     await openAdmin(page);
     await expect(page.getByTestId("dedication-prices-summary")).toContainText(
       "לא הוגדרו מחירי פרנס",
     );
-    await expectDayTileHref(page, "/donations#donate");
+    await expectDayTileHref(
+      page,
+      "/donations#donate",
+      PRICES_CACHE_POLL_TIMEOUT_MS,
+    );
   });
 
   test("מחיר מתחת ל-101 נדחה; מחיר תקין נשמר, ובדף הבית הקובייה מפנה לרכישה עם המחיר", async ({

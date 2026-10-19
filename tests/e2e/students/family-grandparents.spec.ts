@@ -3,6 +3,7 @@ import { test, expect, type Page } from "@playwright/test";
 
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
 import { approvedCard } from "../helpers/approved-card";
+import { addStudentPhoto } from "../helpers/student-photo";
 
 /**
  * סבים וסבתות בטופס הכרטיס: (1) התוויות מנוסחות מנקודת המבט של ההורה שבמקטע
@@ -95,6 +96,8 @@ test.describe("סבים וסבתות - רשות", () => {
     await selects.nth(0).selectOption("single");
     await selects.nth(1).selectOption("kosher");
     await selects.nth(2).selectOption("koilel");
+    // תמונה: חובה בכרטיס של גבר
+    await addStudentPhoto(page);
     await next(page);
     await expect(page.locator("button:has-text('הבא')")).toBeVisible();
     await next(page);
