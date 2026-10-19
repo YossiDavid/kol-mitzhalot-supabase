@@ -46,3 +46,18 @@ export function shadchanRoleLabel(gender: ShadchanGender | null): string {
   if (gender === "male") return "שדכן";
   return "שדכן/ית";
 }
+
+/**
+ * כותב שהוא מנהל (לפי התפקיד הנוכחי, לא התפקיד שנשמר על ההערה) מוצג
+ * "מנהל מערכת" בלבד - בלי שם ובלי קישור לעמוד שדכן. בהערות השדכן ובפורום.
+ */
+export const ADMIN_AUTHOR_LABEL = "מנהל מערכת";
+
+/** כותרת כותב הערת שדכן: "מנהל מערכת" למנהל, אחרת formatShadchanTitle */
+export function formatNoteAuthorTitle(
+  name: string,
+  gender: ShadchanGender | null,
+  isAdmin: boolean,
+): string {
+  return isAdmin ? ADMIN_AUTHOR_LABEL : formatShadchanTitle(name, gender);
+}

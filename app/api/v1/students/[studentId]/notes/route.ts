@@ -34,13 +34,18 @@ type AuthorResult =
 const FORBIDDEN: AuthorResult = { error: "Forbidden", status: 403 };
 
 /**
- * לכותרת ההערה החדשה ("השדכן הרב" / "השדכנית גב'"), כמו ב-get_student_shadchan_notes:
- * המגדר מהשורה של הכותב עצמו (RLS: עצמי), ועמוד שדכן יש לשדכן ולמנהל.
+ * לכותרת ההערה החדשה ("השדכן הרב" / "השדכנית גב'" / "מנהל מערכת"), כמו ב-
+ * get_student_shadchan_notes: המגדר מהשורה של הכותב עצמו (RLS: עצמי), עמוד
+ * שדכן יש לשדכן ולמנהל, ומנהל לפי התפקיד הנוכחי (לא לפי author_role שנשמר).
  */
 async function loadShadchanAuthorTitle(
   supabase: ServerSupabase,
   user: User,
-): Promise<{ author_gender: string | null; author_has_profile: boolean }> {
+): Promise<{
+  author_gender: string | null;
+  author_has_profile: boolean;
+  author_is_admin: boolean;
+}> {
   const { data, error } = await supabase
     .from("shadchanim_info")
     .select("gender")
@@ -50,6 +55,7 @@ async function loadShadchanAuthorTitle(
   return {
     author_gender: typeof data?.gender === "string" ? data.gender : null,
     author_has_profile: hasRole(user, "shadchan") || hasRole(user, "admin"),
+    author_is_admin: hasRole(user, "admin"),
   };
 }
 

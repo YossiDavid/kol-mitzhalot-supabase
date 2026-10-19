@@ -1,12 +1,19 @@
 "use client";
 
-// Importers: admin content hub Link. API: contact_submissions CRUD via supabase client.
-// Schema: public.contact_submissions. User: "3. לחבר את הטפסים למערכת הניהול ולDB."
+// Importers: admin content hub Link, מייל "פנייה חדשה מהאתר" (?id=).
+// API: contact_submissions CRUD via supabase client; מענה דרך
+// /api/v1/admin/contact-submissions/[id]/reply.
+// Schema: public.contact_submissions, public.contact_submission_replies.
+// User: "3. לחבר את הטפסים למערכת הניהול ולDB." +
+// "איך אני מגיב לפניות כלליות מהאתר, מתוך חלון הפנייה לפונה".
 
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
+
 import { Box, Page, PageHeader } from "@/components/layout";
-import { Badge, type BadgeVariant } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Empty,
   EmptyDescription,
@@ -14,145 +21,30 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { ListSkeleton } from "@/components/ui/skeleton";
+import {
+  STATUS_BADGE_VARIANT,
+  SubmissionDetail,
+} from "@/features/admin/components/submission-detail";
+import {
+  FILTER_TABS,
+  STATUS_LABEL,
+  TYPE_LABEL,
+  type Submission,
+  type SubmissionFilter,
+  type SubmissionStatus,
+} from "@/features/contact-submissions/lib/submission-model";
 import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import { Archive, Eye, Mail } from "lucide-react";
 
-type Submission = {
-  id: string;
-  type: "contact" | "shidduch_idea";
-  name: string;
-  email: string;
-  phone: string | null;
-  subject: string | null;
-  message: string | null;
-  payload: Record<string, unknown>;
-  status: "new" | "read" | "archived";
-  created_at: string;
-};
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const STATUS_LABEL: Record<Submission["status"], string> = {
-  new: "חדש",
-  read: "נקרא",
-  archived: "ארכיון",
-};
-
-const STATUS_BADGE_VARIANT: Record<Submission["status"], BadgeVariant> = {
-  new: "success",
-  read: "info",
-  archived: "neutral",
-};
-
-const TYPE_LABEL: Record<Submission["type"], string> = {
-  contact: "פנייה כללית",
-  shidduch_idea: "רעיון לשידוך",
-};
-
-// שדות המיועד/ת בתוך payload של "רעיון לשידוך". yeshiva קיים רק אצל הבחור
-// ו-seminary רק אצל הבחורה — מי שאין לו ערך פשוט לא מוצג.
-const PERSON_FIELDS = [
-  { key: "name", label: "שם" },
-  { key: "father", label: "שם האב" },
-  { key: "city", label: "עיר" },
-  { key: "yeshiva", label: "ישיבה" },
-  { key: "seminary", label: "סמינר" },
-  { key: "age", label: "גיל" },
-  { key: "status", label: "מצב אישי" },
-] as const;
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function PersonDetails({ title, person }: { title: string; person: unknown }) {
-  if (!isRecord(person)) return null;
-
-  const rows = PERSON_FIELDS.map((field) => ({
-    label: field.label,
-    value: person[field.key],
-  })).filter(
-    (row) =>
-      row.value !== undefined &&
-      row.value !== null &&
-      String(row.value).trim() !== "",
-  );
-
-  if (rows.length === 0) return null;
-
-  return (
-    <div className="rounded-md border p-3">
-      <p className="mb-2 text-body-sm font-bold">{title}</p>
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
-        {rows.map((row) => (
-          <div key={row.label} className="flex flex-col">
-            <dt className="text-caption text-muted-foreground">{row.label}</dt>
-            <dd className="text-body-sm font-semibold">{String(row.value)}</dd>
-          </div>
-        ))}
-      </dl>
-    </div>
-  );
-}
-
-function ShidduchIdeaDetails({
-  payload,
-  message,
-}: {
-  payload: Record<string, unknown>;
-  message: string | null;
-}) {
-  const male = payload.intended_male;
-  const female = payload.intended_female;
-
-  // מבנה לא מוכר — עדיף להציג את הנתונים הגולמיים מאשר להסתיר מידע
-  if (!isRecord(male) && !isRecord(female)) {
-    return (
-      <pre
-        className="overflow-auto rounded-md bg-muted p-3 text-caption"
-        dir="ltr"
-      >
-        {JSON.stringify(payload, null, 2)}
-      </pre>
-    );
-  }
-
-  const reason = typeof payload.reason === "string" ? payload.reason : "";
-  // reason נשמר גם בעמודה message ומוצג למעלה — מציגים רק אם הוא שונה
-  const showReason = reason.trim() !== "" && reason !== message;
-
-  return (
-    <div className="space-y-3">
-      <PersonDetails title="המיועד" person={male} />
-      <PersonDetails title="המיועדת" person={female} />
-      {showReason && (
-        <div className="rounded-md border p-3">
-          <p className="mb-1 text-body-sm font-bold">סיבת ההצעה</p>
-          <p className="text-body-sm leading-relaxed whitespace-pre-wrap">
-            {reason}
-          </p>
-        </div>
-      )}
-      {typeof payload.accompany === "boolean" && (
-        <p className="text-body-sm">
-          <span className="text-muted-foreground">
-            מוכן/ה ללוות את השידוך:{" "}
-          </span>
-          <span className="font-semibold">
-            {payload.accompany ? "כן" : "לא"}
-          </span>
-        </p>
-      )}
-    </div>
-  );
-}
-
-export default function SubmissionsAdminPage() {
+function SubmissionsAdminView() {
   const [items, setItems] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "new" | "read" | "archived">(
-    "all",
-  );
+  const [filter, setFilter] = useState<SubmissionFilter>("all");
   const [selected, setSelected] = useState<Submission | null>(null);
+  const searchParams = useSearchParams();
+  const requestedId = searchParams.get("id");
   const supabase = createClient();
 
   async function load() {
@@ -172,7 +64,7 @@ export default function SubmissionsAdminPage() {
     load();
   }, [filter]);
 
-  async function setStatus(id: string, status: Submission["status"]) {
+  async function setStatus(id: string, status: SubmissionStatus) {
     const { error } = await supabase
       .from("contact_submissions")
       .update({ status })
@@ -180,9 +72,43 @@ export default function SubmissionsAdminPage() {
     if (error) toast.error("שגיאה בעדכון");
     else {
       toast.success("עודכן");
-      if (selected?.id === id) setSelected({ ...selected, status });
+      setSelected((current) =>
+        current?.id === id ? { ...current, status } : current,
+      );
       load();
     }
+  }
+
+  function openSubmission(item: Submission) {
+    setSelected(item);
+    if (item.status === "new") setStatus(item.id, "read");
+  }
+
+  // קישור ישיר מהמייל למנהלים: פותח את הפנייה גם אם אינה בסינון הנוכחי
+  async function openRequested(id: string) {
+    const { data, error } = await supabase
+      .from("contact_submissions")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle<Submission>();
+    if (error || !data) {
+      toast.error("הפנייה המבוקשת לא נמצאה");
+      return;
+    }
+    openSubmission(data);
+  }
+
+  useEffect(() => {
+    if (requestedId && UUID_PATTERN.test(requestedId)) {
+      openRequested(requestedId);
+    }
+  }, [requestedId]);
+
+  function handleReplied(id: string) {
+    setSelected((current) =>
+      current?.id === id ? { ...current, status: "replied" } : current,
+    );
+    load();
   }
 
   return (
@@ -192,20 +118,14 @@ export default function SubmissionsAdminPage() {
         description="טפסי צור קשר ורעיונות לשידוך"
       />
       <div className="flex flex-wrap gap-2">
-        {(["all", "new", "read", "archived"] as const).map((key) => (
+        {FILTER_TABS.map((tab) => (
           <Button
-            key={key}
+            key={tab.key}
             size="sm"
-            variant={filter === key ? "default" : "outline"}
-            onClick={() => setFilter(key)}
+            variant={filter === tab.key ? "default" : "outline"}
+            onClick={() => setFilter(tab.key)}
           >
-            {key === "all"
-              ? "הכל"
-              : key === "new"
-                ? "חדש"
-                : key === "read"
-                  ? "נקרא"
-                  : "בארכיון"}
+            {tab.label}
           </Button>
         ))}
       </div>
@@ -227,10 +147,7 @@ export default function SubmissionsAdminPage() {
                   key={item.id}
                   type="button"
                   className="flex w-full flex-col gap-1 py-4 text-start hover:bg-accent/40"
-                  onClick={() => {
-                    setSelected(item);
-                    if (item.status === "new") setStatus(item.id, "read");
-                  }}
+                  onClick={() => openSubmission(item)}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-semibold">{item.name}</span>
@@ -262,55 +179,24 @@ export default function SubmissionsAdminPage() {
               </EmptyHeader>
             </Empty>
           ) : (
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setStatus(selected.id, "read")}
-                >
-                  <Eye className="me-1 h-4 w-4" />
-                  סמן כנקרא
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setStatus(selected.id, "archived")}
-                >
-                  <Archive className="me-1 h-4 w-4" />
-                  לארכיון
-                </Button>
-                <Button size="sm" variant="outline" asChild>
-                  <a href={`mailto:${selected.email}`}>
-                    <Mail className="me-1 h-4 w-4" />
-                    מייל
-                  </a>
-                </Button>
-              </div>
-              <p className="text-subtitle font-bold">{selected.name}</p>
-              <p className="text-body-sm text-muted-foreground">
-                {selected.email}
-                {selected.phone ? ` · ${selected.phone}` : ""}
-              </p>
-              <p className="text-body-sm font-semibold">
-                {TYPE_LABEL[selected.type]}
-                {selected.subject ? ` — ${selected.subject}` : ""}
-              </p>
-              {selected.message ? (
-                <p className="text-body leading-relaxed whitespace-pre-wrap">
-                  {selected.message}
-                </p>
-              ) : null}
-              {selected.type === "shidduch_idea" && selected.payload ? (
-                <ShidduchIdeaDetails
-                  payload={selected.payload}
-                  message={selected.message}
-                />
-              ) : null}
-            </div>
+            <SubmissionDetail
+              key={selected.id}
+              submission={selected}
+              onSetStatus={setStatus}
+              onReplied={handleReplied}
+            />
           )}
         </Box>
       </div>
     </Page>
+  );
+}
+
+// useSearchParams (?id= מהמייל) דורש גבול Suspense
+export default function SubmissionsAdminPage() {
+  return (
+    <Suspense fallback={<ListSkeleton />}>
+      <SubmissionsAdminView />
+    </Suspense>
   );
 }

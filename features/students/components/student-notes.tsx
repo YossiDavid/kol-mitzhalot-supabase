@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/empty";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  formatNoteAuthorTitle,
   parseShadchanGender,
   shadchanTitlePrefix,
 } from "@/features/shadchanim/lib/gender";
@@ -38,9 +39,10 @@ type CreatedNote = {
   institution_city: string | null;
   author_id: string;
   author_name: string | null;
-  /** הערת שדכן בלבד: המגדר של הכותב ואם יש לו עמוד שדכן */
+  /** הערת שדכן בלבד: המגדר של הכותב, אם יש לו עמוד שדכן ואם הוא מנהל */
   author_gender?: string | null;
   author_has_profile?: boolean;
+  author_is_admin?: boolean;
 };
 
 function formatNoteDate(dateString: string): string {
@@ -252,20 +254,33 @@ function NoteEditor({
   );
 }
 
-/** "השדכן הרב <שם>" / "השדכנית גב' <שם>" / "השדכן/ית <שם>", השם מקשר לעמוד השדכן */
+/**
+ * "השדכן הרב <שם>" / "השדכנית גב' <שם>" / "השדכן/ית <שם>", השם מקשר לעמוד
+ * השדכן. מנהל מוצג "מנהל מערכת" בלבד, בלי שם ובלי קישור.
+ */
 function ShadchanNoteAuthor({ note }: { note: ShadchanNote }) {
+  const showProfileLink = note.authorHasProfile && !note.authorIsAdmin;
   return (
-    <span className="text-caption font-bold text-foreground">
-      {shadchanTitlePrefix(note.authorGender)}{" "}
-      {note.authorHasProfile ? (
-        <Link
-          href={shadchanProfileHref(note.authorId) as Route}
-          className="underline-offset-4 hover:underline"
-        >
-          {note.authorName}
-        </Link>
+    <span
+      className="text-caption font-bold text-foreground"
+      data-testid="shadchan-note-author"
+    >
+      {showProfileLink ? (
+        <>
+          {shadchanTitlePrefix(note.authorGender)}{" "}
+          <Link
+            href={shadchanProfileHref(note.authorId) as Route}
+            className="underline-offset-4 hover:underline"
+          >
+            {note.authorName}
+          </Link>
+        </>
       ) : (
-        note.authorName
+        formatNoteAuthorTitle(
+          note.authorName,
+          note.authorGender,
+          note.authorIsAdmin,
+        )
       )}
     </span>
   );
@@ -372,6 +387,7 @@ export function ShadchanNotes({
         authorName: created.author_name || "את/ה",
         authorGender: parseShadchanGender(created.author_gender),
         authorHasProfile: created.author_has_profile === true,
+        authorIsAdmin: created.author_is_admin === true,
         canManage: true,
       },
       ...prev,

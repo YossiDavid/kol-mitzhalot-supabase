@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 
+import { ADMIN_AUTHOR_LABEL } from "@/features/shadchanim/lib/gender";
 import { createClient } from "@/lib/supabase/server";
 import { describeZodIssues } from "@/lib/describe-zod-issues";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
@@ -54,6 +55,7 @@ const replyRowSchema = z.object({
 const authorNameRowSchema = z.object({
   user_id: z.string(),
   display_name: z.string().nullable(),
+  is_admin: z.boolean(),
 });
 
 /** שורת לייקים לפי עמודה דינמית (post_id / reply_id) */
@@ -70,6 +72,10 @@ const countOf = (rows: CountRow) => rows?.[0]?.count ?? 0;
 
 type SupabaseServer = Awaited<ReturnType<typeof createClient>>;
 
+/**
+ * שם הכותב לכל מזהה. מנהל (לפי התפקיד הנוכחי) מוצג "מנהל מערכת" בלבד - כך
+ * זה אחיד ברשימת הנושאים, בעמוד הנושא ובתגובות, שכולם עוברים כאן.
+ */
 async function loadAuthorNames(
   supabase: SupabaseServer,
   authorIds: string[],
@@ -94,7 +100,8 @@ async function loadAuthorNames(
     return names;
   }
   for (const row of parsed.data) {
-    if (row.display_name) names.set(row.user_id, row.display_name);
+    const name = row.is_admin ? ADMIN_AUTHOR_LABEL : row.display_name;
+    if (name) names.set(row.user_id, name);
   }
   return names;
 }

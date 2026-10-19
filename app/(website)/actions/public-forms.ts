@@ -7,11 +7,25 @@
  * User: "3. לחבר את הטפסים למערכת הניהול ולDB." + "6. כרגע צריך לחבר אותו לטבלה ב db"
  */
 
+import { randomUUID } from "node:crypto";
+import { after } from "next/server";
+
+import { notifyAdminsOfNewContactSubmission } from "@/features/notifications/lib/notify-admins-new-contact-submission";
+import type { NewContactSubmissionParams } from "@/lib/email/templates/admin-new-contact-submission";
 import { createClient } from "@/lib/supabase/public";
 
 export type FormActionResult =
   | { ok: true }
   | { ok: false; error: string };
+
+/**
+ * ההכנסה נעשית בלקוח אנונימי (RLS: הכנסה בלבד, בלי קריאה חוזרת), ולכן המזהה
+ * נוצר כאן ונשלח עם השורה - כך הקישור במייל למנהלים מצביע על הפנייה עצמה.
+ * המייל יוצא אחרי התגובה ובלי לזרוק: כשל בו אינו מכשיל את שליחת הטופס.
+ */
+function notifyAdminsAfterResponse(submission: NewContactSubmissionParams) {
+  after(() => notifyAdminsOfNewContactSubmission(submission));
+}
 
 function str(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -32,8 +46,10 @@ export async function submitContactForm(
     return { ok: false, error: "נא למלא את כל השדות החובה" };
   }
 
+  const id = randomUUID();
   const supabase = createClient();
   const { error } = await supabase.from("contact_submissions").insert({
+    id,
     type: "contact",
     name,
     email,
@@ -48,6 +64,15 @@ export async function submitContactForm(
     return { ok: false, error: "שליחת הפנייה נכשלה. נסו שוב מאוחר יותר." };
   }
 
+  notifyAdminsAfterResponse({
+    id,
+    type: "contact",
+    name,
+    email,
+    phone: phone || null,
+    subject,
+    message,
+  });
   return { ok: true };
 }
 
@@ -159,8 +184,10 @@ export async function submitShidduchIdeaForm(
     return { ok: false, error: "נא למלא את כל השדות החובה" };
   }
 
+  const id = randomUUID();
   const supabase = createClient();
   const { error } = await supabase.from("contact_submissions").insert({
+    id,
     type: "shidduch_idea",
     name,
     email,
@@ -176,6 +203,15 @@ export async function submitShidduchIdeaForm(
     return { ok: false, error: "שליחת הרעיון נכשלה. נסו שוב מאוחר יותר." };
   }
 
+  notifyAdminsAfterResponse({
+    id,
+    type: "shidduch_idea",
+    name,
+    email,
+    phone,
+    subject: "רעיון לשידוך",
+    message: reason || null,
+  });
   return { ok: true };
 }
 

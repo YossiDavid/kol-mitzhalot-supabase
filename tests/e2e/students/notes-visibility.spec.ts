@@ -325,6 +325,47 @@ test.describe("שדכן מחובר", () => {
     }
   });
 
+  test("כותב שהוא מנהל (גם שדכן) מוצג 'מנהל מערכת' בלי שם ובלי קישור", async ({
+    page,
+  }) => {
+    // Arrange - ההערה נשמרה כ-'shadchan'; התפקיד הנוכחי קובע. מוענק זמנית
+    const { data: authorAuth } = await admin.auth.admin.getUserById(
+      fixtures.otherShadchanId,
+    );
+    const originalAppMetadata = authorAuth.user?.app_metadata ?? {};
+    await admin.auth.admin.updateUserById(fixtures.otherShadchanId, {
+      app_metadata: { ...originalAppMetadata, roles: ["shadchan", "admin"] },
+    });
+    const othersItem = page
+      .getByRole("listitem")
+      .filter({ hasText: OTHER_SHADCHAN_NOTE });
+
+    try {
+      // Act
+      await openCard(page);
+
+      // Assert
+      const author = othersItem.getByTestId("shadchan-note-author");
+      await expect(author).toHaveText("מנהל מערכת");
+      await expect(othersItem).not.toContainText(SHADCHAN_AUTHOR_NAME);
+      await expect(othersItem.getByRole("link")).toHaveCount(0);
+    } finally {
+      await admin.auth.admin.updateUserById(fixtures.otherShadchanId, {
+        app_metadata: {
+          ...originalAppMetadata,
+          roles: originalAppMetadata.roles ?? [],
+        },
+      });
+    }
+
+    // Assert - אחרי הסרת תפקיד המנהל חוזרת הכותרת הרגילה
+    await openCard(page);
+    await expect(othersItem.getByTestId("shadchan-note-author")).toContainText(
+      SHADCHAN_AUTHOR_NAME,
+    );
+    await expect(othersItem).not.toContainText("מנהל מערכת");
+  });
+
   test("שדכן אינו יכול לערוך הערה של שדכן אחר דרך ה-API", async ({
     request,
   }) => {

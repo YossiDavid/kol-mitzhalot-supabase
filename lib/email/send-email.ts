@@ -14,6 +14,8 @@ export type SendEmailParams = {
   /** מזהה תבנית Dynamic ב-SendGrid (d-xxxx). כשמוגדר, נשלח דרכה ב-dynamicData */
   templateId?: string | null;
   dynamicData?: Record<string, unknown>;
+  /** כתובת למענה (reply_to של SendGrid). אופציונלי: בלעדיו המענה חוזר לשולח */
+  replyTo?: string | null;
 };
 
 /** תוכן מייל שנבנה מתבנית, לפני בחירת נמען */
@@ -54,7 +56,16 @@ export function readTemplateId(envName: string): string | null {
   return id || null;
 }
 
-function buildRequestBody(params: SendEmailParams): Record<string, unknown> {
+/** reply_to רק כשיש כתובת; בלעדיה גוף הבקשה זהה לקודם */
+function replyToField(params: SendEmailParams): Record<string, unknown> {
+  const replyTo = params.replyTo?.trim();
+  return replyTo ? { reply_to: { email: replyTo } } : {};
+}
+
+/** גוף הבקשה ל-SendGrid v3 בלי שדה from (נקבע מהסביבה בזמן השליחה) */
+export function buildRequestBody(
+  params: SendEmailParams,
+): Record<string, unknown> {
   if (params.templateId) {
     return {
       personalizations: [
@@ -65,6 +76,7 @@ function buildRequestBody(params: SendEmailParams): Record<string, unknown> {
         },
       ],
       template_id: params.templateId,
+      ...replyToField(params),
     };
   }
 
@@ -76,6 +88,7 @@ function buildRequestBody(params: SendEmailParams): Record<string, unknown> {
     personalizations: [{ to: [{ email: params.to }] }],
     subject: params.subject,
     content,
+    ...replyToField(params),
   };
 }
 
