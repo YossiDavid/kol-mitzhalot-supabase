@@ -19,6 +19,15 @@ export const metadata: Metadata = {
   metadataBase: new URL(getAppOrigin()),
   title: "קול מצהלות",
   description: "המערכת הגדולה לניהול שידוכים במגזר החסידי",
+  // אימות בעלות ב-Google Search Console (שיטת "תג HTML"). בלי המשתנה - אין תג;
+  // אימות דרך DNS (נכס דומיין) לא צריך אותו בכלל.
+  ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? {
+        verification: {
+          google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+        },
+      }
+    : {}),
 };
 
 const heeboSans = Heebo({
