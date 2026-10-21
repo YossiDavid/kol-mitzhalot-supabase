@@ -3,6 +3,7 @@ import { Suspense, type FC, type SVGProps } from "react";
 import { WebStats } from "@/components/website/stats";
 import { EndorsementsCarousel } from "@/components/website/endorsements-carousel";
 import { WebCta } from "@/components/website/cta";
+import { EngagementsConfetti } from "@/components/website/engagements-confetti";
 import {
   DedicationTilesFallback,
   DedicationTilesSection,
@@ -275,68 +276,93 @@ function ArticleCard({
   );
 }
 
+/**
+ * מודעות מאורסים מוצגות בדף הבית חודש מיום הפרסום - כמו הכרטיס עצמו, שיורד
+ * מהמאגר חודש אחרי האירוסין (ENGAGED_VISIBILITY_MONTHS ב-archive-engaged).
+ * הישנות יותר נשארות ב"מה חדש" (סינון לפי היום / השבוע / החודש).
+ */
+const HOMEPAGE_ENGAGEMENT_DAYS = 30;
+const HOMEPAGE_ENGAGEMENT_LIMIT = 10;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 async function HomepageEngagements() {
   const supabase = await createClient();
+  const since = new Date(
+    Date.now() - HOMEPAGE_ENGAGEMENT_DAYS * DAY_MS,
+  ).toISOString();
   const { data: engagements } = await supabase
     .from("engagements")
     .select("id, groom_name, bride_name, groom_city")
     .eq("is_published", true)
+    .gte("created_at", since)
     .order("created_at", { ascending: false })
-    .limit(5);
+    .limit(HOMEPAGE_ENGAGEMENT_LIMIT);
 
   if (!engagements?.length) return null;
 
   return (
-    <section className="bg-background">
-      <div className="shell-site py-20">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-          <h2
-            className="text-display font-bold text-primary"
-            style={{ lineHeight: 1.1, margin: 0 }}
-          >
-            שידוכים שנסגרו
-            <br />
-            <HighlightSpan>למזל טוב</HighlightSpan>
-          </h2>
-          <div className="flex gap-[10px]">
-            {[
-              { label: "לכל מה שחדש", href: "/whats-new" as any },
-              { label: "לעדכון מודעת מאורסים", href: "/contact" as any },
-            ].map(({ label, href }) => (
-              <Link
-                key={label}
-                href={href}
-                className="rounded-[8px] border border-border px-4 py-[9px] text-body-sm font-bold text-primary no-underline transition-colors hover:bg-muted"
+    <EngagementsConfetti>
+      <section className="bg-background">
+        <div className="shell-site py-20">
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+            <h2
+              className="text-display font-bold text-primary"
+              style={{ lineHeight: 1.1, margin: 0 }}
+            >
+              שידוכים שנסגרו
+              <br />
+              <HighlightSpan>למזל טוב</HighlightSpan>
+            </h2>
+            <div className="flex gap-[10px]">
+              {[
+                { label: "לכל מה שחדש", href: "/whats-new" as any },
+                { label: "לעדכון מודעת מאורסים", href: "/contact" as any },
+              ].map(({ label, href }) => (
+                <Link
+                  key={label}
+                  href={href}
+                  className="rounded-[8px] border border-border px-4 py-[9px] text-body-sm font-bold text-primary no-underline transition-colors hover:bg-muted"
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+            {engagements.map((e) => (
+              <div
+                key={e.id}
+                className="flex flex-col items-center justify-center rounded-[14px] border border-border bg-card p-4 text-center"
+                style={{ aspectRatio: "3/4" }}
               >
-                {label}
-              </Link>
+                <div className="mb-1 text-body-sm font-bold text-foreground">
+                  {e.groom_name}
+                </div>
+                <div className="mb-2 text-caption text-muted-foreground">&</div>
+                <div className="text-body-sm font-bold text-foreground">
+                  {e.bride_name}
+                </div>
+                {e.groom_city && (
+                  <div className="mt-3 text-caption text-muted-foreground">
+                    {e.groom_city}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
+          <div className="mt-10 flex flex-col items-center gap-3 text-center">
+            <p className="text-title font-bold text-primary" style={{ margin: 0 }}>
+              הבשורה הטובה הבאה יכולה להיות שלכם
+            </p>
+            <Button asChild size="lg">
+              <Link href="/auth/sign-up" data-testid="engagements-signup-cta">
+                הצטרפו עכשיו לקול מצהלות
+              </Link>
+            </Button>
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
-          {engagements.map((e) => (
-            <div
-              key={e.id}
-              className="flex flex-col items-center justify-center rounded-[14px] border border-border bg-card p-4 text-center"
-              style={{ aspectRatio: "3/4" }}
-            >
-              <div className="mb-1 text-body-sm font-bold text-foreground">
-                {e.groom_name}
-              </div>
-              <div className="mb-2 text-caption text-muted-foreground">&</div>
-              <div className="text-body-sm font-bold text-foreground">
-                {e.bride_name}
-              </div>
-              {e.groom_city && (
-                <div className="mt-3 text-caption text-muted-foreground">
-                  {e.groom_city}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
+      </section>
+    </EngagementsConfetti>
   );
 }
 
