@@ -15,6 +15,7 @@ export const ACTIVITY_ENTITY_TYPES = [
   "shidduch",
   "shadchan_application",
   "user",
+  "announcement",
 ] as const;
 
 export type ActivityEntityType = (typeof ACTIVITY_ENTITY_TYPES)[number];
@@ -24,6 +25,7 @@ export const ACTIVITY_ENTITY_LABELS: Record<ActivityEntityType, string> = {
   shidduch: "הצעות",
   shadchan_application: "בקשות שדכן",
   user: "משתמשים ותפקידים",
+  announcement: "הודעות הנהלה",
 };
 
 export type ActivityLogQuery = {

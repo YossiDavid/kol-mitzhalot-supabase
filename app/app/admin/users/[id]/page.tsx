@@ -11,6 +11,7 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { CardSkeleton } from "@/components/ui/card-skeleton";
 import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
 import { ServiceRoleError } from "@/features/admin/components/service-role-error";
+import { UserApplicationsCard } from "@/features/admin/components/user-applications-card";
 import { UserChildrenTable } from "@/features/admin/components/user-children-table";
 import { UserRolesEditor } from "@/features/admin/components/user-roles-editor";
 import {
@@ -169,6 +170,11 @@ async function UserDetailsContent({ params }: UserDetailsPageProps) {
       />
       <div className="space-y-6">
         <BasicInfoCard userDetails={userDetails} />
+
+        <UserApplicationsCard
+          userId={userDetails.id}
+          applications={userDetails.applications}
+        />
 
         {/* עריכת תפקידים - משתמש יכול להיות גם וגם (למשל שדכן וגם איש צוות) */}
         <Card>

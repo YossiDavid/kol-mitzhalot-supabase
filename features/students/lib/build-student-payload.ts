@@ -2,6 +2,10 @@ import type { StudentFormValues } from "@/features/students/components/create-fo
 import { buildAuthorInfo } from "@/features/students/lib/author-info";
 import { isParentDeceased } from "@/features/students/lib/deceased-parents";
 import {
+  toStoredLanguages,
+  toStoredNativeLanguage,
+} from "@/features/students/lib/student-languages";
+import {
   LEGACY_CHILDREN_COUNT_KEY,
   getChildrenCount,
   toChildGender,
@@ -449,6 +453,14 @@ export function buildStudentPayload(
     personal_status: mapPersonalStatus(values.personalStatus),
     is_kohen: buildIsKohen(values),
     willing_to_live_countries: values.willingToLiveCountries ?? [],
+    native_language: toStoredNativeLanguage({
+      nativeLanguage: values.nativeLanguage ?? "",
+      nativeLanguageOther: values.nativeLanguageOther ?? "",
+    }),
+    languages: toStoredLanguages({
+      languages: values.languages ?? [],
+      languagesOther: values.languagesOther ?? "",
+    }),
     height: values.height ? parseFloat(values.height) : null,
     phone: values.phone,
     country: values.country,

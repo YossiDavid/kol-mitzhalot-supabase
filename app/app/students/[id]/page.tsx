@@ -382,6 +382,7 @@ async function StudentPageContent({
               status={approvalStatus}
               rejectionReason={approval.admin_rejection_reason}
               returnToQueue
+              isPaused={isAdminPaused === true}
             />
           )}
           {isAdminPaused === true && <AdminPausedBanner />}

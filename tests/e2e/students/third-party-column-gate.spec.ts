@@ -116,6 +116,9 @@ const VIEW_NULL_WHEN_RESTRICTED = [
   "third_party_full_display_approved_by",
   "third_party_proposals_approved_by",
   "willing_to_live_countries",
+  // שפת אם ושפות נוספות: כמו "מוכן/ה לגור ב", לא מהנתונים הבסיסיים
+  "native_language",
+  "languages",
 ] as const;
 /**
  * קיימות ב-view ואינן עמודות של students (student_admin_focus): לשדכן ולמנהל

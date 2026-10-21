@@ -72,6 +72,7 @@ const rowSchema = z.object({
   admin_exclusive_at: z.string().nullable(),
   third_party_full_display_approved_at: z.string().nullable(),
   third_party_proposals_approved_at: z.string().nullable(),
+  admin_paused_at: z.string().nullable(),
 });
 
 export type NewCardRow = {
@@ -89,6 +90,8 @@ export type NewCardRow = {
   rejectionReason: string | null;
   thirdPartyFullDisplayApprovedAt: string | null;
   thirdPartyProposalsApprovedAt: string | null;
+  /** מושהה ע"י ההנהלה - אינו משנה את מצב האישור */
+  isPaused: boolean;
 };
 
 export type NewCardsPage = {
@@ -97,7 +100,7 @@ export type NewCardsPage = {
 };
 
 const COLUMNS =
-  "id, first_name, last_name, created_at, card_for, author_info, admin_approved_at, admin_rejected_at, admin_rejection_reason, admin_exclusive_at, third_party_full_display_approved_at, third_party_proposals_approved_at";
+  "id, first_name, last_name, created_at, card_for, author_info, admin_approved_at, admin_rejected_at, admin_rejection_reason, admin_exclusive_at, third_party_full_display_approved_at, third_party_proposals_approved_at, admin_paused_at";
 
 function toRow(raw: z.infer<typeof rowSchema>): NewCardRow {
   const author = readAuthorInfo(raw.author_info, raw.card_for);
@@ -116,6 +119,7 @@ function toRow(raw: z.infer<typeof rowSchema>): NewCardRow {
     rejectionReason: raw.admin_rejection_reason,
     thirdPartyFullDisplayApprovedAt: raw.third_party_full_display_approved_at,
     thirdPartyProposalsApprovedAt: raw.third_party_proposals_approved_at,
+    isPaused: raw.admin_paused_at !== null,
   };
 }
 

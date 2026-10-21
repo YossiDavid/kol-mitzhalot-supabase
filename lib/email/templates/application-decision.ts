@@ -14,6 +14,8 @@ export type ApplicationDecisionParams = {
   reason: string | null;
   /** הודעה חופשית שהמנהל צירף לאישור (אופציונלי) */
   message?: string | null;
+  /** הודעה קבועה לסוג הבקשה שמצורפת לאישור (למשל ההפרשה למערכת לשדכן) */
+  notice?: string | null;
 };
 
 /** תואם ל-email-templates/sendgrid/application-{approved,rejected}.html */
@@ -37,6 +39,7 @@ export function buildApplicationDecisionEmail(
   const appUrl = `${getAppOrigin()}/app`;
   const reason = params.reason?.trim() || "";
   const message = params.message?.trim() || "";
+  const notice = params.notice?.trim() || "";
 
   if (params.decision === "approved") {
     const subject = `בקשתך להצטרף כ${kindLabel} אושרה`;
@@ -45,6 +48,7 @@ export function buildApplicationDecisionEmail(
       `מזל טוב! בקשתך להצטרף למערכת קול מצהלות כ${kindLabel} אושרה.`,
       "מעכשיו אפשר להיכנס למערכת ולהתחיל לעבוד.",
       ...(message ? [`הודעה מההנהלה: ${message}`] : []),
+      ...(notice ? [notice] : []),
     ];
     return {
       subject,
@@ -68,6 +72,7 @@ export function buildApplicationDecisionEmail(
         kind_label: kindLabel,
         app_url: appUrl,
         message,
+        notice,
       },
     };
   }

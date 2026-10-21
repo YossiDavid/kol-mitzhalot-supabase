@@ -13,7 +13,8 @@ export type ActivityEntry = {
   actorId: string;
   action: string;
   entityType: string;
-  entityId: string;
+  /** null = פעולה בלי ישות אחת (למשל הודעה לכל השדכנים) */
+  entityId: string | null;
   summary: string;
   /** שמות שדות וערכי סטטוס בלבד - לא פרטים אישיים */
   details: Record<string, unknown>;

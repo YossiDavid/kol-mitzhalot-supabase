@@ -9,6 +9,7 @@ import {
   ShadchanimList,
   ShadchanimListFallback,
 } from "@/features/admin/components/shadchanim-list";
+import { ShadchanAnnouncementButton } from "@/features/admin/components/shadchan-announcement-dialog";
 
 function parseShadchanimQuery(
   raw: Record<string, string | string[] | undefined>,
@@ -83,7 +84,8 @@ async function ShadchanimContent({ searchParams }: ShadchanimPageProps) {
         title="כל השדכנים"
         count={total}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <ShadchanAnnouncementButton />
             {pendingCount > 0 ? (
               <Button asChild variant="outline">
                 <Link href="/app/admin/shadchanim/requests">

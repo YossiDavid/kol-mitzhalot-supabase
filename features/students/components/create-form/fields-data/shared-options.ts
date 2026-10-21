@@ -1,3 +1,7 @@
+import {
+  LANGUAGE_NAMES,
+  OTHER_LANGUAGE,
+} from "@/features/students/lib/student-languages";
 import type { FieldCondition } from "../field-visibility";
 import type {
   FieldOptionDefinition,
@@ -93,6 +97,15 @@ export const WILLING_TO_LIVE_COUNTRY_OPTIONS: FieldOptionDefinition[] =
     "אוסטרליה",
     "דרום אפריקה",
   ]);
+
+/**
+ * "שפת אם" ו"שפות נוספות" (student-languages.ts). "אחר" בסוף הרשימה, ופותח
+ * שדה טקסט לשפה שאינה ברשימה.
+ */
+export const LANGUAGE_OPTIONS: FieldOptionDefinition[] = sameValueAndLabel([
+  ...LANGUAGE_NAMES,
+  OTHER_LANGUAGE,
+]);
 
 /** קבצים שמתקבלים בקו״ח ובמסמכים רפואיים */
 export const DOCUMENT_ACCEPT: UploadField["accept"] = {

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { ADMIN_ANNOUNCEMENT_NOTIFICATION_TYPE } from "@/features/admin/lib/shadchan-announcement";
 
 export type Notification = {
   id: string;
@@ -216,7 +217,15 @@ export function NotificationBell({ userId }: { userId: string }) {
                         </time>
                       </div>
                       {n.body && (
-                        <p className="mt-0.5 line-clamp-2 text-caption text-muted-foreground">
+                        <p
+                          className={cn(
+                            "mt-0.5 text-caption text-muted-foreground",
+                            // הודעת הנהלה מוצגת במלואה; השאר תצוגה מקדימה
+                            n.type === ADMIN_ANNOUNCEMENT_NOTIFICATION_TYPE
+                              ? "whitespace-pre-line"
+                              : "line-clamp-2",
+                          )}
+                        >
                           {n.body}
                         </p>
                       )}

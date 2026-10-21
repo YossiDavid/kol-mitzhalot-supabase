@@ -9,6 +9,10 @@ import {
   parseStoredChildren,
   type PartnerChildFormValue,
 } from "@/features/students/lib/previous-partner-children";
+import {
+  languagesToForm,
+  nativeLanguageToForm,
+} from "@/features/students/lib/student-languages";
 
 // המיפוי ההפוך ל-build-student-payload: שורת students + טבלאות הבת שלה חזרה
 // לערכי הטופס. כל שינוי שם שדה שם חייב להשתקף כאן, אחרת העריכה תאבד מידע.
@@ -270,6 +274,8 @@ export function studentToFormValues(
     isKohen:
       typeof student.is_kohen === "boolean" ? String(student.is_kohen) : "",
     willingToLiveCountries: toStringArray(student.willing_to_live_countries),
+    ...nativeLanguageToForm(text(student.native_language)),
+    ...languagesToForm(toStringArray(student.languages)),
     height:
       student.height === null || student.height === undefined
         ? ""

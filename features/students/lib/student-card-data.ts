@@ -116,6 +116,8 @@ export const FULL_STUDENT_COLUMNS = [
   "deleted_at",
   "is_kohen",
   "willing_to_live_countries",
+  "native_language",
+  "languages",
 ] as const satisfies readonly StudentColumn[];
 
 const FULL_STUDENT_EMBEDS = [

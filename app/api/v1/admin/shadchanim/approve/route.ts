@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { sendApplicationDecisionEmail } from "@/features/notifications/lib/send-application-decision-email";
+import { notifyNewShadchanFeePolicy } from "@/features/notifications/lib/send-shadchan-announcement";
+import { SHADCHAN_FEE_NOTICE } from "@/features/admin/lib/shadchan-announcement";
 import { recordApplicationMessage } from "@/features/admin/lib/record-application-message";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -85,6 +87,8 @@ export async function POST(req: NextRequest) {
           message,
         });
       }
+      // מדיניות ההפרשה למערכת: התראה נפרדת, ובמייל האישור עצמו (notice)
+      await notifyNewShadchanFeePolicy(adminClient, userId);
       // אחרי התגובה ובלי לזרוק: כשל במייל אינו מכשיל את האישור.
       after(() =>
         sendApplicationDecisionEmail({
@@ -92,6 +96,7 @@ export async function POST(req: NextRequest) {
           kind: "shadchan",
           decision: "approved",
           message: message ?? null,
+          notice: SHADCHAN_FEE_NOTICE.body,
         }),
       );
     }

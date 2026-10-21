@@ -31,6 +31,7 @@ export const ACTIVITY_ACTION_LABELS: Record<string, string> = {
   "shidduch.scope": "הצעה נשלחה לצד נוסף",
   "shadchan_application.status": "בקשת שדכן",
   "user.roles": "תפקידים עודכנו",
+  "announcement.shadchanim": "הודעה נשלחה לכל השדכנים",
 };
 
 /** תוויות לעמודות הכרטיס שנרשמות ב-details.changed */
@@ -151,5 +152,9 @@ export function activityDetailsText(
     return `${rolesLabel(details.roles_from)} ← ${rolesLabel(details.roles_to)}`;
   }
   if (entityType === "student") return studentDetails(details);
+  if (entityType === "announcement") {
+    const recipients = Number(details.recipients);
+    return Number.isFinite(recipients) ? `${recipients} נמענים` : null;
+  }
   return null;
 }

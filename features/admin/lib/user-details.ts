@@ -6,6 +6,10 @@ import {
 } from "@/features/auth/lib/signup-purpose";
 import { getEffectiveRole, getRoles, type Role } from "@/lib/user";
 import { resolveUserPhone } from "@/lib/phone";
+import {
+  getUserApplications,
+  type UserApplications,
+} from "@/features/admin/lib/user-applications";
 
 export type UserDetails = {
   id: string;
@@ -28,6 +32,8 @@ export type UserDetails = {
   city: string | null;
   /** אישור התקנון האחרון (terms_acceptances) */
   termsAcceptance: { version: number; acceptedAt: string } | null;
+  /** בקשות ההצטרפות כשדכן / כאיש צוות (null = לא הגיש) */
+  applications: UserApplications;
   children: Array<{
     id: string;
     firstName: string;
@@ -132,6 +138,8 @@ export async function getUserDetails(
   if (termsError) {
     console.error("Error fetching terms_acceptances:", termsError);
   }
+
+  const applications = await getUserApplications(adminClient, userId);
 
   // שיוכי המוסדות של איש הצוות: ממלאים מראש את הבורר ב-UserRolesEditor ומראים
   // למנהל למה המשתמש רואה (או לא רואה) כרטיסים. admin client כי מדובר בשורות
@@ -253,6 +261,7 @@ export async function getUserDetails(
     termsAcceptance: termsRow
       ? { version: termsRow.version, acceptedAt: termsRow.accepted_at }
       : null,
+    applications,
     children: childrenData.map((c) => ({
       id: c.id,
       firstName: c.first_name,

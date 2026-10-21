@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { CardAdminPauseDialog } from "@/features/admin/components/card-admin-pause-dialog";
 import { CardExclusiveApprovalButton } from "@/features/admin/components/card-exclusive-approval-button";
 import {
   CardRejectDialog,
@@ -28,6 +29,11 @@ type Props = {
    * במקום (בתור עצמו). החזרה להמתנה תמיד נשארת באותו מסך.
    */
   returnToQueue?: boolean;
+  /**
+   * הכרטיס מושהה ע"י ההנהלה (admin_paused_at). השהיה אינה החלטת אישור: הכרטיס
+   * נשאר באותו מצב אישור ובאותו מסך, ואפשר לבטל אותה מכאן.
+   */
+  isPaused?: boolean;
 };
 
 type DirectAction = "approve" | "exclusive" | "reset";
@@ -62,8 +68,10 @@ export function CardApprovalButtons({
   studentName,
   status,
   returnToQueue = false,
+  isPaused = false,
 }: Props) {
   const router = useRouter();
+  const [isPauseOpen, setIsPauseOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<DirectAction | null>(
     null,
   );
@@ -174,6 +182,23 @@ export function CardApprovalButtons({
           דחייה
         </Button>
       )}
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        onClick={() => setIsPauseOpen(true)}
+        disabled={isBusy}
+        aria-label={`${isPaused ? "ביטול השהיה" : "השהיית כרטיס"}: ${studentName}`}
+      >
+        {isPaused ? "ביטול השהיה" : "השהיית כרטיס"}
+      </Button>
+      <CardAdminPauseDialog
+        studentId={studentId}
+        studentName={studentName}
+        isPaused={isPaused}
+        open={isPauseOpen}
+        onOpenChange={setIsPauseOpen}
+      />
       <CardRejectDialog
         open={isRejectOpen}
         onOpenChange={setIsRejectOpen}

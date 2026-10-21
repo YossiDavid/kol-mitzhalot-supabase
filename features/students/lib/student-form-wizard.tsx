@@ -55,6 +55,10 @@ export const emptyStudentFormValues: StudentFormValues = {
   personalStatus: "",
   isKohen: "",
   willingToLiveCountries: [] as string[],
+  nativeLanguage: "",
+  nativeLanguageOther: "",
+  languages: [] as string[],
+  languagesOther: "",
   height: "",
   cellphoneType: "",
   phone: "",
@@ -210,6 +214,10 @@ const genderLabelOverrides: Record<string, { male: string; female: string }> = {
   willingToLiveCountries: {
     male: "מוכן לגור ב:",
     female: "מוכנה לגור ב:",
+  },
+  languages: {
+    male: "שפות נוספות שדובר",
+    female: "שפות נוספות שדוברת",
   },
   about: {
     male: "כמה מילים על אופי וסגנון המיועד",

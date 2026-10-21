@@ -112,6 +112,11 @@ export function PersonalDetailsSection({
               : null
           }
         />
+        <InfoTag label="שפת אם" value={student.native_language} />
+        <InfoTag
+          label="שפות נוספות"
+          value={student.languages?.length ? student.languages.join(", ") : null}
+        />
         <InfoTag
           label="גובה"
           value={student.height ? `${student.height} ס"מ` : null}

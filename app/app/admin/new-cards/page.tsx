@@ -11,6 +11,7 @@ import {
 } from "@/components/data-table";
 import { Eye } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -93,6 +94,11 @@ function StatusCell({ row }: { row: NewCardRow }) {
   return (
     <div data-testid={`approval-status-${row.id}`} data-status={row.status}>
       <p className="font-medium">{CARD_APPROVAL_LABELS[row.status]}</p>
+      {row.isPaused && (
+        <Badge variant="warning" data-testid={`paused-badge-${row.id}`}>
+          מושהה
+        </Badge>
+      )}
       {(row.status === "approved" || row.status === "exclusive") && (
         <p className="text-caption text-muted-foreground">
           {formatDate(row.approvedAt)}
@@ -180,6 +186,7 @@ const COLUMNS: DataTableColumn<NewCardRow>[] = [
           studentId={row.id}
           studentName={row.candidateName}
           status={row.status}
+          isPaused={row.isPaused}
         />
       </div>
     ),

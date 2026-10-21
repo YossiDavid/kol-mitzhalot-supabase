@@ -6,10 +6,12 @@ import {
   CELLPHONE_TYPE_OPTIONS,
   COMMUNITY_SEARCH,
   DOCUMENT_ACCEPT,
+  LANGUAGE_OPTIONS,
   PLAN_FOR_LIFE_OPTIONS,
   WILLING_TO_LIVE_COUNTRY_OPTIONS,
   genderIs,
 } from "./shared-options";
+import { OTHER_LANGUAGE } from "@/features/students/lib/student-languages";
 import type { FormSteps, PhotoGalleryField, SelectField } from "./types";
 
 const PHOTO_RULES_TEXT = `עד ${MAX_STUDENT_PHOTOS} תמונות (JPG, PNG או WebP). תמונות גדולות מוקטנות אוטומטית לעד ${MAX_STUDENT_PHOTO_MB}MB. התמונה הראשונה היא התמונה הראשית.`;
@@ -229,6 +231,49 @@ export const basicInformationStep: FormSteps = {
           label: "מוכן/ה לגור ב:",
           type: "chips",
           options: WILLING_TO_LIVE_COUNTRY_OPTIONS,
+        },
+        {
+          // שפת אם ושפות נוספות - רשות. "אחר" פותח טקסט חופשי
+          // (student-languages.ts)
+          name: "nativeLanguage",
+          width: "sm",
+          label: "שפת אם",
+          type: "select",
+          options: LANGUAGE_OPTIONS,
+        },
+        {
+          name: "nativeLanguageOther",
+          width: "sm",
+          label: "איזו שפת אם?",
+          type: "text",
+          condition: [
+            {
+              parameter: "nativeLanguage",
+              operator: "===",
+              value: OTHER_LANGUAGE,
+            },
+          ],
+        },
+        {
+          name: "languages",
+          width: "full",
+          label: "שפות נוספות שדובר/ת",
+          type: "chips",
+          options: LANGUAGE_OPTIONS,
+        },
+        {
+          name: "languagesOther",
+          width: "lg",
+          label: "אילו שפות נוספות?",
+          placeholder: "למשל: פרסית, יוונית",
+          type: "text",
+          condition: [
+            {
+              parameter: "languages",
+              operator: "includes",
+              value: OTHER_LANGUAGE,
+            },
+          ],
         },
         {
           name: "about",

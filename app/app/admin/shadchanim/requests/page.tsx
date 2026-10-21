@@ -14,6 +14,8 @@ import {
   groupMessagesByApplicant,
 } from "@/features/admin/lib/application-messages";
 import { Suspense } from "react";
+import { applicationAnchorId } from "@/features/admin/lib/user-applications";
+import { ScrollToHashTarget } from "@/features/admin/components/scroll-to-hash-target";
 import type { Route } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -169,8 +171,14 @@ async function ShadchanRequestsContent() {
         </Empty>
       ) : (
         <div className="space-y-6">
+          <ScrollToHashTarget />
           {requests.map((request) => (
-            <Card key={request.id}>
+            <Card
+              key={request.id}
+              // עוגן לקישור מפרטי המשתמש; ScrollToHashTarget גולל אליו ומדגיש
+              id={applicationAnchorId(request.user_id)}
+              className="scroll-mt-24 data-[anchor-target=true]:ring-2 data-[anchor-target=true]:ring-primary"
+            >
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">

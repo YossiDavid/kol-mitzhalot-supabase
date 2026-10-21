@@ -57,6 +57,12 @@ const studentFormBaseSchema = z.object({
   isKohen: opt,
   // "מוכן/ה לגור ב:" - שמות ארצות
   willingToLiveCountries: z.array(z.string()).default([]),
+  // שפת אם: שם השפה, או "אחר" + nativeLanguageOther (student-languages.ts)
+  nativeLanguage: opt,
+  nativeLanguageOther: opt,
+  // שפות נוספות: שמות השפות, ו"אחר" + languagesOther (מופרדות בפסיק)
+  languages: z.array(z.string()).default([]),
+  languagesOther: opt,
   // גובה בס״מ. ריק מותר, אבל ערך שהוזן חייב להיות סביר —
   // מתחת ל-50 זה כמעט תמיד טעות הקלדה.
   height: opt.refine((v) => v === "" || Number(v) >= MIN_HEIGHT_CM, {

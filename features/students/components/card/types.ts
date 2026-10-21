@@ -97,4 +97,8 @@ export type PersonalDetails = {
   is_kohen?: boolean | null;
   /** "מוכן/ה לגור ב:" - שמות ארצות */
   willing_to_live_countries?: string[] | null;
+  /** שפת אם */
+  native_language?: string | null;
+  /** שפות נוספות */
+  languages?: string[] | null;
 };

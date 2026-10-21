@@ -15,6 +15,8 @@ type DecisionEmailParams = {
   reason?: string | null;
   /** הודעה חופשית של המנהל שמצורפת למייל האישור */
   message?: string | null;
+  /** הודעה קבועה שמצורפת למייל האישור (למשל ההפרשה למערכת לשדכן) */
+  notice?: string | null;
 };
 
 /**
@@ -48,6 +50,7 @@ export async function sendApplicationDecisionEmail(
           : null,
       reason: params.reason ?? null,
       message: params.message ?? null,
+      notice: params.notice ?? null,
     });
 
     const result = await sendEmail({

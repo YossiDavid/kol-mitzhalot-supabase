@@ -56,6 +56,11 @@ export const STUDENT_COLUMN_SHAPE = {
   is_kohen: z.boolean().nullable().optional(),
   /** "מוכן/ה לגור ב:" - שמות ארצות. null = לא צוין */
   willing_to_live_countries: z.array(z.string()).nullable().optional(),
+  // אופציונליות: מסד שעוד לא קיבל את 20261102100000_students_languages.sql
+  /** שפת אם (שם השפה). null = לא צוין */
+  native_language: text.optional(),
+  /** שפות נוספות (שמות השפות). null = לא צוין */
+  languages: z.array(z.string()).nullable().optional(),
   /** כינויים של נתיבי JSON ב-BASIC (ראו COLUMN_SELECT_FRAGMENTS) */
   parents_father: jsonObject,
   parents_mother: jsonObject,

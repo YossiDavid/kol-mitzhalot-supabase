@@ -3,7 +3,8 @@
 <head>
   <!--
     ספק: SendGrid. סוג: Dynamic Transactional Template.
-    משתנים: subject, first_name, kind_label, app_url, message (אופציונלי: הודעת מנהל)
+    משתנים: subject, first_name, kind_label, app_url, message (אופציונלי: הודעת מנהל),
+    notice (אופציונלי: הודעה קבועה לסוג הבקשה, למשל ההפרשה למערכת לשדכן)
     נושא מוצע: {{subject}}
     כל הערכים ב-{{...}} עוברים בריחת HTML אוטומטית ב-Handlebars.
     לוגו: URL קבוע בתבנית. תחתית: {{{unsubscribe}}} וכו' מוגדרים ע"י SendGrid.
@@ -34,6 +35,9 @@
               <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7;">מעכשיו אפשר להיכנס למערכת ולהתחיל לעבוד.</p>
               {{#if message}}
               <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7;">הודעה מההנהלה: {{message}}</p>
+              {{/if}}
+              {{#if notice}}
+              <p style="margin:0 0 12px;color:#4b5563;font-size:15px;line-height:1.7;">{{notice}}</p>
               {{/if}}
             </td>
           </tr>
