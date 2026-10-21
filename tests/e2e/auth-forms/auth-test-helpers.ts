@@ -57,6 +57,10 @@ export async function createTestUser(): Promise<TestUser> {
   await admin
     .from("system_settings")
     .upsert({ key: "terms_gate_enabled", value: false });
+  // וגם חגיגת השידוכים (ראו auth.setup.ts)
+  await admin
+    .from("system_settings")
+    .upsert({ key: "celebrations_enabled", value: false });
 
   return { id: data.user.id, email };
 }

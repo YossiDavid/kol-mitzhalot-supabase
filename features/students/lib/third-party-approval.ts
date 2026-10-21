@@ -29,6 +29,8 @@ const approvalRowSchema = z.object({
   admin_approved_at: z.string().nullable(),
   admin_rejected_at: z.string().nullable(),
   admin_rejection_reason: z.string().nullable(),
+  // אישור להצעות המנהל בלבד: ב-view למנהל בלבד (לאחרים null)
+  admin_exclusive_at: z.string().nullable(),
 });
 
 export type ThirdPartyApprovalRow = z.infer<typeof approvalRowSchema>;
@@ -44,6 +46,7 @@ const FAIL_CLOSED_ROW: ThirdPartyApprovalRow = {
   admin_approved_at: null,
   admin_rejected_at: null,
   admin_rejection_reason: null,
+  admin_exclusive_at: null,
 };
 
 /**

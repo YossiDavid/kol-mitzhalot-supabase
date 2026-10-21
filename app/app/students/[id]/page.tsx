@@ -366,7 +366,7 @@ async function StudentPageContent({
       adminFocus={adminFocus}
       adminControls={
         <>
-          {approvalStatus !== "approved" &&
+          {(approvalStatus === "pending" || approvalStatus === "rejected") &&
             !isAdmin &&
             student.user_id === user.id && (
               <CardApprovalBanner
@@ -381,6 +381,7 @@ async function StudentPageContent({
               studentName={`${student.first_name} ${student.last_name}`}
               status={approvalStatus}
               rejectionReason={approval.admin_rejection_reason}
+              returnToQueue
             />
           )}
           {isAdminPaused === true && <AdminPausedBanner />}

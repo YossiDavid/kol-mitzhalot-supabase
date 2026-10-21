@@ -1,6 +1,7 @@
 import { MessageSquareText } from "lucide-react";
 
 import { ThirdPartyCardTag } from "@/features/students/components/third-party-card-tag";
+import { KohenBadge } from "@/features/students/components/kohen-badge";
 import {
   THIRD_PARTY_HIDDEN_PARTS_NOTE,
   type ThirdPartyApprovalColumns,
@@ -67,7 +68,12 @@ export function PublicStudentCard({
             photos={photos}
           />
         }
-        tag={thirdParty ? <ThirdPartyCardTag card={thirdParty} /> : null}
+        tag={
+          <>
+            <KohenBadge card={student} />
+            {thirdParty ? <ThirdPartyCardTag card={thirdParty} /> : null}
+          </>
+        }
       />
 
       {/* ללא ת.ז./טלפון/סוג מכשיר/רחוב/בית - הם לא נשלפו בכלל */}

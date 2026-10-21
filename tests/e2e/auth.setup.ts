@@ -62,6 +62,12 @@ setup("authenticate test user", async ({ page }) => {
     .from("system_settings")
     .upsert({ key: "terms_gate_enabled", value: false });
 
+  // חגיגת השידוכים (קונפטי/דיאלוג "ברוכים השבים") כבויה בסביבת הבדיקות:
+  // דיאלוג מודאלי היה חוסם לחיצות. shidduch-celebration.spec.ts מדליקה ומחזירה.
+  await admin
+    .from("system_settings")
+    .upsert({ key: "celebrations_enabled", value: false });
+
   // Generate a magic link token
   const { data: linkData, error: linkError } =
     await admin.auth.admin.generateLink({

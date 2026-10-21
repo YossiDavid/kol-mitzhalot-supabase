@@ -15,6 +15,7 @@ import {
   type ProposalBlock,
 } from "@/features/shidduchim/lib/proposal-gate";
 import { isKohenDivorcedPair } from "@/features/shidduchim/lib/kohen-rule";
+import { isActiveShadchan } from "@/features/shadchanim/lib/shadchan-access";
 import { hasRole } from "@/lib/user";
 
 const recipientScopeSchema = z.enum(["both", "groom_only", "bride_only"]);
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
   }
 
   const isAdmin = hasRole(user, "admin");
-  if (!hasRole(user, "shadchan") && !isAdmin) {
+  if (!(await isActiveShadchan(user)) && !isAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

@@ -3,6 +3,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
+import { isActiveShadchan } from "@/features/shadchanim/lib/shadchan-access";
 import { hasRole } from "@/lib/user";
 
 // עריכה ומחיקה של "הערת שדכן". הכותב או מנהל בלבד - האכיפה האמיתית היא
@@ -33,7 +34,7 @@ async function requireShadchanOrAdmin() {
       response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
     };
   }
-  if (!hasRole(user, "shadchan") && !hasRole(user, "admin")) {
+  if (!hasRole(user, "admin") && !(await isActiveShadchan(user))) {
     return {
       response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
     };

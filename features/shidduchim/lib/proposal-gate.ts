@@ -1,6 +1,7 @@
 import {
   CARD_PENDING_BLOCK_CODE,
   CARD_PENDING_PROPOSAL_MESSAGE,
+  isAdminExclusive,
   isCardApproved,
 } from "@/features/students/lib/card-approval";
 import { z } from "zod";
@@ -145,6 +146,7 @@ type PairCardRow = {
   card_for: string | null;
   third_party_proposals_approved_at: string | null;
   admin_approved_at: string | null;
+  admin_exclusive_at: string | null;
   is_kohen: boolean | null;
   personal_status: string | null;
 };
@@ -156,7 +158,8 @@ function cardBlock(
   options: PairBlockOptions,
 ): ProposalBlock | null {
   if (!card) return null;
-  if (!options.isAdmin && !isCardApproved(card)) {
+  // כרטיס בלעדי למנהל: מבחינת שדכן אינו מאושר למאגר (כמו בטריגר)
+  if (!options.isAdmin && (!isCardApproved(card) || isAdminExclusive(card))) {
     return {
       code: CARD_PENDING_BLOCK_CODE,
       side,
@@ -187,7 +190,7 @@ export async function findPairBlocks(
   const { data, error } = await admin
     .from("students")
     .select(
-      "id, card_for, third_party_proposals_approved_at, admin_approved_at, is_kohen, personal_status",
+      "id, card_for, third_party_proposals_approved_at, admin_approved_at, admin_exclusive_at, is_kohen, personal_status",
     )
     .in("id", [groomId, brideId]);
 

@@ -34,6 +34,12 @@ export type ShadchanAdminRow = {
   lastActivityAt: string | null;
   /** שדכן מאושר שהתיאור הציבורי שלו ריק או קצר מאוד (לתיקון בידי מנהל) */
   hasMissingOrShortDescription: boolean;
+  /** המנהל הקפיא את השדכן (shadchanim_info.frozen_at) */
+  isFrozen: boolean;
+  /** יש למשתמש תפקיד shadchan כרגע (אפשר להסיר הרשאות) */
+  hasShadchanRole: boolean;
+  /** יש שורת shadchanim_info (אפשר להקפיא) */
+  hasProfileRow: boolean;
 };
 
 export type AdminShadchanimListResult = {
@@ -65,6 +71,8 @@ type ShadchanListEntry = {
   applicationStatus: ShadchanApplicationStatus;
   sortAt: number;
   bio: string | null;
+  isFrozen: boolean;
+  hasProfileRow: boolean;
 };
 
 /** המאוחר מבין שני תאריכי ISO (או null כששניהם חסרים) */
@@ -113,10 +121,10 @@ async function loadShidduchimStats(
 
 function buildRow(
   user: User,
-  applicationStatus: ShadchanApplicationStatus,
-  bio: string | null,
+  entry: ShadchanListEntry,
   shidduchim: Awaited<ReturnType<typeof loadShidduchimStats>>,
 ): ShadchanAdminRow {
+  const { applicationStatus, bio } = entry;
   const { firstName, lastName } = resolveDisplayName(user);
   return {
     id: user.id,
@@ -136,6 +144,9 @@ function buildRow(
       applicationStatus,
       bio,
     ),
+    isFrozen: entry.isFrozen,
+    hasShadchanRole: hasRole(user, "shadchan"),
+    hasProfileRow: entry.hasProfileRow,
   };
 }
 
@@ -145,7 +156,7 @@ async function listShadchanEntries(
 ): Promise<{ entries: ShadchanListEntry[]; pendingCount: number }> {
   const { data: applications, error: appsError } = await adminClient
     .from("shadchanim_info")
-    .select("user_id, application_status, submitted_at, bio")
+    .select("user_id, application_status, submitted_at, bio, frozen_at")
     .order("submitted_at", { ascending: false, nullsFirst: false });
 
   if (appsError) {
@@ -173,6 +184,8 @@ async function listShadchanEntries(
       applicationStatus: app.application_status as ShadchanApplicationStatus,
       sortAt,
       bio: app.bio,
+      isFrozen: Boolean(app.frozen_at),
+      hasProfileRow: true,
     });
   }
 
@@ -183,6 +196,8 @@ async function listShadchanEntries(
       applicationStatus: null,
       sortAt: new Date(user.created_at).getTime(),
       bio: null,
+      isFrozen: false,
+      hasProfileRow: false,
     });
     seen.add(user.id);
   }
@@ -266,7 +281,7 @@ export async function getShadchanimList(
     const user = await resolveUser(adminClient, usersById, entry.userId);
     if (!user) continue;
     const shidduchim = await loadShidduchimStats(supabase, user.id);
-    rows.push(buildRow(user, entry.applicationStatus, entry.bio, shidduchim));
+    rows.push(buildRow(user, entry, shidduchim));
   }
 
   return {

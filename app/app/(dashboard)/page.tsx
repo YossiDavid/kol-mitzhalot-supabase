@@ -26,6 +26,8 @@ import {
 } from "@/features/dashboard/lib/shadchan-join-prompt";
 import { readSignupPurpose } from "@/features/auth/lib/signup-purpose";
 import { getUser, hasRole } from "@/lib/user";
+import { ShadchanFrozenBanner } from "@/features/shadchanim/components/shadchan-frozen-notice";
+import { getShadchanAccess } from "@/features/shadchanim/lib/shadchan-access";
 import DashboardSkeleton from "@/features/dashboard/components/dashboard-skeleton";
 import { unstable_noStore as noStore } from "next/cache";
 import { Suspense } from "react";
@@ -78,7 +80,9 @@ async function DashboardSections() {
   const user = await getUser();
 
   const isAdmin = hasRole(user, "admin");
-  const isShadchan = hasRole(user, "shadchan");
+  // שדכן מוקפא רואה את העמוד כמשתמש רגיל, עם באנר שמסביר את ההקפאה
+  const shadchanAccess = await getShadchanAccess(user);
+  const isShadchan = shadchanAccess === "active";
 
   const isShadchanView = Boolean(user?.id && (isShadchan || isAdmin));
   const favorites = readFavorites(user);
@@ -219,6 +223,7 @@ async function DashboardSections() {
 
       {/* כשיש "המשך הרשמה", הכרטיס הגדול מחליף את באנר ההצטרפות; "אחר כך"
           מקטין אותו חזרה לבאנר */}
+      {shadchanAccess === "frozen" && !isAdmin && <ShadchanFrozenBanner />}
       {signupTarget && <ContinueSignupCta target={signupTarget} />}
       {joinPrompt === "pending" && <ShadchanJoinBanner prompt={joinPrompt} />}
       {staffPrompt === "pending" && (

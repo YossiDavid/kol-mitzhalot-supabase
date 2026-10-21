@@ -36,7 +36,11 @@ import {
   isRecentlyEngaged,
 } from "@/features/students/lib/student-status";
 import { NewCardBadge } from "@/features/students/components/new-card-badge";
-import { CardApprovalTag } from "@/features/students/components/card-approval-tag";
+import {
+  CardApprovalTag,
+  PoolApprovalTags,
+} from "@/features/students/components/card-approval-tag";
+import { KohenBadge } from "@/features/students/components/kohen-badge";
 import { cardListedAt } from "@/features/students/lib/card-approval";
 import { SelfCardTag } from "@/features/students/components/self-card-tag";
 import { ThirdPartyCardTag } from "@/features/students/components/third-party-card-tag";
@@ -79,6 +83,10 @@ export type StudentTableRow = {
   /** אישור ההנהלה: רגע האישור קובע את התג "חדש" ואת עמודת "נוסף" ברשימה */
   admin_approved_at?: string | null;
   admin_rejected_at?: string | null;
+  /** אושר להצעות המנהל בלבד (לא במאגר). ב-view למנהל בלבד */
+  admin_exclusive_at?: string | null;
+  /** כהן (גבר בלבד) - תג בולט ליד השם */
+  is_kohen?: boolean | null;
   /** עבור מי מולא הכרטיס. null בכרטיסים ישנים */
   card_for?: CardFor;
   /** אישורי הנהלה לכרטיס צד שלישי (null = טרם אושר) */
@@ -315,8 +323,9 @@ function ProposalCountCell({ count }: { count: number | undefined }) {
 }
 
 /**
- * תגיות ליד השם: "חדש" ברשימה, "הכרטיס שלי" בכרטיסים של המשתמש עצמו, ובכל
- * הטבלאות - "מולא ע״י צד שלישי" כשהכרטיס כזה
+ * תגיות ליד השם: "חדש" ומצב האישור (כרטיס שלא אושר במלואו - רק המנהל רואה
+ * כאלה במאגר) ברשימה, "הכרטיס שלי" בכרטיסים של המשתמש עצמו, ובכל הטבלאות -
+ * "כהן" ו"מולא ע״י צד שלישי" כשהכרטיס כזה
  */
 function NameBadges({
   student,
@@ -332,6 +341,8 @@ function NameBadges({
       {preset === "list" && (
         <NewCardBadge createdAt={cardListedAt(student)} now={now} />
       )}
+      {preset === "list" && <PoolApprovalTags card={student} />}
+      <KohenBadge card={student} />
       {preset === "children" && <SelfCardTag cardFor={student.card_for} />}
       {preset === "children" && <CardApprovalTag card={student} />}
       <ThirdPartyCardTag card={student} />
@@ -480,7 +491,8 @@ function leadingColumn(
       const isFavorite = props.isFavorite(student.id);
       const isBlocked =
         !isFavorite && isOutOfShidduchimStatus(student.personal_status);
-      // כרטיס צד שלישי שטרם אושר להצעות לא מגיע ללוח העבודה - בלי כוכב
+      // כרטיס שלא אושר להצעות (ממתין / נדחה, או צד שלישי שטרם אושר להצעות)
+      // לא מגיע ללוח העבודה - בלי כוכב
       const canFavorite = isFavoritable(student);
       return (
         <div className="flex items-center gap-1">

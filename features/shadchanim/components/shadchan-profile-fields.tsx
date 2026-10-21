@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { SearchSelectField } from "@/features/students/components/create-form/fields/search-select-field";
 import { COMMUNITY_SEARCH } from "@/features/students/components/create-form/fields-data/shared-options";
 import { ShadchanAvatarField } from "@/features/shadchanim/components/shadchan-avatar-field";
+import { ShadchanMatchTypesField } from "@/features/shadchanim/components/shadchan-match-types-field";
 import { SHADCHAN_GENDER_OPTIONS } from "@/features/shadchanim/lib/gender";
 import {
   ageFromBirthDate,
@@ -230,8 +231,9 @@ export function ShadchanProfileFields({
         name="location"
         render={({ field }) => (
           <FormFieldShell
-            label="עיר"
+            label="עיר מגורים"
             description="מוצגת בכרטיס שלך ברשימת השדכנים"
+            required
           >
             <Input
               {...field}
@@ -241,6 +243,8 @@ export function ShadchanProfileFields({
           </FormFieldShell>
         )}
       />
+
+      <ShadchanMatchTypesField control={control} isSubmitting={isSubmitting} />
 
       <FormField
         control={control}
@@ -317,24 +321,46 @@ export function ShadchanProfileFields({
         )}
       />
 
-      <FormField
-        control={control}
-        name="synagogue_rabbi"
-        render={({ field }) => (
-          <FormFieldShell
-            label="רב בית הכנסת שלך"
-            description="שם הרב של בית הכנסת שבו אתה מתפלל. הפרט נראה למנהל המערכת בלבד."
-            required
-          >
-            <Input
-              {...field}
-              placeholder="לדוגמה: הרב יעקב כהן"
-              maxLength={SYNAGOGUE_RABBI_MAX_LENGTH}
-              disabled={isSubmitting}
-            />
-          </FormFieldShell>
-        )}
-      />
+      <FormGrid>
+        <FormField
+          control={control}
+          name="synagogue_rabbi"
+          render={({ field }) => (
+            <FormFieldShell
+              label="רב בית הכנסת שלך"
+              description="שם הרב של בית הכנסת שבו אתה מתפלל. הפרט נראה למנהל המערכת בלבד."
+              required
+            >
+              <Input
+                {...field}
+                placeholder="לדוגמה: הרב יעקב כהן"
+                maxLength={SYNAGOGUE_RABBI_MAX_LENGTH}
+                disabled={isSubmitting}
+              />
+            </FormFieldShell>
+          )}
+        />
+        <FormField
+          control={control}
+          name="rabbi_phone"
+          render={({ field }) => (
+            <FormFieldShell
+              label="טלפון של הרב"
+              description="לא מוצג למשתמשים. גלוי רק לך ולהנהלת האתר."
+              required
+            >
+              <Input
+                {...field}
+                type="tel"
+                placeholder="+972 50…"
+                dir="ltr"
+                className="text-start"
+                disabled={isSubmitting}
+              />
+            </FormFieldShell>
+          )}
+        />
+      </FormGrid>
 
       <FormField
         control={control}

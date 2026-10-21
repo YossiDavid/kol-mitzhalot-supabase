@@ -6,6 +6,7 @@ import { CirclePlus, FileCheck, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { ThirdPartyCardTag } from "@/features/students/components/third-party-card-tag";
+import { KohenBadge } from "@/features/students/components/kohen-badge";
 import { Badge } from "@/components/ui/badge";
 import { candidateStatuses } from "@/features/shidduchim/lib/candidate-status";
 
@@ -165,7 +166,8 @@ function StudentBox({
         </div>
 
         {item && (
-          <div className="mt-1">
+          <div className="mt-1 flex flex-wrap gap-1">
+            <KohenBadge card={item} />
             <ThirdPartyCardTag card={item} />
           </div>
         )}

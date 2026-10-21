@@ -27,7 +27,7 @@ type ApplicationRequestActionsProps = {
 };
 
 /** שולח JSON ל-route של מנהל; מחזיר הודעת שגיאה בעברית או null בהצלחה */
-async function postAdminAction(
+export async function postAdminAction(
   url: string,
   body: Record<string, unknown>,
 ): Promise<string | null> {

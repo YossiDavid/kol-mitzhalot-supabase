@@ -11,6 +11,8 @@
  * הקובץ בלי תלות בלקוח או בשרת, ולכן משמש את הדפים, הרשימות והטופס.
  */
 
+import type { CardApprovalColumns } from "@/features/students/lib/card-approval";
+
 export const THIRD_PARTY_CARD_FOR = "other";
 
 export function isThirdPartyCardFor(cardFor: unknown): boolean {
@@ -44,21 +46,30 @@ export function isProposalsPending(card: ThirdPartyApprovalColumns): boolean {
   );
 }
 
+/** מה שהכרעת "מועדף" צריכה: אישורי צד שלישי ואישור ההנהלה לכרטיס */
+export type FavoritableColumns = ThirdPartyApprovalColumns &
+  Pick<CardApprovalColumns, "admin_approved_at">;
+
+/** העמודות שכל קריאה שמכריעה "מועדף" שולפת (שמות עמודה מפורשים) */
+export const FAVORITABLE_COLUMNS = `${THIRD_PARTY_APPROVAL_COLUMNS}, admin_approved_at`;
+
 /**
  * האם אפשר לסמן את הכרטיס כמועדף (= להביא אותו ללוח העבודה של השדכן):
- * רק כרטיס שאינו ממתין לאישור קבלת הצעות. כרטיס רגיל, ישן (card_for ריק)
- * וצד שלישי שאושר - כן; צד שלישי שטרם אושר להצעות - לא (גם אם ההצגה המלאה
- * שלו כבר אושרה, האישורים בלתי תלויים).
+ * רק כרטיס שהנהלת המערכת אישרה ושאינו ממתין לאישור קבלת הצעות. כרטיס ממתין
+ * או נדחה - לא (גם למנהל); צד שלישי שטרם אושר להצעות - לא (גם אם ההצגה המלאה
+ * שלו כבר אושרה, האישורים בלתי תלויים). כרטיס "בלעדי למנהל" מאושר, ולכן כן -
+ * והוא מגיע רק למנהל (ה-view מסתיר אותו מכל אחר). admin_approved_at שלא נשלף
+ * (undefined) - לא (סגור כברירת מחדל).
  */
-export function isFavoritable(card: ThirdPartyApprovalColumns): boolean {
-  return !isProposalsPending(card);
+export function isFavoritable(card: FavoritableColumns): boolean {
+  return !!card.admin_approved_at && !isProposalsPending(card);
 }
 
 /**
  * מסנן מרשימת מועדפים כרטיסים שאינם מועמדים ללוח (ראו isFavoritable).
  * המסנן אינו נוגע ב-user_metadata: אחרי אישור ההנהלה הכרטיס חוזר מעצמו.
  */
-export function keepFavoritable<T extends ThirdPartyApprovalColumns>(
+export function keepFavoritable<T extends FavoritableColumns>(
   cards: readonly T[],
 ): T[] {
   return cards.filter(isFavoritable);
@@ -67,6 +78,17 @@ export function keepFavoritable<T extends ThirdPartyApprovalColumns>(
 /** הסירוב להוסיף למועדפים כרטיס צד שלישי שטרם אושר להצעות */
 export const THIRD_PARTY_FAVORITE_MESSAGE =
   "לא ניתן להוסיף למועדפים כרטיס שמולא על ידי צד שלישי וטרם אושר לקבלת הצעות על ידי הנהלת המערכת.";
+
+/** הסירוב להוסיף למועדפים כרטיס שהנהלת המערכת עוד לא אישרה */
+export const UNAPPROVED_FAVORITE_MESSAGE =
+  "לא ניתן להוסיף למועדפים כרטיס שטרם אושר לקבלת הצעות על ידי הנהלת המערכת.";
+
+/** הסיבה שכרטיס אינו יכול להיות מועדף (ראו isFavoritable) */
+export function favoriteRefusalMessage(card: FavoritableColumns): string {
+  return card.admin_approved_at
+    ? THIRD_PARTY_FAVORITE_MESSAGE
+    : UNAPPROVED_FAVORITE_MESSAGE;
+}
 
 /**
  * האם הצופה מוגבל לנתונים בסיסיים: כרטיס צד שלישי בלי אישור הצגה, והצופה

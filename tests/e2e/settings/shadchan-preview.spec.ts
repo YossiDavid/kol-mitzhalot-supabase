@@ -119,7 +119,7 @@ test.describe("הצטרפות כשדכן - תצוגה מקדימה והערה ל
 
     // Act
     await page.getByLabel("ביוגרפיה").fill(BIO);
-    await page.getByLabel("עיר", { exact: true }).fill(CITY);
+    await page.getByLabel("עיר מגורים").fill(CITY);
     await page.getByLabel("שנות ניסיון").fill("3");
     await page.getByLabel("התמחויות").fill("צעירים, מבוגרים, גרושים, אלמנים");
 

@@ -2,6 +2,7 @@ import { Lock, MessageSquareText, NotebookPen } from "lucide-react";
 
 import { AdminFocusBadge } from "@/features/students/components/admin-focus-badge";
 import { ThirdPartyCardTag } from "@/features/students/components/third-party-card-tag";
+import { KohenBadge } from "@/features/students/components/kohen-badge";
 import type { CardAdminFocus } from "@/features/students/lib/card-admin-focus";
 import { THIRD_PARTY_HIDDEN_PARTS_NOTE } from "@/features/students/lib/third-party-card";
 
@@ -118,6 +119,7 @@ export function StudentCard({
         }
         tag={
           <>
+            <KohenBadge card={student} />
             <ThirdPartyCardTag card={student} />
             <AdminFocusBadge
               focusedAt={adminFocus?.focusedAt}

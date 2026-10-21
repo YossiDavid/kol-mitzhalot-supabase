@@ -48,7 +48,7 @@ async function ShiduchDeskContent() {
     );
   }
 
-  // צד שלישי שטרם אושר להצעות לא עולה ללוח (מסונן ב-loadDeskFavorites)
+  // כרטיס שלא אושר להצעות (אישור ההנהלה או צד שלישי) לא עולה ללוח (מסונן ב-loadDeskFavorites)
   return <ShiduchDesk initialFavorites={favorites.data} />;
 }
 

@@ -174,13 +174,28 @@ test.describe("הצעות על כרטיס שטרם אושר - מנהל מול ש
     }
   });
 
-  test("לוח עבודה של מנהל: הכרטיס הממתין עולה ללוח, והשמירה והשליחה פתוחות", async ({
+  test("לוח עבודה של מנהל: כרטיס ממתין אינו עולה ללוח; אחרי אישור 'להצעות ממני בלבד' - עולה, והשמירה והשליחה פתוחות", async ({
     page,
   }) => {
     // Arrange
     await setAdminFavorites([fx.groomFirst, fx.brideFirst]);
 
-    // Act
+    // Act + Assert: ממתין - לא בלוח (אין כוכב לכרטיס שלא אושר להצעות)
+    await page.goto("/app/canvas");
+    await expect(
+      page.getByRole("button", { name: "שיבוץ מיועדת ראשונה במשבצת המיועדת" }),
+    ).toHaveCount(0, { timeout: 30_000 });
+    await expect(
+      page.getByRole("button", { name: "שיבוץ מיועד ראשון במשבצת המיועד" }),
+    ).toHaveCount(0);
+
+    // Act: אישור בלעדי למנהל
+    const now = new Date().toISOString();
+    const { error } = await svc
+      .from("students")
+      .update({ admin_approved_at: now, admin_exclusive_at: now })
+      .eq("id", fx.groomFirst);
+    expect(error).toBeNull();
     await page.goto("/app/canvas");
     await placePair(page);
 

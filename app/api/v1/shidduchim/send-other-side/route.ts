@@ -11,6 +11,7 @@ import {
 import { sendShidduchOfferEmails } from "@/features/shidduchim/lib/send-offer-email";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { isActiveShadchan } from "@/features/shadchanim/lib/shadchan-access";
 import { hasRole } from "@/lib/user";
 
 const bodySchema = z.object({
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
   }
 
   const isAdmin = hasRole(user, "admin");
-  if (!isAdmin && !hasRole(user, "shadchan")) {
+  if (!isAdmin && !(await isActiveShadchan(user))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

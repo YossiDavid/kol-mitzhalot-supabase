@@ -8,6 +8,8 @@ import {
   planForLifeToHebrew,
 } from "@/features/students/lib/profile-labels";
 
+import { KohenBadge } from "@/features/students/components/kohen-badge";
+
 import { AgeBirthDate } from "./age-birth-date";
 import { CardSection } from "./card-section";
 import { InfoTag, InfoTagGrid } from "./info-tag";
@@ -91,7 +93,17 @@ export function PersonalDetailsSection({
               : null
           }
         />
-        <InfoTag label="כהן" value={kohenLabel(student)} />
+        {student.gender === "male" && student.is_kohen === true ? (
+          // כהן מובלט (כלל הכהן והגרושה), ולא עוד "כן" בין השדות
+          <div className="flex flex-col items-start gap-1">
+            <span className="text-caption font-medium text-muted-foreground">
+              כהן
+            </span>
+            <KohenBadge card={student} />
+          </div>
+        ) : (
+          <InfoTag label="כהן" value={kohenLabel(student)} />
+        )}
         <InfoTag
           label={willingToLiveLabel(student.gender)}
           value={

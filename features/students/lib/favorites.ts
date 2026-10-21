@@ -1,10 +1,10 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import {
+  FAVORITABLE_COLUMNS,
   STUDENT_CARDS_VIEW,
-  THIRD_PARTY_APPROVAL_COLUMNS,
-  THIRD_PARTY_FAVORITE_MESSAGE,
+  favoriteRefusalMessage,
   isFavoritable,
-  type ThirdPartyApprovalColumns,
+  type FavoritableColumns,
 } from "@/features/students/lib/third-party-card";
 
 /**
@@ -96,12 +96,12 @@ async function checkFavoritable(
 ): Promise<FavoritesResult | null> {
   const { data, error } = await supabase
     .from(STUDENT_CARDS_VIEW)
-    .select(THIRD_PARTY_APPROVAL_COLUMNS)
+    .select(FAVORITABLE_COLUMNS)
     .eq("id", studentId)
-    .maybeSingle<ThirdPartyApprovalColumns>();
+    .maybeSingle<FavoritableColumns>();
   if (error || !data) return fail("check favoritable", error ?? "not found");
   if (!isFavoritable(data)) {
-    return { ok: false, message: THIRD_PARTY_FAVORITE_MESSAGE };
+    return { ok: false, message: favoriteRefusalMessage(data) };
   }
   return null;
 }

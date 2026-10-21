@@ -9,6 +9,7 @@ import {
 } from "@/features/students/lib/student-uploads";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { isActiveShadchan } from "@/features/shadchanim/lib/shadchan-access";
 import { hasRole } from "@/lib/user";
 
 /**
@@ -52,7 +53,7 @@ export async function POST(
 
   const canEditCard =
     student.user_id === user.id ||
-    hasRole(user, "shadchan") ||
+    (await isActiveShadchan(user)) ||
     hasRole(user, "admin");
   if (!canEditCard) {
     return NextResponse.json(

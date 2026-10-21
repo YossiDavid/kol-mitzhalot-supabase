@@ -5,7 +5,7 @@ import { DESK_STUDENT_SELECT } from "@/features/shidduchim/lib/desk-student-sele
 import {
   STUDENT_CARDS_VIEW,
   keepFavoritable,
-  type ThirdPartyApprovalColumns,
+  type FavoritableColumns,
 } from "@/features/students/lib/third-party-card";
 
 /**
@@ -40,7 +40,7 @@ async function loadInProcessIds(
 }
 
 export async function loadDeskFavorites<
-  T extends { id: string } & ThirdPartyApprovalColumns,
+  T extends { id: string } & FavoritableColumns,
 >(
   supabase: SupabaseClient,
   favoriteIds: readonly string[],
@@ -52,7 +52,8 @@ export async function loadDeskFavorites<
 
   if (error) return { ok: false, error };
 
-  // צד שלישי שטרם אושר להצעות לא עולה ללוח (נשאר במטא-דאטה וחוזר באישור)
+  // כרטיס שלא אושר להצעות (אישור ההנהלה, או צד שלישי) לא עולה ללוח - נשאר
+  // במטא-דאטה וחוזר באישור
   const cards = keepFavoritable((data ?? []) as unknown as T[]);
   const inProcess = await loadInProcessIds(
     supabase,

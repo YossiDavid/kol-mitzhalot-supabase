@@ -49,9 +49,16 @@ export const PLAN_FOR_LIFE_OPTIONS: FieldOptionDefinition[] = [
 ];
 
 /**
+ * מגבלת השליפה של מאגר הקהילות: גבוהה מגודל המאגר, כדי שהרשימה כולה
+ * תיפתח (ברירת המחדל של הבורר היא 50). תואם למגבלת התשובה של PostgREST.
+ */
+const COMMUNITY_CATALOG_LIMIT = 1000;
+
+/**
  * בורר "חסידות או קהילה" מתוך מאגר הקהילות (public.communities).
  * הערך הנשמר הוא השם עצמו ולא מזהה, ולכן כרטיסים שהוזנו כטקסט חופשי
- * נשארים תקפים. ערך שאינו במאגר מוצע להוספה (creatable).
+ * נשארים תקפים. ערך שאינו במאגר מוצע להוספה (creatable). הרשימה נפתחת
+ * כולה, לפי סדר הא"ב.
  */
 export const COMMUNITY_SEARCH = {
   table: "communities",
@@ -59,6 +66,8 @@ export const COMMUNITY_SEARCH = {
   labelColumn: "name",
   searchColumn: "name",
   filters: { is_active: true },
+  orderColumn: "name",
+  limit: COMMUNITY_CATALOG_LIMIT,
   creatable: true,
   placeholder: "חיפוש או הוספה למאגר",
   empty: "לא נמצאה קהילה בשם הזה",

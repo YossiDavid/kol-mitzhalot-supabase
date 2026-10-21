@@ -15,6 +15,7 @@ import {
 } from "@/features/admin/components/shadchanim-pagination";
 import type { AdminShadchanimQuery } from "@/features/admin/lib/shadchanim-query";
 import { getShadchanimList } from "@/features/admin/lib/shadchanim";
+import { ShadchanModerationActions } from "@/features/admin/components/shadchan-moderation-actions";
 import { Suspense } from "react";
 
 type ShadchanRow = Awaited<
@@ -67,9 +68,16 @@ const SHADCHAN_COLUMNS: DataTableColumn<ShadchanRow>[] = [
     size: "min",
     mobile: "aside",
     cell: (shadchan) => (
-      <Badge variant={applicationStatusVariant(shadchan.applicationStatus)}>
-        {shadchan.applicationStatusLabel}
-      </Badge>
+      <span className="flex flex-wrap items-center gap-1">
+        <Badge variant={applicationStatusVariant(shadchan.applicationStatus)}>
+          {shadchan.applicationStatusLabel}
+        </Badge>
+        {shadchan.isFrozen && (
+          <Badge variant="info" data-testid="frozen-badge">
+            מוקפא
+          </Badge>
+        )}
+      </span>
     ),
   },
   {
@@ -118,11 +126,20 @@ const SHADCHAN_COLUMNS: DataTableColumn<ShadchanRow>[] = [
     size: "min",
     mobile: "actions",
     cell: (shadchan) => (
-      <Button asChild variant="outline" size="sm">
-        <Link href={`/app/admin/shadchanim/${shadchan.id}/edit` as Route}>
-          עריכת פרופיל
-        </Link>
-      </Button>
+      <span className="flex flex-wrap items-center gap-2">
+        <Button asChild variant="outline" size="sm">
+          <Link href={`/app/admin/shadchanim/${shadchan.id}/edit` as Route}>
+            עריכת פרופיל
+          </Link>
+        </Button>
+        <ShadchanModerationActions
+          userId={shadchan.id}
+          name={fullNameOf(shadchan)}
+          isFrozen={shadchan.isFrozen}
+          canFreeze={shadchan.hasProfileRow}
+          canRevoke={shadchan.hasShadchanRole}
+        />
+      </span>
     ),
   },
 ];

@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 
 import { PageHeaderSkeleton } from "@/components/layout";
 import { Skeleton, SkeletonRegion } from "@/components/ui/skeleton";
+import { ShadchanFrozenNotice } from "@/features/shadchanim/components/shadchan-frozen-notice";
+import { getShadchanAccess } from "@/features/shadchanim/lib/shadchan-access";
 import { StudentsNoAccess } from "@/features/students/components/no-access";
 import { getUser, hasRole } from "@/lib/user";
 
@@ -45,16 +47,17 @@ async function StudentsGate({ children }: { children: React.ReactNode }) {
   // פתוחים, ו-RLS מצמצם כל אחד למה שמותר לו:
   //   - הורה       — auth.uid() = students.user_id (הילדים שלו בלבד)
   //   - איש צוות   — staff_can_access_student (המיועדים של המוסד שלו)
-  //   - שדכן/אדמין — is_shadchan_or_admin (הכל)
+  //   - שדכן/אדמין — is_shadchan_or_admin (הכל; שדכן מוקפא - לא)
   // ראה supabase/migrations/20260830170000_student_notes.sql:134-145.
   if (
     STUDENTS_LIST_PATH_REGEX.test(pathname) &&
     !hasRole(user, "admin") &&
-    !hasRole(user, "shadchan") &&
     !hasRole(user, "staff")
   ) {
+    const shadchanAccess = await getShadchanAccess(user);
     // הודעה ולא redirect: הפניה שקטה נראית כמו תקלה.
-    return <StudentsNoAccess />;
+    if (shadchanAccess === "frozen") return <ShadchanFrozenNotice />;
+    if (shadchanAccess === "none") return <StudentsNoAccess />;
   }
 
   return <>{children}</>;

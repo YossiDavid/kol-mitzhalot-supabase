@@ -69,6 +69,7 @@ const rowSchema = z.object({
   admin_approved_at: z.string().nullable(),
   admin_rejected_at: z.string().nullable(),
   admin_rejection_reason: z.string().nullable(),
+  admin_exclusive_at: z.string().nullable(),
   third_party_full_display_approved_at: z.string().nullable(),
   third_party_proposals_approved_at: z.string().nullable(),
 });
@@ -96,7 +97,7 @@ export type NewCardsPage = {
 };
 
 const COLUMNS =
-  "id, first_name, last_name, created_at, card_for, author_info, admin_approved_at, admin_rejected_at, admin_rejection_reason, third_party_full_display_approved_at, third_party_proposals_approved_at";
+  "id, first_name, last_name, created_at, card_for, author_info, admin_approved_at, admin_rejected_at, admin_rejection_reason, admin_exclusive_at, third_party_full_display_approved_at, third_party_proposals_approved_at";
 
 function toRow(raw: z.infer<typeof rowSchema>): NewCardRow {
   const author = readAuthorInfo(raw.author_info, raw.card_for);

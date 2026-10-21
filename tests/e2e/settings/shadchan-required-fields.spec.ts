@@ -4,13 +4,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServiceClient } from "../shidduchim/fixtures";
 import { createUserSessionClient } from "../forums/forum-fixtures";
 import {
+  APPLICATION_EXTRAS,
   COMPLETE_IDENTITY_COLUMNS,
   fillShadchanIdentity,
 } from "../helpers/shadchan-form";
 
 /**
- * בקשת הצטרפות כשדכן: טלפון, קהילה ורב בית הכנסת הם שדות חובה - בטופס
- * ובמסד (הטריגר guard_application_decision). בקשה ישנה בלי השדות נטענת
+ * בקשת הצטרפות כשדכן: טלפון, קהילה, רב בית הכנסת, עיר מגורים, סוג שידוכים
+ * וטלפון הרב הם שדות חובה - בטופס ובמסד (הטריגר guard_application_decision). בקשה ישנה בלי השדות נטענת
  * כרגיל, ונדרש למלא אותם רק בהגשה הבאה.
  *
  * משתמש הבדיקה הרגיל הוא שדכן ומוּפנה מהטופס, ולכן כאן נוצר מגיש נפרד
@@ -25,6 +26,9 @@ const PHONE_MESSAGE = "נא למלא טלפון ליצירת קשר";
 const COMMUNITY_MESSAGE = "נא לבחור קהילה / חסידות";
 const RABBI_MESSAGE = "נא למלא רב בית הכנסת שלך";
 const RABBI_NAME = "הרב בדיקה שלום";
+const CITY_MESSAGE = "נא למלא עיר מגורים";
+const MATCH_TYPES_MESSAGE = "נא לבחור לפחות סוג שידוכים אחד";
+const RABBI_PHONE_MESSAGE = "נא למלא טלפון של הרב";
 
 const admin = createServiceClient();
 let applicantId = "";
@@ -95,7 +99,9 @@ const stored = async (client: SupabaseClient) =>
   (
     await client
       .from("shadchanim_info")
-      .select("contact_phone, community, synagogue_rabbi, application_status")
+      .select(
+        "contact_phone, community, synagogue_rabbi, application_status, location, match_types, rabbi_phone",
+      )
       .eq("user_id", applicantId)
       .maybeSingle()
   ).data;
@@ -170,6 +176,111 @@ test.describe("הצטרפות כשדכן - שדות חובה", () => {
     expect(row?.contact_phone).toBe("0501234567");
     expect(row?.synagogue_rabbi).toBe(RABBI_NAME);
     expect(row?.community).toBeTruthy();
+    expect(row?.location).toBe(APPLICATION_EXTRAS.city);
+    expect(row?.match_types).toEqual(["young"]);
+    expect(row?.rabbi_phone).toBe(APPLICATION_EXTRAS.rabbiPhone);
+  });
+
+  test("שליחה בלי עיר מגורים, סוג שידוכים וטלפון הרב נחסמת", async ({
+    page,
+  }) => {
+    // Arrange
+    await openForm(page);
+    await fillBase(page);
+    await page.getByLabel("טלפון ליצירת קשר").fill("0501234567");
+    await page.getByLabel("רב בית הכנסת שלך").fill(RABBI_NAME);
+    await pickFirstCommunity(page);
+    await fillShadchanIdentity(page, { withExtras: false });
+
+    // Act
+    await page.getByRole("button", { name: "שלח בקשה" }).click();
+
+    // Assert
+    await expect(page.getByText(CITY_MESSAGE)).toBeVisible();
+    await expect(page.getByText(MATCH_TYPES_MESSAGE)).toBeVisible();
+    await expect(page.getByText(RABBI_PHONE_MESSAGE)).toBeVisible();
+    expect(await stored(admin)).toBeNull();
+  });
+
+  test("טלפון רב לא תקין נחסם בטופס", async ({ page }) => {
+    // Arrange
+    await openForm(page);
+    await fillBase(page);
+    await page.getByLabel("טלפון ליצירת קשר").fill("0501234567");
+    await page.getByLabel("רב בית הכנסת שלך").fill(RABBI_NAME);
+    await pickFirstCommunity(page);
+    await fillShadchanIdentity(page);
+    await page.getByLabel("טלפון של הרב").fill("12");
+
+    // Act
+    await page.getByRole("button", { name: "שלח בקשה" }).click();
+
+    // Assert
+    await expect(
+      page.getByText("מספר טלפון לא תקין", { exact: false }),
+    ).toBeVisible();
+    expect(await stored(admin)).toBeNull();
+  });
+
+  test("המסד דוחה בקשה ממתינה בלי עיר, סוג שידוכים או טלפון רב", async () => {
+    // Arrange
+    const session = await createUserSessionClient(admin, EMAIL);
+    const complete = {
+      user_id: applicantId,
+      contact_phone: "0501234567",
+      community: "בעלזא",
+      synagogue_rabbi: RABBI_NAME,
+      ...COMPLETE_IDENTITY_COLUMNS,
+    };
+    const broken: Record<string, unknown>[] = [
+      { location: " " },
+      { match_types: null },
+      { rabbi_phone: null },
+      { rabbi_phone: "12" },
+    ];
+
+    // Act - ברצף, כל ניסיון על שורה נקייה
+    const messages: (string | undefined)[] = [];
+    for (const override of broken) {
+      await admin.from("shadchanim_info").delete().eq("user_id", applicantId);
+      const { error } = await session
+        .from("shadchanim_info")
+        .insert({ ...complete, ...override });
+      messages.push(error?.message);
+    }
+    await admin.from("shadchanim_info").delete().eq("user_id", applicantId);
+    const invalidType = await session
+      .from("shadchanim_info")
+      .insert({ ...complete, match_types: ["unknown"] });
+
+    // Assert
+    expect(messages).toEqual(
+      broken.map(() => "shadchan_application_incomplete"),
+    );
+    expect(invalidType.error?.message).toContain(
+      "shadchanim_info_match_types_check",
+    );
+  });
+
+  test("שדכן מאושר ותיק בלי השדות החדשים אינו נחסם בעדכון במסד", async () => {
+    // Arrange - שורה מאושרת ישנה (service role), בלי עיר/סוגים/טלפון רב
+    await admin.from("shadchanim_info").insert({
+      user_id: applicantId,
+      application_status: "approved",
+      contact_phone: "0501234567",
+      community: "בעלזא",
+      synagogue_rabbi: RABBI_NAME,
+    });
+    const session = await createUserSessionClient(admin, EMAIL);
+
+    // Act
+    const { error } = await session
+      .from("shadchanim_info")
+      .update({ bio: "עדכון של שדכן ותיק" })
+      .eq("user_id", applicantId);
+
+    // Assert
+    expect(error).toBeNull();
   });
 
   test("בקשה ישנה בלי השדות נטענת, ונדרש למלא אותם בהגשה הבאה", async ({

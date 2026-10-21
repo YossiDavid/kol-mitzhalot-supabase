@@ -90,6 +90,10 @@ export interface SelectField extends BaseField {
   valueColumn?: string;
   labelColumn?: string;
   searchColumn?: string;
+  /** select2 מול טבלה: מיון לפי עמודה ובא"ב העברי (ראו SearchSelectField) */
+  orderColumn?: string;
+  /** select2 מול טבלה: כמה שורות לשלוף (ברירת מחדל 50) */
+  limit?: number;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   filters?: Record<string, any>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

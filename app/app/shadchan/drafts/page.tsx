@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/empty";
 import { createClient } from "@/lib/supabase/server";
 import { hasRole } from "@/lib/user-role";
+import { ShadchanFrozenNotice } from "@/features/shadchanim/components/shadchan-frozen-notice";
+import { getShadchanAccess } from "@/features/shadchanim/lib/shadchan-access";
 import DeleteShidduchButton from "@/features/shidduchim/components/delete-shidduch-button";
 import DraftActions from "@/features/shidduchim/components/draft-actions";
 import ShadchanProposalCard from "@/features/shidduchim/components/shadchan-proposal-card";
@@ -86,8 +88,11 @@ async function DraftsList({
   } = await supabase.auth.getUser();
 
   // כמו "כל השידוכים שלי", ובנוסף: טיוטות הן כלי עבודה של שדכן/מנהל בלבד
-  if (!user || !(hasRole(user, "shadchan") || hasRole(user, "admin"))) {
-    notFound();
+  if (!user) notFound();
+  if (!hasRole(user, "admin")) {
+    const shadchanAccess = await getShadchanAccess(user);
+    if (shadchanAccess === "frozen") return <ShadchanFrozenNotice />;
+    if (shadchanAccess === "none") notFound();
   }
 
   const { proposals, total, page, failed } = await getShadchanProposalsPage(

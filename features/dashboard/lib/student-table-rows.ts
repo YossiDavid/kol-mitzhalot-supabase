@@ -48,6 +48,7 @@ export const STUDENT_TABLE_SHAPE = {
   proposal_limit_count: z.number().nullable(),
   proposal_limit_period: text,
   admin_paused_at: text,
+  is_kohen: z.boolean().nullable(),
   previous_partners: z.array(z.record(z.string(), z.unknown())).nullable(),
 } as const;
 
@@ -82,6 +83,8 @@ export const STUDENT_TABLE_SELECT = {
   proposal_limit_count: "proposal_limit_count",
   proposal_limit_period: "proposal_limit_period",
   admin_paused_at: "admin_paused_at",
+  // תג "כהן" הבולט ליד השם
+  is_kohen: "is_kohen",
   // לשורת הילדים של גרוש/אלמן. ללא הרשאה (RLS) חוזר מערך ריק
   previous_partners:
     "previous_partners(children, children_number, no_children)",

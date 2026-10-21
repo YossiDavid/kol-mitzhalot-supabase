@@ -93,7 +93,7 @@ function StatusCell({ row }: { row: NewCardRow }) {
   return (
     <div data-testid={`approval-status-${row.id}`} data-status={row.status}>
       <p className="font-medium">{CARD_APPROVAL_LABELS[row.status]}</p>
-      {row.status === "approved" && (
+      {(row.status === "approved" || row.status === "exclusive") && (
         <p className="text-caption text-muted-foreground">
           {formatDate(row.approvedAt)}
         </p>

@@ -12,6 +12,8 @@ const LEGACY_EMAIL = `req-legacy-${RUN_ID}@kol-mitzhalot.test`;
 const RABBI = `הרב-בדיקה-${RUN_ID}`;
 const COMMUNITY = `קהילת-בדיקה-${RUN_ID}`;
 const PHONE = "0509998877";
+const RABBI_PHONE = "0521112233";
+const CITY = `עיר-בדיקה-${RUN_ID}`;
 
 const admin = createServiceClient();
 const userIds: string[] = [];
@@ -41,6 +43,9 @@ test.beforeAll(async () => {
       contact_phone: PHONE,
       community: COMMUNITY,
       synagogue_rabbi: RABBI,
+      rabbi_phone: RABBI_PHONE,
+      location: CITY,
+      match_types: ["young", "divorced"],
     },
     {
       user_id: legacyId,
@@ -69,6 +74,13 @@ test.describe("בקשות הצטרפות כשדכן - שדות החובה אצל
     await expect(card.getByTestId("request-phone")).toHaveText(PHONE);
     await expect(card.getByTestId("request-community")).toHaveText(COMMUNITY);
     await expect(card.getByTestId("request-rabbi")).toHaveText(RABBI);
+    await expect(card.getByTestId("request-rabbi-phone")).toHaveText(
+      RABBI_PHONE,
+    );
+    await expect(card.getByTestId("request-city")).toHaveText(CITY);
+    await expect(card.getByTestId("request-match-types")).toHaveText(
+      "צעירים, גרושים / גרושות",
+    );
   });
 
   test("בקשה ישנה בלי השדות נטענת ומסומנת 'לא צוין'", async ({ page }) => {
@@ -79,7 +91,14 @@ test.describe("בקשות הצטרפות כשדכן - שדות החובה אצל
       .filter({ hasText: LEGACY_EMAIL });
 
     // Assert
-    for (const field of ["phone", "community", "rabbi"]) {
+    for (const field of [
+      "phone",
+      "community",
+      "rabbi",
+      "rabbi-phone",
+      "city",
+      "match-types",
+    ]) {
       await expect(card.getByTestId(`request-${field}`)).toContainText(
         "לא צוין",
       );

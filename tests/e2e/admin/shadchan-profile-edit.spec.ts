@@ -27,6 +27,9 @@ const VALID_BODY = {
   gender: COMPLETE_IDENTITY_COLUMNS.gender,
   birth_date: COMPLETE_IDENTITY_COLUMNS.birth_date,
   avatar_path: "",
+  location: COMPLETE_IDENTITY_COLUMNS.location,
+  match_types: [...COMPLETE_IDENTITY_COLUMNS.match_types],
+  rabbi_phone: COMPLETE_IDENTITY_COLUMNS.rabbi_phone,
 };
 
 const service = createServiceClient();

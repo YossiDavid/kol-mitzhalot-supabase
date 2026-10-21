@@ -58,7 +58,7 @@ export async function getFavoriteStudents(
     console.error("[dashboard/favorites]", describeSupabaseError(error));
     return { students: [], failed: true };
   }
-  // צד שלישי שטרם אושר להצעות לא מוצג בלוח (המטא-דאטה נשאר, וחוזר באישור)
+  // כרטיס שלא אושר להצעות (אישור ההנהלה או צד שלישי) לא מוצג בלוח (המטא-דאטה נשאר, וחוזר באישור)
   const result = toStudentTableResult(data, "[dashboard/favorites]");
   return { ...result, students: keepFavoritable(result.students) };
 }

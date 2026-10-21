@@ -53,6 +53,8 @@ export function SearchSelectFormField(props: FieldControlProps) {
           valueColumn={readOptionalString(field.valueColumn)}
           labelColumn={readOptionalString(field.labelColumn)}
           searchColumn={readOptionalString(field.searchColumn)}
+          orderColumn={readOptionalString(field.orderColumn)}
+          limit={typeof field.limit === "number" ? field.limit : undefined}
           filters={readRecord(field.filters)}
           params={readRecord(field.params)}
           extraColumns={fillOnSelect && Object.values(fillOnSelect)}

@@ -17,11 +17,12 @@ import { Suspense } from "react";
 import type { Route } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { formatMatchTypes } from "@/features/shadchanim/lib/match-types";
 
 // מספר כרטיסי השלד בזמן הטעינה - מקרב את גובה הרשימה האמיתית.
 const FALLBACK_CARD_COUNT = 3;
 
-/** שלושת שדות החובה בבקשה; בקשה ישנה שהוגשה לפני שהפכו לחובה מציגה זאת במפורש */
+/** שדות החובה בבקשה; בקשה ישנה שהוגשה לפני שהפכו לחובה מציגה זאת במפורש */
 const MISSING_FIELD_LABEL = "לא צוין (בקשה שהוגשה לפני שהשדה נדרש)";
 
 type ShadchanRequest = {
@@ -36,6 +37,8 @@ type ShadchanRequest = {
   location: string | null;
   community: string | null;
   synagogue_rabbi: string | null;
+  rabbi_phone: string | null;
+  match_types: string[] | null;
   application_note: string | null;
   languages: string[] | null;
   certifications: string[] | null;
@@ -288,6 +291,31 @@ async function ShadchanRequestsContent() {
                       {request.synagogue_rabbi || MISSING_FIELD_LABEL}
                     </p>
                   </div>
+                  <div>
+                    <h4 className="mb-1 font-semibold">טלפון של הרב:</h4>
+                    <p
+                      className="text-body-sm"
+                      data-testid="request-rabbi-phone"
+                    >
+                      {request.rabbi_phone || MISSING_FIELD_LABEL}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="mb-1 font-semibold">עיר מגורים:</h4>
+                    <p className="text-body-sm" data-testid="request-city">
+                      {request.location || MISSING_FIELD_LABEL}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="mb-1 font-semibold">סוג שידוכים שעוסק:</h4>
+                    <p
+                      className="text-body-sm"
+                      data-testid="request-match-types"
+                    >
+                      {formatMatchTypes(request.match_types) ||
+                        MISSING_FIELD_LABEL}
+                    </p>
+                  </div>
                   <div
                     className="rounded-lg border border-primary/40 bg-primary/5 p-3 md:col-span-2"
                     data-testid="request-application-note"
@@ -301,12 +329,6 @@ async function ShadchanRequestsContent() {
                       )}
                     </p>
                   </div>
-                  {request.location && (
-                    <div>
-                      <h4 className="mb-1 font-semibold">מיקום:</h4>
-                      <p className="text-body-sm">{request.location}</p>
-                    </div>
-                  )}
                   {request.languages && request.languages.length > 0 && (
                     <div>
                       <h4 className="mb-1 font-semibold">שפות:</h4>

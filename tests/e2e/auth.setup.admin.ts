@@ -58,6 +58,10 @@ setup("authenticate admin test user", async ({ page }) => {
   await admin
     .from("system_settings")
     .upsert({ key: "terms_gate_enabled", value: false });
+  // וגם חגיגת השידוכים (ראו auth.setup.ts)
+  await admin
+    .from("system_settings")
+    .upsert({ key: "celebrations_enabled", value: false });
 
   // Generate magic link
   const { data: linkData, error: linkError } =

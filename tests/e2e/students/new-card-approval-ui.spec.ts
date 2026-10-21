@@ -306,7 +306,7 @@ test.describe("אישור הנהלה לכרטיס חדש (דפים)", () => {
     await parent.context().close();
   });
 
-  test("המנהל מאשר מדף הכרטיס; השדכן רואה את הכרטיס ברשימה עם 'חדש היום', וההורה מקבל התראה", async ({
+  test("המנהל מאשר מדף הכרטיס וחוזר לתור; השדכן רואה את הכרטיס ברשימה עם 'חדש היום', וההורה מקבל התראה", async ({
     page,
     browser,
   }) => {
@@ -333,8 +333,8 @@ test.describe("אישור הנהלה לכרטיס חדש (דפים)", () => {
       .getByRole("button", { name: `אישור הכרטיס של ${FULL_NAME}` })
       .click();
 
-    // Assert
-    await expect(controls).toHaveAttribute("data-status", "approved", {
+    // Assert: אחרי האישור המנהל חוזר לתור הממתינים
+    await expect(admin).toHaveURL(/\/app\/admin\/new-cards$/, {
       timeout: LOAD_TIMEOUT,
     });
     await admin.context().close();

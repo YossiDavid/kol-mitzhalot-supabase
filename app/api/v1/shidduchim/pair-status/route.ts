@@ -8,6 +8,7 @@ import {
   findPairBlocks,
   type ProposalBlock,
 } from "@/features/shidduchim/lib/proposal-gate";
+import { isActiveShadchan } from "@/features/shadchanim/lib/shadchan-access";
 import { hasRole } from "@/lib/user";
 
 const idSchema = z.guid();
@@ -53,7 +54,7 @@ export async function GET(req: NextRequest) {
   // כדי שהלוח יחסום מראש ולא אחרי הלחיצה
   const isAdmin = hasRole(user, "admin");
   let blocks: ProposalBlock[] = [];
-  if (isAdmin || hasRole(user, "shadchan")) {
+  if (isAdmin || (await isActiveShadchan(user))) {
     try {
       blocks = await findPairBlocks(admin, groomId!, brideId!, { isAdmin });
     } catch (e) {

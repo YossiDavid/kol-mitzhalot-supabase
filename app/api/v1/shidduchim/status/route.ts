@@ -13,6 +13,7 @@ import {
   dbBlockFromError,
   proposalBlocksBody,
 } from "@/features/shidduchim/lib/proposal-gate";
+import { isActiveShadchan } from "@/features/shadchanim/lib/shadchan-access";
 import { hasRole } from "@/lib/user";
 
 const bodySchema = z.object({
@@ -31,7 +32,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   const isAdmin = hasRole(user, "admin");
-  if (!isAdmin && !hasRole(user, "shadchan")) {
+  if (!isAdmin && !(await isActiveShadchan(user))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

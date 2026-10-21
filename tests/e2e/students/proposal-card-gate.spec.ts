@@ -146,6 +146,9 @@ const NEVER_IN_PROPOSAL = [
   "admin_rejection_reason",
   // דחייה / החזרה להמתנה בלי הודעה לבעל הכרטיס: פרט ניהולי
   "admin_review_silent",
+  // אישור "להצעות המנהל בלבד": פרט ניהולי
+  "admin_exclusive_at",
+  "admin_exclusive_by",
 ] as const;
 
 const CHILD_TABLES = [

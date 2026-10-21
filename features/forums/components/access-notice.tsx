@@ -1,4 +1,4 @@
-import { HeartHandshake, Hourglass } from "lucide-react";
+import { HeartHandshake, Hourglass, Snowflake } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +12,7 @@ import type { ForumAccess } from "@/features/forums/lib/access";
 
 /**
  * הסבר למשתמש שאינו רשאי להיכנס לפורום, במקום עמוד ריק:
- * שדכן שממתין לאישור, או משתמש שאינו שדכן ויכול להגיש בקשה.
+ * שדכן שממתין לאישור, שדכן מוקפא, או משתמש שאינו שדכן ויכול להגיש בקשה.
  */
 export default function ForumAccessNotice({
   status,
@@ -20,6 +20,23 @@ export default function ForumAccessNotice({
   status: Exclude<ForumAccess["status"], "allowed">;
 }) {
   const isPending = status === "pending";
+
+  if (status === "frozen") {
+    return (
+      <Empty data-testid="forum-access-notice">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <Snowflake aria-hidden />
+          </EmptyMedia>
+          <EmptyTitle>חשבון השדכן שלך מוקפא</EmptyTitle>
+          <EmptyDescription>
+            הנהלת האתר הקפיאה זמנית את הרשאות השדכן שלך, ולכן הפורום סגור בפניך
+            כרגע. לפרטים נוספים אפשר לפנות להנהלה.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    );
+  }
 
   return (
     <Empty data-testid="forum-access-notice">

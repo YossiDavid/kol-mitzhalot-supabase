@@ -103,6 +103,8 @@ const VIEW_AS_IS = [
 const VIEW_OWNER_AND_ADMIN_ONLY = [
   "admin_rejected_at",
   "admin_rejection_reason",
+  // אישור "להצעות המנהל בלבד": למנהל בלבד (בעל הכרטיס רואה "מאושר")
+  "admin_exclusive_at",
 ] as const;
 /** קיימות ב-view, אבל ריקות בכרטיס מוגבל */
 const VIEW_NULL_WHEN_RESTRICTED = [
@@ -137,6 +139,7 @@ const NEVER_IN_VIEW = [
   "admin_approved_by",
   "admin_rejected_by",
   "admin_review_silent",
+  "admin_exclusive_by",
 ] as const;
 
 const SENSITIVE_CHILD_TABLES = [

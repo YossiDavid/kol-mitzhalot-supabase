@@ -45,6 +45,12 @@ const STUDENT_ROW_COLUMNS = [
   // לתג "חדש" ולעמודת "נוסף": רגע האישור (card-approval.ts, cardListedAt)
   "created_at",
   CARD_LISTED_AT_COLUMN,
+  // תג "לא אושר במלואו" במאגר של המנהל (ממתין / נדחה / בלעדי). לשדכן הכרטיסים
+  // האלה אינם חוזרים מה-view, והדחייה והבלעדיות ריקות אצלו ממילא
+  "admin_rejected_at",
+  "admin_exclusive_at",
+  // תג "כהן" הבולט
+  "is_kohen",
   // תג "מולא ע״י צד שלישי" ואישורי ההנהלה
   "card_for",
   "third_party_full_display_approved_at",

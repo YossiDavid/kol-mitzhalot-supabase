@@ -39,6 +39,12 @@ export type SearchSelectFieldProps = {
   debounceMs?: number;
   minQueryLength?: number;
   limit?: number;
+  /**
+   * מיון לפי עמודה (Supabase בלבד): השליפה ממוינת במסד - כך שהמגבלה (limit)
+   * חותכת את סוף הא"ב ולא שורות אקראיות - והתוויות ממוינות שוב בלקוח לפי
+   * הא"ב העברי. בלעדיו הסדר הוא של המסד, כמו קודם.
+   */
+  orderColumn?: string;
 
   /** אם תרצה להעביר ידנית */
   selectedLabel?: string;
@@ -91,6 +97,11 @@ function escapePostgrestLike(input: string) {
   return input.replace(/[(),]/g, " ").replace(/\s+/g, " ").trim();
 }
 
+/** מיון תוויות לפי הא"ב העברי, בלי לשנות את המערך המקורי */
+function sortByHebrewLabel(options: readonly Option[]): Option[] {
+  return [...options].sort((a, b) => a.label.localeCompare(b.label, "he"));
+}
+
 function parseLimit(limit?: unknown, fallback = 50) {
   if (typeof limit === "number" && Number.isFinite(limit)) return limit;
   if (typeof limit === "string") {
@@ -119,6 +130,7 @@ export function SearchSelectField({
   debounceMs = 300,
   minQueryLength = 2,
   limit,
+  orderColumn,
   selectedLabel: selectedLabelProp,
   resolveSelectedLabel = true,
   extraColumns,
@@ -326,6 +338,10 @@ export function SearchSelectField({
             }
           }
 
+          if (orderColumn) {
+            qb = qb.order(orderColumn, { ascending: true });
+          }
+
           const effectiveLimit = parseLimit(limit ?? params?.limit, 50);
           qb = qb.limit(effectiveLimit);
 
@@ -355,7 +371,8 @@ export function SearchSelectField({
               };
             }) ?? [];
 
-          setOptions(transformed.filter((o) => o.value));
+          const valid = transformed.filter((o) => o.value);
+          setOptions(orderColumn ? sortByHebrewLabel(valid) : valid);
           return;
         }
       } catch (e: any) {
@@ -387,6 +404,7 @@ export function SearchSelectField({
     debounceMs,
     minQueryLength,
     limit,
+    orderColumn,
     initialOptions,
     extraColumnsKey,
   ]);

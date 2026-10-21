@@ -12,6 +12,10 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { TermsVersionPanel } from "@/features/auth/components/terms-version-panel";
 import { TERMS_CONTENT_KEY } from "@/features/auth/lib/terms";
+import {
+  describeTargetGroups,
+  type TermsTargetGroup,
+} from "@/features/auth/lib/terms-target-groups";
 
 const CONTENT_KEYS: Record<string, { title: string; description: string }> = {
   "privacy-policy": {
@@ -112,14 +116,22 @@ export default function EditContentPage({
     setSaving(false);
   };
 
-  /** שמירה ואז פרסום גרסה חדשה - כך הגרסה שמאשרים היא הנוסח שבעורך */
-  const handlePublishVersion = async (): Promise<boolean> => {
+  /**
+   * שמירה ואז פרסום גרסה חדשה לקבוצות היעד (ריק = כולם) - כך הגרסה שמאשרים
+   * היא הנוסח שבעורך
+   */
+  const handlePublishVersion = async (
+    targetGroups: TermsTargetGroup[],
+  ): Promise<boolean> => {
     setSaving(true);
     try {
       if (!(await saveContent())) return false;
       const { data, error } = await supabase.rpc(
         "publish_system_content_version",
-        { p_key: key },
+        {
+          p_key: key,
+          p_target_groups: targetGroups.length > 0 ? targetGroups : null,
+        },
       );
       if (error || typeof data !== "number") {
         console.error("Error publishing content version:", error);
@@ -127,7 +139,9 @@ export default function EditContentPage({
         return false;
       }
       setVersion(data);
-      toast.success(`גרסה ${data} פורסמה. המשתמשים יתבקשו לאשר אותה`);
+      toast.success(
+        `גרסה ${data} פורסמה. ${describeTargetGroups(targetGroups)} יתבקשו לאשר אותה`,
+      );
       return true;
     } finally {
       setSaving(false);

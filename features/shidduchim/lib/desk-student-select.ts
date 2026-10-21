@@ -1,4 +1,4 @@
-import { THIRD_PARTY_APPROVAL_COLUMNS } from "@/features/students/lib/third-party-card";
+import { FAVORITABLE_COLUMNS } from "@/features/students/lib/third-party-card";
 
 /**
  * מה שלוח העבודה קורא מכרטיס מועדף: התצוגה (שם, גיל, עיר, הורים, תעסוקה)
@@ -9,7 +9,7 @@ import { THIRD_PARTY_APPROVAL_COLUMNS } from "@/features/students/lib/third-part
  * שלא אושר להצגה מלאה ה-view מחזיר נתונים בסיסיים בלבד - parents_info עם
  * שמות הורים בלבד, כיוון חיים וכיסוי ראש ריקים - ו-partner_preferences נחסמת
  * ב-RLS, כך שלבדיקת ההתאמה פשוט אין מה להשוות. card_for והאישורים מזינים את
- * התג ואת חסימת השליחה בלוח. is_kohen מזין את כלל הכהן והגרושה; in_shidduchim, admin_paused_at ו-personal_status
+ * התג, את חסימת השליחה בלוח ואת הסינון של כרטיס שאינו מאושר (isFavoritable). is_kohen מזין את כלל הכהן והגרושה; in_shidduchim, admin_paused_at ו-personal_status
  * מזינים גם את תגי מצב המועמד (candidate-status.ts).
  */
 export const DESK_STUDENT_SELECT = `
@@ -29,7 +29,7 @@ export const DESK_STUDENT_SELECT = `
   head_cover_type,
   cellphone_type,
   parents_info,
-  ${THIRD_PARTY_APPROVAL_COLUMNS},
+  ${FAVORITABLE_COLUMNS},
   employment_history(category),
   partner_preferences(age_min, age_max, preferred_countries, work_status, head_cover_type, plan_for_life, cellphone_type)
 `;

@@ -10,6 +10,7 @@ import {
 } from "@/lib/forms/schema";
 
 import { isShadchanGender } from "./gender";
+import { isShadchanMatchType, normalizeMatchTypes } from "./match-types";
 
 /**
  * סכמה ומיפוי משותפים לטופס הצטרפות כשדכן, לעריכת הפרופיל העצמית ולעריכת
@@ -27,6 +28,8 @@ const LIST_MAX_LENGTH = 500;
 const PHONE_MAX_LENGTH = 30;
 const EMAIL_MAX_LENGTH = 200;
 const COMMUNITY_MAX_LENGTH = 100;
+
+export const MATCH_TYPES_REQUIRED_MESSAGE = "נא לבחור לפחות סוג שידוכים אחד";
 
 const tooLong = (max: number) => `הטקסט ארוך מדי (עד ${max} תווים)`;
 
@@ -99,10 +102,20 @@ export const shadchanProfileBaseSchema = z.object({
     SYNAGOGUE_RABBI_MAX_LENGTH,
     `שם הרב ארוך מדי (עד ${SYNAGOGUE_RABBI_MAX_LENGTH} תווים)`,
   ),
-  /** העיר שמוצגת בכרטיס ברשימת השדכנים (העמודה location) */
-  location: optionalText()
-    .max(CITY_MAX_LENGTH, tooLong(CITY_MAX_LENGTH))
-    .optional(),
+  /** טלפון של הרב (העמודה rabbi_phone) - להנהלה בלבד */
+  rabbi_phone: requiredPhone("טלפון של הרב").max(
+    PHONE_MAX_LENGTH,
+    tooLong(PHONE_MAX_LENGTH),
+  ),
+  /** עיר המגורים, שמוצגת בכרטיס ברשימת השדכנים (העמודה location) */
+  location: requiredText("עיר מגורים").max(
+    CITY_MAX_LENGTH,
+    tooLong(CITY_MAX_LENGTH),
+  ),
+  /** "סוג שידוכים שעוסק": לפחות אחד מהרשימה (match-types.ts) */
+  match_types: z
+    .array(z.string().refine(isShadchanMatchType, "ערך לא מוכר"))
+    .min(1, MATCH_TYPES_REQUIRED_MESSAGE),
   /**
    * "למה כדאי לאשר אותי" - להנהלה בלבד, אופציונלי. אופציונלי גם בסכמה
    * עצמה: גוף בקשה בלי המפתח (למשל מנתיב המנהל הישן) אינו מוחק את הערך.
@@ -147,7 +160,9 @@ export const EMPTY_SHADCHAN_FORM: ShadchanFormData = {
   languages: "",
   community: "",
   synagogue_rabbi: "",
+  rabbi_phone: "",
   location: "",
+  match_types: [],
   application_note: "",
 };
 
@@ -174,8 +189,9 @@ export interface ShadchanProfileColumns {
   languages: string[] | null;
   community: string;
   synagogue_rabbi: string;
-  /** מופיע רק כשהטופס כולל אותו - אחרת העמודה אינה נכתבת */
-  location?: string | null;
+  rabbi_phone: string;
+  location: string;
+  match_types: string[];
   /** מופיע רק כשהטופס כולל אותו - אחרת העמודה אינה נכתבת */
   application_note?: string | null;
 }
@@ -212,7 +228,9 @@ export function formToColumns(
       : null,
     community: data.community,
     synagogue_rabbi: data.synagogue_rabbi,
-    ...(data.location !== undefined ? { location: data.location || null } : {}),
+    rabbi_phone: data.rabbi_phone,
+    location: data.location,
+    match_types: normalizeMatchTypes(data.match_types),
     ...(shouldWriteNote
       ? { application_note: data.application_note || null }
       : {}),
@@ -233,7 +251,9 @@ export interface ShadchanProfileRow {
   languages?: string[] | string | null;
   community?: string | null;
   synagogue_rabbi?: string | null;
+  rabbi_phone?: string | null;
   location?: string | null;
+  match_types?: string[] | null;
   application_note?: string | null;
 }
 
@@ -256,11 +276,13 @@ export function rowToForm(row: ShadchanProfileRow): ShadchanFormData {
     community: row.community || "",
     // בקשות/פרופילים שנשמרו לפני שהשדה נדרש: ריק, ויידרש במילוי הבא
     synagogue_rabbi: row.synagogue_rabbi || "",
+    rabbi_phone: row.rabbi_phone || "",
     location: row.location || "",
+    match_types: normalizeMatchTypes(row.match_types),
     application_note: row.application_note || "",
   };
 }
 
 /** עמודות הפרופיל לשליפה (select) לעריכה */
 export const SHADCHAN_PROFILE_SELECT =
-  "gender, birth_date, avatar_path, bio, experience_years, closed_matches, specializations, contact_phone, contact_email, languages, community, synagogue_rabbi, location, application_note";
+  "gender, birth_date, avatar_path, bio, experience_years, closed_matches, specializations, contact_phone, contact_email, languages, community, synagogue_rabbi, rabbi_phone, location, match_types, application_note";

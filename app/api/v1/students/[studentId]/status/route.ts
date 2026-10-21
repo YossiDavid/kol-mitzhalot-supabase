@@ -6,6 +6,7 @@ import {
   PERSONAL_STATUS_VALUES,
   setStudentPersonalStatus,
 } from "@/features/engagements/lib/set-student-personal-status";
+import { isActiveShadchan } from "@/features/shadchanim/lib/shadchan-access";
 import { hasRole } from "@/lib/user";
 
 const bodySchema = z.object({
@@ -26,7 +27,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!hasRole(user, "admin") && !hasRole(user, "shadchan")) {
+  if (!hasRole(user, "admin") && !(await isActiveShadchan(user))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

@@ -279,7 +279,7 @@ test.describe("בקשות ועריכת מנהל", () => {
     // הדף מוצג מהשרת לפני ההידרציה; ממלאים שוב עד שההקלדה נקלטת בטופס
     await expect(async () => {
       await page.getByLabel("ביוגרפיה").fill(typed);
-      await page.getByLabel("עיר", { exact: true }).fill("אשדוד");
+      await page.getByLabel("עיר מגורים").fill("אשדוד");
       await expect(card.getByTestId("shadchan-card-description")).toHaveText(
         typed,
         { timeout: 1_000 },
