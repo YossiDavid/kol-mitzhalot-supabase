@@ -18,6 +18,8 @@ import Analytics from "@/components/website/google-analytics";
 import { TermsGateDialog } from "@/features/auth/components/terms-gate-dialog";
 import { resolveTermsGate } from "@/features/auth/lib/terms-gate";
 import { ShidduchCelebration } from "@/features/engagements/components/shidduch-celebration";
+import { IdleLogoutGuard } from "@/features/idle-logout/components/idle-logout-guard";
+import { getIdleLogoutMinutes } from "@/features/idle-logout/lib/idle-logout-setting";
 
 // כרטיס מיועד ציבורי: נתיב של בדיוק /app/students/<מזהה> ללא סגמנטים נוספים.
 // ה-lookahead השלילי מוציא במפורש את /app/students/create, כדי שדף יצירת
@@ -41,6 +43,8 @@ export default async function AppLayout({
   // הגדרת אימות הטלפון לא תלויה במשתמש, ולכן יוצאת במקביל ל-getUser ולא
   // אחריו. היא לא נזרקת (תופסת שגיאות בעצמה), ונצרכת רק למשתמש מחובר.
   const phoneVerificationPromise = getPhoneVerificationEnabled();
+  // כך גם זמן ההתנתקות האוטומטית (לא נזרק; כשל = ברירת המחדל)
+  const idleLogoutMinutesPromise = getIdleLogoutMinutes();
   const user = await getUser();
 
   const requestHeaders = await headers();
@@ -74,6 +78,7 @@ export default async function AppLayout({
   const termsGate = user ? await resolveTermsGate(user) : null;
 
   const roles = user ? getRoles(user) : [];
+  const idleLogoutMinutes = user ? await idleLogoutMinutesPromise : 0;
 
   // גולש לא מחובר בכרטיס ציבורי מקבל מעטפת מינימלית: אין sidebar, אין
   // ניווט תחתון ואין באנר התחזות — כולם כלי ניהול של משתמש מחובר.
@@ -120,6 +125,10 @@ export default async function AppLayout({
             </main>
             {/* חגיגת שידוכים - לא מעל דיאלוג התקנון החוסם */}
             {user && !termsGate && <ShidduchCelebration />}
+            {/* התנתקות אוטומטית אחרי חוסר פעילות (0 = כבוי בהגדרות המנהל) */}
+            {user && idleLogoutMinutes > 0 && (
+              <IdleLogoutGuard timeoutMinutes={idleLogoutMinutes} />
+            )}
             <Footer className="hidden md:block" />
           </div>
           <BottomNav roles={roles} />

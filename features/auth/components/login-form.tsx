@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { PageTitle } from "@/components/layout/page-header";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -51,10 +52,13 @@ function resolveLoginError(err: unknown): string {
 export function LoginForm({
   className,
   next = null,
+  notice = null,
   ...props
 }: React.ComponentPropsWithoutRef<"div"> & {
   /** היעד שאליו לחזור אחרי ההתחברות, כשההגעה לכאן הייתה מקישור עמוק */
   next?: string | null;
+  /** הודעה עדינה מעל הטופס (למשל אחרי התנתקות אוטומטית) */
+  notice?: string | null;
 }) {
   const router = useRouter();
 
@@ -97,6 +101,11 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
+      {notice ? (
+        <Alert role="status" data-testid="login-notice">
+          <AlertDescription>{notice}</AlertDescription>
+        </Alert>
+      ) : null}
       <Card>
         <CardHeader>
           <PageTitle>התחברות</PageTitle>

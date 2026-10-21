@@ -4,12 +4,16 @@ import { Suspense } from "react";
 import { ContactEmailSetting } from "@/features/contact-email/components/contact-email-setting";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PhoneVerificationToggle } from "@/features/admin/components/phone-verification-toggle";
+import { IdleLogoutSetting } from "@/features/idle-logout/components/idle-logout-setting";
 
 export default function SettingsPage() {
   return (
     <Page>
       <PageHeader title="הגדרות מערכת" description="עריכת תוכן מערכת" />
       <PhoneVerificationToggle />
+      <Suspense fallback={<Skeleton className="h-44 w-full" />}>
+        <IdleLogoutSetting />
+      </Suspense>
       <Suspense fallback={<Skeleton className="h-36 w-full" />}>
         <ContactEmailSetting />
       </Suspense>
