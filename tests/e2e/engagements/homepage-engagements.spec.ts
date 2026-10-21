@@ -25,7 +25,13 @@ test.describe("מודעות מאורסים בדף הבית", () => {
       .insert([
         {
           groom_name: recentGroom,
+          groom_father: "יעקב חיים",
+          groom_yeshiva: "ישיבת דעת אהרן",
+          groom_city: "בית שמש",
           bride_name: "כלה חדשה",
+          bride_father: "חיים יחיאל",
+          bride_seminary: "סמינר בנות אלישבע",
+          bride_city: "ירושלים",
           is_published: true,
           source: "admin",
           // הכנסה מרובה ב-PostgREST: עמודה חסרה באחת השורות נשמרת NULL
@@ -57,6 +63,18 @@ test.describe("מודעות מאורסים בדף הבית", () => {
     const section = page.getByTestId("engagements-confetti");
     await expect(section).toContainText(recentGroom, { timeout: 30_000 });
     await expect(section).not.toContainText(oldGroom);
+
+    // מודעה בעיצוב המסורתי: בהר"ר + שם האב, ישיבה/סמינר, עיר, "מאורסים"
+    const announcement = page
+      .getByTestId("engagement-announcement")
+      .filter({ hasText: recentGroom });
+    await expect(announcement).toContainText("בהר״ר יעקב חיים");
+    await expect(announcement).toContainText("ישיבת דעת אהרן");
+    await expect(announcement).toContainText("בהר״ר חיים יחיאל");
+    await expect(announcement).toContainText("סמינר בנות אלישבע");
+    await expect(announcement).toContainText("ירושלים");
+    await expect(announcement).toContainText("מאורסים");
+    await expect(announcement).toContainText("בס״ד");
     await expect(page.getByTestId("engagements-signup-cta")).toHaveAttribute(
       "href",
       "/auth/sign-up",

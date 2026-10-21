@@ -1,4 +1,8 @@
 import Link from "next/link";
+import {
+  ENGAGEMENT_ANNOUNCEMENT_COLUMNS,
+  EngagementAnnouncement,
+} from "@/components/website/engagement-announcement";
 import { Suspense } from "react";
 import { WebCta } from "@/components/website/cta";
 import { LogoSvg } from "@/components/website/logo-svg";
@@ -92,9 +96,7 @@ function ArticleCard({
         <h3 className="text-subtitle leading-[1.35] font-bold text-foreground">
           {title}
         </h3>
-        <p className="text-body-sm text-muted-foreground">
-          {excerpt}
-        </p>
+        <p className="text-body-sm text-muted-foreground">{excerpt}</p>
         <div className="mt-auto flex items-center justify-between border-t border-border pt-4">
           <div className="flex items-center gap-2.5">
             <span className="flex size-8 items-center justify-center rounded-md bg-primary-muted">
@@ -136,7 +138,7 @@ async function EngagementsSection({
 
   let query = supabase
     .from("engagements")
-    .select("id, groom_name, bride_name, groom_city, bride_city, shadchan_name")
+    .select(ENGAGEMENT_ANNOUNCEMENT_COLUMNS)
     .eq("is_published", true)
     .order("created_at", { ascending: false })
     .limit(10);
@@ -158,26 +160,9 @@ async function EngagementsSection({
   if (!engagements?.length) return null;
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       {engagements.map((e) => (
-        <div
-          key={e.id}
-          className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card p-4 text-center"
-          style={{ aspectRatio: "3/4" }}
-        >
-          <div className="mb-1 text-body-sm font-bold text-foreground">
-            {e.groom_name}
-          </div>
-          <div className="mb-2 text-caption text-muted-foreground">&</div>
-          <div className="text-body-sm font-bold text-foreground">
-            {e.bride_name}
-          </div>
-          {e.groom_city ? (
-            <div className="mt-3 text-caption text-muted-foreground">
-              {e.groom_city}
-            </div>
-          ) : null}
-        </div>
+        <EngagementAnnouncement key={e.id} data={e} />
       ))}
     </div>
   );
@@ -187,7 +172,9 @@ async function ArticlesSection() {
   const supabase = await createClient();
   const { data: articles } = await supabase
     .from("articles")
-    .select("id, slug, title, excerpt, category, read_time_minutes, published_at")
+    .select(
+      "id, slug, title, excerpt, category, read_time_minutes, published_at",
+    )
     .eq("is_published", true)
     .order("published_at", { ascending: false })
     .limit(9);
@@ -225,7 +212,7 @@ export default function WhatsNewPage({
     <>
       {/* ── 1. HERO ── */}
       <section className="relative overflow-hidden bg-primary text-primary-foreground">
-        <div className="bg-brand-gold-wash pointer-events-none absolute inset-0" />
+        <div className="pointer-events-none absolute inset-0 bg-brand-gold-wash" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/logo_negative.svg"
@@ -237,7 +224,7 @@ export default function WhatsNewPage({
         />
 
         <div className="relative shell-site flex flex-col items-center justify-center py-24 text-center md:py-28">
-          <h1 className="max-w-5xl text-hero text-balance text-primary-foreground">
+          <h1 className="text-hero max-w-5xl text-balance text-primary-foreground">
             כל מה שחדש בתחום השידוכים
             <br />
             <span
@@ -321,7 +308,10 @@ export default function WhatsNewPage({
             fallback={
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-[340px] animate-pulse rounded-2xl bg-border" />
+                  <div
+                    key={i}
+                    className="h-[340px] animate-pulse rounded-2xl bg-border"
+                  />
                 ))}
               </div>
             }

@@ -5,6 +5,10 @@ import { EndorsementsCarousel } from "@/components/website/endorsements-carousel
 import { WebCta } from "@/components/website/cta";
 import { EngagementsConfetti } from "@/components/website/engagements-confetti";
 import {
+  ENGAGEMENT_ANNOUNCEMENT_COLUMNS,
+  EngagementAnnouncement,
+} from "@/components/website/engagement-announcement";
+import {
   DedicationTilesFallback,
   DedicationTilesSection,
 } from "@/components/website/dedications/dedication-tiles-section";
@@ -292,7 +296,7 @@ async function HomepageEngagements() {
   ).toISOString();
   const { data: engagements } = await supabase
     .from("engagements")
-    .select("id, groom_name, bride_name, groom_city")
+    .select(ENGAGEMENT_ANNOUNCEMENT_COLUMNS)
     .eq("is_published", true)
     .gte("created_at", since)
     .order("created_at", { ascending: false })
@@ -328,30 +332,16 @@ async function HomepageEngagements() {
               ))}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {engagements.map((e) => (
-              <div
-                key={e.id}
-                className="flex flex-col items-center justify-center rounded-[14px] border border-border bg-card p-4 text-center"
-                style={{ aspectRatio: "3/4" }}
-              >
-                <div className="mb-1 text-body-sm font-bold text-foreground">
-                  {e.groom_name}
-                </div>
-                <div className="mb-2 text-caption text-muted-foreground">&</div>
-                <div className="text-body-sm font-bold text-foreground">
-                  {e.bride_name}
-                </div>
-                {e.groom_city && (
-                  <div className="mt-3 text-caption text-muted-foreground">
-                    {e.groom_city}
-                  </div>
-                )}
-              </div>
+              <EngagementAnnouncement key={e.id} data={e} />
             ))}
           </div>
           <div className="mt-10 flex flex-col items-center gap-3 text-center">
-            <p className="text-title font-bold text-primary" style={{ margin: 0 }}>
+            <p
+              className="text-title font-bold text-primary"
+              style={{ margin: 0 }}
+            >
               הבשורה הטובה הבאה יכולה להיות שלכם
             </p>
             <Button asChild size="lg">
