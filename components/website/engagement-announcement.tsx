@@ -1,19 +1,11 @@
-import { Frank_Ruhl_Libre } from "next/font/google";
-
 import { jewishDateHebrew } from "@/lib/jewishDatte";
 import { cn } from "@/lib/utils";
 
 /**
- * מודעת מאורסים בעיצוב המסורתי: מסגרת מעוטרת, החתן מימין והכלה משמאל
- * (שם, "בהר"ר" + שם האב, ישיבה/סמינר, עיר), "מאורסים" במרכז ותאריך עברי.
- * שדה ריק פשוט לא מוצג.
+ * מודעת מאורסים בעימוד המסורתי - החתן מימין והכלה משמאל (שם, "בהר"ר" +
+ * שם האב, ישיבה/סמינר, עיר), "מאורסים" במרכז ותאריך עברי - בפונט ובצבעים
+ * של האתר. שדה ריק פשוט לא מוצג.
  */
-
-const announcementFont = Frank_Ruhl_Libre({
-  subsets: ["hebrew"],
-  weight: ["500", "900"],
-  display: "swap",
-});
 
 /** העמודות שהמודעה צריכה - לשאילתות בדף הבית וב"מה חדש" */
 export const ENGAGEMENT_ANNOUNCEMENT_COLUMNS =
@@ -55,13 +47,13 @@ function Party({ name, father, institution, city, align }: PartyProps) {
         align === "start" ? "text-start" : "text-end",
       )}
     >
-      <p className="m-0 text-subtitle leading-tight font-black sm:text-title">
+      <p className="m-0 text-subtitle leading-tight font-bold text-primary sm:text-title">
         {name}
       </p>
       {details.map((line) => (
         <p
           key={line}
-          className="m-0 text-body-sm leading-snug font-medium sm:text-body"
+          className="m-0 text-body-sm leading-snug text-muted-foreground sm:text-body"
         >
           {line}
         </p>
@@ -70,22 +62,25 @@ function Party({ name, father, institution, city, align }: PartyProps) {
   );
 }
 
-/** תלתל קישוט לפינה; מסובב לכל פינה */
-function CornerFlourish({ className }: { className: string }) {
+/** עיטור עדין לפינת המסגרת הפנימית; מסובב לכל פינה */
+function CornerOrnament({ className }: { className: string }) {
   return (
     <svg
-      viewBox="0 0 40 40"
+      viewBox="0 0 32 32"
       aria-hidden="true"
-      className={cn("absolute size-7 sm:size-9", className)}
+      className={cn(
+        "pointer-events-none absolute size-6 text-primary/60 sm:size-8",
+        className,
+      )}
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.6"
+      strokeWidth="2"
       strokeLinecap="round"
     >
-      <path d="M4 36 C4 18 10 6 30 4" />
-      <path d="M30 4 C22 8 20 14 26 16 C31 17 32 11 28 10" />
-      <path d="M4 36 C8 28 14 26 16 32 C17 37 11 38 10 34" />
-      <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
+      <path d="M3 22 C3 11 11 3 22 3" />
+      <path d="M22 3 C17 5 16 10 20 11 C23 12 24 8 21 7" />
+      <path d="M3 22 C5 17 10 16 11 20 C12 23 8 24 7 21" />
+      <circle cx="10" cy="10" r="2.2" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -109,17 +104,14 @@ export function EngagementAnnouncement({
 
   return (
     <article
-      className={cn(
-        announcementFont.className,
-        "relative bg-white p-2 text-neutral-900 shadow-sm",
-      )}
+      className="rounded-[14px] border-2 border-border bg-card p-2"
       data-testid="engagement-announcement"
     >
-      <div className="relative border-[3px] border-double border-neutral-800 px-5 pt-5 pb-4 sm:px-8 sm:pt-6">
-        <CornerFlourish className="-top-1 -right-1 -scale-x-100" />
-        <CornerFlourish className="-top-1 -left-1" />
-        <CornerFlourish className="-right-1 -bottom-1 rotate-180" />
-        <CornerFlourish className="-bottom-1 -left-1 -scale-y-100" />
+      <div className="relative rounded-[10px] border-2 border-primary/30 px-6 pt-5 pb-4 sm:px-9 sm:pt-6">
+        <CornerOrnament className="top-1 right-1 -scale-x-100" />
+        <CornerOrnament className="top-1 left-1" />
+        <CornerOrnament className="right-1 bottom-1 rotate-180" />
+        <CornerOrnament className="bottom-1 left-1 -scale-y-100" />
 
         <div className="flex gap-4 sm:gap-8">
           <Party
@@ -138,11 +130,11 @@ export function EngagementAnnouncement({
           />
         </div>
 
-        <p className="m-0 mt-2 text-center text-display leading-none font-black tracking-wide">
+        <p className="m-0 mt-3 text-center text-display leading-none font-bold text-primary">
           מאורסים
         </p>
         {hebrewDate ? (
-          <p className="m-0 mt-2 text-center text-body-sm font-medium sm:text-body">
+          <p className="m-0 mt-2 text-center text-body-sm text-muted-foreground">
             בס״ד, {hebrewDate}
           </p>
         ) : null}
