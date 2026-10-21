@@ -3,8 +3,15 @@
  * Replaces stub SupportPage. Links to /contact.
  * User: "2. לסדר את הלינקים ולהוסיף עמודים רלוונטיים."
  */
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+
+export const metadata: Metadata = {
+  title: "שירות ותמיכה",
+  description:
+    "שאלות נפוצות על ההרשמה, השימוש במערכת ופרסום מודעת מאורסים, ודרכי פנייה לצוות קול מצהלות.",
+};
 
 const faqs = [
   {
@@ -29,7 +36,7 @@ export default function SupportPage() {
   return (
     <>
       <section className="relative overflow-hidden bg-primary text-primary-foreground">
-        <div className="bg-brand-gold-wash pointer-events-none absolute inset-0" />
+        <div className="pointer-events-none absolute inset-0 bg-brand-gold-wash" />
         <div className="relative shell-site flex flex-col items-center justify-center py-24 text-center md:py-28">
           <h1 className="text-hero text-primary-foreground">שירות ותמיכה</h1>
           <p className="mt-8 max-w-2xl text-subtitle text-primary-foreground/85">
@@ -54,13 +61,14 @@ export default function SupportPage() {
           </h2>
           <div className="flex flex-col gap-8">
             {faqs.map((item) => (
-              <div key={item.q} className="border-b border-border pb-8 last:border-b-0">
+              <div
+                key={item.q}
+                className="border-b border-border pb-8 last:border-b-0"
+              >
                 <h3 className="mb-2 text-subtitle font-bold text-foreground">
                   {item.q}
                 </h3>
-                <p className="text-body text-muted-foreground">
-                  {item.a}
-                </p>
+                <p className="text-body text-muted-foreground">{item.a}</p>
               </div>
             ))}
           </div>

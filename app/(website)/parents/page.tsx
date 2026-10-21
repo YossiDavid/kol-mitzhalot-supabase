@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { WebStats } from "@/components/website/stats";
@@ -11,6 +12,12 @@ import {
   ProposalReplyPreview,
 } from "@/components/website/product-previews";
 import { Button } from "@/components/ui/button";
+
+export const metadata: Metadata = {
+  title: { absolute: "קול מצהלות להורים ומיועדים" },
+  description:
+    "ממלאים כרטיס קו״ח פעם אחת ומקבלים הצעות מתאימות משדכנים מורשים, במקום אחד ובשמירה על צנעת הפרט. הרשמה ללא עלות.",
+};
 
 const FEATURES = [
   {
@@ -91,7 +98,7 @@ export default function ParentsPage() {
     <>
       {/* ── 1. HERO ── */}
       <section className="relative overflow-hidden bg-primary text-primary-foreground">
-        <div className="bg-brand-gold-wash pointer-events-none absolute inset-0" />
+        <div className="pointer-events-none absolute inset-0 bg-brand-gold-wash" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/logo_negative.svg"

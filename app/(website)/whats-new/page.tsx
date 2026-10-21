@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ENGAGEMENT_ANNOUNCEMENT_COLUMNS,
@@ -9,6 +10,12 @@ import { LogoSvg } from "@/components/website/logo-svg";
 import { ArticleCover } from "@/components/website/product-previews";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: "מה חדש – שידוכים שנסגרו ועדכונים",
+  description:
+    "מודעות מאורסים מהשידוכים שנסגרו לאחרונה, עדכונים ומאמרים בתחום השידוכים בקהילתנו.",
+};
 
 const TIME_FILTERS = [
   { label: "היום", value: "today" },

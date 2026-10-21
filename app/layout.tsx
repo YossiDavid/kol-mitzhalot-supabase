@@ -17,8 +17,11 @@ const ploni = localFont({
 
 export const metadata: Metadata = {
   metadataBase: new URL(getAppOrigin()),
-  title: "קול מצהלות",
+  // עמוד שמגדיר כותרת מקבל את הסיומת "| קול מצהלות"; עמוד בלי כותרת - ברירת המחדל
+  title: { default: "קול מצהלות", template: "%s | קול מצהלות" },
   description: "המערכת הגדולה לניהול שידוכים במגזר החסידי",
+  applicationName: "קול מצהלות",
+  openGraph: { siteName: "קול מצהלות", locale: "he_IL", type: "website" },
   // אימות בעלות ב-Google Search Console (שיטת "תג HTML"). בלי המשתנה - אין תג;
   // אימות דרך DNS (נכס דומיין) לא צריך אותו בכלל.
   ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION

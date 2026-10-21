@@ -3,6 +3,14 @@
  * Replaces stub PricingPage. No DB API.
  * User: "2. לסדר את הלינקים ולהוסיף עמודים רלוונטיים."
  */
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "מסלולים ומחירים",
+  description:
+    "מסלולי השימוש במערכת קול מצהלות: הרשמה ללא עלות להורים ומיועדים, ומסלולים מורחבים לשדכנים.",
+};
+
 export default function PricingPage() {
   const plans = [
     {
@@ -28,7 +36,7 @@ export default function PricingPage() {
   return (
     <>
       <section className="relative overflow-hidden bg-primary text-primary-foreground">
-        <div className="bg-brand-gold-wash pointer-events-none absolute inset-0" />
+        <div className="pointer-events-none absolute inset-0 bg-brand-gold-wash" />
         <div className="relative shell-site flex flex-col items-center justify-center py-24 text-center md:py-28">
           <h1 className="text-hero text-primary-foreground">מסלולים</h1>
           <p className="mt-8 max-w-2xl text-subtitle text-primary-foreground/85">
@@ -43,15 +51,15 @@ export default function PricingPage() {
           {plans.map((plan) => (
             <article
               key={plan.name}
-              className="flex flex-col gap-4 border-b border-border pb-8 md:border-b-0 md:border-e md:pb-0 md:pe-8 last:md:border-e-0 last:md:pe-0"
+              className="flex flex-col gap-4 border-b border-border pb-8 md:border-e md:border-b-0 md:pe-8 md:pb-0 last:md:border-e-0 last:md:pe-0"
             >
-              <h2 className="text-display font-bold text-primary">{plan.name}</h2>
+              <h2 className="text-display font-bold text-primary">
+                {plan.name}
+              </h2>
               <p className="text-subtitle font-bold text-foreground">
                 {plan.price}
               </p>
-              <p className="text-body text-muted-foreground">
-                {plan.desc}
-              </p>
+              <p className="text-body text-muted-foreground">{plan.desc}</p>
               <ul className="m-0 list-disc space-y-2 ps-5 text-body-sm text-foreground">
                 {plan.points.map((point) => (
                   <li key={point}>{point}</li>

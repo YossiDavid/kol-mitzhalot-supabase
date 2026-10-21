@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { WebStats } from "@/components/website/stats";
@@ -12,6 +13,12 @@ import {
   ShadchanimProductPreview,
 } from "@/components/website/product-previews";
 import { Button } from "@/components/ui/button";
+
+export const metadata: Metadata = {
+  title: { absolute: "קול מצהלות לשדכנים" },
+  description:
+    "מערכת לשדכנים ושדכניות: מאגר מיועדים מאנ״ש, לוח עבודה, ניהול הצעות מול שני הצדדים ופורום שדכנים. הרשמה ללא עלות.",
+};
 
 const FEATURES = [
   {
@@ -81,7 +88,7 @@ export default function ShadchanPage() {
     <>
       {/* ── 1. HERO ── */}
       <section className="relative overflow-hidden bg-primary text-primary-foreground">
-        <div className="bg-brand-gold-wash pointer-events-none absolute inset-0" />
+        <div className="pointer-events-none absolute inset-0 bg-brand-gold-wash" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/logo_negative.svg"
@@ -98,8 +105,8 @@ export default function ShadchanPage() {
               שדכנים ושדכניות
             </h1>
             <p className="mb-10 max-w-2xl text-subtitle text-primary-foreground/85">
-              מערכת קול מצהלות תוכננה ונבנתה במיוחד עבורכם, והיא כאן כדי לפתור את
-              כל האתגרים שאתם מתמודדים איתם בהצעת וניהול שידוכים.
+              מערכת קול מצהלות תוכננה ונבנתה במיוחד עבורכם, והיא כאן כדי לפתור
+              את כל האתגרים שאתם מתמודדים איתם בהצעת וניהול שידוכים.
             </p>
             <Button
               asChild

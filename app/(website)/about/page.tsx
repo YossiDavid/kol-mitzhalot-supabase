@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { WebStats } from "@/components/website/stats";
 import { RabbinicalEndorsements } from "@/components/website/rabbinical-endorsements";
 import { WebCta } from "@/components/website/cta";
+
+export const metadata: Metadata = {
+  title: { absolute: "אודות קול מצהלות" },
+  description:
+    "הסיפור והמטרה של קול מצהלות: מערכת שהוקמה בהכוונת רבני הקהילה כדי לעזור להורים, למיועדים ולשדכנים להגיע לזיווג הגון בקלות ובצניעות.",
+};
 
 function HighlightSpan({ children }: { children: React.ReactNode }) {
   return (
@@ -66,7 +73,7 @@ export default function AboutPage() {
     <>
       {/* ── 1. HERO ── */}
       <section className="relative overflow-hidden bg-primary text-primary-foreground">
-        <div className="bg-brand-gold-wash pointer-events-none absolute inset-0" />
+        <div className="pointer-events-none absolute inset-0 bg-brand-gold-wash" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/logo_negative.svg"
@@ -78,7 +85,7 @@ export default function AboutPage() {
         />
 
         <div className="relative shell-site flex flex-col items-center justify-center py-28 text-center md:py-36">
-          <h1 className="max-w-5xl text-hero text-balance text-primary-foreground">
+          <h1 className="text-hero max-w-5xl text-balance text-primary-foreground">
             קול מצהלות הוקמה
             <br />
             <span
@@ -108,9 +115,7 @@ export default function AboutPage() {
                 <h2 className="text-title leading-snug font-bold text-primary">
                   {title}
                 </h2>
-                <p className="text-body text-foreground/80">
-                  {desc}
-                </p>
+                <p className="text-body text-foreground/80">{desc}</p>
               </article>
             ))}
           </div>
@@ -127,8 +132,8 @@ export default function AboutPage() {
               <HighlightSpan>יצאנו לדרך.</HighlightSpan>
             </h2>
             <p className="mb-5 text-body text-foreground/80">
-              לא מתוך מחשבה להמציא מחדש את עולם השידוכים, המתנהל בדרך אבותינו הק'
-              מזה דורי דורות, אלא במטרה לשמור על הקיים ולהכניס לתוכו כלי עזר
+              לא מתוך מחשבה להמציא מחדש את עולם השידוכים, המתנהל בדרך אבותינו
+              הק' מזה דורי דורות, אלא במטרה לשמור על הקיים ולהכניס לתוכו כלי עזר
               וסיוע הנצרך בעקבות המצב, לבנות מערכת טכנולוגית שתקל על ההורים, על
               המיועדים ובעיקר על השדכנים, מבלי לפגום במעמד הקדוש של הקמת בית
               בישראל.

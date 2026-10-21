@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense, type FC, type SVGProps } from "react";
 import { WebStats } from "@/components/website/stats";
@@ -26,6 +27,12 @@ import { Button } from "@/components/ui/button";
 import { ENDORSEMENTS_SECTION_ID } from "@/components/website/endorsements-anchor";
 import { fetchPublishedEndorsements } from "@/lib/endorsements";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: { absolute: "קול מצהלות – הארגון לקידום שידוכים בציבור החסידי" },
+  description:
+    "מערכת שידוכים לציבור החסידי: מאגר מיועדים מאנ״ש, שדכנים נבחרים ופורום שדכנים, בהמלצת ובפיקוח רבני הקהילה. הרשמה ללא עלות.",
+};
 
 type SvgIcon = FC<SVGProps<SVGSVGElement>>;
 

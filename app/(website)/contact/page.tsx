@@ -117,7 +117,10 @@ function ContactForm() {
     return <SuccessBox title="הפנייה נשלחה בהצלחה!" sub="נחזור אליכם בקרוב." />;
   }
   return (
-    <form action={action} className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-8">
+    <form
+      action={action}
+      className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-8"
+    >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="שם" name="name" required />
         <Field label="מייל" name="email" required type="email" />
@@ -139,14 +142,20 @@ function ContactForm() {
 }
 
 function EngagementForm() {
-  const [state, action, pending] = useActionState(submitEngagementForm, initial);
+  const [state, action, pending] = useActionState(
+    submitEngagementForm,
+    initial,
+  );
   if (state?.ok) {
     return (
       <SuccessBox title="המודעה התקבלה!" sub="תפורסם לאחר בדיקה ואישור." />
     );
   }
   return (
-    <form action={action} className="flex flex-col gap-8 rounded-2xl border border-border bg-card p-8">
+    <form
+      action={action}
+      className="flex flex-col gap-8 rounded-2xl border border-border bg-card p-8"
+    >
       <FormSection title="החתן">
         <Field label="שם החתן" name="groom_name" required />
         <Field label="שם אביו" name="groom_father" required />
@@ -169,7 +178,12 @@ function EngagementForm() {
         <Field label="שם השדכן" name="shadchan_name" />
         <Field label="שם השולח" name="submitter_name" required />
         <Field label="טלפון השולח" name="submitter_phone" required type="tel" />
-        <Field label="מייל השולח" name="submitter_email" required type="email" />
+        <Field
+          label="מייל השולח"
+          name="submitter_email"
+          required
+          type="email"
+        />
       </FormSection>
       <FormError state={state} />
       <div>
@@ -185,14 +199,18 @@ function EngagementForm() {
 }
 
 function IdeaForm() {
-  const [state, action, pending] = useActionState(submitShidduchIdeaForm, initial);
+  const [state, action, pending] = useActionState(
+    submitShidduchIdeaForm,
+    initial,
+  );
   if (state?.ok) {
-    return (
-      <SuccessBox title="ההצעה התקבלה!" sub="תשובה תישלח למייל שציינת." />
-    );
+    return <SuccessBox title="ההצעה התקבלה!" sub="תשובה תישלח למייל שציינת." />;
   }
   return (
-    <form action={action} className="flex flex-col gap-8 rounded-2xl border border-border bg-card p-8">
+    <form
+      action={action}
+      className="flex flex-col gap-8 rounded-2xl border border-border bg-card p-8"
+    >
       <FormSection title="המיועד">
         <Field label="שם המיועד" name="male_name" required />
         <Field label="שם אביו" name="male_father" required />
@@ -221,7 +239,7 @@ function IdeaForm() {
       </FormSection>
       <Field label="סיבת ההתאמה לדעתך" name="reason" type="textarea" rows={4} />
       <div>
-        <p className="text-label mb-1.5 font-bold">
+        <p className="mb-1.5 text-label font-bold">
           רוצה ללוות את השדכנים בקידום ההצעה?
         </p>
         <div className="flex gap-6">
@@ -268,7 +286,7 @@ export default function ContactPage() {
   return (
     <>
       <section className="relative overflow-hidden bg-primary text-primary-foreground">
-        <div className="bg-brand-gold-wash pointer-events-none absolute inset-0" />
+        <div className="pointer-events-none absolute inset-0 bg-brand-gold-wash" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/logo_negative.svg"
