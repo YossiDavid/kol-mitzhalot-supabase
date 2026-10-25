@@ -27,7 +27,7 @@ const codeSchema = z.object({
         .string()
         .regex(
           new RegExp(`^\\d{${CODE_MIN_LENGTH},${CODE_MAX_LENGTH}}$`),
-          "הקוד מורכב מ-6 ספרות",
+          "הקוד מורכב מספרות בלבד, בדיוק כפי שמופיע במייל",
         ),
     ),
 });
@@ -92,7 +92,7 @@ export function EmailCodeForm({
         הזנת קוד מהמייל
       </h2>
       <p className="text-body-sm text-muted-foreground">
-        באותו מייל מופיע גם קוד בן 6 ספרות. הקלידו אותו כאן כדי להיכנס בלי
+        באותו מייל מופיע גם קוד מספרי. הקלידו אותו כאן כדי להיכנס בלי
         הקישור.
       </p>
       <Form {...form}>
@@ -140,13 +140,13 @@ export function EmailCodeForm({
               control={form.control}
               name="code"
               render={({ field }) => (
-                <FormFieldShell label="הקוד בן 6 הספרות" required>
+                <FormFieldShell label="הקוד מהמייל" required>
                   <Input
                     {...field}
                     type="text"
                     inputMode="numeric"
                     autoComplete="one-time-code"
-                    placeholder="123456"
+                    placeholder="12345678"
                     maxLength={CODE_MAX_LENGTH + 2}
                     dir="ltr"
                     className="text-start tracking-widest"

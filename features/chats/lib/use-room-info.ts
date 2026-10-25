@@ -20,6 +20,8 @@ export type RoomInfo = {
   context: RoomContext | null;
   /** שדכן/מנהל: רשאי לראות כרטיסים של הצד השני (תפריט "כרטיסי המשתמש") */
   isStaffViewer: boolean;
+  /** מתי הצד השני נראה לאחרונה באפליקציה (user_profiles.last_seen_at) */
+  otherLastSeenAt: string | null;
 };
 
 const EMPTY_INFO: RoomInfo = {
@@ -29,6 +31,7 @@ const EMPTY_INFO: RoomInfo = {
   avatarUrl: null,
   context: null,
   isStaffViewer: false,
+  otherLastSeenAt: null,
 };
 
 /**
@@ -66,13 +69,18 @@ export function useRoomInfo(roomId: string): RoomInfo {
         avatarUrl: null,
         context: parseRoomContext(room),
         isStaffViewer: hasRole(user, "shadchan") || hasRole(user, "admin"),
+        otherLastSeenAt: null,
       };
 
       try {
-        const { data } = await supabase.rpc("get_user_metadata", {
-          target_user_id: otherUserId,
-        });
+        const [{ data }, lastSeen] = await Promise.all([
+          supabase.rpc("get_user_metadata", { target_user_id: otherUserId }),
+          supabase.rpc("get_chat_partner_last_seen", { p_room_id: roomId }),
+        ]);
         if (!isMounted) return;
+        if (lastSeen.error) {
+          console.error("[chats/last-seen]", lastSeen.error.message);
+        }
         const metadata = data as UserMetadata;
         setLoaded({
           roomId,
@@ -80,6 +88,8 @@ export function useRoomInfo(roomId: string): RoomInfo {
             ...base,
             title: getDisplayName(metadata),
             avatarUrl: getAvatarUrl(metadata),
+            otherLastSeenAt:
+              typeof lastSeen.data === "string" ? lastSeen.data : null,
           },
         });
       } catch {

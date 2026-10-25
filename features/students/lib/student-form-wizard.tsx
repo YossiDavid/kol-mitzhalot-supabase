@@ -7,6 +7,8 @@ import { toast } from "sonner";
 
 import { Form } from "@/components/ui/form";
 import { Box, PageTitle } from "@/components/layout";
+import { Button } from "@/components/ui/button";
+import type { FamilyPrefill } from "@/features/students/lib/family-prefill";
 import { studentFields } from "@/features/students/components/create-form/fields-data";
 import { DynamicField } from "@/features/students/components/create-form/fields/dynamic-field";
 import { FIELD_GRID_CLASS } from "@/features/students/components/create-form/field-layout";
@@ -310,6 +312,8 @@ export type StudentFormWizardProps = {
    * ממתין להם.
    */
   lateAuthorDefaults?: LateAuthorDefaults;
+  /** יצירה: פרטי המשפחה מכרטיס קודם של אותו הורה, למילוי בלחיצה */
+  familyPrefill?: FamilyPrefill | null;
   onSubmit: (values: StudentFormValues) => Promise<void>;
   /**
    * עריכה בלבד: "שמירת שינויים" מכל שלב, בלי לעזוב אותו. מחזיר האם נשמר.
@@ -327,6 +331,7 @@ export function StudentFormWizard({
   submittingLabel,
   initialValues,
   lateAuthorDefaults,
+  familyPrefill = null,
   onSubmit,
   onSaveProgress,
   isRefreshingSavedValues = false,
@@ -368,6 +373,19 @@ export function StudentFormWizard({
       if (isEmpty && isUntouched) form.setValue(path, value);
     }
   }, [form, lateAuthorDefaults]);
+
+  const [isFamilyPrefilled, setIsFamilyPrefilled] = useState(false);
+  const applyFamilyPrefill = useCallback(() => {
+    if (!familyPrefill) return;
+    for (const key of ["father", "mother", "family", "parents"] as const) {
+      form.setValue(key, familyPrefill.values[key], {
+        shouldDirty: true,
+        shouldValidate: false,
+      });
+    }
+    setIsFamilyPrefilled(true);
+    toast.success("פרטי המשפחה מולאו. אפשר לעבור עליהם בשלבי המשפחה");
+  }, [familyPrefill, form]);
 
   // האשף צופה רק במגדר (תוויות ושמות שלבים). תנאי תצוגה נצפים בכל שדה ומקטע
   // לחוד (use-form-conditions.ts), כדי שהקלדה לא תרנדר את כל הטופס
@@ -559,6 +577,20 @@ export function StudentFormWizard({
         isEnabled={shouldSkipStepValidation}
         onChange={setShouldSkipStepValidation}
       />
+      {familyPrefill && !isFamilyPrefilled && (
+        <div
+          className="flex flex-col gap-3 rounded-lg border border-primary/40 bg-primary-muted px-4 py-3 text-body-sm sm:flex-row sm:items-center sm:justify-between"
+          data-testid="family-prefill-banner"
+        >
+          <p>
+            כבר מילאת כרטיס עבור <strong>{familyPrefill.sourceName}</strong>.
+            אפשר להעתיק משם את פרטי ההורים והמשפחה, ולתקן מה שצריך.
+          </p>
+          <Button type="button" size="sm" onClick={applyFamilyPrefill}>
+            מילוי פרטי המשפחה
+          </Button>
+        </div>
+      )}
       {/* במובייל הכרטיס נפרש עד קצוות המסך, כדי שהשדות יקבלו את כל הרוחב */}
       <Box
         ref={shellRef}

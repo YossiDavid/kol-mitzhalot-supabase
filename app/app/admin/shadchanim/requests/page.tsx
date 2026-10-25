@@ -42,6 +42,7 @@ type ShadchanRequest = {
   rabbi_phone: string | null;
   match_types: string[] | null;
   application_note: string | null;
+  referral_source: string | null;
   languages: string[] | null;
   certifications: string[] | null;
   application_status: "pending" | "approved" | "rejected" | null;
@@ -322,6 +323,14 @@ async function ShadchanRequestsContent() {
                     >
                       {formatMatchTypes(request.match_types) ||
                         MISSING_FIELD_LABEL}
+                    </p>
+                  </div>
+                  <div data-testid="request-referral-source">
+                    <h4 className="mb-1 font-semibold">מי הפנה לקול מצהלות:</h4>
+                    <p className="text-body-sm">
+                      {request.referral_source || (
+                        <span className="text-muted-foreground">לא צוין</span>
+                      )}
                     </p>
                   </div>
                   <div

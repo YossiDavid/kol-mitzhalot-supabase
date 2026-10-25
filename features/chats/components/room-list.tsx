@@ -177,7 +177,8 @@ export function RoomList() {
                     }
                   : r,
               )
-              .toSorted(byLastAtDesc),
+              // sort על המערך החדש של map; toSorted אינו קיים בכרום 109
+              .sort(byLastAtDesc),
           );
         },
       )

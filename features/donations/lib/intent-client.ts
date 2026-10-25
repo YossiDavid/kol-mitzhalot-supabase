@@ -3,6 +3,7 @@
  * שמנפיק את ה-id וכתובת ה-CallBack, והלקוח רק משתמש בהם.
  */
 import { z } from "zod";
+import type { DonationCurrency } from "./currency";
 import type { DonationStatus } from "./status";
 import { isDonationStatus } from "./status";
 
@@ -23,6 +24,7 @@ export type DonationIntent = z.infer<typeof intentResponseSchema>;
 export interface IntentRequest {
   amount: number;
   frequency: "once" | "monthly";
+  currency: DonationCurrency;
   dedicationType: string;
   dedicationName: string;
   firstName: string;

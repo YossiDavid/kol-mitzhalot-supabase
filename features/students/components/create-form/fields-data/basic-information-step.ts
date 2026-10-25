@@ -4,6 +4,7 @@ import {
 } from "@/features/students/lib/student-photo-rules";
 import {
   CELLPHONE_TYPE_OPTIONS,
+  HEAD_COVER_TYPE_OPTIONS,
   COMMUNITY_SEARCH,
   DOCUMENT_ACCEPT,
   LANGUAGE_OPTIONS,
@@ -217,12 +218,7 @@ export const basicInformationStep: FormSteps = {
           label: "סוג כיסוי ראש נהוג",
           type: "select",
           vertical: true,
-          options: [
-            { value: "kerchief", label: "מטפחת" },
-            { value: "wig", label: "פאה" },
-            { value: "kerchief_on_wig", label: "מטפחת על פאה" },
-            { value: "other", label: "לא משנה" },
-          ],
+          options: HEAD_COVER_TYPE_OPTIONS,
           condition: genderIs("female"),
         },
         {

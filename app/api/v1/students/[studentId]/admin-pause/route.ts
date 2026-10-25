@@ -7,7 +7,11 @@ import { describeSupabaseError } from "@/lib/supabase/describe-error";
 import { createClient } from "@/lib/supabase/server";
 import { hasRole } from "@/lib/user";
 
-const bodySchema = z.object({ paused: z.boolean() });
+const bodySchema = z.object({
+  paused: z.boolean(),
+  /** השהיה שקטה: מנהל הכרטיס ממשיך לראות את הכרטיס כפעיל */
+  silent: z.boolean().optional(),
+});
 
 /**
  * השהיית כרטיס ע"י הנהלת המערכת, ובטלה. כל עוד הכרטיס מושהה כך, מנהל
@@ -75,11 +79,13 @@ export async function PATCH(
     ? {
         admin_paused_at: new Date().toISOString(),
         admin_paused_by: user.id,
+        admin_pause_silent: parsed.data.silent === true,
         in_shidduchim: false,
       }
     : {
         admin_paused_at: null,
         admin_paused_by: null,
+        admin_pause_silent: false,
         in_shidduchim: !isOutOfShidduchimStatus(student.personal_status),
       };
 

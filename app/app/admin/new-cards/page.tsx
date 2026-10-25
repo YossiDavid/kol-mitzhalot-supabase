@@ -39,7 +39,13 @@ import {
 } from "@/features/students/lib/third-party-card";
 
 const FALLBACK_ROW_COUNT = 5;
-const FILTERS: readonly NewCardsFilter[] = ["pending", "rejected", "approved"];
+const FILTERS: readonly NewCardsFilter[] = [
+  "pending",
+  "rejected",
+  "approved",
+  "paused",
+  "exclusive",
+];
 
 // ההרשאה נאכפת ב-app/app/admin/layout.tsx; הנתונים נשלפים ב-service role
 // ולכן הדף אינו נגיש מחוץ לנתיב הזה.
@@ -260,6 +266,8 @@ const EMPTY_TEXT: Record<NewCardsFilter, string> = {
   pending: "אין כרטיסים שממתינים לאישור",
   rejected: "אין כרטיסים שנדחו",
   approved: "עוד לא אושרו כרטיסים",
+  paused: "אין כרטיסים מושהים",
+  exclusive: "אין כרטיסים שאושרו בשבילך בלבד",
 };
 
 async function NewCardsContent({ searchParams }: PageProps) {

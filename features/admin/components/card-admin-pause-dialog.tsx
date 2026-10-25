@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -23,18 +24,24 @@ export function CardAdminPauseDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const router = useRouter();
+  const [isSilent, setIsSilent] = useState(false);
 
   async function handleConfirm(): Promise<boolean> {
     const res = await fetch(`/api/v1/students/${studentId}/admin-pause`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ paused: !isPaused }),
+      body: JSON.stringify({
+        paused: !isPaused,
+        ...(isPaused ? {} : { silent: isSilent }),
+      }),
     });
     if (!res.ok) {
       toast.error("עדכון ההשהיה נכשל");
       return false;
     }
-    toast.success(isPaused ? "ההשהיה בוטלה" : "הכרטיס הושהה");
+    toast.success(
+      isPaused ? "ההשהיה בוטלה" : isSilent ? "הכרטיס הושהה בשקט" : "הכרטיס הושהה",
+    );
     return true;
   }
 
@@ -53,6 +60,20 @@ export function CardAdminPauseDialog({
           <>
             הכרטיס של <strong>{studentName}</strong> יוצא משידוכים, ומנהל הכרטיס
             לא יוכל להחזיר אותו עד לביטול ההשהיה. הצעות קיימות אינן מושפעות.
+            אין התראה למנהל הכרטיס.
+            <label className="mt-3 flex items-start gap-2 text-foreground">
+              <input
+                type="checkbox"
+                className="mt-1 size-4 accent-primary"
+                checked={isSilent}
+                onChange={(event) => setIsSilent(event.target.checked)}
+                data-testid="admin-pause-silent"
+              />
+              <span>
+                השהיה שקטה: מנהל הכרטיס ימשיך לראות את הכרטיס כפעיל, בלי סימון
+                השהיה
+              </span>
+            </label>
           </>
         )
       }

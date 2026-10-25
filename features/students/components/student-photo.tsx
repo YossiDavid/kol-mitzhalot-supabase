@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { PhotoRequestDialog } from "@/features/photo-requests/components/photo-request-dialog";
 
 /**
@@ -20,7 +21,7 @@ export default function LockedStudentPhoto({
   const [open, setOpen] = useState(false);
 
   return (
-    <>
+    <div className="flex flex-col items-center gap-1">
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -31,12 +32,23 @@ export default function LockedStudentPhoto({
         <Lock className="h-6 w-6 text-muted-foreground" />
         <span className="text-caption text-muted-foreground">חסוי</span>
       </button>
+      {/* כפתור גלוי בנוסף למנעול: שדכנים לא זיהו שהמנעול לחיץ */}
+      <Button
+        type="button"
+        variant="link"
+        size="sm"
+        className="h-auto p-0 text-caption"
+        onClick={() => setOpen(true)}
+        data-testid="photo-request-button"
+      >
+        בקשה לצפייה בתמונה
+      </Button>
       <PhotoRequestDialog
         studentId={studentId}
         studentName={alt}
         open={open}
         onOpenChange={setOpen}
       />
-    </>
+    </div>
   );
 }

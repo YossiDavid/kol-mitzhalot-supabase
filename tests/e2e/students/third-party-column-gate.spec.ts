@@ -143,6 +143,11 @@ const NEVER_IN_VIEW = [
   "admin_rejected_by",
   "admin_review_silent",
   "admin_exclusive_by",
+  // השהיה שקטה ו"בתהליך שידוך": פרטי ניהול, נקראים רק דרך RPC/שרת
+  "admin_pause_silent",
+  "matchmaking_hold_at",
+  "matchmaking_hold_reason",
+  "matchmaking_hold_by",
 ] as const;
 
 const SENSITIVE_CHILD_TABLES = [

@@ -1,3 +1,4 @@
+import { AdminUserChatButton } from "@/features/admin/components/admin-user-chat-button";
 import { Suspense } from "react";
 import { LastSeen } from "@/features/admin/components/last-seen";
 import Link from "next/link";
@@ -90,10 +91,21 @@ function BasicInfoCard({ userDetails }: { userDetails: UserDetails }) {
             lastSignInAt={userDetails.lastSignInAt}
           />
         </DetailRow>
-        <DetailRow label="אישור תקנון:">
-          {userDetails.termsAcceptance
-            ? `גרסה ${userDetails.termsAcceptance.version} · ${formatUserDate(userDetails.termsAcceptance.acceptedAt)}`
-            : "טרם אושר"}
+        <DetailRow label="חתימה על התקנון:">
+          {userDetails.termsHistory.length === 0 ? (
+            "טרם נחתם"
+          ) : (
+            <ul className="space-y-1" data-testid="user-terms-history">
+              {userDetails.termsHistory.map((row) => (
+                <li key={row.version}>
+                  <span className="font-medium">
+                    נחתם על ידי {userDetails.firstName} {userDetails.lastName}
+                  </span>{" "}
+                  · גרסה {row.version} · {formatUserDate(row.acceptedAt)}
+                </li>
+              ))}
+            </ul>
+          )}
         </DetailRow>
       </div>
     </Card>
@@ -166,7 +178,12 @@ async function UserDetailsContent({ params }: UserDetailsPageProps) {
       <PageHeader
         title={`פרטי משתמש: ${userDetails.firstName} ${userDetails.lastName}`}
         description="מידע מפורט על המשתמש"
-        actions={<BackToUsersButton />}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <AdminUserChatButton userId={userDetails.id} />
+            <BackToUsersButton />
+          </div>
+        }
       />
       <div className="space-y-6">
         <BasicInfoCard userDetails={userDetails} />

@@ -15,6 +15,7 @@ import { SHADCHAN_GENDER_OPTIONS } from "@/features/shadchanim/lib/gender";
 import {
   ageFromBirthDate,
   APPLICATION_NOTE_MAX_LENGTH,
+  REFERRAL_SOURCE_MAX_LENGTH,
   BIO_MAX_LENGTH,
   SHADCHAN_MAX_AGE,
   SHADCHAN_MIN_AGE,
@@ -375,6 +376,26 @@ export function ShadchanProfileFields({
           </FormFieldShell>
         )}
       />
+
+      {showApplicationNote && (
+        <FormField
+          control={control}
+          name="referral_source"
+          render={({ field }) => (
+            <FormFieldShell
+              label="מי הפנה אותך לקול מצהלות?"
+              description="שם האדם, הארגון או המקום שבו שמעת עלינו. להנהלה בלבד."
+            >
+              <Input
+                {...field}
+                value={field.value ?? ""}
+                maxLength={REFERRAL_SOURCE_MAX_LENGTH}
+                disabled={isSubmitting}
+              />
+            </FormFieldShell>
+          )}
+        />
+      )}
 
       {showApplicationNote && (
         <FormField

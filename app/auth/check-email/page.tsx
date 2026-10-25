@@ -52,7 +52,7 @@ export default function CheckEmailPage({
       <CardHeader>
         <PageTitle>בדוק את האימייל שלך</PageTitle>
         <CardDescription>
-          שלחנו לך מייל עם קישור להתחברות ועם קוד בן 6 ספרות. לחץ על הקישור כדי
+          שלחנו לך מייל עם קישור להתחברות ועם קוד מספרי. לחץ על הקישור כדי
           להיכנס, או הזן את הקוד כאן למטה.
         </CardDescription>
       </CardHeader>

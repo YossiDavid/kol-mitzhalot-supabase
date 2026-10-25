@@ -17,10 +17,14 @@ import {
   normalizeDonorId,
   type DonationFrequency,
 } from "./nedarim";
+import {
+  DEFAULT_DONATION_CURRENCY,
+  currencyCode,
+  type DonationCurrency,
+} from "./currency";
 
 export const COMMENT_MAX_LENGTH = 300;
 const BUTTON_TEXT = "תרומה";
-const CURRENCY_SHEKEL = "1";
 const IL_INTL_MOBILE = /^9725\d{8}$/;
 
 export type StartPaymentValue = Record<string, string>;
@@ -28,8 +32,10 @@ export type StartPaymentValue = Record<string, string>;
 export interface StartPaymentInput {
   mosadId: string;
   apiValid: string;
-  /** סכום בשקלים (לחודש בהוראת קבע) */
+  /** סכום במטבע שנבחר (לחודש בהוראת קבע) */
   amount: number;
+  /** ברירת מחדל שקל */
+  currency?: DonationCurrency;
   frequency: DonationFrequency;
   /** טקסט ההקדשה המלא, למשל "לעילוי נשמת משה בן שרה" */
   dedication?: string;
@@ -92,7 +98,9 @@ export function buildStartPaymentValue(
     ApiValid: input.apiValid,
     Amount: String(input.amount),
     PaymentType: isMonthly ? "HK" : "Ragil",
-    Currency: CURRENCY_SHEKEL,
+    Currency: String(
+      currencyCode(input.currency ?? DEFAULT_DONATION_CURRENCY),
+    ),
     // חד-פעמי: תשלום אחד; הוראת קבע: ריק = ללא הגבלה
     Tashlumim: isMonthly ? "" : "1",
     Groupe: comment ? DEDICATION_GROUP : DONATION_GROUP,

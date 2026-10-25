@@ -31,6 +31,7 @@ export function ChatView({
         title={info.title}
         avatarUrl={info.avatarUrl}
         isOnline={isOnline}
+        lastSeenAt={info.otherLastSeenAt}
       />
 
       {info.context && info.otherUserId && (

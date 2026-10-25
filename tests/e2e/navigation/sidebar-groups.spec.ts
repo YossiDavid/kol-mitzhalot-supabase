@@ -37,6 +37,7 @@ test.describe("סרגל צד — קבוצות", () => {
     expect(await hrefsOf("כללי")).toEqual([
       "/app",
       "/app/chats",
+      "/app/help",
       "/app/settings",
     ]);
     expect(await hrefsOf("כלי שדכן")).toEqual([
@@ -72,6 +73,7 @@ test.describe("סרגל צד — קבוצות", () => {
         "/app/chats",
         "/app/proposals",
         "/app/shadchanim",
+        "/app/help",
         "/app/settings",
       ]);
     } finally {

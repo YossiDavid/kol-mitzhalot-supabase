@@ -195,13 +195,15 @@ test.describe("טבלת השדכנים של המנהל", () => {
       "הצעות שנוצרו",
       "הצעות שנסגרו",
       "פעילות אחרונה",
+      "נראה לאחרונה",
+      "זמן פעילות",
       "פעולות",
     ]) {
       await expect(
         table.getByRole("columnheader", { name: header, exact: true }),
       ).toBeVisible();
     }
-    await expect(table.getByRole("columnheader")).toHaveCount(8);
+    await expect(table.getByRole("columnheader")).toHaveCount(10);
 
     // Assert - שורה: שם אחד, ערך חסר כ"—", בלי "לא זמין"
     const emptyRow = rowOf("empty");

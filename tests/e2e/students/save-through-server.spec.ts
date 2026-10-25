@@ -19,6 +19,7 @@ import {
   ensureCardManagerId,
 } from "../shidduchim/fixtures";
 import { addStudentPhoto } from "../helpers/student-photo";
+import { continuePastDonationDialog } from "../helpers/donation-dialog";
 
 /**
  * שמירת כרטיס עוברת דרך השרת שלנו: הדפדפן לא קורא ל-RPC של Supabase. הסיבה:
@@ -135,6 +136,7 @@ test.describe("שמירת כרטיס דרך השרת", () => {
 
     await fillCreateWizard(page, lastName);
     await page.locator("button[type='submit']").click();
+    await continuePastDonationDialog(page, SAVE_TIMEOUT_MS);
 
     await expect(page).toHaveURL(STUDENT_URL_ID, { timeout: SAVE_TIMEOUT_MS });
     createdStudentIds.push(page.url().match(STUDENT_URL_ID)?.[1] ?? "");
@@ -161,6 +163,7 @@ test.describe("שמירת כרטיס דרך השרת", () => {
 
     await fillCreateWizard(page, lastName);
     await page.locator("button[type='submit']").click();
+    await continuePastDonationDialog(page, SAVE_TIMEOUT_MS);
     await expect(page).toHaveURL(STUDENT_URL_ID, { timeout: SAVE_TIMEOUT_MS });
     const studentId = page.url().match(STUDENT_URL_ID)?.[1] ?? "";
     createdStudentIds.push(studentId);

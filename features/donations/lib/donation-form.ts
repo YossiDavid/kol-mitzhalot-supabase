@@ -168,7 +168,7 @@ export function validateDonationForm(
   if (Number.isNaN(amount)) {
     errors.amount = "בחרו סכום או הזינו סכום אחר.";
   } else if (!isValidDonationAmount(amount)) {
-    errors.amount = `הסכום צריך להיות מספר שלם בין ${DONATION_AMOUNT_MIN} ל־${DONATION_AMOUNT_MAX.toLocaleString("he-IL")} ש״ח.`;
+    errors.amount = `הסכום צריך להיות מספר שלם בין ${DONATION_AMOUNT_MIN} ל־${DONATION_AMOUNT_MAX.toLocaleString("he-IL")}.`;
   }
 
   if (

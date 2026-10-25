@@ -199,7 +199,10 @@ export function StudentCard({
             gender={student.gender}
           />
           {!isBasicOnly && (
-            <ReferencesSection references={student.references} />
+            <ReferencesSection
+              references={student.references}
+              gender={student.gender}
+            />
           )}
           {showMedical && !isBasicOnly && (
             <MedicalSection medical={student.medical_records} />

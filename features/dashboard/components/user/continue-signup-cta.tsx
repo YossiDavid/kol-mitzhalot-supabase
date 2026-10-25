@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Route } from "next";
 import Link from "next/link";
-import { HeartHandshake, UserPlus, type LucideIcon } from "lucide-react";
+import { HeartHandshake, UserPlus, Users, type LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type { ContinueSignupTarget } from "@/features/dashboard/lib/continue-signup";
@@ -18,7 +18,7 @@ type TargetCopy = {
   cta: string;
 };
 
-const COPY: Record<ContinueSignupTarget, TargetCopy> = {
+const COPY: Record<Exclude<ContinueSignupTarget, "choose">, TargetCopy> = {
   shadchan: {
     href: "/app/settings/shadchan" as Route,
     icon: HeartHandshake,
@@ -70,6 +70,70 @@ export function ContinueSignupCta({
   target,
 }: {
   target: ContinueSignupTarget;
+}) {
+  if (target === "choose") return <ChooseSignupPath />;
+  return <SingleTargetCta target={target} />;
+}
+
+const CHOICES: { href: Route; icon: LucideIcon; title: string; body: string }[] = [
+  {
+    href: "/app/students/create" as Route,
+    icon: UserPlus,
+    title: "מילוי כרטיס",
+    body: "כרטיס שלך, של הבן/הבת או של מכר/ה - כדי שהשדכנים יוכלו להציע",
+  },
+  {
+    href: "/app/settings/shadchan" as Route,
+    icon: HeartHandshake,
+    title: "הצטרפות כשדכן/ית",
+    body: "בקשת הצטרפות שתיבדק ותאושר בידי הנהלת המערכת",
+  },
+  {
+    href: "/app/settings/staff" as Route,
+    icon: Users,
+    title: "הצטרפות כאיש/ת צוות",
+    body: "לר״מים ולאנשי צוות במוסדות - צפייה בכרטיסי התלמידים",
+  },
+];
+
+/** נרשם בלי כרטיס ובלי תפקיד: שלוש הדרכים להמשיך */
+function ChooseSignupPath() {
+  return (
+    <section
+      aria-labelledby="choose-signup-title"
+      data-testid="continue-signup-choose"
+      className="mx-auto w-full max-w-3xl space-y-4 rounded-2xl border-2 border-primary/50 bg-primary/5 px-6 py-8 text-center"
+    >
+      <div className="space-y-1">
+        <h2 id="choose-signup-title" className="text-title font-black">
+          איך תרצו להמשיך?
+        </h2>
+        <p className="text-body text-muted-foreground">
+          ההרשמה הושלמה. בחרו מה לעשות עכשיו - אפשר לחזור לכאן בכל עת.
+        </p>
+      </div>
+      <ul className="grid gap-3 sm:grid-cols-3">
+        {CHOICES.map(({ href, icon: Icon, title, body }) => (
+          <li key={href}>
+            <Link
+              href={href}
+              className="flex h-full flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary"
+            >
+              <Icon className="size-7 text-primary" aria-hidden />
+              <span className="font-bold">{title}</span>
+              <span className="text-body-sm text-muted-foreground">{body}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function SingleTargetCta({
+  target,
+}: {
+  target: Exclude<ContinueSignupTarget, "choose">;
 }) {
   const [isMinimized, setIsMinimized] = useState(false);
   const copy = COPY[target];

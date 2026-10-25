@@ -12,6 +12,8 @@ const CONTACT_ERROR_MESSAGES: Record<string, string> = {
   message_required: "יש לכתוב הודעה לשדכן.",
   message_too_long: "ההודעה ארוכה מדי.",
   authentication_required: "יש להתחבר כדי לפנות לשדכן.",
+  active_card_required:
+    "פנייה לשדכנים פתוחה למי שיש לו כרטיס פעיל ומאושר במערכת, הגלוי לכל השדכנים.",
 };
 
 const GENERIC_CONTACT_ERROR = "שליחת הפנייה נכשלה. נסו שוב בעוד רגע.";

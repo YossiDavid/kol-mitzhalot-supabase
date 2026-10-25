@@ -19,6 +19,7 @@ import {
 import {
   buildShadchanimHref,
   getVisiblePaginationPages,
+  parseShadchanimSort,
   type AdminShadchanimQuery,
 } from "@/features/admin/lib/shadchanim-query";
 import { cn } from "@/lib/utils";
@@ -31,8 +32,17 @@ type ShadchanimPaginationProps = {
   perPage: number;
 };
 
-function queryFromProps(page: number, perPage: number): AdminShadchanimQuery {
-  return { page, perPage };
+function queryFromProps(
+  page: number,
+  perPage: number,
+  searchParams: URLSearchParams,
+): AdminShadchanimQuery {
+  return {
+    page,
+    perPage,
+    q: searchParams.get("q") ?? undefined,
+    sort: parseShadchanimSort(searchParams.get("sort")),
+  };
 }
 
 function useShadchanimNavigate() {
@@ -164,10 +174,15 @@ export function ShadchanimPagination({
   perPage,
 }: ShadchanimPaginationProps) {
   const { navigate, isPending } = useShadchanimNavigate();
+  const searchParams = useSearchParams();
 
   if (lastPage <= 1) return null;
 
-  const query = queryFromProps(page, perPage);
+  const query = queryFromProps(
+    page,
+    perPage,
+    new URLSearchParams(searchParams.toString()),
+  );
   const visiblePages = getVisiblePaginationPages(page, lastPage);
 
   return (

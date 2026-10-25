@@ -3,6 +3,7 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
 import { createUserSessionClient } from "../forums/forum-fixtures";
 import { createServiceClient } from "../shidduchim/fixtures";
 import { COMPLETE_IDENTITY_COLUMNS } from "../helpers/shadchan-form";
+import { approvedCard } from "../helpers/approved-card";
 
 /**
  * עריכת פרופיל שדכן מאושר בידי עצמו (הגדרות > עריכת פרופיל שדכן):
@@ -378,7 +379,25 @@ test.describe("טלפון ואימייל של שדכן - רק לשדכן עצמ�
   test("הורה רואה פרופיל בלי טלפון ואימייל, עם כפתור פניה לשדכן שעובד", async ({
     browser,
   }) => {
-    // Arrange
+    // Arrange - פנייה לשדכנים פתוחה רק עם כרטיס פעיל וגלוי לכל השדכנים
+    const { data: card, error: cardError } = await admin
+      .from("students")
+      .insert(
+        approvedCard({
+          user_id: ids.parent,
+          first_name: "פונה",
+          last_name: `לשדכן${RUN_ID}`,
+          birth_date: "1999-01-01",
+          gender: "male",
+          personal_status: "single",
+          country: "ישראל",
+          city: "בני ברק",
+          in_shidduchim: true,
+        }),
+      )
+      .select("id")
+      .single();
+    if (cardError || !card) throw new Error(`כרטיס להורה: ${cardError?.message}`);
     const { page, context } = await newSignedInPage(browser, EMAIL_PARENT);
 
     // Act
@@ -398,6 +417,21 @@ test.describe("טלפון ואימייל של שדכן - רק לשדכן עצמ�
     await page.getByRole("button", { name: "שליחת פנייה" }).click();
     await expect(page).toHaveURL(/\/app\/chats\//, { timeout: LOAD_TIMEOUT });
     await context.close();
+    await admin.from("students").delete().eq("id", card.id);
+  });
+
+  test("הורה בלי כרטיס פעיל אינו יכול לפנות לשדכן", async () => {
+    // Arrange
+    const session = await createUserSessionClient(admin, EMAIL_PARENT);
+
+    // Act
+    const { error } = await session.rpc("contact_shadchan", {
+      p_shadchan_id: ids.b,
+      p_message: "שלום",
+    });
+
+    // Assert
+    expect(error?.message).toBe("active_card_required");
   });
 
   test("השדכן עצמו ומנהל רואים טלפון ואימייל עם הערת פרטיות", async ({

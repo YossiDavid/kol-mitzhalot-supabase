@@ -21,7 +21,12 @@ import {
   isDisplayRestricted,
 } from "@/features/students/lib/third-party-card";
 import { AdminPausedBanner } from "@/features/students/components/card/admin-paused-banner";
+import { MatchmakingHoldPanel } from "@/features/students/components/card/matchmaking-hold-panel";
+import { SiblingsSection } from "@/features/students/components/card/siblings-section";
+import { loadCardSiblings } from "@/features/students/lib/card-siblings";
+import { loadMatchmakingHold } from "@/features/students/lib/card-matchmaking-hold";
 import { loadCardAdminPaused } from "@/features/students/lib/card-admin-pause";
+import { maskSilentPauseForOwner } from "@/features/students/lib/card-silent-pause";
 import { loadCardAdminFocus } from "@/features/students/lib/card-admin-focus";
 import { loadThirdPartyApproval } from "@/features/students/lib/third-party-approval";
 import { ThirdPartyApprovalControls } from "@/features/admin/components/third-party-approval-controls";
@@ -259,7 +264,12 @@ async function StudentPageContent({
       />
     );
   }
-  const student = shaped.student;
+  // השהיה שקטה של ההנהלה: מנהל הכרטיס (שאינו מנהל מערכת) רואה אותו כפעיל
+  const isOwnerViewer =
+    !!user && shaped.student.user_id === user.id && !isAdmin;
+  const student = isOwnerViewer
+    ? (await maskSilentPauseForOwner([shaped.student]))[0]
+    : shaped.student;
   if (!user) {
     // ענף מחובר קיים רק למשתמש מחובר; אנונימי טופל למעלה
     return (
@@ -339,6 +349,19 @@ async function StudentPageContent({
   // גם לא עורך אותו (מסך העריכה מציג את כל הנתונים)
   const canEdit =
     !isBasicView && (student.user_id === user?.id || isShadchan || isAdmin);
+  // "בתהליך שידוך": גלוי לבעלים, לשדכן ולמנהל (ה-RPC מחזיר null לכל אחר)
+  const matchmakingHold = isProposalView
+    ? null
+    : await loadMatchmakingHold(supabase, student.id);
+  const canManageHold =
+    !isProposalView && (student.user_id === user.id || isAdmin);
+  // אחים במערכת: לשדכן, למנהל ולבעלים, בכרטיס המלא בלבד
+  const siblings =
+    !isProposalView &&
+    !isBasicView &&
+    (isShadchan || isAdmin || student.user_id === user.id)
+      ? await loadCardSiblings(student, { isAdmin })
+      : [];
   const approvingAdminNames =
     isAdmin && approval?.card_for === "other"
       ? await Promise.all([
@@ -386,6 +409,12 @@ async function StudentPageContent({
             />
           )}
           {isAdminPaused === true && <AdminPausedBanner />}
+          <MatchmakingHoldPanel
+            studentId={student.id}
+            hold={matchmakingHold}
+            canManage={canManageHold}
+          />
+          <SiblingsSection siblings={siblings} />
           {cardProposals && (
             <CardProposalsSection
               studentId={student.id}

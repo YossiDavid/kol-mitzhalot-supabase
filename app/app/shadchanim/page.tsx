@@ -16,6 +16,10 @@ import {
 } from "@/features/shadchanim/lib/queries";
 import { UrlPagination } from "@/components/url-pagination";
 import { parsePageParam } from "@/lib/pagination";
+import { canBrowseShadchanim } from "@/features/shadchanim/lib/browse-access";
+import { getUser, hasRole } from "@/lib/user";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 /** כמה שלדי כרטיסים להציג בזמן הטעינה. */
 const SKELETON_CARD_COUNT = 6;
@@ -29,6 +33,7 @@ async function ShadchanimList({
 }) {
   noStore();
   const requestedPage = parsePageParam((await searchParams).page);
+  if (!(await canBrowseShadchanim())) return <ActiveCardRequired />;
   const [result, quota] = await Promise.all([
     listApprovedShadchanimPage(requestedPage),
     getMyContactQuota(),
@@ -48,6 +53,21 @@ async function ShadchanimList({
   }
 
   const { shadchanim, total, page } = result;
+  const user = await getUser();
+  // שדכן אינו רואה את עצמו ברשימה (list_approved_shadchanim), ולכן נדמה לו
+  // שאינו מופיע. הוא כן מופיע לכל השאר - ההסבר והקישור לפרופיל שלו
+  const ownProfileNotice =
+    user && hasRole(user, "shadchan") ? (
+      <p
+        className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-body-sm"
+        data-testid="shadchanim-own-profile-notice"
+      >
+        הפרופיל שלך מופיע ברשימה לכל המשתמשים (אינו מוצג לך עצמך).{" "}
+        <Link href={`/app/shadchanim/${user.id}`} className="underline">
+          לצפייה בפרופיל שלך
+        </Link>
+      </p>
+    ) : null;
   if (shadchanim.length === 0) {
     return (
       <Empty>
@@ -61,6 +81,7 @@ async function ShadchanimList({
 
   return (
     <>
+      {ownProfileNotice}
       <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {shadchanim.map((shadchan) => (
           <li key={shadchan.id} data-testid="shadchan-list-item">
@@ -77,7 +98,26 @@ async function ShadchanimList({
   );
 }
 
-/** רשימת השדכנים המאושרים. פתוחה לכל משתמש מחובר, כמו הפרופיל הציבורי של שדכן. */
+/** משתמש בלי כרטיס פעיל וגלוי: הסבר והפניה לכרטיסים שלו */
+function ActiveCardRequired() {
+  return (
+    <Empty data-testid="shadchanim-active-card-required">
+      <EmptyHeader>
+        <EmptyTitle>רשימת השדכנים פתוחה לבעלי כרטיס פעיל</EmptyTitle>
+        <EmptyDescription>
+          כדי לצפות בשדכנים ולפנות אליהם צריך כרטיס פעיל שאושר בידי ההנהלה
+          וגלוי לכל השדכנים. כרטיס שממתין לאישור, מושהה או הוצא משידוכים אינו
+          נחשב.
+        </EmptyDescription>
+      </EmptyHeader>
+      <Button asChild>
+        <Link href="/app">לכרטיסים שלי</Link>
+      </Button>
+    </Empty>
+  );
+}
+
+/** רשימת השדכנים המאושרים: לשדכנים, למנהלים, לאנשי צוות ולבעלי כרטיס פעיל וגלוי. */
 export default function ShadchanimPage({
   searchParams,
 }: {

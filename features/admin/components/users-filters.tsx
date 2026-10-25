@@ -137,6 +137,8 @@ export function AdminUsersFilters() {
           <option value="email">אימייל</option>
           <option value="name">שם (פרטי+משפחה)</option>
           <option value="role">תפקיד</option>
+          <option value="last_seen">נראה לאחרונה</option>
+          <option value="active_time">זמן פעילות במערכת</option>
         </select>
       </div>
       <div className="grid w-full min-w-32 gap-2 md:w-36">

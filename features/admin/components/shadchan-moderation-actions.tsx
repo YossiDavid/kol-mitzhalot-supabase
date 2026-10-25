@@ -13,7 +13,7 @@ import { ApplicationTextDialog } from "./application-text-dialog";
 
 const BASE_URL = "/api/v1/admin/shadchanim";
 
-type DialogName = "freeze" | "unfreeze" | "revoke" | null;
+type DialogName = "freeze" | "unfreeze" | "revoke" | "restore" | null;
 
 type ShadchanModerationActionsProps = {
   userId: string;
@@ -23,6 +23,8 @@ type ShadchanModerationActionsProps = {
   canFreeze: boolean;
   /** יש תפקיד שדכן להסרה */
   canRevoke: boolean;
+  /** יש פרופיל שדכן בלי תפקיד (הוסר או נדחה) - אפשר להחזיר הרשאות */
+  canRestore?: boolean;
 };
 
 /**
@@ -35,6 +37,7 @@ export function ShadchanModerationActions({
   isFrozen,
   canFreeze,
   canRevoke,
+  canRestore = false,
 }: ShadchanModerationActionsProps) {
   const router = useRouter();
   const [openDialog, setOpenDialog] = useState<DialogName>(null);
@@ -78,6 +81,47 @@ export function ShadchanModerationActions({
         >
           הסרת הרשאות
         </Button>
+      )}
+
+      {canRestore && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setOpenDialog("restore")}
+          aria-label={`החזרת הרשאות: ${name}`}
+        >
+          החזרת הרשאות
+        </Button>
+      )}
+
+      {openDialog === "restore" && (
+        <ConfirmDialog
+          open
+          onOpenChange={close}
+          title={`החזרת הרשאות השדכן של ${name}`}
+          description="תפקיד השדכן יוחזר והבקשה תסומן כמאושרת. השדכן יקבל מייל והתראה על האישור."
+          confirmLabel="החזר הרשאות"
+          pendingLabel="מחזיר..."
+          isDestructive={false}
+          onConfirm={async () => {
+            // אותו נתיב כמו אישור בקשה: מוסיף את התפקיד בלי לדרוס תפקידים אחרים
+            const failure = await postAdminAction(`${BASE_URL}/approve`, {
+              userId,
+            });
+            if (failure) {
+              toast.error(failure);
+              return false;
+            }
+            toast.success("הרשאות השדכן הוחזרו");
+            return true;
+          }}
+          onSuccess={() => router.refresh()}
+          onError={(error) => {
+            console.error("[shadchan-moderation] restore failed:", error);
+            toast.error("החזרת ההרשאות נכשלה");
+          }}
+        />
       )}
 
       {openDialog === "freeze" && (

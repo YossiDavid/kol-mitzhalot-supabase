@@ -40,7 +40,53 @@ export type ShadchanAdminRow = {
   hasShadchanRole: boolean;
   /** יש שורת shadchanim_info (אפשר להקפיא) */
   hasProfileRow: boolean;
+  /** user_profiles.last_seen_at */
+  lastSeenAt: string | null;
+  /** הערכת זמן הפעילות המצטבר (user_profiles.active_seconds) */
+  activeSeconds: number;
 };
+
+type ActivityStats = { lastSeenAt: string | null; activeSeconds: number };
+
+const NO_ACTIVITY: ActivityStats = { lastSeenAt: null, activeSeconds: 0 };
+
+/** נראה לאחרונה וזמן פעילות לכל המשתמשים ברשימה (לשורות ולמיון) */
+async function loadActivityStats(
+  adminClient: ReturnType<typeof createAdminClient>,
+  userIds: string[],
+): Promise<Map<string, ActivityStats>> {
+  const map = new Map<string, ActivityStats>();
+  if (userIds.length === 0) return map;
+  const { data, error } = await adminClient
+    .from("user_profiles")
+    .select("id, last_seen_at, active_seconds")
+    .in("id", userIds);
+  if (error) {
+    console.error("[admin-shadchanim] user_profiles activity:", error);
+    return map;
+  }
+  for (const row of data ?? []) {
+    map.set(row.id, {
+      lastSeenAt: row.last_seen_at,
+      activeSeconds: Number(row.active_seconds ?? 0),
+    });
+  }
+  return map;
+}
+
+function sortEntries(
+  entries: ShadchanListEntry[],
+  activity: Map<string, ActivityStats>,
+  sort: AdminShadchanimQuery["sort"],
+): ShadchanListEntry[] {
+  if (!sort || sort === "submitted") return entries;
+  const valueOf = (entry: ShadchanListEntry): number => {
+    const stats = activity.get(entry.userId) ?? NO_ACTIVITY;
+    if (sort === "active_time") return stats.activeSeconds;
+    return stats.lastSeenAt ? new Date(stats.lastSeenAt).getTime() : 0;
+  };
+  return [...entries].sort((a, b) => valueOf(b) - valueOf(a));
+}
 
 export type AdminShadchanimListResult = {
   rows: ShadchanAdminRow[];
@@ -123,6 +169,7 @@ function buildRow(
   user: User,
   entry: ShadchanListEntry,
   shidduchim: Awaited<ReturnType<typeof loadShidduchimStats>>,
+  activity: ActivityStats,
 ): ShadchanAdminRow {
   const { applicationStatus, bio } = entry;
   const { firstName, lastName } = resolveDisplayName(user);
@@ -147,6 +194,8 @@ function buildRow(
     isFrozen: entry.isFrozen,
     hasShadchanRole: hasRole(user, "shadchan"),
     hasProfileRow: entry.hasProfileRow,
+    lastSeenAt: activity.lastSeenAt,
+    activeSeconds: activity.activeSeconds,
   };
 }
 
@@ -222,6 +271,34 @@ async function resolveUser(
   return fetched.user;
 }
 
+/** טקסט החיפוש של שדכן: שם, אימייל וטלפון (ספרות בלבד, כדי ש-050-1234 יימצא גם כ-0501234) */
+function searchHaystack(user: User | undefined): string {
+  if (!user) return "";
+  const { firstName, lastName } = resolveDisplayName(user);
+  const phone = (user.phone ?? "").replace(/\D/g, "");
+  return [firstName, lastName, user.email, phone]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function filterBySearch(
+  entries: ShadchanListEntry[],
+  usersById: Map<string, User>,
+  q: string | undefined,
+): ShadchanListEntry[] {
+  const terms = (q ?? "").trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (terms.length === 0) return entries;
+  return entries.filter((entry) => {
+    const haystack = searchHaystack(usersById.get(entry.userId));
+    return terms.every(
+      (term) =>
+        haystack.includes(term) ||
+        (/^[\d-]+$/.test(term) && haystack.includes(term.replace(/\D/g, ""))),
+    );
+  });
+}
+
 /** Lightweight counts for page shell (header, buttons). */
 export async function getShadchanimSummary(): Promise<{
   total: number;
@@ -266,10 +343,16 @@ export async function getShadchanimList(
   const allUsers = await fetchAllAuthUsers(adminClient);
   const usersById = new Map(allUsers.map((u) => [u.id, u]));
 
-  const { entries, pendingCount } = await listShadchanEntries(
+  const { entries: allEntries, pendingCount } = await listShadchanEntries(
     adminClient,
     usersById,
   );
+  const filtered = filterBySearch(allEntries, usersById, query.q);
+  const activity = await loadActivityStats(
+    adminClient,
+    filtered.map((entry) => entry.userId),
+  );
+  const entries = sortEntries(filtered, activity, query.sort);
   const total = entries.length;
   const lastPage = Math.max(1, Math.ceil(total / perPage) || 1);
   const safePage = Math.min(page, lastPage);
@@ -281,7 +364,9 @@ export async function getShadchanimList(
     const user = await resolveUser(adminClient, usersById, entry.userId);
     if (!user) continue;
     const shidduchim = await loadShidduchimStats(supabase, user.id);
-    rows.push(buildRow(user, entry, shidduchim));
+    rows.push(
+      buildRow(user, entry, shidduchim, activity.get(user.id) ?? NO_ACTIVITY),
+    );
   }
 
   return {

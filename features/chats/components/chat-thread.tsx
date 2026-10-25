@@ -19,6 +19,18 @@ import { MessageListSkeleton } from "./message-list-skeleton";
 
 const HIGHLIGHT_MS = 1200;
 
+/** הודעה מובנת לפי קוד השגיאה של Postgres/PostgREST, כדי שהמשתמש ידע מה לעשות */
+function sendErrorMessage(code: string | undefined): string {
+  // 42501 = חסימת RLS: החיבור פג או שהמשתמש אינו משתתף בשיחה
+  if (code === "42501") {
+    return "אין הרשאה לשלוח בשיחה זו. רעננו את הדף או התחברו מחדש";
+  }
+  if (code === "PGRST301" || code === "401") {
+    return "החיבור פג. התחברו מחדש ונסו שוב";
+  }
+  return "שגיאה בשליחת ההודעה";
+}
+
 type ChatThreadProps = {
   roomId: string;
   currentUserId: string | null;
@@ -172,10 +184,12 @@ export function ChatThread({
       });
 
       if (error) {
-        toast.error("שגיאה בשליחת ההודעה");
+        console.error("[chats/send]", error.code, error.message);
+        toast.error(sendErrorMessage(error.code));
         setDraft(content);
       }
-    } catch {
+    } catch (err) {
+      console.error("[chats/send]", err);
       toast.error("שגיאה בשליחת ההודעה");
       setDraft(content);
     } finally {

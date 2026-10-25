@@ -107,7 +107,10 @@ export function PublicStudentCard({
             gender={student.gender}
           />
           {!isBasicOnly && (
-            <ReferencesSection references={student.references} />
+            <ReferencesSection
+              references={student.references}
+              gender={student.gender}
+            />
           )}
           {staffFeedback.length > 0 && (
             <CardSection title="מחמאות צוות" icon={MessageSquareText}>

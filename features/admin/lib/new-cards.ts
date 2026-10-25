@@ -19,13 +19,24 @@ import {
 
 export const NEW_CARDS_PAGE_SIZE = 25;
 
-/** pending: ממתינים (ברירת מחדל). rejected: נדחו. approved: אושרו לאחרונה */
-export type NewCardsFilter = "pending" | "rejected" | "approved";
+/**
+ * pending: ממתינים (ברירת מחדל). rejected: נדחו. approved: אושרו לאחרונה.
+ * paused: מושהים בידי ההנהלה (מכאן מחזירים לשידוכים). exclusive: אושרו
+ * "בשבילי בלבד" - רק המנהל מציע להם.
+ */
+export type NewCardsFilter =
+  | "pending"
+  | "rejected"
+  | "approved"
+  | "paused"
+  | "exclusive";
 
 export const NEW_CARDS_FILTER_LABELS: Record<NewCardsFilter, string> = {
   pending: "ממתינים לאישור",
   rejected: "נדחו",
   approved: "אושרו לאחרונה",
+  paused: "מושהים",
+  exclusive: "בלעדיים לי",
 };
 
 export type NewCardsQuery = {
@@ -35,7 +46,7 @@ export type NewCardsQuery = {
 
 const pageSchema = z.coerce.number().int().min(1).catch(1);
 const filterSchema = z
-  .enum(["pending", "rejected", "approved"])
+  .enum(["pending", "rejected", "approved", "paused", "exclusive"])
   .catch("pending");
 
 function firstValue(value: string | string[] | undefined): string | undefined {
@@ -152,6 +163,12 @@ function applyNewCardsFilter<B extends FilterableQuery<B>>(
   if (filter === "rejected") {
     return builder.is("deleted_at", null).not("admin_rejected_at", "is", null);
   }
+  if (filter === "paused") {
+    return builder.is("deleted_at", null).not("admin_paused_at", "is", null);
+  }
+  if (filter === "exclusive") {
+    return builder.is("deleted_at", null).not("admin_exclusive_at", "is", null);
+  }
   // רק כרטיסים שמנהל אישר בפועל; כרטיסים מלפני ההטמעה אושרו בלי מאשר
   return builder.is("deleted_at", null).not("admin_approved_by", "is", null);
 }
@@ -161,12 +178,16 @@ const ORDER_COLUMN: Record<NewCardsFilter, string> = {
   pending: "created_at",
   rejected: "admin_rejected_at",
   approved: "admin_approved_at",
+  paused: "admin_paused_at",
+  exclusive: "admin_exclusive_at",
 };
 
 const NEW_CARDS_FILTERS: readonly NewCardsFilter[] = [
   "pending",
   "rejected",
   "approved",
+  "paused",
+  "exclusive",
 ];
 
 /**

@@ -15,6 +15,11 @@ import {
   type DonationFormErrors,
 } from "./donation-form";
 import {
+  DEFAULT_DONATION_CURRENCY,
+  DONATION_CURRENCY_VALUES,
+  currencyCode,
+} from "./currency";
+import {
   DEDICATION_NAME_MAX_LENGTH,
   DONOR_NAME_MAX_LENGTH,
   EMAIL_MAX_LENGTH,
@@ -32,6 +37,7 @@ const text = (maxLength: number) => z.string().max(maxLength).default("");
 export const donationIntentSchema = z.object({
   amount: z.number(),
   frequency: z.enum(["once", "monthly"]),
+  currency: z.enum(DONATION_CURRENCY_VALUES).default(DEFAULT_DONATION_CURRENCY),
   dedicationType: z.enum(DEDICATION_TYPE_VALUES).default(NO_DEDICATION),
   dedicationName: text(DEDICATION_NAME_MAX_LENGTH),
   firstName: text(DONOR_NAME_MAX_LENGTH),
@@ -61,7 +67,11 @@ export function validateDonationIntent(payload: unknown): IntentValidation {
   const data = parsed.data;
   const isPurchase = data.dedicationKind !== undefined;
   // פרנס הוא תשלום אחד לתקופה אחת; הוראת קבע אינה רכישה
-  if (isPurchase && data.frequency !== "once") {
+  // והמחיר שלו בשקלים
+  if (
+    isPurchase &&
+    (data.frequency !== "once" || data.currency !== DEFAULT_DONATION_CURRENCY)
+  ) {
     return { ok: false, message: SHAPE_ERROR, fields: {} };
   }
   const generalFields = validateDonationForm({
@@ -109,7 +119,7 @@ export function toDonationInsert(
   const hasDedication = dedicationText !== "";
   return {
     amount: data.amount,
-    currency: 1,
+    currency: currencyCode(data.currency),
     frequency: data.frequency === "monthly" ? "monthly" : "one_time",
     dedication_type: hasDedication ? data.dedicationType : null,
     dedication_name: hasDedication ? data.dedicationName.trim() : null,

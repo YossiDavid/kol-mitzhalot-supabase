@@ -8,6 +8,7 @@ import { test, expect, Page } from "@playwright/test";
 
 import { createServiceClient, TEST_USER_EMAIL } from "../shidduchim/fixtures";
 import { addStudentPhoto } from "../helpers/student-photo";
+import { continuePastDonationDialog } from "../helpers/donation-dialog";
 
 const fill = (page: Page, fieldName: string, value: string) =>
   page.locator(`#${fieldName.replace(/[^a-zA-Z0-9]+/g, "-")}`).fill(value);
@@ -191,6 +192,7 @@ test.describe("יצירת תלמיד חדש", () => {
         consoleErrors.join("\n"),
       );
     }
+    await continuePastDonationDialog(page, 20_000);
     await expect(page).toHaveURL(STUDENT_URL_ID, {
       timeout: 20_000,
     });

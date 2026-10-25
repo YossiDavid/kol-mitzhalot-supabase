@@ -32,6 +32,8 @@ export type UserDetails = {
   city: string | null;
   /** אישור התקנון האחרון (terms_acceptances) */
   termsAcceptance: { version: number; acceptedAt: string } | null;
+  /** כל אישורי התקנון (החתימות), מהחדש לישן */
+  termsHistory: { version: number; acceptedAt: string }[];
   /** בקשות ההצטרפות כשדכן / כאיש צוות (null = לא הגיש) */
   applications: UserApplications;
   children: Array<{
@@ -128,13 +130,12 @@ export async function getUserDetails(
     console.error("Error fetching user_profiles:", profileError);
   }
 
-  const { data: termsRow, error: termsError } = await adminClient
+  const { data: termsRows, error: termsError } = await adminClient
     .from("terms_acceptances")
     .select("version, accepted_at")
     .eq("user_id", userId)
-    .order("version", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("version", { ascending: false });
+  const termsRow = termsRows?.[0] ?? null;
   if (termsError) {
     console.error("Error fetching terms_acceptances:", termsError);
   }
@@ -258,6 +259,10 @@ export async function getUserDetails(
     lastSignInAt: user.last_sign_in_at || null,
     lastSeenAt: profile?.last_seen_at ?? null,
     city: profile?.city ?? null,
+    termsHistory: (termsRows ?? []).map((row) => ({
+      version: row.version,
+      acceptedAt: row.accepted_at,
+    })),
     termsAcceptance: termsRow
       ? { version: termsRow.version, acceptedAt: termsRow.accepted_at }
       : null,

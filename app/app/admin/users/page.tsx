@@ -1,3 +1,4 @@
+import { formatActiveDuration } from "@/lib/format-duration";
 import { Page, PageHeader } from "@/components/layout";
 import {
   DataTable,
@@ -139,6 +140,12 @@ const USER_COLUMNS: DataTableColumn<UserStatsRow>[] = [
     ),
   },
   {
+    key: "activeTime",
+    header: "זמן פעילות",
+    size: "min",
+    cell: (user) => formatActiveDuration(user.activeSeconds),
+  },
+  {
     key: "actions",
     header: <span className="sr-only">פעולות</span>,
     size: "min",
@@ -173,7 +180,11 @@ function parseUsersQuery(
   ) as AdminUsersQuery["role"];
   const sortRaw = String(g("sort") || "joined");
   const sort = (
-    ["joined", "email", "name", "role"].includes(sortRaw) ? sortRaw : "joined"
+    ["joined", "email", "name", "role", "last_seen", "active_time"].includes(
+      sortRaw,
+    )
+      ? sortRaw
+      : "joined"
   ) as AdminUsersQuery["sort"];
   const orderRaw = String(g("order") || "desc");
   const order = (
@@ -303,6 +314,12 @@ async function UsersContent({ searchParams }: UsersPageProps) {
         description="רשימת משתמשים עם עימוד, סינון ומיון"
         actions={
           <div className="flex items-center gap-2">
+            <Button asChild variant="outline">
+              {/* קובץ להורדה (CSV), לא ניווט */}
+              <a href="/api/v1/admin/users/export" download>
+                ייצוא רשימת תפוצה
+              </a>
+            </Button>
             <Button asChild>
               <Link href="/app/admin/users/create">יצירת משתמש חדש</Link>
             </Button>

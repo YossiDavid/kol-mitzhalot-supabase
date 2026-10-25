@@ -3,6 +3,7 @@
 
 import * as React from "react";
 import { Combobox, type Option } from "@/components/ui/combobox";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 
 type Primitive = string | number | boolean | null | undefined;
@@ -65,6 +66,8 @@ export type SearchSelectFieldProps = {
    * נתמך במצב Supabase (table) בלבד, ורק כשהערך הוא עמודת הטקסט עצמה.
    */
   creatable?: boolean;
+  /** הוספה דרך RPC שמחזיר את מזהה השורה (במקום insert ישיר לטבלה) */
+  createRpc?: { fn: string; params?: Record<string, unknown> };
 
   /** מ-FormControl, מועברים לכפתור הפותח */
   id?: string;
@@ -136,6 +139,7 @@ export function SearchSelectField({
   extraColumns,
   onSelectRow,
   creatable = false,
+  createRpc,
   id,
   "aria-invalid": ariaInvalid,
   "aria-describedby": ariaDescribedBy,
@@ -427,6 +431,11 @@ export function SearchSelectField({
     const valCol = valueColumn || "id";
     const labCol = labelColumn || "name";
 
+    if (createRpc) {
+      await createViaRpc(name, createRpc);
+      return;
+    }
+
     try {
       const supabase = createClient();
       const {
@@ -452,6 +461,37 @@ export function SearchSelectField({
       console.error("SearchSelectField create error:", e);
     }
   };
+
+  /** RPC מחזיר את המזהה; השורה נשמרת כדי ש-onSelectRow ימלא את שדות האחים */
+  async function createViaRpc(
+    name: string,
+    rpc: { fn: string; params?: Record<string, unknown> },
+  ) {
+    try {
+      const { data, error } = await createClient().rpc(rpc.fn, {
+        p_name: name,
+        ...rpc.params,
+      });
+      if (error) throw error;
+      const newId = typeof data === "string" ? data : null;
+      if (!newId) throw new Error("create rpc returned no id");
+      const labCol = labelColumn || "name";
+      rowsByValueRef.current.set(newId, {
+        [valueColumn || "id"]: newId,
+        [labCol]: name,
+      });
+      setOptions((previous) =>
+        previous.some((option) => option.value === newId)
+          ? previous
+          : [{ value: newId, label: name }, ...previous],
+      );
+      setResolvedSelectedLabel(name);
+      handleChange(newId);
+    } catch (e) {
+      console.error("SearchSelectField create rpc error:", e);
+      toast.error("ההוספה למאגר נכשלה, נסו שוב");
+    }
+  }
 
   return (
     <Combobox

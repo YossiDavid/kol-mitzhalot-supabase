@@ -201,7 +201,13 @@ export function getCompatibilityNotes(
   }
 
   const bCover = (bride as { head_cover_type?: string }).head_cover_type;
-  if (groomP?.head_cover_type && bCover && groomP.head_cover_type !== bCover) {
+  // "other" בהעדפה = "לא משנה" - אין אי-התאמה
+  if (
+    groomP?.head_cover_type &&
+    groomP.head_cover_type !== "other" &&
+    bCover &&
+    groomP.head_cover_type !== bCover
+  ) {
     notes.push("כיסוי ראש של המיועדת אינו תואם להעדפת צד המיועד");
   }
 

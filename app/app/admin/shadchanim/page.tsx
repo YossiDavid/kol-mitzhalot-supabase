@@ -3,7 +3,11 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { Suspense } from "react";
-import type { AdminShadchanimQuery } from "@/features/admin/lib/shadchanim-query";
+import {
+  parseShadchanimSort,
+  type AdminShadchanimQuery,
+} from "@/features/admin/lib/shadchanim-query";
+import { ShadchanimFilters } from "@/features/admin/components/shadchanim-filters";
 import { getShadchanimSummary } from "@/features/admin/lib/shadchanim";
 import {
   ShadchanimList,
@@ -21,7 +25,8 @@ function parseShadchanimQuery(
   const page = Math.max(1, parseInt(String(g("page") || "1"), 10) || 1);
   const perPageRaw = parseInt(String(g("perPage") || "25"), 10) || 25;
   const perPage = Math.min(100, Math.max(5, perPageRaw));
-  return { page, perPage };
+  const q = String(g("q") ?? "").trim().slice(0, 100) || undefined;
+  return { page, perPage, q, sort: parseShadchanimSort(g("sort")) };
 }
 
 type ShadchanimPageProps = {
@@ -76,7 +81,7 @@ async function ShadchanimContent({ searchParams }: ShadchanimPageProps) {
     );
   }
 
-  const listKey = `${query.page}-${query.perPage}`;
+  const listKey = `${query.page}-${query.perPage}-${query.q ?? ""}-${query.sort}`;
 
   return (
     <Page>
@@ -100,6 +105,9 @@ async function ShadchanimContent({ searchParams }: ShadchanimPageProps) {
           </div>
         }
       />
+      <Suspense fallback={null}>
+        <ShadchanimFilters />
+      </Suspense>
       <div>
         <Suspense key={listKey} fallback={<ShadchanimListFallback />}>
           <ShadchanimList query={query} />

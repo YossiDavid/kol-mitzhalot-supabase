@@ -31,6 +31,12 @@ import {
 } from "@/features/donations/lib/nedarim";
 import { createDonationIntent } from "@/features/donations/lib/intent-client";
 import {
+  DEFAULT_DONATION_CURRENCY,
+  DONATION_CURRENCIES,
+  formatDonationAmount,
+  type DonationCurrency,
+} from "@/features/donations/lib/currency";
+import {
   buildStartPaymentValue,
   type StartPaymentValue,
 } from "@/features/donations/lib/start-payment";
@@ -93,7 +99,6 @@ const FIELD_ORDER: DonationFormField[] = [
   "email",
 ];
 
-const formatShekels = (amount: number) => `${amount.toLocaleString("he-IL")} ₪`;
 
 /** ערכי הפתיחה: ברכישת פרנס הסכום הוא המחיר וההקדשה מתחילה בסוג הראשון */
 function initialValuesFor(offer: DedicationOffer | null): DonationFormValues {
@@ -124,7 +129,16 @@ export function DonationForm({
     initialValuesFor(offer),
   );
   const [selectedFrequency, setFrequency] = useState<DonationFrequency>("once");
+  const [selectedCurrency, setCurrency] = useState<DonationCurrency>(
+    DEFAULT_DONATION_CURRENCY,
+  );
   const isPurchase = offer !== null;
+  // פרנס: המחיר נקוב בשקלים
+  const currency: DonationCurrency = isPurchase
+    ? DEFAULT_DONATION_CURRENCY
+    : selectedCurrency;
+  const currencyLabel =
+    DONATION_CURRENCIES.find(({ value }) => value === currency)?.label ?? "";
   // פרנס: תשלום אחד לתקופה; הוראת קבע אינה אפשרית
   const frequency: DonationFrequency = isPurchase ? "once" : selectedFrequency;
   const [errors, setErrors] = useState<DonationFormErrors>({});
@@ -182,6 +196,7 @@ export function DonationForm({
     const result = await createDonationIntent({
       amount,
       frequency,
+      currency,
       dedicationType: values.dedicationType,
       dedicationName: values.dedicationName,
       firstName: values.firstName,
@@ -201,6 +216,7 @@ export function DonationForm({
       mosadId,
       apiValid,
       amount,
+      currency,
       frequency,
       dedication,
       firstName: values.firstName,
@@ -222,6 +238,24 @@ export function DonationForm({
           <legend className="mb-1 text-subtitle font-bold text-foreground">
             סכום התרומה
           </legend>
+          <div
+            role="radiogroup"
+            aria-label="מטבע"
+            className="grid grid-cols-2 gap-3 sm:max-w-xs"
+          >
+            {DONATION_CURRENCIES.map(({ value, symbol, label }) => (
+              <ChoiceCard
+                key={value}
+                name="donation-currency"
+                value={value}
+                checked={currency === value}
+                onSelect={() => setCurrency(value)}
+                className="text-body font-bold"
+              >
+                {symbol} {label}
+              </ChoiceCard>
+            ))}
+          </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
             {AMOUNT_PRESETS.map((preset) => (
               <ChoiceCard
@@ -236,13 +270,13 @@ export function DonationForm({
                 }
                 className="text-body font-bold"
               >
-                {formatShekels(preset)}
+                {formatDonationAmount(preset, currency)}
               </ChoiceCard>
             ))}
           </div>
           <FormField
             id={FIELD_IDS.amount}
-            label="סכום אחר (בש״ח)"
+            label={`סכום אחר (ב${currencyLabel})`}
             error={errors.amount}
             optional
           >

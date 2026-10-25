@@ -5,10 +5,10 @@ import { approvedCard } from "../helpers/approved-card";
 
 /**
  * כרטיס שסומן "נשוי" יוצא משידוכים (in_shidduchim=false) ונעלם מהרשימה
- * הרגילה. בלי דרך להגיע אליו, סימון שגוי לא היה ניתן לתיקון — ולכן סינון
- * מפורש לפי הסטטוס חייב להציג אותו.
+ * הרגילה. לבקשת ההנהלה "נשוי/ה" הוסר מסינון הסטטוס (המערכת אינה לנשואים);
+ * סימון שגוי מתוקן מדף המשתמש בניהול (טבלת הכרטיסים שלו).
  */
-test.describe("כרטיס נשוי — נשאר נגיש דרך הסינון", () => {
+test.describe("כרטיס נשוי — מוסתר, ואין סינון נשוי/ה", () => {
   const admin = createServiceClient();
   const lastName = `נשוי${Date.now()}`;
   let studentId: string;
@@ -43,7 +43,9 @@ test.describe("כרטיס נשוי — נשאר נגיש דרך הסינון", (
     await admin.from("students").delete().eq("id", studentId);
   });
 
-  test("מוסתר ברשימה הרגילה ומוצג בסינון נשוי/ה", async ({ page }) => {
+  test("מוסתר ברשימה הרגילה, ו'נשוי/ה' אינו בסינון הסטטוס", async ({
+    page,
+  }) => {
     // Arrange
     await page.goto("/app/students");
     const row = page.getByText(lastName).filter({ visible: true });
@@ -57,7 +59,11 @@ test.describe("כרטיס נשוי — נשאר נגיש דרך הסינון", (
     ).toBeVisible({ timeout: 10_000 });
     await expect(row).toHaveCount(0);
 
-    await page.locator("#personal_status").selectOption("married");
-    await expect(row.first()).toBeVisible({ timeout: 10_000 });
+    await expect(
+      page.locator("#personal_status option[value='married']"),
+    ).toHaveCount(0);
+    await expect(
+      page.locator("#personal_status option[value='engaged']"),
+    ).toHaveCount(1);
   });
 });

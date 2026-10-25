@@ -76,6 +76,22 @@ function pausedMessage(side: ProposalSide) {
   return `${SIDE_LABELS[side]} מושהה כרגע ואינו מקבל הצעות`;
 }
 
+/** "בתהליך שידוך" (עם הסיבה) מוצג במפורש; אחרת הודעת ההשהיה הכללית */
+async function pausedOrHoldMessage(
+  admin: SupabaseClient,
+  side: ProposalSide,
+  studentId: string,
+): Promise<string> {
+  const { data, error } = await admin
+    .from("students")
+    .select("matchmaking_hold_at, matchmaking_hold_reason")
+    .eq("id", studentId)
+    .maybeSingle();
+  if (error || !data?.matchmaking_hold_at) return pausedMessage(side);
+  const reason = data.matchmaking_hold_reason?.trim();
+  return `${SIDE_LABELS[side]} בתהליך שידוך וזמנית אינו מקבל הצעות${reason ? `: ${reason}` : ""}`;
+}
+
 function limitMessage(side: ProposalSide, retryAt: string | null) {
   const base = `${SIDE_LABELS[side]} הגיע למכסת ההצעות שקבע מנהל הכרטיס.`;
   if (!retryAt) return base;
@@ -113,7 +129,11 @@ async function blockForCard(
   if (!quota) return null;
 
   if (quota.is_paused) {
-    return { code: "card_paused", side, message: pausedMessage(side) };
+    return {
+      code: "card_paused",
+      side,
+      message: await pausedOrHoldMessage(admin, side, studentId),
+    };
   }
 
   const isLimitReached =

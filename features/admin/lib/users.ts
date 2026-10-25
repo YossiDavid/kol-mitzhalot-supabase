@@ -33,6 +33,8 @@ export type UserStatsRow = {
   lastSignInAt: string | null;
   /** הפעם האחרונה שהמשתמש נראה באפליקציה (user_profiles.last_seen_at) */
   lastSeenAt: string | null;
+  /** הערכת זמן הפעילות המצטבר (user_profiles.active_seconds) */
+  activeSeconds: number;
   childrenCount: number;
   shidduchimOfferedCount: number;
   shidduchimCompletedCount: number;
@@ -43,7 +45,7 @@ export type AdminUsersQuery = {
   perPage: number;
   q: string;
   role: "" | "admin" | "shadchan" | "user";
-  sort: "joined" | "email" | "name" | "role";
+  sort: "joined" | "email" | "name" | "role" | "last_seen" | "active_time";
   order: "asc" | "desc";
 };
 
@@ -51,6 +53,7 @@ type ProfileRow = {
   first_name: string | null;
   last_name: string | null;
   last_seen_at?: string | null;
+  active_seconds?: number | null;
 };
 
 function clamp(n: number, min: number, max: number) {
@@ -65,7 +68,7 @@ async function loadProfilesMap(
   if (ids.length === 0) return map;
   const { data, error } = await admin
     .from("user_profiles")
-    .select("id, first_name, last_name, last_seen_at")
+    .select("id, first_name, last_name, last_seen_at, active_seconds")
     .in("id", ids);
   if (error) {
     console.warn("[admin-users] user_profiles:", error.message);
@@ -76,6 +79,7 @@ async function loadProfilesMap(
       first_name: row.first_name,
       last_name: row.last_name,
       last_seen_at: row.last_seen_at,
+      active_seconds: row.active_seconds,
     });
   }
   return map;
@@ -164,6 +168,7 @@ async function buildStatsForUser(
     shidduchimOfferedCount: offered,
     shidduchimCompletedCount: completed,
     lastSeenAt: profile?.last_seen_at ?? null,
+    activeSeconds: profile?.active_seconds ?? 0,
   };
 }
 
@@ -205,6 +210,14 @@ function sortUsers(
       const ta = new Date(a.created_at).getTime();
       const tb = new Date(b.created_at).getTime();
       return (ta - tb) * dir;
+    }
+    if (sort === "last_seen") {
+      const ta = pa?.last_seen_at ? new Date(pa.last_seen_at).getTime() : 0;
+      const tb = pb?.last_seen_at ? new Date(pb.last_seen_at).getTime() : 0;
+      return (ta - tb) * dir;
+    }
+    if (sort === "active_time") {
+      return ((pa?.active_seconds ?? 0) - (pb?.active_seconds ?? 0)) * dir;
     }
     if (sort === "email") {
       const ea = (a.email || "").toLowerCase();

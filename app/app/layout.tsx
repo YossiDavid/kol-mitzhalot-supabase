@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ImpersonationBanner } from "@/features/admin/components/impersonation-banner";
+import { SystemAnnouncementBanner } from "@/features/announcements/components/system-announcement-banner";
 
 import { cn } from "@/lib/utils";
 import { cookies, headers } from "next/headers";
@@ -120,7 +121,15 @@ export default async function AppLayout({
                   content={termsGate.content}
                 />
               ) : (
-                children
+                <>
+                  {user && (
+                    <SystemAnnouncementBanner
+                      userId={user.id}
+                      isAdmin={roles.includes("admin")}
+                    />
+                  )}
+                  {children}
+                </>
               )}
             </main>
             {/* חגיגת שידוכים - לא מעל דיאלוג התקנון החוסם */}

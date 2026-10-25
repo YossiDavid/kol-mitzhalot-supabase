@@ -10,6 +10,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { checkNameRequirement } from "@/lib/name-gate";
+import { IMPERSONATION_TARGET_COOKIE } from "@/lib/impersonation";
 
 /** עוגיית ה-throttle של "נראה לאחרונה": ערכה מזהה המשתמש שעודכן */
 const LAST_SEEN_COOKIE = "km_last_seen";
@@ -35,6 +36,10 @@ async function touchLastSeen(
 ): Promise<boolean> {
   if (!userId) return false;
   if (request.cookies.get(LAST_SEEN_COOKIE)?.value === userId) return false;
+  // מנהל שמתחזה למשתמש: זו לא פעילות של המשתמש עצמו
+  if (request.cookies.get(IMPERSONATION_TARGET_COOKIE)?.value === userId) {
+    return false;
+  }
 
   const { error } = await supabase.rpc("touch_last_seen");
   if (error) {

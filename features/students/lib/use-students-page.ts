@@ -14,6 +14,23 @@ import {
 
 const LOAD_FAILED_MESSAGE = "לא הצלחנו לטעון את רשימת הכרטיסים";
 
+/** מספר העמוד נשמר בכתובת (?page=), כדי שחזרה מכרטיס תחזיר לאותו עמוד */
+const PAGE_PARAM = "page";
+
+function readPageFromUrl(): number {
+  const raw = new URLSearchParams(window.location.search).get(PAGE_PARAM);
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed > 1 ? parsed : 1;
+}
+
+function writePageToUrl(page: number) {
+  const url = new URL(window.location.href);
+  if (page > 1) url.searchParams.set(PAGE_PARAM, String(page));
+  else url.searchParams.delete(PAGE_PARAM);
+  // replaceState משולב בראוטר של Next ואינו גורם לניווט או לרינדור שרת
+  window.history.replaceState(window.history.state, "", url);
+}
+
 /**
  * loading - הטעינה הראשונה (שלד); refreshing - עמוד/סינון/מיון חדש כשיש כבר
  * שורות על המסך (הן נשארות, עמומות, כדי שהטבלה לא תקפוץ); ready; error.
@@ -65,7 +82,8 @@ export function useStudentsPage(
 ) {
   const supabaseRef = useRef(createClient());
   const [criteria, setCriteria] = useState<Criteria>({ query, sort });
-  const [page, setPage] = useState(1);
+  // null עד שהעמוד נקרא מהכתובת אחרי הטעינה (בשרת אין window)
+  const [page, setPageState] = useState<number | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [data, setData] = useState<PageData>(INITIAL_DATA);
 
@@ -73,10 +91,22 @@ export function useStudentsPage(
   // העמוד הישן. השוואה לפי תוכן, כי הסינון מעדכן את ההקשר גם בלי שינוי
   if (criteriaKey(criteria) !== criteriaKey({ query, sort })) {
     setCriteria({ query, sort });
-    setPage(1);
+    if (page !== null) setPageState(1);
   }
 
   useEffect(() => {
+    setPageState(readPageFromUrl());
+  }, []);
+
+  useEffect(() => {
+    if (page !== null) writePageToUrl(page);
+  }, [page]);
+
+  const setPage = useCallback((next: number) => setPageState(next), []);
+
+  useEffect(() => {
+    if (page === null) return;
+    const currentPage = page;
     const controller = new AbortController();
 
     async function load() {
@@ -90,7 +120,7 @@ export function useStudentsPage(
           supabaseRef.current,
           criteria.query,
           criteria.sort,
-          page,
+          currentPage,
         ).abortSignal(controller.signal);
         if (controller.signal.aborted) return;
         if (error) {
@@ -101,8 +131,8 @@ export function useStudentsPage(
         }
         const total = count ?? 0;
         // העמוד האחרון התרוקן (מחיקה, או סינון שהצטמצם): חוזרים לעמוד האחרון הקיים
-        if (!rows?.length && total > 0 && page > 1) {
-          setPage(pageCount(total));
+        if (!rows?.length && total > 0 && currentPage > 1) {
+          setPageState(pageCount(total));
           return;
         }
         // select דינמי (עם join לפי הסינון) מבלבל את הסקת הטיפוסים של supabase-js
@@ -147,5 +177,12 @@ export function useStudentsPage(
     }));
   }, []);
 
-  return { ...data, page, setPage, reload, removeStudent, setStudentCv };
+  return {
+    ...data,
+    page: page ?? 1,
+    setPage,
+    reload,
+    removeStudent,
+    setStudentCv,
+  };
 }

@@ -149,6 +149,11 @@ const NEVER_IN_PROPOSAL = [
   // אישור "להצעות המנהל בלבד": פרט ניהולי
   "admin_exclusive_at",
   "admin_exclusive_by",
+  // השהיה שקטה ו"בתהליך שידוך": פרטי ניהול, נקראים רק דרך RPC/שרת
+  "admin_pause_silent",
+  "matchmaking_hold_at",
+  "matchmaking_hold_reason",
+  "matchmaking_hold_by",
 ] as const;
 
 const CHILD_TABLES = [

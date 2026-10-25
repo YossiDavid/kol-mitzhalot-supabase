@@ -14,7 +14,7 @@ import { createClient } from "@/lib/supabase/server";
 export type VerifyEmailCodeResult = { ok: false; message: string };
 
 const INVALID_INPUT_MESSAGE =
-  "נא להזין את כתובת האימייל ואת הקוד שבמייל (ספרות בלבד, 6 ספרות).";
+  "נא להזין את כתובת האימייל ואת הקוד שבמייל (ספרות בלבד).";
 const WRONG_CODE_MESSAGE =
   "הקוד שגוי או שפג תוקפו. הקוד תקף רק במייל האחרון שנשלח אליכם. אפשר לבקש קישור וקוד חדשים.";
 

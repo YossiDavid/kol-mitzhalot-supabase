@@ -203,6 +203,7 @@ async function DashboardSections() {
     staffPrompt,
     ownCardsCount: ownStudentsResult.failed ? null : ownCards.length,
     isShadchanView,
+    isStaff: isStaffOrAdmin,
   });
 
   const activeShidduchimCount =

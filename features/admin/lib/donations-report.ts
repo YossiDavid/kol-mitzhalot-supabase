@@ -20,6 +20,8 @@ export type DonationRow = {
   id: string;
   createdAt: string;
   amount: number;
+  /** donations.currency: 1 שקל, 2 דולר */
+  currency: number;
   frequency: "one_time" | "monthly";
   status: DonationStatus;
   dedicationText: string | null;
@@ -86,6 +88,7 @@ export type UnmatchedPaymentRow = {
   receivedAt: string;
   kind: string;
   amount: number | null;
+  currency: number | null;
   providerTransactionId: string | null;
   providerKevaId: string | null;
   reason: string | null;
@@ -149,7 +152,7 @@ async function loadUnmatched(): Promise<UnmatchedPaymentRow[]> {
   const { data, error } = await supabase
     .from("donation_payments")
     .select(
-      "id, received_at, kind, amount, provider_transaction_id, provider_keva_id, mismatch_reason, donation_id, client_name:raw->>ClientName",
+      "id, received_at, kind, amount, currency, provider_transaction_id, provider_keva_id, mismatch_reason, donation_id, client_name:raw->>ClientName",
     )
     .eq("matched", false)
     .order("received_at", { ascending: false })
@@ -161,6 +164,7 @@ async function loadUnmatched(): Promise<UnmatchedPaymentRow[]> {
     receivedAt: row.received_at,
     kind: row.kind,
     amount: row.amount === null ? null : Number(row.amount),
+    currency: row.currency,
     providerTransactionId: row.provider_transaction_id,
     providerKevaId: row.provider_keva_id,
     reason: row.mismatch_reason,
@@ -178,7 +182,7 @@ export async function loadDonationsReport(
   let builder = supabase
     .from("donations")
     .select(
-      "id, created_at, amount, frequency, status, dedication_text, donor_first_name, donor_last_name, donor_phone, donor_email, last_error, provider_keva_id, dedication_kind, dedication_starts_on, dedication_ends_on, dedication:dedications(needs_review)",
+      "id, created_at, amount, currency, frequency, status, dedication_text, donor_first_name, donor_last_name, donor_phone, donor_email, last_error, provider_keva_id, dedication_kind, dedication_starts_on, dedication_ends_on, dedication:dedications(needs_review)",
       { count: "exact" },
     );
   if (query.status) builder = builder.eq("status", query.status);
@@ -200,6 +204,7 @@ export async function loadDonationsReport(
       id: donation.id,
       createdAt: donation.created_at,
       amount: donation.amount,
+      currency: donation.currency,
       frequency: donation.frequency === "monthly" ? "monthly" : "one_time",
       status: isDonationStatus(donation.status) ? donation.status : "pending",
       dedicationText: donation.dedication_text,

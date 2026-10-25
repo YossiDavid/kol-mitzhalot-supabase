@@ -1,3 +1,4 @@
+import { maskSilentPauseForOwner } from "@/features/students/lib/card-silent-pause";
 import {
   parseRoomContext,
   roomContextTitle,
@@ -74,7 +75,9 @@ export async function getOwnStudents(supabase: ServerSupabase, userId: string) {
     console.error("[dashboard/own-students]", describeSupabaseError(error));
     return { students: [], failed: true };
   }
-  return toStudentTableResult(data, "[dashboard/own-students]");
+  const result = toStudentTableResult(data, "[dashboard/own-students]");
+  // השהיה שקטה של ההנהלה: מנהל הכרטיס רואה את הכרטיס כפעיל
+  return { ...result, students: await maskSilentPauseForOwner(result.students) };
 }
 
 /** מיפוי ערך עמודת application_status לסטטוס מוכר; null לכל ערך אחר */

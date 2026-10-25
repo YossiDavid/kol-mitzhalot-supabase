@@ -1,5 +1,10 @@
 "use client";
 
+import { DonationAfterSubmitDialog } from "@/features/students/components/donation-after-submit-dialog";
+import {
+  loadFamilyPrefill,
+  type FamilyPrefill,
+} from "@/features/students/lib/family-prefill";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -33,6 +38,10 @@ export default function CreateStudentPage() {
     email: null,
     name: null,
   });
+  const [familyPrefill, setFamilyPrefill] = useState<FamilyPrefill | null>(
+    null,
+  );
+  const [createdStudentId, setCreatedStudentId] = useState<string | null>(null);
 
   useEffect(() => {
     let isCancelled = false;
@@ -47,6 +56,10 @@ export default function CreateStudentPage() {
         setAuthorDefaults({
           email: sessionUser.email ?? null,
           name: accountFullName(sessionUser),
+        });
+        // הורה שכבר מילא כרטיס לילד: הצעה למלא את פרטי המשפחה משם
+        void loadFamilyPrefill(supabase, sessionUser.id).then((prefill) => {
+          if (!isCancelled) setFamilyPrefill(prefill);
         });
       })
       .catch((error: unknown) => {
@@ -156,7 +169,8 @@ export default function CreateStudentPage() {
         toast.success("הקו״ח נשמר בהצלחה!");
       }
 
-      router.push(`/app/students/${studentId}`);
+      // לפני המעבר לכרטיס: הזמנה לתרום להחזקת המערכת
+      setCreatedStudentId(studentId);
     } catch (error) {
       console.error("Unexpected error:", error);
       toast.error("אירעה שגיאה לא צפויה");
@@ -164,12 +178,21 @@ export default function CreateStudentPage() {
   };
 
   return (
-    <StudentFormWizard
-      lateAuthorDefaults={authorDefaults}
-      heading="הוספת קו״ח למערכת"
-      submitLabel="שליחה למערכת"
-      submittingLabel="שומר..."
-      onSubmit={handleSubmit}
-    />
+    <>
+      <StudentFormWizard
+        lateAuthorDefaults={authorDefaults}
+        familyPrefill={familyPrefill}
+        heading="הוספת קו״ח למערכת"
+        submitLabel="שליחה למערכת"
+        submittingLabel="שומר..."
+        onSubmit={handleSubmit}
+      />
+      <DonationAfterSubmitDialog
+        open={createdStudentId !== null}
+        onContinue={() => {
+          if (createdStudentId) router.push(`/app/students/${createdStudentId}`);
+        }}
+      />
+    </>
   );
 }

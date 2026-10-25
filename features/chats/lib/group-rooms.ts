@@ -34,7 +34,8 @@ export function groupRoomsByPerson(rooms: readonly Room[]): PersonGroup[] {
 
   return [...byPerson.entries()]
     .map(([otherUserId, personRooms]): PersonGroup => {
-      const sorted = personRooms.toSorted(byLastAtDesc);
+      // לא toSorted: אינו קיים בכרום 109 (Windows 7/8), והשיחות קרסו שם
+      const sorted = [...personRooms].sort(byLastAtDesc);
       const latest = sorted[0];
       return {
         otherUserId,
@@ -45,7 +46,8 @@ export function groupRoomsByPerson(rooms: readonly Room[]): PersonGroup[] {
         lastMessage: latest.lastMessage,
       };
     })
-    .toSorted((a, b) => toTime(b.lastAt) - toTime(a.lastAt));
+    // map מחזיר מערך חדש, ולכן sort אינו משנה את הקלט
+    .sort((a, b) => toTime(b.lastAt) - toTime(a.lastAt));
 }
 
 /** אדם עם שיחה כללית אחת בלבד מוצג כשורה רגילה, בלי שרשורים. */

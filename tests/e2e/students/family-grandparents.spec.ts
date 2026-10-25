@@ -4,6 +4,7 @@ import { test, expect, type Page } from "@playwright/test";
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
 import { approvedCard } from "../helpers/approved-card";
 import { addStudentPhoto } from "../helpers/student-photo";
+import { continuePastDonationDialog } from "../helpers/donation-dialog";
 
 /**
  * סבים וסבתות בטופס הכרטיס: (1) התוויות מנוסחות מנקודת המבט של ההורה שבמקטע
@@ -126,6 +127,7 @@ test.describe("סבים וסבתות - רשות", () => {
     await expect(page.locator("button[type='submit']")).toBeVisible();
     await fill(page, "partner.additionalInformation", "מחפשים בן תורה");
     await page.locator("button[type='submit']").click();
+    await continuePastDonationDialog(page, SAVE_TIMEOUT_MS);
     await expect(page).toHaveURL(STUDENT_URL_ID, { timeout: SAVE_TIMEOUT_MS });
     createdIds.push(page.url().match(STUDENT_URL_ID)?.[1] ?? "");
 

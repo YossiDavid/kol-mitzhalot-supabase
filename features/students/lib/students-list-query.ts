@@ -165,6 +165,14 @@ function applyFieldFilters(
   if (query.personal_status)
     next = next.eq("personal_status", query.personal_status);
   if (query.city) next = next.ilike("city", `%${query.city}%`);
+  if (query.cellphone_type)
+    next = next.eq("cellphone_type", query.cellphone_type);
+  if (query.head_cover_type)
+    next = next.eq("head_cover_type", query.head_cover_type);
+  if (query.plan_for_life) next = next.eq("plan_for_life", query.plan_for_life);
+  if (query.willing_to_live) {
+    next = next.contains("willing_to_live_countries", [query.willing_to_live]);
+  }
 
   const fatherName = sanitizeTerm(query.father_name);
   if (fatherName) {

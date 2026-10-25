@@ -6,16 +6,30 @@ import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatRelativeTime } from "@/lib/relative-time";
 import { ChatAvatar } from "./chat-avatar";
 
 type ChatHeaderProps = {
   title: string | null;
   avatarUrl: string | null;
   isOnline: boolean;
+  /** כשהצד השני לא מחובר: "פעיל/ה לאחרונה" לפי last_seen_at */
+  lastSeenAt?: string | null;
 };
 
+function presenceLabel(isOnline: boolean, lastSeenAt: string | null) {
+  if (isOnline) return "מחובר";
+  if (!lastSeenAt) return "לא מחובר";
+  return `פעיל לאחרונה ${formatRelativeTime(lastSeenAt)}`;
+}
+
 /** כותרת חלון השיחה — נשארת קבועה מעל אזור ההודעות הנגלל. */
-export function ChatHeader({ title, avatarUrl, isOnline }: ChatHeaderProps) {
+export function ChatHeader({
+  title,
+  avatarUrl,
+  isOnline,
+  lastSeenAt = null,
+}: ChatHeaderProps) {
   return (
     <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border bg-card px-3 md:px-4">
       {/* במובייל מוצג חלון אחד בכל פעם — החץ מחזיר לרשימה */}
@@ -56,7 +70,7 @@ export function ChatHeader({ title, avatarUrl, isOnline }: ChatHeaderProps) {
               isOnline ? "bg-primary" : "bg-muted-foreground",
             )}
           />
-          {isOnline ? "מחובר" : "לא מחובר"}
+          {presenceLabel(isOnline, lastSeenAt)}
         </p>
       </div>
     </header>

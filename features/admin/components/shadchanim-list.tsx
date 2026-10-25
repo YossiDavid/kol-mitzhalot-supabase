@@ -16,7 +16,10 @@ import {
 import type { AdminShadchanimQuery } from "@/features/admin/lib/shadchanim-query";
 import { getShadchanimList } from "@/features/admin/lib/shadchanim";
 import { ShadchanModerationActions } from "@/features/admin/components/shadchan-moderation-actions";
+import { AdminUserChatButton } from "@/features/admin/components/admin-user-chat-button";
 import { Suspense } from "react";
+import { formatActiveDuration } from "@/lib/format-duration";
+import { formatDateTimeIsrael, formatRelativeTime } from "@/lib/relative-time";
 
 type ShadchanRow = Awaited<
   ReturnType<typeof getShadchanimList>
@@ -24,7 +27,7 @@ type ShadchanRow = Awaited<
 
 /** ערך חסר בטבלה (לעולם לא "לא זמין") */
 const MISSING_VALUE = "—";
-const TABLE_COLUMN_COUNT = 8;
+const TABLE_COLUMN_COUNT = 10;
 
 /** תאריך בלבד, בלי שעה */
 function formatDate(dateString: string | null): string {
@@ -121,6 +124,25 @@ const SHADCHAN_COLUMNS: DataTableColumn<ShadchanRow>[] = [
     cell: (shadchan) => formatDate(shadchan.lastActivityAt),
   },
   {
+    key: "last-seen",
+    header: "נראה לאחרונה",
+    size: "min",
+    cell: (shadchan) =>
+      shadchan.lastSeenAt ? (
+        <span title={formatDateTimeIsrael(shadchan.lastSeenAt)}>
+          {formatRelativeTime(shadchan.lastSeenAt)}
+        </span>
+      ) : (
+        MISSING_VALUE
+      ),
+  },
+  {
+    key: "active-time",
+    header: "זמן פעילות",
+    size: "min",
+    cell: (shadchan) => formatActiveDuration(shadchan.activeSeconds),
+  },
+  {
     key: "edit",
     header: "פעולות",
     size: "min",
@@ -132,12 +154,19 @@ const SHADCHAN_COLUMNS: DataTableColumn<ShadchanRow>[] = [
             עריכת פרופיל
           </Link>
         </Button>
+        <AdminUserChatButton userId={shadchan.id} size="sm" />
         <ShadchanModerationActions
           userId={shadchan.id}
           name={fullNameOf(shadchan)}
           isFrozen={shadchan.isFrozen}
           canFreeze={shadchan.hasProfileRow}
           canRevoke={shadchan.hasShadchanRole}
+          // הוסר/נדחה בלבד; בקשה ממתינה מאושרת בעמוד הבקשות
+          canRestore={
+            shadchan.hasProfileRow &&
+            !shadchan.hasShadchanRole &&
+            shadchan.applicationStatus !== "pending"
+          }
         />
       </span>
     ),
@@ -171,7 +200,9 @@ export async function ShadchanimList({
     return (
       <Empty>
         <EmptyHeader>
-          <EmptyTitle>לא נמצאו שדכנים במערכת</EmptyTitle>
+          <EmptyTitle>
+            {query.q ? "לא נמצאו שדכנים שתואמים לחיפוש" : "לא נמצאו שדכנים במערכת"}
+          </EmptyTitle>
         </EmptyHeader>
       </Empty>
     );

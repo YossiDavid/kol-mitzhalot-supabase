@@ -44,6 +44,18 @@ export const CELLPHONE_TYPE_OPTIONS: FieldOptionDefinition[] = [
   { value: "other", label: "אחר" },
 ];
 
+/**
+ * סוג כיסוי ראש - של המיועדת ושל מה שהמיועד מחפש (head_cover_type).
+ * "other" מוצג "לא משנה" גם בכרטיס (headCoverTypeToHebrew)
+ */
+export const HEAD_COVER_TYPE_OPTIONS: FieldOptionDefinition[] = [
+  { value: "kerchief", label: "מטפחת" },
+  { value: "wig", label: "פאה" },
+  { value: "wig_and_hat", label: "פאה וכובע" },
+  { value: "wig_and_band", label: "פאה ובנד" },
+  { value: "other", label: "לא משנה" },
+];
+
 /** "מתעתד בעז״ה" - של המיועד ושל מי שמחפשים (plan_for_life_enum) */
 export const PLAN_FOR_LIFE_OPTIONS: FieldOptionDefinition[] = [
   { value: "koilel", label: "ללמוד בכולל" },

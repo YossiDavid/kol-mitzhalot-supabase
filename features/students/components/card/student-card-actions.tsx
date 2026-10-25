@@ -29,6 +29,7 @@ import { CardAdminPauseDialog } from "@/features/admin/components/card-admin-pau
 import { ReportCardDialog } from "@/features/students/components/card/report-card-dialog";
 import { StudentDeleteDialog } from "@/features/students/components/delete-student-button";
 import { StudentChatButton } from "@/features/students/components/message-button";
+import { FavoriteCardMenuItem } from "@/features/students/components/card/favorite-card-button";
 import { shareStudentCard } from "@/features/students/lib/share-student-card";
 import type { CardAdminFocus } from "@/features/students/lib/card-admin-focus";
 
@@ -144,6 +145,9 @@ export function StudentCardActions({
             <Share2 />
             שיתוף הכרטיס
           </DropdownMenuItem>
+
+          {/* מועדפים: כמו הכוכב ברשימה, לשדכן ולמנהל */}
+          {canManage && <FavoriteCardMenuItem studentId={studentId} />}
 
           {ownerUserId && (
             <DropdownMenuItem asChild>

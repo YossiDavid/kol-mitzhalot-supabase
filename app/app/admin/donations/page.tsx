@@ -28,6 +28,7 @@ import {
   type DonationRow,
   type UnmatchedPaymentRow,
 } from "@/features/admin/lib/donations-report";
+import { formatDonationAmount } from "@/features/donations/lib/currency";
 import { DedicationPeriodText } from "@/features/dedications/components/dedication-period-text";
 import { KIND_LABELS as DEDICATION_KIND_LABELS } from "@/features/dedications/lib/dedication-model";
 import {
@@ -69,7 +70,6 @@ function formatDateTime(value: string): string {
   }).format(new Date(value));
 }
 
-const formatShekels = (amount: number) => `${amount.toLocaleString("he-IL")} ₪`;
 
 const dash = (value: string | number | null) => value ?? "—";
 
@@ -85,7 +85,7 @@ const COLUMNS: DataTableColumn<DonationRow>[] = [
     key: "amount",
     header: "סכום",
     size: "min",
-    cell: (row) => formatShekels(row.amount),
+    cell: (row) => formatDonationAmount(row.amount, row.currency),
   },
   {
     key: "frequency",
@@ -196,7 +196,10 @@ const UNMATCHED_COLUMNS: DataTableColumn<UnmatchedPaymentRow>[] = [
     key: "amount",
     header: "סכום",
     size: "min",
-    cell: (row) => (row.amount === null ? "—" : formatShekels(row.amount)),
+    cell: (row) =>
+      row.amount === null
+        ? "—"
+        : formatDonationAmount(row.amount, row.currency ?? 1),
   },
   { key: "client", header: "שם אצל הספק", cell: (row) => dash(row.clientName) },
   {

@@ -35,6 +35,14 @@ export interface StudentQuery {
   cardFilledBy?: string;
   /** "true": רק כרטיסים שההנהלה סימנה "במיקוד". ריק = הכל */
   adminFocus?: string;
+  /** cellphone_type_enum */
+  cellphone_type?: string;
+  /** head_cover_type_enum (רלוונטי לבנות) */
+  head_cover_type?: string;
+  /** plan_for_life_enum - "מתעתד בעז״ה" ללמוד/לעבוד */
+  plan_for_life?: string;
+  /** ארץ אחת מתוך willing_to_live_countries - "מוכן/ה לגור ב" */
+  willing_to_live?: string;
   /** קהילה / חסידות (students.community). undefined = הכל מסומן, בלי סינון */
   communities?: CommunityFilter;
 }

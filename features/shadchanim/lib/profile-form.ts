@@ -23,6 +23,8 @@ export const SYNAGOGUE_RABBI_MAX_LENGTH = 100;
 export const BIO_MAX_LENGTH = 2000;
 /** אורך מקסימלי של "למה כדאי לאשר אותי" (תואם ל-CHECK בעמודה application_note) */
 export const APPLICATION_NOTE_MAX_LENGTH = 1000;
+/** אורך מקסימלי של "מי הפנה אותך" (תואם ל-CHECK בעמודה referral_source) */
+export const REFERRAL_SOURCE_MAX_LENGTH = 200;
 const CITY_MAX_LENGTH = 100;
 const LIST_MAX_LENGTH = 500;
 const PHONE_MAX_LENGTH = 30;
@@ -123,6 +125,10 @@ export const shadchanProfileBaseSchema = z.object({
   application_note: optionalText()
     .max(APPLICATION_NOTE_MAX_LENGTH, tooLong(APPLICATION_NOTE_MAX_LENGTH))
     .optional(),
+  /** "מי הפנה אותך לקול מצהלות?" - להנהלה בלבד, אופציונלי, כמו application_note */
+  referral_source: optionalText()
+    .max(REFERRAL_SOURCE_MAX_LENGTH, tooLong(REFERRAL_SOURCE_MAX_LENGTH))
+    .optional(),
 });
 
 export const AVATAR_REQUIRED_MESSAGE = "נא להעלות תמונה (חובה לשדכנים)";
@@ -164,6 +170,7 @@ export const EMPTY_SHADCHAN_FORM: ShadchanFormData = {
   location: "",
   match_types: [],
   application_note: "",
+  referral_source: "",
 };
 
 /** "עברית, אנגלית" → ["עברית", "אנגלית"]; ריק → null */
@@ -192,8 +199,9 @@ export interface ShadchanProfileColumns {
   rabbi_phone: string;
   location: string;
   match_types: string[];
-  /** מופיע רק כשהטופס כולל אותו - אחרת העמודה אינה נכתבת */
+  /** מופיעים רק כשהטופס כולל אותם - אחרת העמודות אינן נכתבות */
   application_note?: string | null;
+  referral_source?: string | null;
 }
 
 interface FormToColumnsOptions {
@@ -232,7 +240,10 @@ export function formToColumns(
     location: data.location,
     match_types: normalizeMatchTypes(data.match_types),
     ...(shouldWriteNote
-      ? { application_note: data.application_note || null }
+      ? {
+          application_note: data.application_note || null,
+          referral_source: data.referral_source || null,
+        }
       : {}),
   };
 }
@@ -255,6 +266,7 @@ export interface ShadchanProfileRow {
   location?: string | null;
   match_types?: string[] | null;
   application_note?: string | null;
+  referral_source?: string | null;
 }
 
 const listToText = (value: string[] | string | null | undefined) =>
@@ -280,9 +292,10 @@ export function rowToForm(row: ShadchanProfileRow): ShadchanFormData {
     location: row.location || "",
     match_types: normalizeMatchTypes(row.match_types),
     application_note: row.application_note || "",
+    referral_source: row.referral_source || "",
   };
 }
 
 /** עמודות הפרופיל לשליפה (select) לעריכה */
 export const SHADCHAN_PROFILE_SELECT =
-  "gender, birth_date, avatar_path, bio, experience_years, closed_matches, specializations, contact_phone, contact_email, languages, community, synagogue_rabbi, rabbi_phone, location, match_types, application_note";
+  "gender, birth_date, avatar_path, bio, experience_years, closed_matches, specializations, contact_phone, contact_email, languages, community, synagogue_rabbi, rabbi_phone, location, match_types, application_note, referral_source";

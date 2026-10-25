@@ -108,6 +108,12 @@ export interface SelectField extends BaseField {
    * ("הוספה למאגר"), ואז נבחר. דורש table שבו הערך הוא עמודת השם.
    */
   creatable?: boolean;
+  /**
+   * הוספה למאגר דרך RPC במקום insert ישיר (למשל request_institution, שבודק
+   * כפילויות ומחזיר את המזהה). הפרמטרים נשלחים יחד עם p_name.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  createRpc?: { fn: string; params?: Record<string, any> };
 }
 
 export interface TextAndSelectField extends BaseField {

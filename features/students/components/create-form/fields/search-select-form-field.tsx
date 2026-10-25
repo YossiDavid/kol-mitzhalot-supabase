@@ -13,6 +13,16 @@ import {
 import { SearchSelectField } from "./search-select-field";
 
 const DEFAULT_PLACEHOLDER = "חיפוש במאגר...";
+
+type CreateRpc = { fn: string; params?: Record<string, unknown> };
+
+function isCreateRpc(value: unknown): value is CreateRpc {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { fn?: unknown }).fn === "string"
+  );
+}
 const DEFAULT_EMPTY_TEXT = "לא נמצאו תוצאות";
 
 /** "select2": חיפוש במאגר (טבלה ב-Supabase או endpoint) */
@@ -59,7 +69,10 @@ export function SearchSelectFormField(props: FieldControlProps) {
           params={readRecord(field.params)}
           extraColumns={fillOnSelect && Object.values(fillOnSelect)}
           onSelectRow={handleSelectRow}
-          creatable={Boolean(field.creatable)}
+          creatable={Boolean(field.creatable) || Boolean(field.createRpc)}
+          createRpc={
+            isCreateRpc(field.createRpc) ? field.createRpc : undefined
+          }
           disabled={isDisabled}
         />
       )}

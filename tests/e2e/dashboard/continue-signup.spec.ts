@@ -75,7 +75,7 @@ test.describe("continueSignupTarget", () => {
     ).toBeNull();
   });
 
-  test("שדכן/מנהל, או מטרה אחרת - כלום", () => {
+  test("שדכן/מנהל או איש צוות - כלום", () => {
     expect(
       continueSignupTarget({
         ...base,
@@ -83,10 +83,20 @@ test.describe("continueSignupTarget", () => {
         isShadchanView: true,
       }),
     ).toBeNull();
+    expect(continueSignupTarget({ ...base, isStaff: true })).toBeNull();
+  });
+
+  test("מטרה אחרת או לא ידועה, בלי כרטיס ובלי בקשה - מסך בחירה", () => {
+    expect(continueSignupTarget({ ...base, signupPurpose: "other" })).toBe(
+      "choose",
+    );
+    expect(continueSignupTarget(base)).toBe("choose");
     expect(
-      continueSignupTarget({ ...base, signupPurpose: "other" }),
+      continueSignupTarget({ ...base, ownCardsCount: 1 }),
     ).toBeNull();
-    expect(continueSignupTarget(base)).toBeNull();
+    expect(
+      continueSignupTarget({ ...base, staffPrompt: "pending" }),
+    ).toBeNull();
   });
 });
 

@@ -12,8 +12,11 @@ import type { ReferenceEntry } from "./types";
  */
 export function ReferencesSection({
   references,
+  gender,
 }: {
   references: ReferenceEntry[] | null | undefined;
+  /** מגדר בעל הכרטיס - לניסוח "חבר"/"חברה" */
+  gender?: string | null;
 }) {
   if (!references || references.length === 0) return null;
   return (
@@ -25,7 +28,7 @@ export function ReferencesSection({
             className="rounded-lg border border-border bg-card p-3 transition-colors hover:bg-muted/50"
           >
             <p className="mb-1 text-caption font-bold text-primary">
-              {ref.reference_type && referenceTypeToHebrew(ref.reference_type)}
+              {ref.reference_type && referenceTypeToHebrew(ref.reference_type, gender)}
             </p>
             <p className="text-body-sm font-bold">{ref.name}</p>
             {ref.phone && (

@@ -95,10 +95,14 @@ export function headCoverTypeToHebrew(type: string) {
       return "מטפחת";
     case "wig":
       return "פאה";
+    case "wig_and_hat":
+    // ערך ישן שהוחלף ב"פאה וכובע" (מיגרציית head_cover_wig_options)
     case "kerchief_on_wig":
-      return "מטפחת על פאה";
+      return "פאה וכובע";
+    case "wig_and_band":
+      return "פאה ובנד";
     case "other":
-      return "אחר";
+      return "לא משנה";
     default:
       return type;
   }
@@ -174,12 +178,13 @@ export function employmentCompactLabel(
   return label ? pickByGender(label, gender) : "";
 }
 
-export function referenceTypeToHebrew(type: string) {
+/** סוג ממליץ; "חבר" לפי מגדר בעל הכרטיס - בכרטיס של בת מוצג "חברה / מכרה" */
+export function referenceTypeToHebrew(type: string, gender?: string | null) {
   switch (type) {
     case "rabbi":
       return "רב";
     case "friend":
-      return "חבר";
+      return gender === "female" ? "חברה / מכרה" : "חבר / מכר";
     case "family_friend":
       return "מכר משפחתי";
     default:

@@ -1,5 +1,6 @@
 import {
   CELLPHONE_TYPE_OPTIONS,
+  HEAD_COVER_TYPE_OPTIONS,
   PLAN_FOR_LIFE_OPTIONS,
   genderIs,
 } from "./shared-options";
@@ -93,12 +94,7 @@ export const partnerStep: FormSteps = {
           width: "full",
           label: "סוג כיסוי ראש רצוי",
           type: "radio",
-          options: [
-            { value: "kerchief", label: "מטפחת" },
-            { value: "wig", label: "פאה" },
-            { value: "kerchief_on_wig", label: "מטפחת על הפאה" },
-            { value: "other", label: "לא משנה" },
-          ],
+          options: HEAD_COVER_TYPE_OPTIONS,
           condition: genderIs("male"),
         },
         {

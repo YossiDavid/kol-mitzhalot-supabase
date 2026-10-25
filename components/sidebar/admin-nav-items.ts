@@ -23,6 +23,7 @@ import {
   IdCard,
   Database,
   type LucideIcon,
+  Megaphone,
 } from "lucide-react";
 
 import type { Route } from "next";
@@ -74,6 +75,11 @@ export const ADMIN_NAV_SECTIONS: readonly AdminNavSection[] = [
         title: "בקשות הצטרפות כאיש צוות",
         url: "/app/admin/staff/requests",
         icon: UserPlus,
+      },
+      {
+        title: "הודעות מערכת",
+        url: "/app/admin/announcements",
+        icon: Megaphone,
       },
     ],
   },

@@ -27,6 +27,7 @@ function institutionSearch(
   | "searchColumn"
   | "filters"
   | "fillOnSelect"
+  | "createRpc"
 > {
   return {
     placeholder: "חיפוש במאגר המוסדות...",
@@ -38,6 +39,12 @@ function institutionSearch(
     searchColumn: "name",
     filters: { type, gender, is_active: true },
     fillOnSelect: { name: "name", city: "city" },
+    // מוסד שאינו במאגר: "הוספה למאגר" יוצר אותו מיד (המנהל רואה בכרטיס
+    // לפני האישור), עם הסוג והמגדר של המקטע
+    createRpc: {
+      fn: "request_institution",
+      params: { p_gender: gender, p_type: type },
+    },
   };
 }
 

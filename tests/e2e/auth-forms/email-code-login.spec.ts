@@ -47,7 +47,7 @@ test.describe("כניסה עם קוד מהמייל", () => {
     // התבנית המקומית אינה נושאת קוד, ולכן הקוד נוצר כמו ש-{{ .Token }} היה נושא
     const { code } = await generateEmailCredentials(user.email);
     // שדה הקוד קיים רק במסך החדש; ממתינים לו לפני בדיקת האימייל שמולא מראש
-    const codeField = page.getByLabel("הקוד בן 6 הספרות");
+    const codeField = page.getByLabel("הקוד מהמייל");
     await expect(codeField).toBeVisible();
     // (דף ההתחברות נשאר מוסתר ב-DOM, ולכן מצמצמים לאזור הקוד)
     const codeRegion = page.getByRole("region", { name: "הזנת קוד מהמייל" });
@@ -152,7 +152,7 @@ test.describe("כניסה עם קוד מהמייל", () => {
     // Act
     await page.getByLabel("אימייל").fill(user.email);
     await page
-      .getByLabel("הקוד בן 6 הספרות")
+      .getByLabel("הקוד מהמייל")
       .fill(` ${code.slice(0, 3)} ${code.slice(3)} `);
     await page.getByRole("button", { name: "כניסה עם הקוד" }).click();
 
@@ -167,7 +167,7 @@ test.describe("כניסה עם קוד מהמייל", () => {
 
     // Act
     await page.getByLabel("אימייל").fill(user.email);
-    await page.getByLabel("הקוד בן 6 הספרות").fill("000000");
+    await page.getByLabel("הקוד מהמייל").fill("000000");
     await page.getByRole("button", { name: "כניסה עם הקוד" }).click();
 
     // Assert
@@ -181,10 +181,10 @@ test.describe("כניסה עם קוד מהמייל", () => {
     await page.getByLabel("אימייל").fill("someone@example.com");
 
     // Act
-    await page.getByLabel("הקוד בן 6 הספרות").fill("123");
+    await page.getByLabel("הקוד מהמייל").fill("123");
     await page.getByRole("button", { name: "כניסה עם הקוד" }).click();
 
     // Assert
-    await expect(page.getByText("הקוד מורכב מ-6 ספרות")).toBeVisible();
+    await expect(page.getByText("הקוד מורכב מספרות בלבד, בדיוק כפי שמופיע במייל")).toBeVisible();
   });
 });

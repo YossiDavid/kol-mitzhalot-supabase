@@ -11,6 +11,7 @@ import {
   UserSearch,
   Users,
   type LucideIcon,
+  CircleHelp,
 } from "lucide-react";
 
 import type { Route } from "next";
@@ -108,6 +109,12 @@ const allItems: readonly NavItem[] = [
     url: "/app/forums",
     icon: MessagesSquare,
     group: "shadchanTools",
+  },
+  {
+    title: "הוראות שימוש",
+    url: "/app/help",
+    icon: CircleHelp,
+    group: "general",
   },
   { title: "הגדרות", url: "/app/settings", icon: Settings, group: "general" },
 ];

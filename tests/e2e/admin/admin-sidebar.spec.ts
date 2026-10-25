@@ -25,6 +25,7 @@ const SECTIONS: readonly SectionSpec[] = [
       ["כל השדכנים", "/app/admin/shadchanim"],
       ["בקשות הצטרפות כשדכן", "/app/admin/shadchanim/requests"],
       ["בקשות הצטרפות כאיש צוות", "/app/admin/staff/requests"],
+      ["הודעות מערכת", "/app/admin/announcements"],
     ],
   },
   {
@@ -147,7 +148,7 @@ test.describe("סרגל צד — תפריט ניהול", () => {
     await expect(header).toHaveAttribute("aria-expanded", "true");
     await expect(header).toHaveAttribute("aria-controls", /.+/);
     await expect(page).toHaveURL(/\/app\/admin$/);
-    await expect(inlineLinks(page, "אנשים").getByRole("link")).toHaveCount(4);
+    await expect(inlineLinks(page, "אנשים").getByRole("link")).toHaveCount(5);
 
     // Act
     await header.click();
@@ -253,7 +254,7 @@ test.describe("סרגל צד — תפריט ניהול", () => {
     // Assert
     const sub = nav(page).locator('[data-sidebar="menu-sub"]');
     await expect(sub).toHaveCount(1);
-    await expect(sub.getByRole("link")).toHaveCount(4);
+    await expect(sub.getByRole("link")).toHaveCount(5);
     await expect(sub.locator('a[aria-current="page"]')).toHaveText(
       "כל המשתמשים",
     );
@@ -372,7 +373,7 @@ test.describe("סרגל צד — תפריט ניהול", () => {
     const panel = flyout(page, "people");
     await expect(panel).toBeVisible();
     await expect(panel.getByText("אנשים", { exact: true })).toBeVisible();
-    await expect(panel.locator("a")).toHaveCount(4);
+    await expect(panel.locator("a")).toHaveCount(5);
 
     // Act - Escape סוגר
     await page.keyboard.press("Escape");

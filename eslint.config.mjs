@@ -47,6 +47,14 @@ const eslintConfig = [
           message: TYPO_MSG,
         },
         {
+          // משתמשים עם דפדפנים ישנים (כרום 109 ב-Windows 7/8) - בלי polyfill
+          // אלה זורקים TypeError ומפילים את הדף (כך קרסו השיחות של שדכן)
+          selector:
+            "CallExpression[callee.property.name=/^(toSorted|toReversed|toSpliced|groupBy|withResolvers|fromAsync)$/]",
+          message:
+            "Not supported in Chrome < 117 (some users are on Chrome 109). Use [...arr].sort() / a manual loop instead.",
+        },
+        {
           selector:
             "Property[key.name='fontSize'], Property[key.value='fontSize']",
           message:

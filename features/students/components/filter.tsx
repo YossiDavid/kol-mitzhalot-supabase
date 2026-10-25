@@ -27,7 +27,18 @@ import { cn } from "@/lib/utils";
 /** הכל מוחל תוך כדי הקלדה; ההשהיה חוסכת שאילתה על כל תו ועדיין מרגישה מיידית. */
 const FILTER_DEBOUNCE_MS = 300;
 
+import {
+  CELLPHONE_TYPE_OPTIONS,
+  HEAD_COVER_TYPE_OPTIONS,
+  PLAN_FOR_LIFE_OPTIONS,
+  WILLING_TO_LIVE_COUNTRY_OPTIONS,
+} from "@/features/students/components/create-form/fields-data/shared-options";
+
 type Option = { value: string; label: string };
+
+/** אפשרויות הטופס (אותם ערכים שנשמרים בכרטיס) כאפשרויות סינון */
+const toOptions = (options: readonly { value: string; label: string }[]) =>
+  options.map(({ value, label }) => ({ value, label }));
 
 const GENDER_OPTIONS: Option[] = [
   { value: "male", label: "גבר" },
@@ -37,12 +48,12 @@ const GENDER_OPTIONS: Option[] = [
 /** "כרטיסים במיקוד": מה שהנהלת המערכת סימנה (הסינון בשרת) */
 const ADMIN_FOCUS_OPTIONS: Option[] = [{ value: "true", label: "במיקוד בלבד" }];
 
+/** בלי "נשוי/ה": המערכת אינה מיועדת לנשואים (בקשת ההנהלה) */
 const STATUS_OPTIONS: Option[] = [
   { value: "single", label: "רווק/ה" },
   { value: "divorced", label: "גרוש/ה" },
   { value: "widowed", label: "אלמן/ה" },
   { value: "engaged", label: "מאורס/ה" },
-  { value: "married", label: "נשוי/ה" },
 ];
 
 /** הערכים של employment_history.category, כפי שנשמרים בטופס הכרטיס */
@@ -292,6 +303,34 @@ function AdvancedFields(props: FieldGroupProps) {
         name="institution"
         label="מוסד לימודים"
         className="col-span-2 md:col-span-3"
+      />
+      <SelectFilter
+        {...props}
+        name="cellphone_type"
+        label="סוג טלפון"
+        options={toOptions(CELLPHONE_TYPE_OPTIONS)}
+        className="md:col-span-2"
+      />
+      <SelectFilter
+        {...props}
+        name="head_cover_type"
+        label="כיסוי ראש"
+        options={toOptions(HEAD_COVER_TYPE_OPTIONS)}
+        className="md:col-span-2"
+      />
+      <SelectFilter
+        {...props}
+        name="plan_for_life"
+        label="מתעתד/ת ללמוד / לעבוד"
+        options={toOptions(PLAN_FOR_LIFE_OPTIONS)}
+        className="md:col-span-3"
+      />
+      <SelectFilter
+        {...props}
+        name="willing_to_live"
+        label="מוכן/ה לגור ב"
+        options={toOptions(WILLING_TO_LIVE_COUNTRY_OPTIONS)}
+        className="md:col-span-2"
       />
     </>
   );

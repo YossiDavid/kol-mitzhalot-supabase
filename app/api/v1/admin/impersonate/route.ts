@@ -4,6 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getRequestOrigin } from "@/lib/app-url";
 import { hasRole } from "@/lib/user";
 import { unstable_noStore as noStore } from "next/cache";
+import {
+  IMPERSONATION_TARGET_COOKIE,
+  IMPERSONATION_TARGET_MAX_AGE_SECONDS,
+} from "@/lib/impersonation";
 
 /**
  * POST /api/v1/admin/impersonate
@@ -76,7 +80,16 @@ export async function POST(req: NextRequest) {
     const origin = getRequestOrigin(req.headers);
     const redirectUrl = `${origin}/auth/confirm?token_hash=${encodeURIComponent(linkData.properties.hashed_token)}&type=magiclink&next=/app`;
 
-    return NextResponse.json({ redirectUrl });
+    const response = NextResponse.json({ redirectUrl });
+    // "נראה לאחרונה" של המשתמש לא יתעדכן בזמן ההתחזות (lib/supabase/proxy.ts)
+    response.cookies.set(IMPERSONATION_TARGET_COOKIE, userId, {
+      maxAge: IMPERSONATION_TARGET_MAX_AGE_SECONDS,
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+    });
+    return response;
   } catch (error) {
     console.error("Impersonate error:", error);
     return NextResponse.json(
