@@ -11,9 +11,12 @@ import { SectionLoadFailed } from "../section-load-failed";
 
 export default function ActiveShidduchim({
   shiduchim,
+  recentlyClosed = [],
   failed = false,
 }: {
   shiduchim: ParentProposal[];
+  /** נסגרו ב-30 הימים האחרונים - כדי שהצעה שנדחתה לא תיעלם בלי הסבר */
+  recentlyClosed?: ParentProposal[];
   /** השליפה נכשלה: מציגים הודעת שגיאה ולא "אין הצעות" */
   failed?: boolean;
 }) {
@@ -30,6 +33,10 @@ export default function ActiveShidduchim({
             />
           ))}
         </div>
+      ) : recentlyClosed.length > 0 ? (
+        <p className="text-body-sm text-muted-foreground">
+          אין כרגע הצעות פתוחות.
+        </p>
       ) : (
         <Empty size="compact">
           <EmptyHeader>
@@ -39,6 +46,26 @@ export default function ActiveShidduchim({
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
+      )}
+      {recentlyClosed.length > 0 && (
+        <section
+          aria-labelledby="recently-closed-proposals"
+          className="mt-5 space-y-3"
+          data-testid="recently-closed-proposals"
+        >
+          <h4
+            id="recently-closed-proposals"
+            className="text-body-sm font-bold text-muted-foreground"
+          >
+            הצעות שנסגרו לאחרונה
+          </h4>
+          {recentlyClosed.map((proposal) => (
+            <ParentProposalListItem
+              key={`${proposal.shidduchId}-${proposal.side}`}
+              proposal={proposal}
+            />
+          ))}
+        </section>
       )}
     </>
   );

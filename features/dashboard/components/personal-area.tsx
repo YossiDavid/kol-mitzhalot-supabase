@@ -21,6 +21,8 @@ type PersonalAreaProps = {
   /** כשהמשתמש שדכן/מנהל: האזור עטוף בכותרת, והמקטעים מתחתיה */
   isInsideArea: boolean;
   openProposals: ParentProposal[];
+  /** הצעות שנסגרו ב-30 הימים האחרונים (נדחו, נסגרו וכו') */
+  recentlyClosedProposals?: ParentProposal[];
   openProposalsFailed: boolean;
   chats: DashboardChat[];
   chatsFailed: boolean;
@@ -37,6 +39,7 @@ type PersonalAreaProps = {
 export function PersonalArea({
   isInsideArea,
   openProposals,
+  recentlyClosedProposals = [],
   openProposalsFailed,
   chats,
   chatsFailed,
@@ -49,7 +52,10 @@ export function PersonalArea({
   const isDecluttered =
     isInsideArea && ownCards.length === 0 && !ownCardsFailed;
   const showProposals =
-    !isDecluttered || openProposals.length > 0 || openProposalsFailed;
+    !isDecluttered ||
+    openProposals.length > 0 ||
+    recentlyClosedProposals.length > 0 ||
+    openProposalsFailed;
   const showChats = !isDecluttered || chats.length > 0 || chatsFailed;
   const showShadchanim = !isDecluttered || !hasNoShadchanim;
 
@@ -61,7 +67,10 @@ export function PersonalArea({
           title="הצעות פתוחות"
           subTitle="הצעות חדשות או מתקדמות שממתינות לטיפולך"
           button={
-            sectionHasData(openProposals, openProposalsFailed) ? (
+            sectionHasData(
+              [...openProposals, ...recentlyClosedProposals],
+              openProposalsFailed,
+            ) ? (
               <Button asChild variant="outline">
                 <Link href={"/app/proposals"}>לכל ההצעות</Link>
               </Button>
@@ -70,6 +79,7 @@ export function PersonalArea({
         >
           <ActiveShidduchim
             shiduchim={openProposals}
+            recentlyClosed={recentlyClosedProposals}
             failed={openProposalsFailed}
           />
         </DashboardSection>

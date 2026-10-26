@@ -16,7 +16,10 @@ import {
   getSentShidduchimCount,
 } from "@/features/dashboard/lib/queries";
 import { readFavorites } from "@/features/students/lib/favorites";
-import { getMyProposals } from "@/features/shidduchim/lib/proposals-data";
+import {
+  getMyProposals,
+  splitProposalsForDashboard,
+} from "@/features/shidduchim/lib/proposals-data";
 import { ShadchanJoinBanner } from "@/features/dashboard/components/user/shadchan-join-banner";
 import { ContinueSignupCta } from "@/features/dashboard/components/user/continue-signup-cta";
 import { continueSignupTarget } from "@/features/dashboard/lib/continue-signup";
@@ -33,6 +36,9 @@ import { unstable_noStore as noStore } from "next/cache";
 import { Suspense } from "react";
 
 const OPEN_PROPOSALS_LIMIT = 5;
+const RECENTLY_CLOSED_PROPOSALS_LIMIT = 3;
+/** כמה הצעות אחרונות נשלפות כדי למצוא בהן את הפתוחות ואת שנסגרו לאחרונה */
+const DASHBOARD_PROPOSALS_FETCH_LIMIT = 40;
 
 type DashboardChats = Awaited<ReturnType<typeof getChatsBySide>>;
 type ServerSupabase = Awaited<ReturnType<typeof createClient>>;
@@ -138,8 +144,9 @@ async function DashboardSections() {
     // הצעות פתוחות שנשלחו למיועדים של המשתמש (כמנהל כרטיס) - החדשות קודם
     user?.id
       ? getMyProposals(supabase, {
-          openOnly: true,
-          limit: OPEN_PROPOSALS_LIMIT,
+          // גם סגורות: "נסגרו לאחרונה" (הפיצול בשרת, למטה)
+          openOnly: false,
+          limit: DASHBOARD_PROPOSALS_FETCH_LIMIT,
         })
       : { proposals: [], failed: false },
     // פוסטים אחרונים בפורום השדכנים
@@ -166,7 +173,11 @@ async function DashboardSections() {
   const ownCards = ownStudentsResult.students;
   const favoritesStudentsData = favoritesResult.students;
   const activeShidduchimData = activeShidduchimResult.shidduchim;
-  const openProposals = openProposalsResult.proposals;
+  const { open: openProposals, recentlyClosed: recentlyClosedProposals } =
+    splitProposalsForDashboard(openProposalsResult.proposals, {
+      openLimit: OPEN_PROPOSALS_LIMIT,
+      closedLimit: RECENTLY_CLOSED_PROPOSALS_LIMIT,
+    });
 
   // הדשבורד מציג תמצית: האחרונים בלבד, והכפתור בכל מקטע מוביל לעמוד המלא.
   // החדרים כבר ממוינים מהחדש לישן, והחיתוך נעשה אחרי הפיצול לאזורים
@@ -251,6 +262,7 @@ async function DashboardSections() {
         <PersonalArea
           isInsideArea={isShadchanView}
           openProposals={openProposals}
+          recentlyClosedProposals={recentlyClosedProposals}
           openProposalsFailed={openProposalsResult.failed}
           chats={personalChats}
           chatsFailed={chats.failed}

@@ -150,6 +150,47 @@ export async function getMyProposals(
   return { proposals: parsed.data.map(toParentProposal), failed: false };
 }
 
+/** הסטטוסים של הצעה פתוחה - זהים ל-p_open_only ב-get_my_shidduch_proposals */
+const OPEN_PROPOSAL_STATUSES: ReadonlySet<string> = new Set([
+  "sent",
+  "waiting_response",
+  "interested",
+  "more_info_needed",
+  "in_progress",
+]);
+
+const RECENTLY_CLOSED_DAYS = 30;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * פיצול ההצעות של מנהל הכרטיס לפתוחות ולשנסגרו לאחרונה (30 יום), כדי
+ * שהצעה שנדחתה - גם בידי הצד השני - לא תיעלם ממסך הבית בלי הסבר.
+ */
+export function splitProposalsForDashboard(
+  proposals: readonly ParentProposal[],
+  {
+    openLimit,
+    closedLimit,
+    now = new Date(),
+  }: {
+    openLimit: number;
+    closedLimit: number;
+    now?: Date;
+  },
+): { open: ParentProposal[]; recentlyClosed: ParentProposal[] } {
+  const since = now.getTime() - RECENTLY_CLOSED_DAYS * DAY_MS;
+  const open = proposals.filter((p) => OPEN_PROPOSAL_STATUSES.has(p.status));
+  const recentlyClosed = proposals.filter((p) => {
+    if (OPEN_PROPOSAL_STATUSES.has(p.status)) return false;
+    const at = new Date(p.sentAt ?? p.createdAt).getTime();
+    return Number.isFinite(at) && at >= since;
+  });
+  return {
+    open: open.slice(0, openLimit),
+    recentlyClosed: recentlyClosed.slice(0, closedLimit),
+  };
+}
+
 /** כמה הצעות בעמוד ב"הצעות שקיבלתי" */
 export const PROPOSALS_PAGE_SIZE = 20;
 
