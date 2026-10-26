@@ -44,15 +44,25 @@ export const CELLPHONE_TYPE_OPTIONS: FieldOptionDefinition[] = [
   { value: "other", label: "אחר" },
 ];
 
-/**
- * סוג כיסוי ראש - של המיועדת ושל מה שהמיועד מחפש (head_cover_type).
- * "other" מוצג "לא משנה" גם בכרטיס (headCoverTypeToHebrew)
- */
-export const HEAD_COVER_TYPE_OPTIONS: FieldOptionDefinition[] = [
+const HEAD_COVER_BASE_OPTIONS: FieldOptionDefinition[] = [
   { value: "kerchief", label: "מטפחת" },
   { value: "wig", label: "פאה" },
   { value: "wig_and_hat", label: "פאה וכובע" },
   { value: "wig_and_band", label: "פאה ובנד" },
+];
+
+/**
+ * סוג כיסוי ראש (head_cover_type). הערך "other" משמעותו שונה לפי ההקשר,
+ * ולכן גם התווית (כך גם בתצוגה - headCoverTypeToHebrew):
+ * בכרטיס המיועדת - "גמיש" (תתאים את עצמה); בהעדפת המיועד - "לא משנה".
+ */
+export const HEAD_COVER_TYPE_OPTIONS: FieldOptionDefinition[] = [
+  ...HEAD_COVER_BASE_OPTIONS,
+  { value: "other", label: "גמיש - פתוחה לכל אחת מהאפשרויות" },
+];
+
+export const PARTNER_HEAD_COVER_TYPE_OPTIONS: FieldOptionDefinition[] = [
+  ...HEAD_COVER_BASE_OPTIONS,
   { value: "other", label: "לא משנה" },
 ];
 

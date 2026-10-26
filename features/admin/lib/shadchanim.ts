@@ -271,6 +271,28 @@ async function resolveUser(
   return fetched.user;
 }
 
+/** שדכן מורשה: בקשה מאושרת, תפקיד שדכן, לא מוקפא */
+function isAuthorized(entry: ShadchanListEntry, user: User | undefined): boolean {
+  return (
+    entry.applicationStatus === "approved" &&
+    !entry.isFrozen &&
+    !!user &&
+    hasRole(user, "shadchan")
+  );
+}
+
+function filterByGroup(
+  entries: ShadchanListEntry[],
+  usersById: Map<string, User>,
+  group: NonNullable<AdminShadchanimQuery["group"]>,
+): ShadchanListEntry[] {
+  if (group === "all") return entries;
+  const wantAuthorized = group === "authorized";
+  return entries.filter(
+    (entry) => isAuthorized(entry, usersById.get(entry.userId)) === wantAuthorized,
+  );
+}
+
 /** טקסט החיפוש של שדכן: שם, אימייל וטלפון (ספרות בלבד, כדי ש-050-1234 יימצא גם כ-0501234) */
 function searchHaystack(user: User | undefined): string {
   if (!user) return "";
@@ -347,7 +369,11 @@ export async function getShadchanimList(
     adminClient,
     usersById,
   );
-  const filtered = filterBySearch(allEntries, usersById, query.q);
+  const filtered = filterBySearch(
+    filterByGroup(allEntries, usersById, query.group ?? "authorized"),
+    usersById,
+    query.q,
+  );
   const activity = await loadActivityStats(
     adminClient,
     filtered.map((entry) => entry.userId),

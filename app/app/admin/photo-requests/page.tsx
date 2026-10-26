@@ -17,6 +17,28 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Suspense } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  PHOTO_REQUEST_STATUS_LABELS,
+  type PhotoRequestStatus,
+} from "@/features/photo-requests/lib/photo-request-status";
+
+const STATUS_TABS: readonly PhotoRequestStatus[] = [
+  "pending",
+  "approved",
+  "rejected",
+];
+
+/** כמה בקשות שהוכרעו מוצגות (החדשות קודם) */
+const DECIDED_LIMIT = 200;
+
+type PhotoRequestsSearchParams = Promise<{ status?: string | string[] }>;
+
+function parseStatus(value: string | string[] | undefined): PhotoRequestStatus {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return STATUS_TABS.find((status) => status === raw) ?? "pending";
+}
 
 // מספר שורות השלד בזמן הטעינה - מקרב את גובה הטבלה האמיתית ומונע קפיצת פריסה.
 const FALLBACK_ROW_COUNT = 4;
@@ -36,6 +58,8 @@ type PendingPhotoRequest = {
   student_id: string;
   reason: string | null;
   created_at: string;
+  status: PhotoRequestStatus;
+  decided_at: string | null;
   students: PhotoRequestStudent | null;
   requester_name: string | null;
   requester_email: string | null;
@@ -104,20 +128,38 @@ const PHOTO_REQUEST_COLUMNS: DataTableColumn<PendingPhotoRequest>[] = [
     header: <span className="sr-only">פעולות</span>,
     size: "min",
     mobile: "actions",
-    cell: (request) => <PhotoRequestActions requestId={request.id} />,
+    cell: (request) =>
+      request.status === "pending" ? (
+        <PhotoRequestActions requestId={request.id} />
+      ) : (
+        <span className="flex flex-col items-start gap-1">
+          <Badge variant={request.status === "approved" ? "default" : "outline"}>
+            {PHOTO_REQUEST_STATUS_LABELS[request.status]}
+          </Badge>
+          <span className="text-caption text-muted-foreground">
+            {formatDate(request.decided_at)}
+          </span>
+        </span>
+      ),
   },
 ];
 
-async function getPendingRequests(): Promise<PendingPhotoRequest[]> {
+async function getRequests(
+  status: PhotoRequestStatus,
+): Promise<PendingPhotoRequest[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("photo_view_requests")
     .select(
-      "id, requester_id, student_id, reason, created_at, students(first_name, last_name)",
+      "id, requester_id, student_id, reason, created_at, status, decided_at, students(first_name, last_name)",
     )
-    .eq("status", "pending")
-    .order("created_at", { ascending: false });
+    .eq("status", status)
+    .order(status === "pending" ? "created_at" : "decided_at", {
+      ascending: false,
+      nullsFirst: false,
+    })
+    .limit(status === "pending" ? 1000 : DECIDED_LIMIT);
 
   if (error) {
     console.error("[admin/photo-requests]", error);
@@ -156,6 +198,7 @@ async function getPendingRequests(): Promise<PendingPhotoRequest[]> {
 
   return data.map((row) => ({
     ...row,
+    status: row.status as PhotoRequestStatus,
     // PostgREST מחזיר את ה-embed כאובייקט יחיד (יחס many-to-one), אך ה-SDK
     // מקליד אותו כמערך כשאין Database type - מנרמלים לאיבר הראשון בלבד.
     students: Array.isArray(row.students)
@@ -166,14 +209,19 @@ async function getPendingRequests(): Promise<PendingPhotoRequest[]> {
   }));
 }
 
-async function PhotoRequestsContent() {
+async function PhotoRequestsContent({
+  searchParams,
+}: {
+  searchParams: PhotoRequestsSearchParams;
+}) {
   noStore();
+  const status = parseStatus((await searchParams).status);
 
   let requests: PendingPhotoRequest[] = [];
   let error: Error | null = null;
 
   try {
-    requests = await getPendingRequests();
+    requests = await getRequests(status);
   } catch (err) {
     error = err instanceof Error ? err : new Error("שגיאה לא ידועה");
   }
@@ -202,17 +250,45 @@ async function PhotoRequestsContent() {
         count={requests.length}
         description="שדכנים שביקשו הרשאה לצפות בתמונת מיועדת. אישור חושף את התמונה למבקש בכרטיס אחד בלבד."
       />
+      <nav aria-label="סטטוס הבקשות" className="flex flex-wrap gap-2">
+        {STATUS_TABS.map((tab) => (
+          <Button
+            key={tab}
+            asChild
+            size="sm"
+            variant={tab === status ? "default" : "outline"}
+          >
+            <Link
+              href={
+                (tab === "pending"
+                  ? "/app/admin/photo-requests"
+                  : `/app/admin/photo-requests?status=${tab}`) as Route
+              }
+              aria-current={tab === status ? "page" : undefined}
+              data-testid={`photo-requests-tab-${tab}`}
+            >
+              {tab === "pending" ? "ממתינות" : tab === "approved" ? "אושרו" : "נדחו"}
+            </Link>
+          </Button>
+        ))}
+      </nav>
       <Box className="space-y-4">
         <DataTable
           surface={false}
-          caption="בקשות צפייה ממתינות"
+          caption={`בקשות צפייה - ${PHOTO_REQUEST_STATUS_LABELS[status]}`}
           columns={PHOTO_REQUEST_COLUMNS}
           rows={requests}
           getRowKey={(request) => request.id}
           emptyState={
             <Empty size="compact" surface={false}>
               <EmptyHeader>
-                <EmptyTitle>אין בקשות ממתינות</EmptyTitle>
+                <EmptyTitle>
+                  {status === "pending"
+                    ? "אין בקשות ממתינות"
+                    : status === "approved"
+                      ? "אין בקשות שאושרו"
+                      : "אין בקשות שנדחו"}
+                </EmptyTitle>
                 <EmptyDescription>
                   בקשה חדשה תופיע כאן ותישלח אליכם גם כהתראה
                 </EmptyDescription>
@@ -243,10 +319,14 @@ function PhotoRequestsFallback() {
   );
 }
 
-export default function PhotoRequestsAdminPage() {
+export default function PhotoRequestsAdminPage({
+  searchParams,
+}: {
+  searchParams: PhotoRequestsSearchParams;
+}) {
   return (
     <Suspense fallback={<PhotoRequestsFallback />}>
-      <PhotoRequestsContent />
+      <PhotoRequestsContent searchParams={searchParams} />
     </Suspense>
   );
 }

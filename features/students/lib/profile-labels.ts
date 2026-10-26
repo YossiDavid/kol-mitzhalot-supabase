@@ -89,7 +89,14 @@ export function planForLifeToHebrew(plan: string) {
   }
 }
 
-export function headCoverTypeToHebrew(type: string) {
+/**
+ * תווית כיסוי ראש. "other": בכרטיס המיועדת "גמיש", ובהעדפת המיועד "לא משנה"
+ * (preference=true). אותו ערך במסד, משמעות שונה לפי ההקשר.
+ */
+export function headCoverTypeToHebrew(
+  type: string,
+  { isPreference = false }: { isPreference?: boolean } = {},
+) {
   switch (type) {
     case "kerchief":
       return "מטפחת";
@@ -102,7 +109,7 @@ export function headCoverTypeToHebrew(type: string) {
     case "wig_and_band":
       return "פאה ובנד";
     case "other":
-      return "לא משנה";
+      return isPreference ? "לא משנה" : "גמיש";
     default:
       return type;
   }

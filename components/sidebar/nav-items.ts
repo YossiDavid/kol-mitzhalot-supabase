@@ -12,6 +12,7 @@ import {
   Users,
   type LucideIcon,
   CircleHelp,
+  Image as ImageIcon,
 } from "lucide-react";
 
 import type { Route } from "next";
@@ -97,6 +98,12 @@ const allItems: readonly NavItem[] = [
     icon: BookmarkCheck,
     group: "shadchanTools",
   },
+  {
+    title: "בקשות התמונה שלי",
+    url: "/app/shadchan/photo-requests",
+    icon: ImageIcon,
+    group: "shadchanTools",
+  },
   // רשימת השדכנים פתוחה לכל משתמש מחובר; הפורום לשדכנים (ולמנהלים) בלבד
   {
     title: "שדכנים",
@@ -124,6 +131,7 @@ const shadchanOnlyUrls = [
   "/app/canvas",
   "/app/shadchan/proposals",
   "/app/shadchan/drafts",
+  "/app/shadchan/photo-requests",
   "/app/forums",
 ];
 // רשימת המיועדים חושפת מיועדים של אחרים, ולכן סגורה להורה. "הוספת

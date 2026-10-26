@@ -45,6 +45,7 @@ test.describe("סרגל צד — קבוצות", () => {
       "/app/canvas",
       "/app/shadchan/proposals",
       "/app/shadchan/drafts",
+      "/app/shadchan/photo-requests",
       "/app/forums",
     ]);
     expect(await hrefsOf("האזור האישי שלי")).toEqual([

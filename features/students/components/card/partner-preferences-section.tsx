@@ -78,7 +78,9 @@ export function PartnerPreferencesSection({
           )}
           {preferences.head_cover_type && (
             <PreferenceBox label="סוג כיסוי ראש רצוי">
-              {headCoverTypeToHebrew(preferences.head_cover_type)}
+              {headCoverTypeToHebrew(preferences.head_cover_type, {
+                isPreference: true,
+              })}
             </PreferenceBox>
           )}
           {preferences.plan_for_life && (

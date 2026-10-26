@@ -1,6 +1,6 @@
 import {
   CELLPHONE_TYPE_OPTIONS,
-  HEAD_COVER_TYPE_OPTIONS,
+  PARTNER_HEAD_COVER_TYPE_OPTIONS,
   PLAN_FOR_LIFE_OPTIONS,
   genderIs,
 } from "./shared-options";
@@ -94,7 +94,7 @@ export const partnerStep: FormSteps = {
           width: "full",
           label: "סוג כיסוי ראש רצוי",
           type: "radio",
-          options: HEAD_COVER_TYPE_OPTIONS,
+          options: PARTNER_HEAD_COVER_TYPE_OPTIONS,
           condition: genderIs("male"),
         },
         {

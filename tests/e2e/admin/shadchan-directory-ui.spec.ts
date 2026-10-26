@@ -178,7 +178,8 @@ test.describe("טבלת השדכנים של המנהל", () => {
     await page.setViewportSize(DESKTOP_VIEWPORT);
 
     // Act
-    await page.goto("/app/admin/shadchanim");
+    // "הכל": הבדיקה כוללת גם בקשה ממתינה, שאינה בלשונית "שדכנים מורשים"
+    await page.goto("/app/admin/shadchanim?group=all");
     const table = page.getByRole("table");
     await expect(table).toBeVisible({ timeout: LOAD_TIMEOUT });
     const rowOf = (key: Fixture["key"]) =>

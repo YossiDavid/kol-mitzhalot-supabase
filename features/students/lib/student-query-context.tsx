@@ -41,6 +41,8 @@ export interface StudentQuery {
   head_cover_type?: string;
   /** plan_for_life_enum - "מתעתד בעז״ה" ללמוד/לעבוד */
   plan_for_life?: string;
+  /** ארץ המגורים (students.country, טקסט חופשי - התאמה חלקית) */
+  country?: string;
   /** ארץ אחת מתוך willing_to_live_countries - "מוכן/ה לגור ב" */
   willing_to_live?: string;
   /** קהילה / חסידות (students.community). undefined = הכל מסומן, בלי סינון */

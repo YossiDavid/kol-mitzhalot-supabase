@@ -4,6 +4,7 @@ import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { Suspense } from "react";
 import {
+  parseShadchanimGroup,
   parseShadchanimSort,
   type AdminShadchanimQuery,
 } from "@/features/admin/lib/shadchanim-query";
@@ -26,7 +27,13 @@ function parseShadchanimQuery(
   const perPageRaw = parseInt(String(g("perPage") || "25"), 10) || 25;
   const perPage = Math.min(100, Math.max(5, perPageRaw));
   const q = String(g("q") ?? "").trim().slice(0, 100) || undefined;
-  return { page, perPage, q, sort: parseShadchanimSort(g("sort")) };
+  return {
+    page,
+    perPage,
+    q,
+    sort: parseShadchanimSort(g("sort")),
+    group: parseShadchanimGroup(g("group")),
+  };
 }
 
 type ShadchanimPageProps = {
@@ -81,7 +88,7 @@ async function ShadchanimContent({ searchParams }: ShadchanimPageProps) {
     );
   }
 
-  const listKey = `${query.page}-${query.perPage}-${query.q ?? ""}-${query.sort}`;
+  const listKey = `${query.page}-${query.perPage}-${query.q ?? ""}-${query.sort}-${query.group}`;
 
   return (
     <Page>

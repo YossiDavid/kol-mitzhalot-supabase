@@ -264,6 +264,13 @@ function AdvancedFields(props: FieldGroupProps) {
         label="שם האב"
         className="md:col-span-3"
       />
+      <SelectFilter
+        {...props}
+        name="country"
+        label="ארץ מגורים"
+        options={toOptions(WILLING_TO_LIVE_COUNTRY_OPTIONS)}
+        className="md:col-span-2"
+      />
       <TextFilter
         {...props}
         name="city"
@@ -315,7 +322,9 @@ function AdvancedFields(props: FieldGroupProps) {
         {...props}
         name="head_cover_type"
         label="כיסוי ראש"
-        options={toOptions(HEAD_COVER_TYPE_OPTIONS)}
+        options={toOptions(HEAD_COVER_TYPE_OPTIONS).map((option) =>
+          option.value === "other" ? { ...option, label: "גמיש" } : option,
+        )}
         className="md:col-span-2"
       />
       <SelectFilter

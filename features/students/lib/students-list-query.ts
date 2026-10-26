@@ -165,6 +165,8 @@ function applyFieldFilters(
   if (query.personal_status)
     next = next.eq("personal_status", query.personal_status);
   if (query.city) next = next.ilike("city", `%${query.city}%`);
+  const country = sanitizeTerm(query.country);
+  if (country) next = next.ilike("country", `%${country}%`);
   if (query.cellphone_type)
     next = next.eq("cellphone_type", query.cellphone_type);
   if (query.head_cover_type)

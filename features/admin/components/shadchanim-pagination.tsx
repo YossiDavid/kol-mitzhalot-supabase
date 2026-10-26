@@ -19,6 +19,7 @@ import {
 import {
   buildShadchanimHref,
   getVisiblePaginationPages,
+  parseShadchanimGroup,
   parseShadchanimSort,
   type AdminShadchanimQuery,
 } from "@/features/admin/lib/shadchanim-query";
@@ -42,6 +43,7 @@ function queryFromProps(
     perPage,
     q: searchParams.get("q") ?? undefined,
     sort: parseShadchanimSort(searchParams.get("sort")),
+    group: parseShadchanimGroup(searchParams.get("group")),
   };
 }
 
