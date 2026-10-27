@@ -1,6 +1,4 @@
-import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
+import { FullCardLink } from "@/features/shidduchim/components/full-card-link";
 import type { CandidateSummary } from "@/features/shidduchim/lib/candidate-summary";
 
 type CandidateSummaryCardProps = {
@@ -46,9 +44,7 @@ export default function CandidateSummaryCard({
         <Line label="הורים" value={summary.parents} />
       </dl>
       {studentId && (
-        <Button asChild variant="link" className="h-auto p-0">
-          <Link href={`/app/students/${studentId}`}>לכרטיס המלא</Link>
-        </Button>
+        <FullCardLink studentId={studentId} />
       )}
     </div>
   );

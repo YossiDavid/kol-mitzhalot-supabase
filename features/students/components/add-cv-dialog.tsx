@@ -20,6 +20,7 @@ import {
   CV_MAX_SIZE_LABEL,
   validateCvFile,
 } from "@/features/students/lib/cv-file-rules";
+import { uploadCvViaServer } from "@/features/students/lib/upload-cv-via-server";
 
 type AddCvDialogProps = {
   studentId: string;
@@ -27,15 +28,6 @@ type AddCvDialogProps = {
   onCvAdded: (cvUrl: string) => void;
   triggerClassName?: string;
 };
-
-async function readErrorMessage(response: Response): Promise<string> {
-  const body: unknown = await response.json().catch(() => null);
-  if (body && typeof body === "object" && "error" in body) {
-    const { error } = body as { error: unknown };
-    if (typeof error === "string" && error) return error;
-  }
-  return "העלאת הקובץ נכשלה";
-}
 
 /** הוספת קו״ח לכרטיס מתוך טבלת המיועדים: בחירת קובץ ושמירה בלי לעזוב את הטבלה */
 export function AddCvDialog({
@@ -68,28 +60,16 @@ export function AddCvDialog({
   const handleUpload = async () => {
     if (!file) return;
     setIsUploading(true);
-    try {
-      const body = new FormData();
-      body.append("file", file);
-      const response = await fetch(`/api/v1/students/${studentId}/cv`, {
-        method: "POST",
-        body,
-      });
-      if (!response.ok) {
-        toast.error(await readErrorMessage(response));
-        return;
-      }
-      const { cvUrl } = (await response.json()) as { cvUrl: string };
-      toast.success("קובץ הקו״ח נשמר");
-      onCvAdded(cvUrl);
-      setIsOpen(false);
-      setFile(null);
-    } catch (error) {
-      console.error("[students/cv] upload request failed:", error);
-      toast.error("העלאת הקובץ נכשלה. בדקו את החיבור ונסו שוב.");
-    } finally {
-      setIsUploading(false);
+    const result = await uploadCvViaServer(studentId, file);
+    setIsUploading(false);
+    if (!result.ok) {
+      toast.error(result.message);
+      return;
     }
+    toast.success("קובץ הקו״ח נשמר");
+    onCvAdded(result.cvUrl);
+    setIsOpen(false);
+    setFile(null);
   };
 
   return (

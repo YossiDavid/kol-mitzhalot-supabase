@@ -95,6 +95,9 @@ export type StudentTableRow = {
   in_shidduchim?: boolean | null;
   /** הנהלת המערכת השהתה את הכרטיס - מנהל הכרטיס אינו יכול לבטל */
   admin_paused_at?: string | null;
+  /** "בתהליך שידוך" (withMatchmakingHold): כוכב בצבע שונה, אי אפשר להציע כרגע */
+  is_on_matchmaking_hold?: boolean;
+  matchmaking_hold_reason?: string | null;
   /** מכסת הצעות שקבע מנהל הכרטיס (null = ללא הגבלה) */
   proposal_limit_count?: number | null;
   proposal_limit_period?: string | null;
@@ -199,29 +202,45 @@ function ParentsCell({ student }: { student: StudentTableRow }) {
   );
 }
 
+/** תיאור "בתהליך שידוך" לכוכב: מצורף לתווית ומוצג בריחוף */
+function matchmakingHoldHint(student: StudentTableRow): string | null {
+  if (!student.is_on_matchmaking_hold) return null;
+  const reason = student.matchmaking_hold_reason?.trim();
+  return reason
+    ? `בתהליך שידוך - אי אפשר להציע כרגע (${reason})`
+    : "בתהליך שידוך - אי אפשר להציע כרגע";
+}
+
 function StarToggle({
   isActive,
   isDisabled = false,
   label,
+  holdHint = null,
   onToggle,
 }: {
   isActive: boolean;
   isDisabled?: boolean;
   label: string;
+  /** הכרטיס "בתהליך שידוך": כוכב בצבע שונה עם ההסבר */
+  holdHint?: string | null;
   onToggle: () => void;
 }) {
+  const isOnHold = holdHint !== null;
   return (
     <button
       type="button"
       onClick={onToggle}
       className="p-1 disabled:cursor-not-allowed disabled:opacity-40"
       disabled={isDisabled}
-      aria-label={label}
+      aria-label={isOnHold ? `${label}. ${holdHint}` : label}
+      title={holdHint ?? undefined}
+      data-on-hold={isOnHold || undefined}
     >
       <Star
         className={cn(
           "size-5 transition-colors",
-          isActive ? "fill-favorite text-favorite" : "text-muted-foreground",
+          isOnHold ? "text-info" : "text-muted-foreground",
+          isActive && (isOnHold ? "fill-info" : "fill-favorite text-favorite"),
         )}
       />
     </button>
@@ -476,6 +495,7 @@ function leadingColumn(
         <StarToggle
           isActive
           label={`הסר ממועדפים: ${fullName(student)}`}
+          holdHint={matchmakingHoldHint(student)}
           onToggle={() => props.onRemoveFavorite(student.id)}
         />
       ),
@@ -507,6 +527,7 @@ function leadingColumn(
                     ? "לא ניתן להוסיף מאורס או נשוי למועדפים"
                     : "הוסף למועדפים"
               }
+              holdHint={matchmakingHoldHint(student)}
               onToggle={() => props.onToggleFavorite(student.id, !isFavorite)}
             />
           )}

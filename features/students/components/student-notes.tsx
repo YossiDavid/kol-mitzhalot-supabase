@@ -4,10 +4,13 @@ import { useState } from "react";
 import type { Route } from "next";
 import Link from "next/link";
 import { toast } from "sonner";
-import { MessageSquareText, Pencil, Trash2, Users } from "lucide-react";
+import { Lock, MessageSquareText, Pencil, Trash2, Users } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   Empty,
   EmptyHeader,
@@ -28,7 +31,7 @@ import type {
 
 const MAX_NOTE_LENGTH = 2000;
 
-type NoteKind = "shadchan_note" | "staff_feedback";
+type NoteKind = "shadchan_note" | "private_note" | "staff_feedback";
 
 /** השורה שמחזיר app/api/v1/students/[studentId]/notes/route.ts */
 type CreatedNote = {
@@ -43,6 +46,7 @@ type CreatedNote = {
   author_gender?: string | null;
   author_has_profile?: boolean;
   author_is_admin?: boolean;
+  is_private?: boolean;
 };
 
 function formatNoteDate(dateString: string): string {
@@ -89,19 +93,23 @@ function NoteComposer({
   placeholder,
   submitLabel,
   onSubmit,
+  canBePrivate = false,
 }: {
   placeholder: string;
   submitLabel: string;
-  onSubmit: (body: string) => Promise<boolean>;
+  onSubmit: (body: string, isPrivate: boolean) => Promise<boolean>;
+  /** הערת שדכן: אפשר לסמן "אישית" - גלויה לכותב בלבד */
+  canBePrivate?: boolean;
 }) {
   const [draft, setDraft] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit() {
     const trimmed = draft.trim();
     if (!trimmed) return;
     setSubmitting(true);
-    const saved = await onSubmit(trimmed);
+    const saved = await onSubmit(trimmed, isPrivate);
     if (saved) setDraft("");
     setSubmitting(false);
   }
@@ -117,7 +125,25 @@ function NoteComposer({
         maxLength={MAX_NOTE_LENGTH}
         className="min-h-24"
       />
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {canBePrivate ? (
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="note-is-private"
+              checked={isPrivate}
+              onCheckedChange={(checked) => setIsPrivate(checked === true)}
+              disabled={submitting}
+            />
+            <Label
+              htmlFor="note-is-private"
+              className="text-body-sm font-normal"
+            >
+              הערה ותזכורת אישית - רק אני רואה
+            </Label>
+          </div>
+        ) : (
+          <span />
+        )}
         <Button
           size="sm"
           onClick={handleSubmit}
@@ -306,8 +332,14 @@ function ShadchanNoteItem({
   return (
     <li className="rounded-lg border border-border bg-muted/30 p-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="flex flex-wrap items-baseline gap-x-1.5">
+        <span className="flex flex-wrap items-center gap-x-1.5">
           <ShadchanNoteAuthor note={note} />
+          {note.isPrivate && (
+            <Badge variant="outline" data-testid="private-note-badge">
+              <Lock aria-hidden />
+              אישי - רק את/ה רואה
+            </Badge>
+          )}
         </span>
         <span className="flex shrink-0 items-center gap-1">
           <span className="text-caption text-muted-foreground">
@@ -364,7 +396,8 @@ function ShadchanNoteItem({
 /**
  * "הערות שדכן": הערות עבודה של שדכנים. גלויות לכל השדכנים ולמנהלי המערכת
  * (RLS), עם שם הכותב והתאריך; לא לבעל הכרטיס, לא לאנשי צוות ולא בשיתוף
- * הכרטיס. עריכה ומחיקה - לכותב בלבד (מנהל: לכל ההערות).
+ * הכרטיס. הערה אישית (is_private) - לכותב בלבד. עריכה ומחיקה - לכותב בלבד
+ * (מנהל: לכל ההערות שהוא רואה).
  */
 export function ShadchanNotes({
   studentId,
@@ -375,8 +408,15 @@ export function ShadchanNotes({
 }) {
   const [notes, setNotes] = useState<ShadchanNote[]>(initialNotes);
 
-  async function handleSubmit(body: string): Promise<boolean> {
-    const created = await postNote(studentId, "shadchan_note", body);
+  async function handleSubmit(
+    body: string,
+    isPrivate: boolean,
+  ): Promise<boolean> {
+    const created = await postNote(
+      studentId,
+      isPrivate ? "private_note" : "shadchan_note",
+      body,
+    );
     if (!created) return false;
     setNotes((prev) => [
       {
@@ -388,11 +428,12 @@ export function ShadchanNotes({
         authorGender: parseShadchanGender(created.author_gender),
         authorHasProfile: created.author_has_profile === true,
         authorIsAdmin: created.author_is_admin === true,
+        isPrivate: created.is_private === true,
         canManage: true,
       },
       ...prev,
     ]);
-    toast.success("ההערה נשמרה");
+    toast.success(isPrivate ? "ההערה האישית נשמרה" : "ההערה נשמרה");
     return true;
   }
 
@@ -424,11 +465,13 @@ export function ShadchanNotes({
       <p className="flex items-center gap-1.5 text-caption text-muted-foreground">
         <Users className="size-3.5 shrink-0" aria-hidden />
         גלוי לכל השדכנים ולמנהלי המערכת - לא לבעל הכרטיס ולא בשיתוף הכרטיס.
+        הערה אישית גלויה רק לך.
       </p>
       <NoteComposer
         placeholder="הערה על המיועד/ת, גלויה לשדכנים..."
         submitLabel="שמירת הערה"
         onSubmit={handleSubmit}
+        canBePrivate
       />
       {notes.length === 0 ? (
         <EmptyNotes text="עדיין אין הערות שדכנים על כרטיס זה" />

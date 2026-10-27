@@ -24,3 +24,41 @@ export async function loadMatchmakingHold(
   if (!row?.hold_at) return null;
   return { since: row.hold_at, reason: row.reason ?? null };
 }
+
+/** שורה ברשימה עם מצב "בתהליך שידוך" (לכוכב בצבע השונה) */
+export type WithMatchmakingHold = {
+  matchmaking_hold_reason?: string | null;
+  is_on_matchmaking_hold?: boolean;
+};
+
+/**
+ * מוסיף לכל שורה את מצב "בתהליך שידוך" (students_on_matchmaking_hold - לשדכן
+ * ולמנהל; לאחרים חוזר ריק). כשל אינו מפיל את הרשימה: השורות חוזרות כמו שהן.
+ */
+export async function withMatchmakingHold<T extends { id: string }>(
+  supabase: SupabaseClient,
+  rows: readonly T[],
+): Promise<(T & WithMatchmakingHold)[]> {
+  if (rows.length === 0) return [...rows];
+  const { data, error } = await supabase.rpc("students_on_matchmaking_hold", {
+    p_ids: rows.map((row) => row.id),
+  });
+  if (error) {
+    console.error("[students/matchmaking-hold] list lookup failed", error.message);
+    return [...rows];
+  }
+  const reasons = new Map<string, string | null>(
+    ((data ?? []) as { student_id: string; reason: string | null }[]).map(
+      (row) => [row.student_id, row.reason],
+    ),
+  );
+  return rows.map((row) =>
+    reasons.has(row.id)
+      ? {
+          ...row,
+          is_on_matchmaking_hold: true,
+          matchmaking_hold_reason: reasons.get(row.id) ?? null,
+        }
+      : row,
+  );
+}

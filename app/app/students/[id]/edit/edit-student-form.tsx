@@ -23,6 +23,10 @@ import {
   type SaveStudentPhotosResult,
 } from "@/features/students/lib/student-uploads";
 import { updateStudentProfile } from "@/features/students/lib/save-student-profile";
+import {
+  uploadCvViaServer,
+  type UploadCvResult,
+} from "@/features/students/lib/upload-cv-via-server";
 
 const supabase = createClient();
 
@@ -64,6 +68,22 @@ function hasGalleryChanged(
       original.path !== item.path
     );
   });
+}
+
+/**
+ * העלאת קו״ח בעריכה. מדיניות האחסון מתירה העלאה ישירה לבעל הכרטיס בלבד;
+ * שדכן או מנהל מעלים דרך השרת (אחרת ההעלאה נכשלה והקו״ח לא התעדכן).
+ */
+async function uploadCv(
+  studentId: string,
+  file: File,
+  isCardOwner: boolean,
+): Promise<UploadCvResult> {
+  if (!isCardOwner) return uploadCvViaServer(studentId, file);
+  const cvUrl = await uploadStudentFile(supabase, studentId, file, "cv");
+  return cvUrl
+    ? { ok: true, cvUrl }
+    : { ok: false, message: "ניתן לנסות שוב מאוחר יותר" };
 }
 
 function photoWarning(
@@ -109,10 +129,13 @@ export default function EditStudentForm({
       // בשונה מהיצירה, ה-student_id כבר קיים — ולכן הקבצים מועלים לפני
       // הקריאה ל-RPC והכתובות נכנסות לעדכון עצמו, בלי סבב עדכון שני.
       const cvFile = values.cv?.file as File | null;
+      // "הסרת הקובץ" מאפסת את existingUrl בטופס
+      const isCvRemoved = !cvFile && !values.cv?.existingUrl;
 
-      const uploadedCvUrl = cvFile
-        ? await uploadStudentFile(supabase, studentId, cvFile, "cv")
+      const cvUpload = cvFile
+        ? await uploadCv(studentId, cvFile, isCardOwner)
         : null;
+      const uploadedCvUrl = cvUpload?.ok ? cvUpload.cvUrl : null;
       const uploadedMedicalDocuments = await uploadMedicalDocuments(
         supabase,
         studentId,
@@ -120,7 +143,7 @@ export default function EditStudentForm({
       );
 
       const payload = buildStudentPayload(values, {
-        cvUrl: uploadedCvUrl ?? existingCvUrl,
+        cvUrl: uploadedCvUrl ?? (isCvRemoved ? null : existingCvUrl),
         // טבלת medical_records נמחקת ונכתבת מחדש ב-RPC, ולכן המסמכים
         // הקיימים חייבים להישלח שוב יחד עם החדשים.
         medicalDocuments: [
@@ -147,9 +170,9 @@ export default function EditStudentForm({
       const warning = photoWarning(photoResult, isCardOwner);
       if (warning) {
         toast.warning(`השינויים נשמרו. ${warning}`);
-      } else if (Boolean(cvFile) && !uploadedCvUrl) {
+      } else if (cvUpload && !cvUpload.ok) {
         toast.warning(
-          "השינויים נשמרו, אבל היו בעיות בהעלאת חלק מהקבצים. ניתן לנסות שוב מאוחר יותר.",
+          `השינויים נשמרו, אבל קובץ הקו״ח לא הועלה: ${cvUpload.message}`,
         );
       } else {
         toast.success("השינויים נשמרו בהצלחה!");

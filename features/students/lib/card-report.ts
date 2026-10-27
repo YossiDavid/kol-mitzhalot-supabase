@@ -6,6 +6,7 @@ export const CARD_REPORT_REASONS = [
   "duplicate_card",
   "inappropriate_content",
   "no_longer_available",
+  "admin_update",
   "other",
 ] as const;
 
@@ -16,10 +17,16 @@ export const CARD_REPORT_REASON_LABELS: Record<CardReportReason, string> = {
   duplicate_card: "כרטיס כפול",
   inappropriate_content: "תוכן לא הולם",
   no_longer_available: "המיועד/ת כבר לא בשידוכים",
+  admin_update: "דיווח מורחב להנהלה",
   other: "אחר",
 };
 
-export const CARD_REPORT_DETAILS_MAX_LENGTH = 1000;
+export const CARD_REPORT_DETAILS_MAX_LENGTH = 4000;
+
+/** סיבות שבהן הפירוט חובה (תואם ל-card_reports_other_needs_details_check) */
+export function isCardReportDetailsRequired(reason: CardReportReason): boolean {
+  return reason === "other" || reason === "admin_update";
+}
 
 /** הודעות קבועות לפי הקוד ש-report_student_card מחזירה */
 export const CARD_REPORT_RESULTS: Record<
@@ -30,7 +37,7 @@ export const CARD_REPORT_RESULTS: Record<
   invalid_reason: { status: 400, error: "יש לבחור סיבת דיווח" },
   details_required: {
     status: 400,
-    error: 'בסיבה "אחר" יש לפרט את הדיווח',
+    error: "יש לפרט את הדיווח",
   },
   details_too_long: { status: 400, error: "הפירוט ארוך מדי" },
   card_not_visible: {
@@ -57,7 +64,7 @@ export const cardReportBodySchema = z
       .max(CARD_REPORT_DETAILS_MAX_LENGTH, "הפירוט ארוך מדי")
       .optional(),
   })
-  .refine((body) => body.reason !== "other" || Boolean(body.details), {
-    path: ["details"],
-    message: 'בסיבה "אחר" יש לפרט את הדיווח',
-  });
+  .refine(
+    (body) => !isCardReportDetailsRequired(body.reason) || Boolean(body.details),
+    { path: ["details"], message: "יש לפרט את הדיווח" },
+  );

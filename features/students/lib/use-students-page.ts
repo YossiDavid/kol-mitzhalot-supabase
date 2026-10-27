@@ -7,6 +7,7 @@ import type { DataTableSort } from "@/components/data-table";
 import { createClient } from "@/lib/supabase/client";
 import type { StudentTableRow } from "@/features/students/components/students-table";
 import type { StudentQuery } from "@/features/students/lib/student-query-context";
+import { withMatchmakingHold } from "@/features/students/lib/card-matchmaking-hold";
 import {
   buildStudentsPageQuery,
   pageCount,
@@ -136,11 +137,12 @@ export function useStudentsPage(
           return;
         }
         // select דינמי (עם join לפי הסינון) מבלבל את הסקת הטיפוסים של supabase-js
-        setData({
-          students: (rows ?? []) as unknown as StudentTableRow[],
-          total,
-          status: "ready",
-        });
+        const students = await withMatchmakingHold(
+          supabaseRef.current,
+          (rows ?? []) as unknown as StudentTableRow[],
+        );
+        if (controller.signal.aborted) return;
+        setData({ students, total, status: "ready" });
       } catch (err: unknown) {
         if (controller.signal.aborted) return;
         console.error("[students/list] unexpected failure:", err);

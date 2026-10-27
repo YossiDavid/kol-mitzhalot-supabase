@@ -1,4 +1,5 @@
 import { maskSilentPauseForOwner } from "@/features/students/lib/card-silent-pause";
+import { withMatchmakingHold } from "@/features/students/lib/card-matchmaking-hold";
 import {
   parseRoomContext,
   roomContextTitle,
@@ -61,7 +62,12 @@ export async function getFavoriteStudents(
   }
   // כרטיס שלא אושר להצעות (אישור ההנהלה או צד שלישי) לא מוצג בלוח (המטא-דאטה נשאר, וחוזר באישור)
   const result = toStudentTableResult(data, "[dashboard/favorites]");
-  return { ...result, students: keepFavoritable(result.students) };
+  // כוכב בצבע שונה לכרטיס "בתהליך שידוך"
+  const students = await withMatchmakingHold(
+    supabase,
+    keepFavoritable(result.students),
+  );
+  return { ...result, students };
 }
 
 /** המיועדים שבניהול המשתמש. failed נפרד מרשימה ריקה (כמו במועדפים) */

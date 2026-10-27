@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, FileText } from "lucide-react";
+import { ExternalLink, FileText, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -15,6 +15,8 @@ type StoredFileNoticeProps = {
   label: string;
   /** נבחר קובץ חדש, שיחליף את השמור בשמירה */
   isBeingReplaced: boolean;
+  /** הסרת הקובץ השמור מהכרטיס (נשמר עם הכרטיס). בלי - אין כפתור הסרה */
+  onRemove?: () => void;
 };
 
 /** "…/students/<id>/1712345-cv.pdf?token=…" → "cv.pdf" */
@@ -32,6 +34,7 @@ export function StoredFileNotice({
   url,
   label,
   isBeingReplaced,
+  onRemove,
 }: StoredFileNoticeProps) {
   const fileName = getStoredFileName(url);
 
@@ -57,12 +60,26 @@ export function StoredFileNotice({
           )}
         </div>
       </div>
-      <Button asChild variant="outline" size="sm">
-        <a href={url} target="_blank" rel="noopener noreferrer">
-          <ExternalLink aria-hidden />
-          <span>פתיחת הקובץ</span>
-        </a>
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button asChild variant="outline" size="sm">
+          <a href={url} target="_blank" rel="noopener noreferrer">
+            <ExternalLink aria-hidden />
+            <span>פתיחת הקובץ</span>
+          </a>
+        </Button>
+        {onRemove && (
+          <Button
+            // בתוך טופס: בלי type הכפתור היה שולח את הטופס
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onRemove}
+          >
+            <Trash2 aria-hidden />
+            <span>הסרת הקובץ</span>
+          </Button>
+        )}
+      </div>
       {isBeingReplaced && (
         <p className="w-full text-caption text-muted-foreground">
           הקובץ החדש שבחרתם יחליף אותו בשמירה.

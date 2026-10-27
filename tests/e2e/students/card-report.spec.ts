@@ -204,7 +204,7 @@ test.describe("דיווח על כרטיס", () => {
       data: { reason: "other", details: "   " },
     });
     const tooLong = await page.request.post(reportUrl(managerCardId), {
-      data: { reason: "wrong_details", details: "א".repeat(1001) },
+      data: { reason: "wrong_details", details: "א".repeat(4001) },
     });
 
     // Assert

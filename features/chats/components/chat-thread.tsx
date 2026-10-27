@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { createClient } from "@/lib/supabase/client";
 import type { Message } from "@/app/app/chats/types";
 import { buildMessageStream, canEditMessage } from "../lib/message-stream";
+import { notifyRecipientByEmail } from "../lib/notify-recipient-by-email";
 import { useChatMessages } from "../lib/use-chat-messages";
 import { useMarkRoomRead } from "../lib/use-mark-room-read";
 import { MessageBubble } from "./message-bubble";
@@ -187,6 +188,8 @@ export function ChatThread({
         console.error("[chats/send]", error.code, error.message);
         toast.error(sendErrorMessage(error.code));
         setDraft(content);
+      } else {
+        notifyRecipientByEmail(roomId);
       }
     } catch (err) {
       console.error("[chats/send]", err);

@@ -99,7 +99,13 @@ const COLUMNS: DataTableColumn<CardReportRow>[] = [
     header: "פירוט",
     size: "grow",
     className: "text-muted-foreground wrap-anywhere",
-    cell: (report) => report.details ?? "-",
+    // דיווח מורחב יכול להיות ארוך ורב-שורות
+    cell: (report) =>
+      report.details ? (
+        <span className="whitespace-pre-wrap">{report.details}</span>
+      ) : (
+        "-"
+      ),
   },
   {
     key: "created",

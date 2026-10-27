@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
 import PDF from "@/assets/icons/pdf.svg";
+import { toast } from "sonner";
 import { StoredFileNotice } from "./stored-file-notice";
 
 type PreviewFile = {
@@ -22,6 +23,8 @@ type PreviewFile = {
   fileType: "image" | "pdf" | "other";
 };
 const DEFAULT_MAX_FILES = 3;
+const REJECTED_FILE_MESSAGE =
+  "הקובץ לא נקלט: אפשר להעלות PDF או תמונה (PNG, JPG) בלבד";
 
 type UploadProps = {
   value?: File[];
@@ -32,6 +35,8 @@ type UploadProps = {
   "aria-invalid"?: boolean | "true" | "false";
   /** בעריכה: קובץ שכבר שמור. מוצג מעל אזור ההעלאה, וקובץ חדש מחליף אותו */
   storedFile?: { url: string; label: string };
+  /** הסרת הקובץ השמור (בעריכה). בלי - אין כפתור הסרה */
+  onRemoveStored?: () => void;
 } & Pick<UploadField, "accept">;
 
 export default function Upload({
@@ -42,6 +47,7 @@ export default function Upload({
   maxFiles = DEFAULT_MAX_FILES,
   "aria-invalid": ariaInvalid,
   storedFile,
+  onRemoveStored,
 }: UploadProps) {
   const isInvalid = ariaInvalid === true || ariaInvalid === "true";
   const [internalFiles, setInternalFiles] = useState<File[]>([]);
@@ -94,6 +100,7 @@ export default function Upload({
           url={storedFile.url}
           label={storedFile.label}
           isBeingReplaced={files.length > 0}
+          onRemove={onRemoveStored}
         />
       )}
       <div className="relative">
@@ -121,7 +128,8 @@ export default function Upload({
           multiple={multiple}
           maxFiles={multiple ? maxFiles : 1}
           onDrop={handleDrop}
-          onDropRejected={(rej) => console.error("Rejected:", rej)}
+          // קובץ שנדחה (סוג לא נתמך / יותר מדי קבצים) - הודעה ולא שתיקה
+          onDropRejected={() => toast.error(REJECTED_FILE_MESSAGE)}
           onError={console.error}
           src={dropzoneFiles}
           className={isInvalid ? "border-destructive" : undefined}

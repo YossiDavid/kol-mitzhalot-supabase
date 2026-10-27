@@ -2,6 +2,7 @@ import {
   MessagesSquare,
   MessageSquareDashed,
   MessageSquarePlus,
+  SearchX,
 } from "lucide-react";
 
 import {
@@ -14,7 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 
 type ChatEmptyStateProps = {
-  variant: "no-rooms" | "no-selection" | "no-messages";
+  variant: "no-rooms" | "no-selection" | "no-messages" | "no-matches";
   className?: string;
 };
 
@@ -38,6 +39,12 @@ const COPY = {
     Icon: MessageSquarePlus,
     title: "אין הודעות עדיין",
     description: "כתבו את ההודעה הראשונה בשיחה.",
+  },
+  // יש שיחות, אבל החיפוש או הסינון ברשימה לא מצאו אף אחת
+  "no-matches": {
+    Icon: SearchX,
+    title: "לא נמצאו שיחות",
+    description: "נסו חיפוש או סינון אחר.",
   },
 } as const;
 

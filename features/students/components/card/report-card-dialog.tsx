@@ -22,6 +22,7 @@ import {
   CARD_REPORT_DETAILS_MAX_LENGTH,
   CARD_REPORT_REASONS,
   CARD_REPORT_REASON_LABELS,
+  isCardReportDetailsRequired,
   type CardReportReason,
 } from "@/features/students/lib/card-report";
 
@@ -29,20 +30,31 @@ const GENERIC_ERROR = "שליחת הדיווח נכשלה";
 
 /**
  * דיאלוג "דיווח על הכרטיס", נשלט מבחוץ (נפתח מפריט בתפריט הפעולות). הסיבה
- * חובה; בסיבה "אחר" גם הפירוט חובה. הצופה מזוהה בשרת מהסשן, לא מהגוף.
+ * חובה; ב"אחר" וב"דיווח מורחב להנהלה" גם הפירוט חובה. הצופה מזוהה בשרת
+ * מהסשן, לא מהגוף. initialReason - פריט "דיווח מורחב להנהלה" פותח את הדיאלוג
+ * עם הסיבה כבר בחורה.
  */
 export function ReportCardDialog({
   studentId,
   studentName,
   open,
   onOpenChange,
+  initialReason = "",
 }: {
   studentId: string;
   studentName: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialReason?: CardReportReason | "";
 }) {
-  const [reason, setReason] = useState<CardReportReason | "">("");
+  const [reason, setReason] = useState<CardReportReason | "">(initialReason);
+  // הדיאלוג נשאר מורכב בין פתיחות: בכל פתיחה מתחילים מהסיבה שהפריט ביקש
+  const [lastOpen, setLastOpen] = useState(open);
+  if (open !== lastOpen) {
+    setLastOpen(open);
+    if (open) setReason(initialReason);
+  }
+  const isDetailsRequired = reason !== "" && isCardReportDetailsRequired(reason);
   const [details, setDetails] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
@@ -62,8 +74,8 @@ export function ReportCardDialog({
       setFormError("יש לבחור סיבת דיווח");
       return;
     }
-    if (reason === "other" && !details.trim()) {
-      setFormError('בסיבה "אחר" יש לפרט את הדיווח');
+    if (isDetailsRequired && !details.trim()) {
+      setFormError("יש לפרט את הדיווח");
       return;
     }
     setFormError(null);
@@ -121,7 +133,7 @@ export function ReportCardDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="report-details" required={reason === "other"}>
+            <Label htmlFor="report-details" required={isDetailsRequired}>
               פירוט
             </Label>
             <Textarea
@@ -129,8 +141,13 @@ export function ReportCardDialog({
               value={details}
               maxLength={CARD_REPORT_DETAILS_MAX_LENGTH}
               onChange={(event) => setDetails(event.target.value)}
-              placeholder={reason === "other" ? "פרטו את הדיווח" : "אופציונלי"}
+              placeholder={isDetailsRequired ? "פרטו את הדיווח" : "אופציונלי"}
+              className={reason === "admin_update" ? "min-h-48" : undefined}
             />
+            <p className="text-caption text-muted-foreground">
+              עד {CARD_REPORT_DETAILS_MAX_LENGTH.toLocaleString("he-IL")} תווים.
+              הדיווח גלוי להנהלה בלבד.
+            </p>
           </div>
 
           {formError && (

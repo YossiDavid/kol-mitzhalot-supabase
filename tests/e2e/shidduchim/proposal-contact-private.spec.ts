@@ -104,7 +104,7 @@ test.describe("פרטי התקשרות אינם נפתחים לצד השני", (
     await deleteCards(admin, [groomId, secondGroomId, brideId].filter(Boolean));
   });
 
-  test("חלון השליחה: אין בחירה בפרטי התקשרות; יש 'לשתף את קובץ הקו״ח', סגור כברירת מחדל", async ({
+  test("חלון השליחה: אין בחירה בפרטי התקשרות; יש 'לשתף את קובץ הקו״ח', מסומן כברירת מחדל", async ({
     page,
   }) => {
     // Arrange
@@ -119,19 +119,20 @@ test.describe("פרטי התקשרות אינם נפתחים לצד השני", (
     const shareCv = dialog.getByRole("checkbox", {
       name: "לשתף את קובץ הקו״ח",
     });
-    await expect(shareCv).not.toBeChecked();
+    await expect(shareCv).toBeChecked();
     await expect(dialog.locator("#share-cv-hint")).toContainText(
       "הקובץ עצמו עלול לכלול טלפון או כתובת",
     );
     await expect(dialog).toContainText(
       "טלפון, כתובת ופרטי הקשר של ההורים והממליצים אינם מוצגים לצד השני",
     );
-    await expect(
-      dialog.getByRole("checkbox", { name: "הצהרה רפואית" }),
-    ).not.toBeChecked();
+    const shareMedical = dialog.getByRole("checkbox", {
+      name: "הצהרה רפואית",
+    });
+    await expect(shareMedical).toBeChecked();
 
-    // Act: שליחת הטיוטה הישנה, עם שיתוף הקו״ח
-    await shareCv.check();
+    // Act: שליחת הטיוטה הישנה, עם הקו״ח ובלי ההצהרה הרפואית (השדכן מוריד)
+    await shareMedical.uncheck();
     const sent = page.waitForResponse((response) =>
       response.url().includes(OFFER_ENDPOINT),
     );

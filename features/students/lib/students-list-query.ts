@@ -141,6 +141,7 @@ function applyTextSearch(
     next = next.or(
       [
         `first_name.ilike.%${term}%`,
+        `nickname.ilike.%${term}%`,
         `last_name.ilike.%${term}%`,
         `city.ilike.%${term}%`,
         `community.ilike.%${term}%`,
@@ -158,8 +159,13 @@ function applyFieldFilters(
   query: StudentQuery,
 ): StudentsQueryBuilder {
   let next = q;
-  if (query.first_name)
-    next = next.ilike("first_name", `%${query.first_name}%`);
+  // שם פרטי נמצא גם לפי הכינוי (כפי שרבים מכירים את המיועד)
+  const firstName = sanitizeTerm(query.first_name);
+  if (firstName) {
+    next = next.or(
+      `first_name.ilike.%${firstName}%,nickname.ilike.%${firstName}%`,
+    );
+  }
   if (query.last_name) next = next.ilike("last_name", `%${query.last_name}%`);
   if (query.gender) next = next.eq("gender", query.gender);
   if (query.personal_status)

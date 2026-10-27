@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { MessagesSquare } from "lucide-react";
 
 import { Box } from "@/components/layout";
@@ -11,6 +10,7 @@ import {
   proposalThreadAnchor,
 } from "@/features/shidduchim/lib/proposal-thread-anchor";
 import ProposalResponseForm from "@/features/shidduchim/components/proposal-response-form";
+import { FullCardLink } from "@/features/shidduchim/components/full-card-link";
 import ShadchanNameLink from "@/features/shidduchim/components/shadchan-name-link";
 import type { ParentProposal } from "@/features/shidduchim/lib/proposals-data";
 import {
@@ -110,11 +110,7 @@ export default function ParentProposalView({
               והעיר חוזרים ריקים. בלי המשפט המפורש המסך פשוט שותק, וזה נראה
               כאילו הקישור חסר בגלל תקלה. */}
           {proposal.otherStudentId ? (
-            <Button asChild variant="link" className="h-auto p-0">
-              <Link href={`/app/students/${proposal.otherStudentId}`}>
-                לכרטיס המלא
-              </Link>
-            </Button>
+            <FullCardLink studentId={proposal.otherStudentId} />
           ) : (
             <p className="text-body-sm text-muted-foreground">
               הכרטיס הוסר מהמערכת ואינו זמין לצפייה.

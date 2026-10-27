@@ -35,7 +35,13 @@ import type { CardAdminFocus } from "@/features/students/lib/card-admin-focus";
 
 import { StudentStatusMenu, type PersonalStatus } from "./student-status-menu";
 
-type OpenDialog = "delete" | "report" | "pause" | "focus" | null;
+type OpenDialog =
+  | "delete"
+  | "report"
+  | "admin-report"
+  | "pause"
+  | "focus"
+  | null;
 
 /**
  * שורת הפעולות של הכרטיס: פעולה ראשית אחת ("עריכה"), כפתור "צ'אט" גלוי ותפריט
@@ -173,10 +179,16 @@ export function StudentCardActions({
           )}
 
           {canReport && (
-            <DropdownMenuItem onSelect={() => setOpenDialog("report")}>
-              <Flag />
-              דיווח על הכרטיס
-            </DropdownMenuItem>
+            <>
+              <DropdownMenuItem onSelect={() => setOpenDialog("report")}>
+                <Flag />
+                דיווח על הכרטיס
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setOpenDialog("admin-report")}>
+                <FileText />
+                דיווח מורחב להנהלה
+              </DropdownMenuItem>
+            </>
           )}
 
           {adminPause && (
@@ -220,8 +232,9 @@ export function StudentCardActions({
         <ReportCardDialog
           studentId={studentId}
           studentName={studentName}
-          open={openDialog === "report"}
-          onOpenChange={(open) => setOpenDialog(open ? "report" : null)}
+          open={openDialog === "report" || openDialog === "admin-report"}
+          onOpenChange={(open) => setOpenDialog(open ? openDialog : null)}
+          initialReason={openDialog === "admin-report" ? "admin_update" : ""}
         />
       )}
 

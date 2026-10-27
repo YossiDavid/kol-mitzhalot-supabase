@@ -57,6 +57,11 @@ export function UploadFormField(props: FieldControlProps) {
                   }
                 : undefined
             }
+            onRemoveStored={
+              storedUrl
+                ? () => rhfField.onChange({ ...singleValue, existingUrl: null })
+                : undefined
+            }
           />
         );
       }}

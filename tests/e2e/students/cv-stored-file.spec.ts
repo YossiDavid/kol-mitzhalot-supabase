@@ -1,7 +1,11 @@
 import { test, expect } from "@playwright/test";
 
-import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
-import { approvedCard } from "../helpers/approved-card";
+import {
+  createServiceClient,
+  ensureCardManagerId,
+  getTestUserId,
+} from "../shidduchim/fixtures";
+import { insertCompleteCard } from "../helpers/complete-card";
 
 /**
  * בעריכת כרטיס עם קו״ח שמור, אזור הקו״ח מראה שהקובץ קיים, עם קישור לפתיחה
@@ -16,35 +20,12 @@ test.describe("קו״ח שמור בעריכת כרטיס", () => {
   let studentId: string;
 
   test.beforeAll(async () => {
-    const userId = await getTestUserId(admin);
-    const { data, error } = await admin
-      .from("students")
-      .insert(
-        approvedCard({
-          user_id: userId,
-          first_name: "קו״ח",
-          last_name: `שמור${Date.now()}`,
-          identity_number: `8${String(Date.now()).slice(-8)}`,
-          // כרטיס שנוצר בלי card_for נחסם בעריכה עד שנבחר עבור מי הוא
-          card_for: "child",
-          // פרטי הממלא חובה כבר בשלב ההקדמה: בלעדיהם אי אפשר לעבור ממנו
-          author_info: { name: "ממלא", phone: "0501234567", relation: "אב" },
-          birth_date: "1998-01-01",
-          gender: "male",
-          personal_status: "single",
-          country: "ישראל",
-          city: "בני ברק",
-          cellphone_type: "kosher",
-          in_shidduchim: true,
-          cv_url: STORED_CV_URL,
-        }),
-      )
-      .select("id")
-      .single();
-    if (error || !data) {
-      throw new Error(`יצירת כרטיס הבדיקה נכשלה: ${error?.message}`);
-    }
-    studentId = data.id as string;
+    studentId = await insertCompleteCard(admin, {
+      userId: await getTestUserId(admin),
+      firstName: "קו״ח",
+      lastName: `שמור${Date.now()}`,
+      extra: { cv_url: STORED_CV_URL },
+    });
   });
 
   test.afterAll(async () => {
@@ -80,5 +61,93 @@ test.describe("קו״ח שמור בעריכת כרטיס", () => {
       cvCell.getByText("הקובץ החדש שבחרתם יחליף אותו בשמירה."),
     ).toBeVisible();
     await expect(openLink).toBeVisible();
+  });
+
+  test("הסרת הקובץ השמור ושמירה מוחקת את הקו״ח מהכרטיס", async ({ page }) => {
+    // Arrange
+    await admin
+      .from("students")
+      .update({ cv_url: STORED_CV_URL })
+      .eq("id", studentId);
+    await page.goto(`/app/students/${studentId}/edit`);
+    await page
+      .getByRole("navigation", { name: "שלבי הטופס" })
+      .getByRole("button", { name: "פרטים אישיים", exact: true })
+      .click();
+    const cvCell = page.locator('[data-field-name="cv"]');
+
+    // Act
+    await cvCell.getByRole("button", { name: "הסרת הקובץ" }).click();
+    await expect(cvCell.getByText("קובץ קו״ח קיים")).toHaveCount(0);
+    await page
+      .getByRole("button", { name: "שמירת שינויים", exact: true })
+      .click();
+
+    // Assert
+    await expect(page.getByText("השינויים נשמרו בהצלחה!")).toBeVisible({
+      timeout: 20_000,
+    });
+    const { data } = await admin
+      .from("students")
+      .select("cv_url")
+      .eq("id", studentId)
+      .single();
+    expect(data?.cv_url).toBeNull();
+  });
+
+  test("שדכן שאינו בעל הכרטיס מעלה קו״ח חדש בעריכה, והוא נשמר", async ({
+    page,
+  }) => {
+    // Arrange - כרטיס של מנהל כרטיסים אחר; משתמש הבדיקה הוא שדכן
+    const managerId = await ensureCardManagerId(admin);
+    const otherCardId = await insertCompleteCard(admin, {
+      userId: managerId,
+      firstName: "קו״ח",
+      lastName: `שדכן${Date.now()}`,
+      extra: { cv_url: STORED_CV_URL },
+    });
+
+    try {
+      await page.goto(`/app/students/${otherCardId}/edit`);
+      await page
+        .getByRole("navigation", { name: "שלבי הטופס" })
+        .getByRole("button", { name: "פרטים אישיים", exact: true })
+        .click();
+      const cvCell = page.locator('[data-field-name="cv"]');
+
+      // Act
+      await cvCell.locator('input[type="file"]').setInputFiles({
+        name: "new-cv.pdf",
+        mimeType: "application/pdf",
+        buffer: Buffer.from("%PDF-1.4\n%%EOF"),
+      });
+      await page
+        .getByRole("button", { name: "שמירת שינויים", exact: true })
+        .click();
+
+      // Assert
+      await expect(page.getByText("השינויים נשמרו בהצלחה!")).toBeVisible({
+        timeout: 20_000,
+      });
+      const { data } = await admin
+        .from("students")
+        .select("cv_url")
+        .eq("id", otherCardId)
+        .single();
+      expect(data?.cv_url).toContain(`/students/${otherCardId}/`);
+      expect(data?.cv_url).toMatch(/\/\d+-cv\.pdf/);
+    } finally {
+      await admin.storage
+        .from("students")
+        .list(otherCardId)
+        .then(({ data }) =>
+          data?.length
+            ? admin.storage
+                .from("students")
+                .remove(data.map((file) => `${otherCardId}/${file.name}`))
+            : null,
+        );
+      await admin.from("students").delete().eq("id", otherCardId);
+    }
   });
 });

@@ -11,7 +11,8 @@ import { hasRole } from "@/lib/user";
 // הסוג נבחר במפורש, כי למשתמש יכולים להיות גם תפקיד שדכן וגם איש צוות.
 // author_role נגזר בשרת מהסוג ומהתפקידים האמיתיים - לעולם לא מהלקוח - ומדיניות
 // ה-INSERT של RLS היא האכיפה האמיתית (כולל שיוך איש הצוות למוסד של המיועד).
-const NOTE_KINDS = ["shadchan_note", "staff_feedback"] as const;
+// private_note: הערה/תזכורת אישית של שדכן - גלויה לכותב בלבד (is_private)
+const NOTE_KINDS = ["shadchan_note", "private_note", "staff_feedback"] as const;
 
 /** קוד Postgres להפרת מדיניות RLS */
 const RLS_VIOLATION_CODE = "42501";
@@ -154,6 +155,7 @@ export async function POST(
       body,
       author_role: author.role,
       author_institution_id: author.institutionId,
+      is_private: kind === "private_note",
     })
     .select("id, body, created_at, institutions(name, city)")
     .single();
@@ -176,9 +178,9 @@ export async function POST(
     : created.institutions;
 
   const shadchanAuthor =
-    kind === "shadchan_note"
-      ? await loadShadchanAuthorTitle(supabase, user)
-      : null;
+    kind === "staff_feedback"
+      ? null
+      : await loadShadchanAuthorTitle(supabase, user);
 
   return NextResponse.json(
     {
@@ -190,6 +192,7 @@ export async function POST(
         institution_city: institution?.city ?? null,
         author_id: user.id,
         author_name: displayNameOf(user),
+        is_private: kind === "private_note",
         ...shadchanAuthor,
       },
     },

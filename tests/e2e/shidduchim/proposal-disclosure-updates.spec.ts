@@ -397,7 +397,7 @@ test.describe("פתיחת מידע בהצעה וספירת הצעות (מסד ו
     await adminPage.context().close();
   });
 
-  test("חלון השליחה כולל 'לשתף את פרטי הממליצים', סגור כברירת מחדל", async ({
+  test("חלון השליחה כולל 'לשתף את פרטי הממליצים', מסומן כברירת מחדל", async ({
     page,
   }) => {
     await page.goto("/app/shadchan/drafts");
@@ -405,7 +405,7 @@ test.describe("פתיחת מידע בהצעה וספירת הצעות (מסד ו
     const dialog = page.getByRole("dialog");
     await expect(
       dialog.getByRole("checkbox", { name: "לשתף את פרטי הממליצים" }),
-    ).not.toBeChecked({ timeout: LOAD_TIMEOUT });
+    ).toBeChecked({ timeout: LOAD_TIMEOUT });
     await expect(dialog.locator("#share-references-hint")).toContainText(
       "פרטי הקשר של המיועד/ת ושל ההורים אינם נחשפים",
     );

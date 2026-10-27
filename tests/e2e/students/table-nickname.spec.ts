@@ -95,3 +95,44 @@ test("הכינוי מוצג בסוגריים אחרי השם הפרטי", async 
   ).toBeVisible();
   await expect(withoutNickname.getByText("(")).toHaveCount(0);
 });
+
+test("חיפוש לפי הכינוי מוצא את הכרטיס", async ({ page }) => {
+  // Arrange - כינוי ייחודי שאינו מופיע בשם, בעיר או בקהילה
+  const userId = await getTestUserId(admin);
+  const uniqueNickname = `חיפושכינוי${RUN_ID}`;
+  const { data, error } = await admin
+    .from("students")
+    .insert(
+      approvedCard([
+        {
+          user_id: userId,
+          first_name: "שמעון",
+          last_name: "בדיקה",
+          nickname: uniqueNickname,
+          birth_date: "1998-04-04",
+          gender: "male",
+          personal_status: "single",
+          country: "ישראל",
+          city: "בני ברק",
+          in_shidduchim: true,
+        },
+      ]),
+    )
+    .select("id")
+    .single();
+  if (error || !data) throw new Error(`יצירת הכרטיס נכשלה: ${error?.message}`);
+  ids.push(data.id as string);
+
+  // Act
+  await page.goto("/app/students");
+  await page.locator("#search").fill(uniqueNickname);
+
+  // Assert
+  const table = page.getByRole("table", { name: TABLE_CAPTION });
+  await expect(table.getByRole("row", { name: /^כרטיס מלא:/ })).toHaveCount(1, {
+    timeout: 15_000,
+  });
+  await expect(
+    table.getByRole("row", { name: "כרטיס מלא: שמעון בדיקה" }),
+  ).toBeVisible();
+});

@@ -6,7 +6,7 @@ import {
   getTestUserId,
   TEST_USER_EMAIL,
 } from "../shidduchim/fixtures";
-import { approvedCard } from "../helpers/approved-card";
+import { insertCompleteCard } from "../helpers/complete-card";
 
 /**
  * עריכת כרטיס: "שמירת שינויים" מכל שלב. השמירה מאמתת את כל הטופס, נשארת
@@ -35,79 +35,15 @@ const SAVE_TIMEOUT_MS = 20_000;
 
 let studentId: string;
 
-const nameParts = (name: string) => ({ prefix: "", name, suffix: "" });
-
 /** כרטיס רווק שעובר את כל שדות החובה בטופס, בבעלות משתמש הבדיקה */
 async function createCompleteStudent(): Promise<string> {
-  const userId = await getTestUserId(admin);
-  const { data, error } = await admin
-    .from("students")
-    .insert(
-      approvedCard({
-        user_id: userId,
-        first_name: "שמירה",
-        last_name: `בכלשלב${RUN_ID}`,
-        identity_number: `7${String(RUN_ID).slice(-8)}`,
-        // כרטיס שנוצר בלי card_for נחסם בעריכה עד שנבחר עבור מי הוא
-        card_for: "child",
-        birth_date: "1997-03-03",
-        // אשה: בכרטיס של גבר התמונה חובה, והבדיקה אינה עוסקת בתמונות
-        gender: "female",
-        personal_status: "single",
-        country: "ישראל",
-        city: "בני ברק",
-        street: "רבי עקיבא",
-        house: "12",
-        cellphone_type: "kosher",
-        in_shidduchim: true,
-        parents_info: {
-          father: {
-            self: nameParts(FATHER_NAME),
-            phone: "0501111111",
-            job: "מלמד",
-            email: "",
-            grandFather: nameParts("יצחק"),
-            grandMother: nameParts("שרה"),
-          },
-          mother: {
-            self: nameParts("רחל"),
-            maidenName: "לוי",
-            phone: "0502222222",
-            job: "מורה",
-            email: "",
-            grandFather: nameParts("יעקב"),
-            grandMother: nameParts("לאה"),
-          },
-        },
-        family_info: {
-          numberOfChildren: 6,
-          currentChildPlace: 2,
-          about: "משפחה תורנית",
-          mechutanim: [],
-        },
-        author_info: {
-          name: "כותב הבדיקה",
-          phone: "0503333333",
-          email: AUTHOR_EMAIL,
-          relation: "אב",
-        },
-      }),
-    )
-    .select("id")
-    .single();
-
-  if (error || !data) {
-    throw new Error(`יצירת כרטיס הבדיקה נכשלה: ${error?.message}`);
-  }
-  const id = data.id as string;
-
-  const { error: preferencesError } = await admin
-    .from("partner_preferences")
-    .insert({ student_id: id, additional_information: "מחפשים בת תורה" });
-  if (preferencesError) {
-    throw new Error(`הכנת העדפות הכרטיס נכשלה: ${preferencesError.message}`);
-  }
-  return id;
+  return insertCompleteCard(admin, {
+    userId: await getTestUserId(admin),
+    firstName: "שמירה",
+    lastName: `בכלשלב${RUN_ID}`,
+    fatherName: FATHER_NAME,
+    authorEmail: AUTHOR_EMAIL,
+  });
 }
 
 async function readStudent() {

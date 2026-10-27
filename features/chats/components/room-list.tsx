@@ -4,7 +4,9 @@ import * as React from "react";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { createClient } from "@/lib/supabase/client";
 import type { Room } from "@/app/app/chats/types";
 import {
@@ -17,6 +19,12 @@ import {
   groupRoomsByPerson,
   isPlainGeneralGroup,
 } from "../lib/group-rooms";
+import {
+  ROOM_FILTER_LABELS,
+  ROOM_FILTERS,
+  filterRooms,
+  type RoomFilter,
+} from "../lib/filter-rooms";
 import { parseRoomContext } from "../lib/room-context";
 import { useUnreadChats } from "../lib/unread-chats-context";
 import { ChatEmptyState } from "./chat-empty-state";
@@ -189,7 +197,17 @@ export function RoomList() {
     };
   }, [currentUserId, supabase, rooms]);
 
-  const groups = React.useMemo(() => groupRoomsByPerson(rooms), [rooms]);
+  const [query, setQuery] = React.useState("");
+  const [filter, setFilter] = React.useState<RoomFilter>("all");
+  const allGroupsCount = React.useMemo(
+    () => groupRoomsByPerson(rooms).length,
+    [rooms],
+  );
+  const groups = React.useMemo(
+    () =>
+      groupRoomsByPerson(filterRooms(rooms, { query, filter, unreadRoomIds })),
+    [rooms, query, filter, unreadRoomIds],
+  );
 
   const activeRoomId = pathname.startsWith("/app/chats/")
     ? pathname.slice("/app/chats/".length)
@@ -199,13 +217,47 @@ export function RoomList() {
     <aside aria-label="רשימת הצ'אטים" className="flex h-full min-h-0 flex-col">
       <div className="flex h-16 shrink-0 items-center gap-2 border-b border-border px-4">
         <h1 className="text-subtitle font-bold text-foreground">צ'אטים</h1>
-        {!loading && groups.length > 0 && (
+        {!loading && allGroupsCount > 0 && (
           <span className="rounded-full bg-primary-muted px-2 py-0.5 text-caption font-semibold text-primary tabular-nums">
-            {groups.length}
+            {allGroupsCount}
             <span className="sr-only"> שיחות</span>
           </span>
         )}
       </div>
+
+      {!loading && rooms.length > 0 && (
+        <div className="flex shrink-0 flex-col gap-2 border-b border-border p-2">
+          <Input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="חיפוש לפי שם, כרטיס או הודעה"
+            aria-label="חיפוש בצ'אטים"
+          />
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            value={filter}
+            onValueChange={(next) => {
+              // לחיצה על הסינון הפעיל מחזירה ל"הכל" במקום להשאיר בלי בחירה
+              setFilter(
+                (ROOM_FILTERS as readonly string[]).includes(next)
+                  ? (next as RoomFilter)
+                  : "all",
+              );
+            }}
+            aria-label="סינון הצ'אטים"
+            className="w-full"
+          >
+            {ROOM_FILTERS.map((value) => (
+              <ToggleGroupItem key={value} value={value} className="flex-1">
+                {ROOM_FILTER_LABELS[value]}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        </div>
+      )}
 
       {/* Radix עוטף את התוכן ב-div עם display:table, שמתרחב לרוחב התוכן
           ולא נעצר ברוחב החלונית. בלי הביטול הזה שורה עם הודעה ארוכה גולשת
@@ -223,6 +275,8 @@ export function RoomList() {
           </div>
         ) : rooms.length === 0 ? (
           <ChatEmptyState variant="no-rooms" className="py-14" />
+        ) : groups.length === 0 ? (
+          <ChatEmptyState variant="no-matches" className="py-14" />
         ) : (
           <ul className="flex flex-col gap-1 p-2">
             {groups.map((group) => (

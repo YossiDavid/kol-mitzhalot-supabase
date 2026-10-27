@@ -37,6 +37,9 @@ type Props = {
   blockedReason?: string | null;
 };
 
+/** התוספות לכרטיס מסומנות כברירת מחדל (בקשת ההנהלה) */
+const SHARE_BY_DEFAULT = true;
+
 const TAB_ITEMS: { scope: RecipientScope; label: string }[] = [
   { scope: "both", label: "לשני הצדדים" },
   { scope: "groom_only", label: "רק לצד המיועד" },
@@ -56,13 +59,12 @@ export default function SendProposalModal({
   const [noteGroom, setNoteGroom] = useState(initialNoteGroom);
   const [noteBride, setNoteBride] = useState(initialNoteBride);
   // פרטי התקשרות אינם נפתחים לצד השני: יצירת הקשר עוברת דרך השדכן בלבד.
-  // קובץ הקו״ח וההצהרה הרפואית סגורים כברירת מחדל, והפתיחה היא החלטה אקטיבית
-  // לכל הצעה בנפרד.
-  const [shareCv, setShareCv] = useState(false);
-  const [shareReferences, setShareReferences] = useState(false);
-  const [shareMedical, setShareMedical] = useState(false);
-  // פתוח כברירת מחדל: תמונת הבחור נשלחה תמיד, והשדכן סוגר אותה כשצריך
-  const [shareGroomPhoto, setShareGroomPhoto] = useState(true);
+  // כל התוספות (קו״ח, ממליצים, הצהרה רפואית, תמונת הבחור) מסומנות כברירת
+  // מחדל לבקשת ההנהלה, והשדכן מוריד את מה שלא מתאים בהצעה הזו.
+  const [shareCv, setShareCv] = useState(SHARE_BY_DEFAULT);
+  const [shareReferences, setShareReferences] = useState(SHARE_BY_DEFAULT);
+  const [shareMedical, setShareMedical] = useState(SHARE_BY_DEFAULT);
+  const [shareGroomPhoto, setShareGroomPhoto] = useState(SHARE_BY_DEFAULT);
   // סירוב מהשרת (מכסה / השהיה) מוצג בתוך החלון, ולא כהודעה חולפת
   const [refusal, setRefusal] = useState<string | null>(null);
 
@@ -74,10 +76,10 @@ export default function SendProposalModal({
       setScope("both");
       setNoteGroom("");
       setNoteBride("");
-      setShareCv(false);
-      setShareReferences(false);
-      setShareMedical(false);
-      setShareGroomPhoto(true);
+      setShareCv(SHARE_BY_DEFAULT);
+      setShareReferences(SHARE_BY_DEFAULT);
+      setShareMedical(SHARE_BY_DEFAULT);
+      setShareGroomPhoto(SHARE_BY_DEFAULT);
     }
     setRefusal(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -182,8 +184,8 @@ export default function SendProposalModal({
             </p>
             <p className="text-caption text-muted-foreground">
               הכרטיס נפתח להם בלי פרטי התקשרות: טלפון, כתובת ופרטי הקשר של
-              ההורים והממליצים אינם מוצגים לצד השני, והקשר עובר דרכך. קובץ הקו״ח
-              וההצהרה הרפואית סגורים כברירת מחדל.
+              ההורים והממליצים אינם מוצגים לצד השני, והקשר עובר דרכך. התוספות
+              שלמטה מסומנות כברירת מחדל, ואפשר להוריד כל אחת מהן.
             </p>
 
             <div className="flex items-start gap-2">

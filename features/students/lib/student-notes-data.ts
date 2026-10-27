@@ -29,6 +29,7 @@ const shadchanNoteRowSchema = z.object({
   author_gender: z.string().nullable(),
   author_has_profile: z.boolean(),
   author_is_admin: z.boolean(),
+  is_private: z.boolean(),
 });
 
 const staffFeedbackRowSchema = z.object({
@@ -56,6 +57,8 @@ export type ShadchanNote = {
   authorHasProfile: boolean;
   /** הכותב מנהל כרגע - מוצג "מנהל מערכת" בלי שם וקישור */
   authorIsAdmin: boolean;
+  /** הערה/תזכורת אישית - גלויה לכותב בלבד */
+  isPrivate: boolean;
   canManage: boolean;
 };
 
@@ -122,6 +125,7 @@ export async function loadShadchanNotes(
     authorGender: parseShadchanGender(row.author_gender),
     authorHasProfile: row.author_has_profile,
     authorIsAdmin: row.author_is_admin,
+    isPrivate: row.is_private,
     canManage: isAdmin || row.author_id === userId,
   }));
 }

@@ -10,6 +10,7 @@ import {
   openContextRoom,
   openRoomErrorMessage,
 } from "@/features/chats/lib/open-room";
+import { notifyRecipientByEmail } from "@/features/chats/lib/notify-recipient-by-email";
 import { createClient } from "@/lib/supabase/client";
 
 export async function sendChatMessage(roomId: string, content: string) {
@@ -32,6 +33,7 @@ export async function sendChatMessage(roomId: string, content: string) {
   });
 
   if (error) throw error;
+  notifyRecipientByEmail(roomId);
 }
 
 /** פרמטר הכתובת שמבקש מחלון הצ'אט להעביר פוקוס לשדה הכתיבה. */
