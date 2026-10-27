@@ -118,6 +118,13 @@ test.describe("אישור הנהלה לכרטיס חדש (דפים)", () => {
       banner.getByRole("button", { name: "שליחה לאישור מחדש" }),
     ).toHaveCount(0);
 
+    // שיתוף חסום עד האישור: הקישור לא היה נפתח למי שאינו הבעלים
+    await parent.getByRole("button", { name: "עוד פעולות" }).click();
+    const share = parent.getByTestId("card-share");
+    await expect(share).toHaveAttribute("data-disabled", "");
+    await expect(share).toContainText("אפשר לשתף אחרי אישור ההנהלה");
+    await parent.keyboard.press("Escape");
+
     await parent.goto("/app");
     const tag = parent
       .getByRole("row", { name: new RegExp(LAST) })

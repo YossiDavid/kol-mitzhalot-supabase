@@ -57,6 +57,7 @@ export function StudentCardActions({
   canManage,
   canDelete,
   inShidduchim,
+  isPubliclyVisible = true,
   ownerUserId,
   canReport = false,
   adminPause = null,
@@ -74,6 +75,11 @@ export function StudentCardActions({
   canDelete: boolean;
   /** false - הכרטיס הוצא משידוכים. null/undefined בשורה ישנה נחשב פעיל */
   inShidduchim?: boolean | null;
+  /**
+   * הכרטיס אושר וגלוי לכולם. כרטיס ממתין/נדחה/"בלעדי למנהל" אינו נפתח
+   * בקישור למי שאינו הבעלים, ולכן השיתוף חסום עד האישור
+   */
+  isPubliclyVisible?: boolean;
   /** בעל הכרטיס, לקישור "פרטי המשתמש" - נמסר למנהל מערכת בלבד */
   ownerUserId?: string | null;
   /** מחובר, רואה את הכרטיס ואינו בעליו: "דיווח על הכרטיס". נקבע בשרת */
@@ -137,13 +143,21 @@ export function StudentCardActions({
             אל תוך העמוד במקום להידחק אל שפת החלון */}
         <DropdownMenuContent align="end" className="min-w-52">
           <DropdownMenuItem
-            disabled={!isInShidduchim}
+            disabled={!isInShidduchim || !isPubliclyVisible}
             onSelect={() => {
               void handleShare();
             }}
+            data-testid="card-share"
           >
             <Share2 />
-            שיתוף הכרטיס
+            <span className="flex flex-col">
+              שיתוף הכרטיס
+              {!isPubliclyVisible && (
+                <span className="text-caption text-muted-foreground">
+                  אפשר לשתף אחרי אישור ההנהלה
+                </span>
+              )}
+            </span>
           </DropdownMenuItem>
 
           {/* מועדפים: כמו הכוכב ברשימה, לשדכן ולמנהל */}

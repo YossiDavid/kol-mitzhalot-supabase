@@ -453,6 +453,7 @@ async function StudentPageContent({
           personalStatus={toPersonalStatus(student.personal_status)}
           gender={student.gender ?? null}
           inShidduchim={student.in_shidduchim}
+          isPubliclyVisible={approvalStatus === "approved"}
           canEdit={canEdit}
           canManage={isShadchan}
           canDelete={isAdmin}
