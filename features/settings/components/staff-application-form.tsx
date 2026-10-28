@@ -127,7 +127,8 @@ export function StaffApplicationForm() {
         .order("name", { ascending: true });
 
       if (error) {
-        setInstitutionsError(`שגיאה בטעינת רשימת המוסדות: ${error.message}`);
+        console.error("[staff-application] institutions", error);
+        setInstitutionsError("שגיאה בטעינת רשימת המוסדות");
         setIsInstitutionsLoading(false);
         return;
       }

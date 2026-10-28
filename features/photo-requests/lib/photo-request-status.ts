@@ -22,3 +22,6 @@ export const PHOTO_REQUEST_STATUS_LABELS: Record<PhotoRequestStatus, string> = {
 
 /** שגיאת מפתח כפול של Postgres — בקשה לאותה מיועדת כבר קיימת. */
 export const UNIQUE_VIOLATION_CODE = "23505";
+
+/** חסימת RLS של Postgres — למשל כרטיס שאינו פתוח לבקשות מהצופה. */
+export const RLS_VIOLATION_CODE = "42501";

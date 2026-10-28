@@ -159,7 +159,7 @@ export default function EditStudentForm({
 
       if (updateError) {
         console.error("Failed updating student:", updateError);
-        toast.error(`שגיאה בעדכון הקו״ח: ${updateError.message}`);
+        toast.error("שגיאה בעדכון הקו״ח. אפשר לנסות שוב מאוחר יותר.");
         return false;
       }
 

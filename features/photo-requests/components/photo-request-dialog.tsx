@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import {
+  RLS_VIOLATION_CODE,
   UNIQUE_VIOLATION_CODE,
   type PhotoRequestStatus,
 } from "@/features/photo-requests/lib/photo-request-status";
@@ -115,7 +116,13 @@ export function PhotoRequestDialog({
         return;
       }
       console.error("[photo-requests] insert", error);
-      toast.error(`שגיאה בשליחת הבקשה: ${error.message}`);
+      // לעולם לא מציגים את error.message: הוא באנגלית וחושף שמות מדיניות
+      // וטבלאות. חסימת RLS מנוסחת בניטרליות, בלי לרמוז על מצב הכרטיס.
+      toast.error(
+        error.code === RLS_VIOLATION_CODE
+          ? "לא ניתן לשלוח בקשה לכרטיס זה כרגע. לבירור אפשר לפנות להנהלה."
+          : "שגיאה בשליחת הבקשה. אפשר לנסות שוב מאוחר יותר.",
+      );
       setSubmitting(false);
       return;
     }
