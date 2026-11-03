@@ -305,6 +305,7 @@ export type RedactedProposalFields = {
   parents_info: RedactedParentsInfo | null;
   author_info: ContactFreeJson | null;
   previous_partners: RedactedPreviousPartner[] | null;
+  partner_preferences: JsonRecord | null;
 };
 
 export type RedactedProposalStudent<T extends JsonRecord> = Omit<
@@ -437,5 +438,17 @@ export function redactProposalStudent<T extends JsonRecord>(
     parents_info,
     author_info,
     previous_partners: redactPreviousPartners(student.previous_partners),
+    partner_preferences: withoutShadchanOnlyInfo(student.partner_preferences),
   };
+}
+
+/**
+ * "לעיני השדכן בלבד" (additional_information) אינו נשלח לצד השני. המסד כבר
+ * אינו מחזיר אותו (get_proposal_student_card), וזו שכבת ההגנה השנייה.
+ */
+function withoutShadchanOnlyInfo(value: unknown): JsonRecord | null {
+  if (!isRecord(value)) return null;
+  const { additional_information, ...rest } = value;
+  void additional_information;
+  return rest;
 }
