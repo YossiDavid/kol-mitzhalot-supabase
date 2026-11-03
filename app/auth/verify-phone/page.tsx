@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import OTPSection from "./otp-section";
 import { Suspense } from "react";
 import { unstable_noStore as noStore } from "next/cache";
-import { maskPhone } from "@/lib/phone";
+import { maskPhone, resolveUserPhone } from "@/lib/phone";
+import { isPhoneVerified } from "@/lib/phone-verification";
 import { getPhoneVerificationEnabled } from "@/lib/system-settings";
 import { Spinner } from "@/components/ui/spinner";
 import { sanitizeNextPath } from "@/features/auth/lib/next-path";
@@ -27,15 +28,11 @@ async function VerifyPhoneContent({
     redirect(nextPath);
   }
 
-  if (user?.user_metadata?.phone_verified === true) {
+  if (user && isPhoneVerified(user)) {
     redirect(nextPath);
   }
 
-  const phoneNumber =
-    (user?.user_metadata?.phone_verified === false &&
-      (user?.user_metadata?.phone as string | undefined)) ||
-    user?.phone ||
-    (user?.user_metadata?.phone as string | undefined);
+  const phoneNumber = user ? resolveUserPhone(user) : null;
   const hasPhone = !!phoneNumber;
   const maskedPhone = phoneNumber ? maskPhone(phoneNumber) : null;
 

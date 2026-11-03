@@ -18,11 +18,7 @@ import { Form, FormField } from "@/components/ui/form";
 import { FormFieldShell } from "@/components/ui/form-field-shell";
 import { FormFields, FormGrid } from "@/components/ui/form-layout";
 import { Input } from "@/components/ui/input";
-import {
-  requiredEmail,
-  requiredPhone,
-  requiredText,
-} from "@/lib/forms/schema";
+import { requiredEmail, requiredPhone, requiredText } from "@/lib/forms/schema";
 import { normalizePhoneKey } from "@/lib/phone";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -91,15 +87,10 @@ export function ProfileForm({
         lastName: data.lastName,
       };
 
+      // מספר חדש שונה מ-app_metadata.verified_phone, ולכן כשהאימות פעיל
+      // השער ב-layout ידרוש אימות מחדש (lib/phone-verification.ts)
       if (phoneChanged) {
         updateData.phone = data.phone;
-        if (phoneVerificationEnabled) {
-          updateData.phone_verified = false;
-          updateData.phone_confirmed_at = null;
-        } else {
-          updateData.phone_verified = true;
-          updateData.phone_confirmed_at = new Date().toISOString();
-        }
       }
 
       const { error } = await supabase.auth.updateUser({

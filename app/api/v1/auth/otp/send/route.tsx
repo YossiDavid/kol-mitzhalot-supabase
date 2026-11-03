@@ -1,7 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callMicropay } from "@/lib/micropay";
-import { isValidPhone, maskPhone, normalizePhoneKey, PHONE_INVALID_MESSAGE } from "@/lib/phone";
+import {
+  isValidPhone,
+  maskPhone,
+  normalizePhoneKey,
+  PHONE_INVALID_MESSAGE,
+  resolveUserPhone,
+} from "@/lib/phone";
+import { isPhoneVerified } from "@/lib/phone-verification";
+import { createRateLimiter } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
+
+const HOUR_MS = 60 * 60 * 1000;
+const MAX_SENDS_PER_USER_PER_HOUR = 5;
+const sendsPerUser = createRateLimiter({
+  limit: MAX_SENDS_PER_USER_PER_HOUR,
+  windowMs: HOUR_MS,
+});
 import { getPhoneVerificationEnabled } from "@/lib/system-settings";
 import { unstable_noStore as noStore } from "next/cache";
 
@@ -58,21 +73,23 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const alreadyVerified =
-    user.phone_confirmed_at || user.user_metadata?.phone_verified === true;
-  if (alreadyVerified) {
+  if (isPhoneVerified(user)) {
     return NextResponse.json(
       { status: "ERROR", message: "Phone already verified" },
       { status: 400 },
     );
   }
 
-  // When user changed phone (pending verification), send OTP to the new number
-  const phoneNumber =
-    (user.user_metadata?.phone_verified === false &&
-      (user.user_metadata?.phone as string | undefined)) ||
-    user.phone ||
-    (user.user_metadata?.phone as string | undefined);
+  // מגבלה לכל משתמש, בנוסף למגבלת טלפון+IP: החלפת מספר או IP לא מאפסת אותה
+  if (!sendsPerUser.allow(user.id)) {
+    return NextResponse.json(
+      { status: "MAX_SENT", message: "Too many attempts" },
+      { status: 429 },
+    );
+  }
+
+  // המספר הנוכחי של המשתמש (גם אחרי החלפה בהגדרות)
+  const phoneNumber = resolveUserPhone(user);
 
   if (!phoneNumber) {
     return NextResponse.json(
@@ -121,7 +138,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
           {
             status: "ERROR",
-            message: result.errorMessage || "שירות השליחה לא זמין. נסה שוב בעוד דקה.",
+            message:
+              result.errorMessage || "שירות השליחה לא זמין. נסה שוב בעוד דקה.",
           },
           { status: 503 },
         );

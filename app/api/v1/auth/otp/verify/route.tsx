@@ -3,7 +3,17 @@ import { callMicropay } from "@/lib/micropay";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPhoneVerificationEnabled } from "@/lib/system-settings";
+import { resolveUserPhone } from "@/lib/phone";
+import { isPhoneVerified } from "@/lib/phone-verification";
+import { createRateLimiter } from "@/lib/rate-limit";
 import { unstable_noStore as noStore } from "next/cache";
+
+const VERIFY_WINDOW_MS = 15 * 60 * 1000;
+const MAX_VERIFY_ATTEMPTS_PER_WINDOW = 10;
+const verifyAttemptsPerUser = createRateLimiter({
+  limit: MAX_VERIFY_ATTEMPTS_PER_WINDOW,
+  windowMs: VERIFY_WINDOW_MS,
+});
 
 export async function POST(req: NextRequest) {
   noStore();
@@ -27,21 +37,21 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const alreadyVerified =
-    user.phone_confirmed_at || user.user_metadata?.phone_verified === true;
-  if (alreadyVerified) {
+  if (isPhoneVerified(user)) {
     return NextResponse.json(
       { status: "ERROR", message: "Phone already verified" },
       { status: 400 },
     );
   }
 
-  // When user changed phone (pending verification), validate against the new number
-  const phoneNumber =
-    (user.user_metadata?.phone_verified === false &&
-      (user.user_metadata?.phone as string | undefined)) ||
-    user.phone ||
-    (user.user_metadata?.phone as string | undefined);
+  if (!verifyAttemptsPerUser.allow(user.id)) {
+    return NextResponse.json(
+      { status: "MAX_SENT", message: "Too many attempts" },
+      { status: 429 },
+    );
+  }
+
+  const phoneNumber = resolveUserPhone(user);
 
   if (!phoneNumber) {
     return NextResponse.json(
@@ -77,13 +87,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Update user phone confirmation metadata
-    const { error: updateError } = await supabase.auth.updateUser({
-      data: {
-        phone_verified: true,
-        phone_confirmed_at: new Date().toISOString(),
+    // סימון האימות ב-app_metadata - נכתב רק כאן, ב-service role (המשתמש לא
+    // יכול לכתוב אותו). GoTrue ממזג את app_metadata, כך שהתפקידים נשמרים.
+    const adminClient = createAdminClient();
+    const { error: updateError } = await adminClient.auth.admin.updateUserById(
+      user.id,
+      {
+        app_metadata: {
+          verified_phone: phoneNumber,
+          phone_verified_at: new Date().toISOString(),
+        },
       },
-    });
+    );
 
     if (updateError) {
       console.error("Failed to update phone confirmation:", updateError);
@@ -95,13 +110,15 @@ export async function POST(req: NextRequest) {
 
     // Sync auth.users.phone so it matches the verified number (e.g. after change-phone flow)
     try {
-      const adminClient = createAdminClient();
       const { error: adminError } = await adminClient.auth.admin.updateUserById(
         user.id,
         { phone: phoneNumber, phone_confirm: true },
       );
       if (adminError) {
-        console.warn("Failed to sync auth.users.phone after verify:", adminError);
+        console.warn(
+          "Failed to sync auth.users.phone after verify:",
+          adminError,
+        );
       }
     } catch (e) {
       console.warn("Admin client unavailable for phone sync:", e);

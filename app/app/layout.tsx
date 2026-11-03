@@ -21,6 +21,7 @@ import { resolveTermsGate } from "@/features/auth/lib/terms-gate";
 import { ShidduchCelebration } from "@/features/engagements/components/shidduch-celebration";
 import { IdleLogoutGuard } from "@/features/idle-logout/components/idle-logout-guard";
 import { getIdleLogoutMinutes } from "@/features/idle-logout/lib/idle-logout-setting";
+import { isPhoneVerified } from "@/lib/phone-verification";
 
 // כרטיס מיועד ציבורי: נתיב של בדיוק /app/students/<מזהה> ללא סגמנטים נוספים.
 // ה-lookahead השלילי מוציא במפורש את /app/students/create, כדי שדף יצירת
@@ -67,8 +68,7 @@ export default async function AppLayout({
   if (user) {
     const phoneVerificationEnabled = await phoneVerificationPromise;
     if (phoneVerificationEnabled) {
-      const isPhoneVerified = user.user_metadata?.phone_verified === true;
-      if (!isPhoneVerified) {
+      if (!isPhoneVerified(user)) {
         redirect(withNextParam("/auth/verify-phone", requestedPath));
       }
     }
