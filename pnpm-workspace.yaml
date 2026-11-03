@@ -6,3 +6,15 @@ allowBuilds:
 # מושך עותק ישן ומדפיס "The data in this module is over two months old"
 overrides:
   baseline-browser-mapping: ^2.11.21
+  # תיקוני אבטחה בתלויות עקיפות (pnpm audit, 4.11.2026) - בתוך אותה גרסה ראשית
+  brace-expansion@1: ^1.1.21
+  brace-expansion@2: ^2.1.7
+  browserslist: ^4.28.7
+  linkify-it@5: ^5.0.2
+  markdown-it@14: ^14.3.3
+  minimatch@3: ^3.1.4
+  nanoid@3: ^3.3.18
+  postcss@8: ^8.5.23
+  prosemirror-view: ^1.42.3
+  source-map-js: ^1.2.2
+  ws@8: ^8.21.0
