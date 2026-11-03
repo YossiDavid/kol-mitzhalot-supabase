@@ -44,13 +44,22 @@ function PreferenceBox({
 export function PartnerPreferencesSection({
   preferences,
   gender,
+  showShadchanOnlyInfo,
 }: {
   preferences: PartnerPreferences;
   gender: string | null | undefined;
+  /**
+   * "לעיני השדכן בלבד" - לבעל הכרטיס ולשדכנים בלבד. בכרטיס הצעה השדה כלל
+   * לא נשלף (get_proposal_student_card), וזו שכבת הגנה נוספת.
+   */
+  showShadchanOnlyInfo: boolean;
 }) {
   if (!preferences) return null;
 
   const workStatus = workStatusToHebrew(preferences.work_status, gender);
+  const shadchanOnlyInfo = showShadchanOnlyInfo
+    ? preferences.additional_information
+    : null;
 
   return (
     <CardSection
@@ -58,10 +67,13 @@ export function PartnerPreferencesSection({
       icon={Star}
     >
       <div className="space-y-4">
-        {preferences.additional_information && (
+        {shadchanOnlyInfo && (
           <div className="rounded-lg border-r-4 border-primary bg-muted/50 p-4">
+            <p className="mb-1 text-caption text-muted-foreground">
+              לעיני השדכן בלבד
+            </p>
             <p className="font-medium text-foreground italic">
-              "{preferences.additional_information}"
+              "{shadchanOnlyInfo}"
             </p>
           </div>
         )}

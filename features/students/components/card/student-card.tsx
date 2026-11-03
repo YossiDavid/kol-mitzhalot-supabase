@@ -187,6 +187,7 @@ export function StudentCard({
               <PartnerPreferencesSection
                 preferences={student.partner_preferences}
                 gender={student.gender}
+                showShadchanOnlyInfo={!isProposalView}
               />
             </>
           )}
