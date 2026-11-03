@@ -21,7 +21,26 @@ const svgrLoader = {
   },
 };
 
+/**
+ * כותרות אבטחה לכל התגובות. האתר לא מוטמע אצל אף אחד (ה-iframe של נדרים פלוס
+ * מוטמע אצלנו, לא להפך), ולכן frame-ancestors 'none' חוסם clickjacking.
+ * CSP מלא (script-src וכו') עוד לא מוגדר - דורש מעבר על GA, Supabase ונדרים.
+ */
+const SECURITY_HEADERS = [
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  {
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=()",
+  },
+];
+
 const nextConfig: NextConfig = {
+  async headers() {
+    return [{ source: "/:path*", headers: SECURITY_HEADERS }];
+  },
   cacheComponents: true,
   typedRoutes: true,
   turbopack: {
