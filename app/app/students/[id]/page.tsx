@@ -38,6 +38,7 @@ import { loadStudentPhotos } from "@/features/students/lib/student-photos";
 import {
   canViewStudentPhoto,
   isGroomPhotoWithheld,
+  isGroomPhotoWithheldInAnyProposal,
   type PhotoAccessSubject,
 } from "@/features/students/lib/student-photo-access";
 import { toPersonalStatus } from "@/features/students/lib/student-status";
@@ -248,10 +249,13 @@ async function StudentPageContent({
 
     // כלל מוחלט: אצל בת לעולם לא מוצגת תמונה בדף הציבורי - הגלריה נטענת
     // ונחתמת רק לבן, ולבת לא נוצר אף קישור.
-    const publicPhotos =
-      publicStudent.gender === "male"
-        ? (await loadStudentPhotos(publicStudent.id, { canView: true })).photos
-        : [];
+    // ובחור שנשלח בהצעה "בלי תמונה" - גם לו אין גלריה בקישור הציבורי
+    const showPublicGallery =
+      publicStudent.gender === "male" &&
+      !(await isGroomPhotoWithheldInAnyProposal(publicStudent.id));
+    const publicPhotos = showPublicGallery
+      ? (await loadStudentPhotos(publicStudent.id, { canView: true })).photos
+      : [];
 
     return (
       <PublicStudentCard

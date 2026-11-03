@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { createAdminClient } from "@/lib/supabase/admin";
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
 
 /**
@@ -107,4 +108,29 @@ export async function resolveViewablePhotoIds(
     ];
   }
   return new Set(viewable);
+}
+
+/**
+ * קישור השיתוף הציבורי: הצופה אינו מזוהה, ולכן ייתכן שזה הצד השני של הצעה
+ * ששדכן סימן בה "בלי תמונה". בחור שנשלח בהצעה כזו (לא טיוטה, כשהצד של הכלה
+ * מקבל אותה) אינו מציג גלריה בקישור הציבורי - אחרת מספיק לפתוח את הכרטיס
+ * בגלישה בסתר כדי לעקוף את ההחלטה של השדכן.
+ */
+export async function isGroomPhotoWithheldInAnyProposal(
+  groomId: string,
+): Promise<boolean> {
+  const { data, error } = await createAdminClient()
+    .from("shidduchim")
+    .select("id")
+    .eq("groom_id", groomId)
+    .neq("status", "draft")
+    .in("recipient_scope", ["both", "bride_only"])
+    .eq("share_groom_photo", false)
+    .limit(1);
+  if (error) {
+    // כשל בבדיקה: לא חושפים (fail closed)
+    console.error(describeSupabaseError(error));
+    return true;
+  }
+  return (data ?? []).length > 0;
 }

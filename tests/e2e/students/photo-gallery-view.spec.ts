@@ -125,3 +125,49 @@ test.describe("צופה לא מחובר", () => {
     expect(await response?.text()).not.toContain(SIGNED_URL_MARKER);
   });
 });
+
+test.describe("צופה לא מחובר - בן שנשלח בהצעה בלי תמונה", () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  let withheldGroomId = "";
+  let brideId = "";
+
+  test.beforeAll(async () => {
+    const ownerId = await getTestUserId(admin, CARD_OWNER_EMAIL);
+    const shadchanId = await getTestUserId(admin);
+    withheldGroomId = await createStudentWithPhotos(ownerId, "male", 1);
+    brideId = await createStudentWithPhotos(ownerId, "female", 0);
+    const { error } = await admin.from("shidduchim").insert({
+      groom_id: withheldGroomId,
+      bride_id: brideId,
+      shadchan_id: shadchanId,
+      status: "sent",
+      recipient_scope: "both",
+      sent_at: new Date().toISOString(),
+      share_groom_photo: false,
+    });
+    if (error) throw new Error(`יצירת הצעה נכשלה: ${error.message}`);
+  });
+
+  test.afterAll(async () => {
+    await admin
+      .from("shidduchim")
+      .delete()
+      .eq("groom_id", withheldGroomId);
+    await admin.from("students").delete().in("id", [withheldGroomId, brideId]);
+  });
+
+  test("הקישור הציבורי לא מציג את הגלריה ולא חותם קישור", async ({ page }) => {
+    // Act
+    const response = await page.goto(`/app/students/${withheldGroomId}`);
+
+    // Assert
+    await expect(page.getByText("גלריה").first()).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(
+      page.getByRole("button", { name: /פתיחת גלריית התמונות/ }),
+    ).toHaveCount(0);
+    expect(await response?.text()).not.toContain(SIGNED_URL_MARKER);
+  });
+});
