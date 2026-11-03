@@ -25,6 +25,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // היסטוריית הצמד נשלפת ב-service role: רק למי שמציע הצעות (מנהל או שדכן פעיל)
+  const isAdmin = hasRole(user, "admin");
+  if (!isAdmin && !(await isActiveShadchan(user))) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const groomId = req.nextUrl.searchParams.get("groomId");
   const brideId = req.nextUrl.searchParams.get("brideId");
 
@@ -50,17 +56,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "שגיאת מסד" }, { status: 500 });
   }
 
-  // חסימות הצמד (אישור הנהלה, צד שלישי, כהן וגרושה) - רק למי שמציע הצעות,
-  // כדי שהלוח יחסום מראש ולא אחרי הלחיצה
-  const isAdmin = hasRole(user, "admin");
+  // חסימות הצמד (אישור הנהלה, צד שלישי, כהן וגרושה), כדי שהלוח יחסום מראש
+  // ולא אחרי הלחיצה
   let blocks: ProposalBlock[] = [];
-  if (isAdmin || (await isActiveShadchan(user))) {
-    try {
-      blocks = await findPairBlocks(admin, groomId!, brideId!, { isAdmin });
-    } catch (e) {
-      console.error(e);
-      return NextResponse.json({ error: "שגיאת מסד" }, { status: 500 });
-    }
+  try {
+    blocks = await findPairBlocks(admin, groomId!, brideId!, { isAdmin });
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json({ error: "שגיאת מסד" }, { status: 500 });
   }
 
   return NextResponse.json({ rows: data || [], blocks });
