@@ -140,6 +140,32 @@ test.describe("שרשורי הקשר בצ'אט — RPC והרשאות", () => {
     expect(fromParent.roomId).toBe(first.roomId);
   });
 
+  test("שיחה כללית: הורה מול הורה נחסם, הורה מול שדכן ושדכן מול שדכן נפתחים", async () => {
+    // Arrange
+    await deleteRoomsAmong(admin, everyone());
+
+    // Act
+    const parentToParent = await openRoomAs(parentAClient, parentB, {
+      kind: "general",
+    });
+    const viaOld = await parentAClient.rpc("get_or_create_dm_room", {
+      other_user_id: parentB,
+    });
+    const parentToShadchan = await openRoomAs(parentBClient, shadchanId, {
+      kind: "general",
+    });
+    const shadchanToShadchan = await openRoomAs(shadchanClient, strangerId, {
+      kind: "general",
+    });
+
+    // Assert
+    expect(parentToParent.error).toContain("context_not_allowed");
+    expect(viaOld.error?.message).toContain("context_not_allowed");
+    expect(parentToShadchan.error).toBeNull();
+    expect(shadchanToShadchan.error).toBeNull();
+    await deleteRoomsAmong(admin, everyone());
+  });
+
   test("שיחה כללית קיימת לא מושפעת, ו-get_or_create_dm_room עדיין מחזיר אותה", async () => {
     // Arrange - חדר "ישן": נוצר בלי עמודות הקשר, כמו כל חדר שהיה לפני המיגרציה
     await deleteRoomsAmong(admin, [shadchanId, parentB]);

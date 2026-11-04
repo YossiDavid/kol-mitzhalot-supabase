@@ -3,13 +3,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
   createServiceClient,
+  TEST_USER_EMAIL,
   getTestUserId,
   setupShidduchFixtures,
   teardownShidduchFixtures,
   type ShidduchFixtures,
 } from "../shidduchim/fixtures";
 import {
-  CARD_MANAGER_EMAIL,
   clientAs,
   deleteRoomsAmong,
   ensureSecondParentId,
@@ -21,8 +21,8 @@ import {
  * שנסגרו: (א) יוצר חדר מוסיף צד שלישי, (ב) הזזת room_id של שורה עצמית,
  * (ג) הזזת הודעה לחדר אחר. והצ'אט הרגיל ממשיך לעבוד.
  *
- * הדמויות: א' = מנהל הכרטיסים, ב' = ההורה השני, ג' = משתמש הבדיקה (זר
- * לשיחה). חדר א'-ב' נפתח ב-RPC; חדר ב'-ג' נכתב ישירות (service role).
+ * הדמויות: א' = משתמש הבדיקה (שדכן), ב' = ההורה השני, ג' = מנהל הכרטיסים
+ * (זר לשיחה). שיחה כללית נפתחת רק כשאחד הצדדים שדכן. חדר א'-ב' נפתח ב-RPC; חדר ב'-ג' נכתב ישירות (service role).
  */
 test.describe("צ'אט - מדיניות משתתפים והודעות", () => {
   test.describe.configure({ mode: "serial" });
@@ -41,12 +41,12 @@ test.describe("צ'אט - מדיניות משתתפים והודעות", () => {
   test.beforeAll(async () => {
     admin = createServiceClient();
     fx = await setupShidduchFixtures(admin);
-    userA = fx.cardManagerId;
+    userA = await getTestUserId(admin);
     userB = await ensureSecondParentId(admin);
-    userC = await getTestUserId(admin);
+    userC = fx.cardManagerId;
     await deleteRoomsAmong(admin, everyone());
 
-    clientA = await clientAs(admin, CARD_MANAGER_EMAIL);
+    clientA = await clientAs(admin, TEST_USER_EMAIL);
     const opened = await openRoomAs(clientA, userB, { kind: "general" });
     expect(opened.error).toBeNull();
     roomAB = opened.roomId!;
