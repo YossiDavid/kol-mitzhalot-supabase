@@ -37,6 +37,10 @@ async function setIdleMinutes(minutes: number): Promise<void> {
 
 const idleDialog = (page: Page) => page.getByTestId("idle-logout-dialog");
 
+/** זמן הפעילות האחרונה המשותף ללשוניות (ראו idle-activity-store.ts) */
+const readActivity = (page: Page) =>
+  page.evaluate(() => window.localStorage.getItem("idle_last_activity"));
+
 /** טעינה מחדש עם שעון מזויף: השומר מתחיל לספור מטעינת הדף */
 async function openWithFakeClock(page: Page): Promise<void> {
   await page.clock.install();
@@ -198,15 +202,21 @@ test.describe("התנתקות אוטומטית אחרי חוסר פעילות", 
   test("בין לשוניות: 'להישאר מחובר' באחת סוגר את האזהרה בשנייה, והתנתקות מנתקת את שתיהן", async ({
     browser,
   }) => {
+    // שתי לשוניות, שני מעברים לאזהרה והתנתקות - בשרת הפיתוח זה חורג מ-30 שניות
+    test.slow();
     // Arrange: שתי לשוניות באותו הקשר (אותו localStorage)
     await setIdleMinutes(TEST_TIMEOUT_MINUTES);
     const first = await loggedInPage(browser);
     const context = first.context();
     try {
       await openWithFakeClock(first);
+      const before = await readActivity(first);
       const second = await context.newPage();
       await second.goto("/app");
       await expect(second.getByTitle("תפריט משתמש")).toBeVisible(LOAD);
+      // התפריט מגיע כבר מהשרת; השומר של הלשונית השנייה פעיל רק אחרי hydration,
+      // כשהוא רושם את טעינת הדף כפעילות. בלי ההמתנה, מעבר הזמן קודם לו.
+      await expect.poll(() => readActivity(second), LOAD).not.toBe(before);
 
       // Act: חוסר פעילות בשתיהן
       await first.clock.fastForward(INTO_WARNING_MS);

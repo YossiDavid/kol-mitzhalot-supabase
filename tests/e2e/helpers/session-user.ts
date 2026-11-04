@@ -36,7 +36,8 @@ export async function createSessionUser({
     phone,
     email_confirm: true,
     phone_confirm: true,
-    app_metadata: { roles },
+    // השער סומך רק על app_metadata.verified_phone (ראו lib/phone-verification.ts)
+    app_metadata: { roles, verified_phone: phone },
     user_metadata: {
       firstName: "בדיקה",
       lastName: prefix,

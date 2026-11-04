@@ -26,7 +26,11 @@ setup("authenticate test user", async ({ page }) => {
     // להרשאות). ממזגים כדי לא לדרוס provider/providers.
     await admin.auth.admin.updateUserById(userId, {
       user_metadata: { phone_verified: true, phone: TEST_PHONE },
-      app_metadata: { ...existing.app_metadata, roles: ["shadchan"] },
+      app_metadata: {
+        ...existing.app_metadata,
+        roles: ["shadchan"],
+        verified_phone: TEST_PHONE,
+      },
     });
   } else {
     const { data, error } = await admin.auth.admin.createUser({
@@ -34,7 +38,7 @@ setup("authenticate test user", async ({ page }) => {
       phone: TEST_PHONE,
       email_confirm: true,
       phone_confirm: true,
-      app_metadata: { roles: ["shadchan"] },
+      app_metadata: { roles: ["shadchan"], verified_phone: TEST_PHONE },
       user_metadata: {
         firstName: "Test",
         lastName: "User",

@@ -23,7 +23,11 @@ setup("authenticate admin test user", async ({ page }) => {
     userId = existing.id;
     // התפקיד ב-app_metadata (ממוזג כדי לא לדרוס provider/providers)
     await admin.auth.admin.updateUserById(userId, {
-      app_metadata: { ...existing.app_metadata, roles: ["admin"] },
+      app_metadata: {
+        ...existing.app_metadata,
+        roles: ["admin"],
+        verified_phone: ADMIN_PHONE,
+      },
       user_metadata: {
         phone_verified: true,
         phone: ADMIN_PHONE,
@@ -37,7 +41,7 @@ setup("authenticate admin test user", async ({ page }) => {
       phone: ADMIN_PHONE,
       email_confirm: true,
       phone_confirm: true,
-      app_metadata: { roles: ["admin"] },
+      app_metadata: { roles: ["admin"], verified_phone: ADMIN_PHONE },
       user_metadata: {
         firstName: "Admin",
         lastName: "Test",

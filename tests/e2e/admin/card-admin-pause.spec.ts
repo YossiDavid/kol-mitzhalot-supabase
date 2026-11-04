@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
@@ -13,6 +13,21 @@ import { resetCardRules } from "../shidduchim/proposal-events";
  * השהיית כרטיס ע"י הנהלה, מטבלת הילדים בעמוד פרטי המשתמש. ההשהיה מכבה את
  * in_shidduchim ונועלת אותו; ביטול ההשהיה מחזיר את הכרטיס לשידוכים.
  */
+/**
+ * לחיצה על כפתור ההשהיה. לחיצה לפני שהדף סיים hydration לא שולחת בקשה;
+ * חוזרים רק כשלא יצאה בקשה (לחיצה שנקלטה הופכת את המצב, ולכן לא חוזרים עליה).
+ */
+async function clickPauseToggle(page: Page, button: Locator) {
+  await expect(async () => {
+    const request = page.waitForRequest(
+      (req) => req.method() === "PATCH" && req.url().includes("/admin-pause"),
+      { timeout: 2_000 },
+    );
+    await button.click();
+    await request;
+  }).toPass({ timeout: 15_000 });
+}
+
 test.describe("השהיית כרטיס ע״י הנהלה", () => {
   let admin: SupabaseClient;
   let fx: ShidduchFixtures;
@@ -48,9 +63,10 @@ test.describe("השהיית כרטיס ע״י הנהלה", () => {
     await expect(badge).toHaveCount(0);
 
     // Act - השהיה
-    await page
-      .getByRole("button", { name: /השהיית כרטיס: מיועד ראשון/ })
-      .click();
+    await clickPauseToggle(
+      page,
+      page.getByRole("button", { name: /השהיית כרטיס: מיועד ראשון/ }),
+    );
 
     // Assert
     await expect(badge).toBeVisible();
@@ -60,9 +76,10 @@ test.describe("השהיית כרטיס ע״י הנהלה", () => {
     expect(paused?.admin_paused_by).not.toBeNull();
 
     // Act - ביטול
-    await page
-      .getByRole("button", { name: /ביטול השהיה: מיועד ראשון/ })
-      .click();
+    await clickPauseToggle(
+      page,
+      page.getByRole("button", { name: /ביטול השהיה: מיועד ראשון/ }),
+    );
 
     // Assert
     await expect(badge).toHaveCount(0);
@@ -83,9 +100,10 @@ test.describe("השהיית כרטיס ע״י הנהלה", () => {
     await page.goto(`/app/admin/users/${fx.cardManagerId}`);
 
     // Act
-    await page
-      .getByRole("button", { name: /ביטול השהיה: מיועד ראשון/ })
-      .click();
+    await clickPauseToggle(
+      page,
+      page.getByRole("button", { name: /ביטול השהיה: מיועד ראשון/ }),
+    );
     await expect(
       page.getByTestId(`admin-paused-badge-${fx.groomFirst}`).first(),
     ).toHaveCount(0);
