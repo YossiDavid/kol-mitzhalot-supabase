@@ -17,6 +17,10 @@ import { buildPublicStudent } from "@/features/students/lib/student-card-data";
 import { loadStudentCard } from "@/features/students/lib/load-student-card";
 import { shapeStudentCard } from "@/features/students/lib/shape-student-card";
 import {
+  loadFillReason,
+  withFillReason,
+} from "@/features/students/lib/student-private";
+import {
   STUDENT_CARDS_VIEW,
   isDisplayRestricted,
 } from "@/features/students/lib/third-party-card";
@@ -209,7 +213,7 @@ async function StudentPageContent({
   // ולכן יוצאים יחד. הפידבק נצרך רק אחרי שהשורה עברה את כל הבדיקות למטה;
   // כרטיס שאינו זמין לצופה מחזיר הודעה, והפידבק שנשלף נזרק בלי להיחשף.
   // הווריאנט נבחר ומאומת ב-loadStudentCard (select + schema + טיפוס).
-  const [loaded, staffFeedback] = await Promise.all([
+  const [loaded, staffFeedback, fillReason] = await Promise.all([
     loadStudentCard({
       supabase,
       studentId: id,
@@ -219,6 +223,8 @@ async function StudentPageContent({
     }),
     // הערות הצוות אינן מוצגות בקישור הציבורי (גם המסד חוסם את anon)
     isAnonymous ? Promise.resolve([]) : loadStaffFeedback(supabase, id),
+    // "מדוע מילאתי" נשמר בנפרד; המסד מחזיר אותו רק לבעלים ולמנהל
+    isAnonymous ? Promise.resolve(null) : loadFillReason(supabase, id),
   ]);
 
   if (loaded.status === "error") {
@@ -243,7 +249,17 @@ async function StudentPageContent({
 
   // חיתוך פרטי ההתקשרות שחבויים בעמודות ה-JSON וההסבר "מדוע מילאתי" (למנהלים
   // ולממלא בלבד). חייב לקרות כאן, לפני שהשורה מגיעה לרינדור.
-  const shaped = shapeStudentCard(loaded.card, {
+  const card =
+    loaded.card.variant === "full" && fillReason
+      ? {
+          ...loaded.card,
+          row: {
+            ...loaded.card.row,
+            author_info: withFillReason(loaded.card.row.author_info, fillReason),
+          },
+        }
+      : loaded.card;
+  const shaped = shapeStudentCard(card, {
     userId: user?.id ?? null,
     isAdmin,
   });

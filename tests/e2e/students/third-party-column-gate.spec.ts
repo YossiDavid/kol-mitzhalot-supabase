@@ -472,13 +472,12 @@ test.describe("שער הכרטיס המוגבל (מסד)", () => {
         father: { self: { name: SEEDED.fatherName } },
         mother: { self: { name: "שרה-שם-אם" } },
       });
+      // "מדוע מילאתי" לא נשמר ב-author_info כלל (student_private)
       const author = asRecord(row.author_info, "author_info");
-      const { fillReason, ...authorWithoutReason } = asRecord(
-        expected.author_info,
-        "author_info בטבלה",
+      expect(author, label).toEqual(
+        asRecord(expected.author_info, "author_info בטבלה"),
       );
-      expect(fillReason).toBe(SEEDED.fillReason);
-      expect(author, label).toEqual(authorWithoutReason);
+      expect(author.fillReason, label).toBeUndefined();
       expectNoHiddenValues(row, label);
     }
   });
@@ -679,7 +678,8 @@ test.describe("שער הכרטיס המוגבל (מסד)", () => {
       const direct = await client
         .from("students")
         .select(
-          "about, phone, identity_number, author_info, parents_info, references(name), medical_records(details)",
+          // "מדוע מילאתי" נשמר ב-student_private, שבעלים ומנהל קוראים
+          "about, phone, identity_number, author_info, parents_info, references(name), medical_records(details), student_private(fill_reason)",
         )
         .eq("id", restrictedId)
         .single();

@@ -58,6 +58,10 @@ const rowSchema = z.object({
   author_info: z.unknown(),
   third_party_full_display_approved_at: z.string().nullable(),
   third_party_proposals_approved_at: z.string().nullable(),
+  student_private: z
+    .object({ fill_reason: z.string().nullable() })
+    .nullable()
+    .optional(),
 });
 
 export type ThirdPartyCardRow = {
@@ -79,8 +83,9 @@ export type ThirdPartyCardsPage = {
   total: number;
 };
 
+// "מדוע מילאתי" נשמר ב-student_private (20261108160000_card_private_fields.sql)
 const COLUMNS =
-  "id, first_name, last_name, created_at, author_info, third_party_full_display_approved_at, third_party_proposals_approved_at";
+  "id, first_name, last_name, created_at, author_info, third_party_full_display_approved_at, third_party_proposals_approved_at, student_private(fill_reason)";
 
 function toRow(raw: z.infer<typeof rowSchema>): ThirdPartyCardRow {
   const author = readAuthorInfo(raw.author_info, "other");
@@ -93,7 +98,7 @@ function toRow(raw: z.infer<typeof rowSchema>): ThirdPartyCardRow {
     fillerPhone: author.phone,
     fillerEmail: author.email,
     knowsWell: author.knowsWell,
-    fillReason: author.fillReason,
+    fillReason: raw.student_private?.fill_reason ?? author.fillReason,
     fullDisplayApprovedAt: raw.third_party_full_display_approved_at,
     proposalsApprovedAt: raw.third_party_proposals_approved_at,
   };

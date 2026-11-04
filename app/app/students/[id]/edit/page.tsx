@@ -27,6 +27,10 @@ import { applyAuthorRules } from "@/features/students/lib/author-email-rules";
 import { loadStudentPhotos } from "@/features/students/lib/student-photos";
 import type { StudentPhotoItem } from "@/features/students/lib/student-photo-rules";
 import { withViewerMedical } from "@/features/students/lib/load-student-card";
+import {
+  loadFillReason,
+  withFillReason,
+} from "@/features/students/lib/student-private";
 import EditStudentForm from "./edit-student-form";
 
 /** PostgREST: `.single()` ללא שורה תואמת - כרטיס שאינו קיים, לא תקלה */
@@ -222,7 +226,15 @@ async function EditStudentPageContent({
       />
     );
   }
-  const student = withMedical.data as StudentRowWithRelations;
+  // "מדוע מילאתי" נשמר בנפרד; המסד מחזיר אותו רק לבעלים ולמנהל
+  const fillReason = await loadFillReason(supabase, id);
+  const loadedStudent = withMedical.data as StudentRowWithRelations;
+  const student: StudentRowWithRelations = fillReason
+    ? {
+        ...loadedStudent,
+        author_info: withFillReason(loadedStudent.author_info, fillReason),
+      }
+    : loadedStudent;
 
   // בדיוק אותה הרשאה שה-RPC אוכף (בעלים / שדכן / מנהל), כדי שמסך שנפתח
   // לעולם לא ייפול על not_allowed בשמירה.
