@@ -354,6 +354,8 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
     await mustInsert("medical_records", {
       student_id: groomId,
       status: "littleProblem",
+      // רמה מפורשת: רמה שלא נבחרה מוצגת כחשיפה בסיסית, בלי הפירוט
+      exposure_level: "full_exposure",
       details: MEDICAL_DETAILS,
       contact_info: {
         type: "other",
