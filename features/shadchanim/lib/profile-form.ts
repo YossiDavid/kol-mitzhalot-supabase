@@ -151,7 +151,9 @@ export const shadchanProfileSchema = shadchanProfileBaseSchema.superRefine(
   refineShadchanProfile,
 );
 
-export type ShadchanFormData = z.infer<typeof shadchanProfileSchema>;
+/** ערכי הטופס (קלט). הפלט של ה-schema צר יותר (למשל gender) */
+export type ShadchanFormData = z.input<typeof shadchanProfileSchema>;
+export type ShadchanFormOutput = z.output<typeof shadchanProfileSchema>;
 
 export const EMPTY_SHADCHAN_FORM: ShadchanFormData = {
   gender: "",

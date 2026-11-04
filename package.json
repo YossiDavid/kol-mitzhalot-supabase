@@ -14,7 +14,7 @@
     "capture:ui": "node --env-file=.env.local scripts/capture-ui.mjs"
   },
   "dependencies": {
-    "@hookform/resolvers": "^5.4.0",
+    "@hookform/resolvers": "^5.9.2",
     "@next/third-parties": "16.4.5",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-checkbox": "^1.3.1",
@@ -56,12 +56,12 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.8",
-    "react-hook-form": "^7.68.0",
+    "react-hook-form": "^7.91.0",
     "react-jewish-datepicker": "^2.0.24",
     "sanitize-html": "^2.18.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.0",
-    "zod": "^4.1.13"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",

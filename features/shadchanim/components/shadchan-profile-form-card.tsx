@@ -23,6 +23,7 @@ import type { PreviewIdentity } from "@/features/shadchanim/lib/preview-card";
 import {
   shadchanProfileSchema,
   type ShadchanFormData,
+  type ShadchanFormOutput,
 } from "@/features/shadchanim/lib/profile-form";
 import { createClient } from "@/lib/supabase/client";
 
@@ -86,7 +87,7 @@ export function ShadchanProfileFormCard({
   showApplicationNote = false,
   onSubmit,
 }: ShadchanProfileFormCardProps) {
-  const form = useForm<ShadchanFormData>({
+  const form = useForm<ShadchanFormData, unknown, ShadchanFormOutput>({
     resolver: zodResolver(shadchanProfileSchema),
     defaultValues,
   });

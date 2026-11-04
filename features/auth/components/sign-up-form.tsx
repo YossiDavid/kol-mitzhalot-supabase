@@ -126,7 +126,8 @@ const signUpSchema = z
     }
   });
 
-type SignUpValues = z.infer<typeof signUpSchema>;
+/** ערכי הטופס (קלט). הפלט של ה-schema צר יותר (refine עם type guard) */
+type SignUpValues = z.input<typeof signUpSchema>;
 
 /**
  * גרסת התקנון שהמשתמש אישר בטופס. נשמרת במטא-דאטה ונרשמת כאישור בכניסה
@@ -152,7 +153,7 @@ export function SignUpForm({
 }: React.ComponentPropsWithoutRef<"div">) {
   const router = useRouter();
 
-  const form = useForm<SignUpValues>({
+  const form = useForm<SignUpValues, unknown, z.output<typeof signUpSchema>>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
       firstName: "",
