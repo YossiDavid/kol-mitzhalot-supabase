@@ -363,7 +363,7 @@ async function ShadchanRequestsContent() {
                         </p>
                       </div>
                     )}
-                  {request.website_url && (
+                  {request.website_url && isHttpUrl(request.website_url) && (
                     <div>
                       <h4 className="mb-1 font-semibold">אתר:</h4>
                       <p className="text-body-sm">
@@ -407,4 +407,9 @@ export default function ShadchanRequestsPage() {
       <ShadchanRequestsContent />
     </Suspense>
   );
+}
+
+/** קישור שהשדכן הזין בעצמו: רק http(s), כדי שלא יוביל לסכמה אחרת */
+function isHttpUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value.trim());
 }

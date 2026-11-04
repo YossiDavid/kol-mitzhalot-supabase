@@ -3,6 +3,7 @@ import { cache } from "react";
 import { z } from "zod";
 
 import { describeSupabaseError } from "@/lib/supabase/describe-error";
+import { sanitizeArticleHtml } from "@/lib/articles";
 import { createClient } from "@/lib/supabase/server";
 
 import {
@@ -87,7 +88,11 @@ async function loadTermsContent(
   if (error) {
     console.error("[terms/gate] content", describeSupabaseError(error));
   }
-  return { title: data?.title || "תקנון", content: data?.content ?? "" };
+  // התוכן מוצג כ-HTML לכל משתמש מחובר: מסננים כמו מאמר (גם אם חשבון מנהל נפרץ)
+  return {
+    title: data?.title || "תקנון",
+    content: sanitizeArticleHtml(data?.content ?? ""),
+  };
 }
 
 /**

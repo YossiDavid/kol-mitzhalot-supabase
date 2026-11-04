@@ -8,10 +8,12 @@
  */
 
 import { randomUUID } from "node:crypto";
+import { headers } from "next/headers";
 import { after } from "next/server";
 
 import { notifyAdminsOfNewContactSubmission } from "@/features/notifications/lib/notify-admins-new-contact-submission";
 import type { NewContactSubmissionParams } from "@/lib/email/templates/admin-new-contact-submission";
+import { createRateLimiter } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/public";
 
 export type FormActionResult =
@@ -27,6 +29,35 @@ function notifyAdminsAfterResponse(submission: NewContactSubmissionParams) {
   after(() => notifyAdminsOfNewContactSubmission(submission));
 }
 
+/** טפסים ציבוריים (בלי התחברות): הגבלת קצב לפי IP ואורך שדה מרבי */
+const FORM_WINDOW_MS = 10 * 60 * 1000;
+const MAX_SUBMISSIONS_PER_WINDOW = 5;
+const MAX_FIELD_LENGTH = 5000;
+const formLimiter = createRateLimiter({
+  limit: MAX_SUBMISSIONS_PER_WINDOW,
+  windowMs: FORM_WINDOW_MS,
+});
+
+async function rejectAbuse(
+  form: string,
+  formData: FormData,
+): Promise<FormActionResult | null> {
+  for (const value of formData.values()) {
+    if (typeof value === "string" && value.length > MAX_FIELD_LENGTH) {
+      return { ok: false, error: "אחד השדות ארוך מדי" };
+    }
+  }
+  const h = await headers();
+  const ip =
+    h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    h.get("x-real-ip")?.trim() ||
+    "unknown";
+  if (!formLimiter.allow(`${form}::${ip}`)) {
+    return { ok: false, error: "נשלחו יותר מדי פניות. נסו שוב בעוד כמה דקות." };
+  }
+  return null;
+}
+
 function str(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
@@ -36,6 +67,8 @@ export async function submitContactForm(
   _prev: FormActionResult | null,
   formData: FormData,
 ): Promise<FormActionResult> {
+  const abuse = await rejectAbuse("submitContactForm", formData);
+  if (abuse) return abuse;
   const name = str(formData, "name");
   const email = str(formData, "email");
   const phone = str(formData, "phone");
@@ -80,6 +113,8 @@ export async function submitEngagementForm(
   _prev: FormActionResult | null,
   formData: FormData,
 ): Promise<FormActionResult> {
+  const abuse = await rejectAbuse("submitEngagementForm", formData);
+  if (abuse) return abuse;
   const groom_name = str(formData, "groom_name");
   const groom_father = str(formData, "groom_father");
   const groom_city = str(formData, "groom_city");
@@ -139,6 +174,8 @@ export async function submitShidduchIdeaForm(
   _prev: FormActionResult | null,
   formData: FormData,
 ): Promise<FormActionResult> {
+  const abuse = await rejectAbuse("submitShidduchIdeaForm", formData);
+  if (abuse) return abuse;
   const name = str(formData, "submitter_name");
   const email = str(formData, "submitter_email");
   const phone = str(formData, "submitter_phone");
@@ -219,6 +256,8 @@ export async function subscribeNewsletter(
   _prev: FormActionResult | null,
   formData: FormData,
 ): Promise<FormActionResult> {
+  const abuse = await rejectAbuse("subscribeNewsletter", formData);
+  if (abuse) return abuse;
   const email = str(formData, "email").toLowerCase();
   if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
     return { ok: false, error: "נא להזין כתובת מייל תקינה" };

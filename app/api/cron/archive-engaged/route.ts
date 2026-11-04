@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
 
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret || !isValidCronAuth(authHeader, cronSecret)) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
@@ -54,4 +55,13 @@ export async function GET(request: NextRequest) {
     console.error("[cron/archive-engaged] unexpected failure:", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
+}
+
+/** השוואה בזמן קבוע, כדי שזמן התגובה לא ידליף את הסוד תו אחר תו */
+function isValidCronAuth(header: string | null, secret: string): boolean {
+  const expected = Buffer.from(`Bearer ${secret}`);
+  const received = Buffer.from(header ?? "");
+  return (
+    received.length === expected.length && timingSafeEqual(received, expected)
+  );
 }

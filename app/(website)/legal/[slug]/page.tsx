@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/public";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { sanitizeArticleHtml } from "@/lib/articles";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -53,7 +54,9 @@ async function LegalContent({ slug }: { slug: string }) {
   return (
     <article dir="rtl">
       <h1 className="mb-8">{data.title}</h1>
-      <div dangerouslySetInnerHTML={{ __html: data.content }} />
+      <div
+        dangerouslySetInnerHTML={{ __html: sanitizeArticleHtml(data.content) }}
+      />
     </article>
   );
 }
