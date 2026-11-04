@@ -295,18 +295,25 @@ type OtherUserMetadata = {
   avatar_url?: string;
 } | null;
 
-async function getOtherUserMetadata(
+/** שמות הצד השני בכל השיחות בקריאה אחת (get_users_metadata) */
+async function getOtherUsersMetadata(
   supabase: ServerSupabase,
-  otherUserId: string,
-): Promise<OtherUserMetadata> {
-  try {
-    const { data } = await supabase.rpc("get_user_metadata", {
-      target_user_id: otherUserId,
-    });
-    return data as OtherUserMetadata;
-  } catch {
-    return null;
+  otherUserIds: readonly string[],
+): Promise<Map<string, OtherUserMetadata>> {
+  if (otherUserIds.length === 0) return new Map();
+  const { data, error } = await supabase.rpc("get_users_metadata", {
+    target_user_ids: [...otherUserIds],
+  });
+  // השמות הם קישוט לשורה: בלעדיהם השיחות עדיין מוצגות
+  if (error) {
+    console.error("[dashboard/chat-names]", describeSupabaseError(error));
+    return new Map();
   }
+  return new Map(
+    ((data ?? []) as { user_id: string; metadata: OtherUserMetadata }[]).map(
+      (row) => [row.user_id, row.metadata],
+    ),
+  );
 }
 
 /**
@@ -324,20 +331,23 @@ export async function getChatsWithLastMessage(
     room.last_message_id ? [room.last_message_id] : [],
   );
 
+  const otherUserIdOf = (room: (typeof chatRooms)[number]) =>
+    room.user_a === userId ? room.user_b : room.user_a;
+  const otherUserIds = chatRooms.flatMap((room) => {
+    const id = otherUserIdOf(room);
+    return id ? [id] : [];
+  });
+
   // ההודעות ושמות הצד השני לא תלויים זה בזה - נשלפים במקביל
-  const [lastMessages, chats] = await Promise.all([
+  const [lastMessages, metadataById] = await Promise.all([
     getLastMessagesById(supabase, messageIds),
-    Promise.all(
-      chatRooms.map(async (room) => {
-        const otherUserId = room.user_a === userId ? room.user_b : room.user_a;
-        if (!otherUserId) return null;
-        return {
-          room,
-          userData: await getOtherUserMetadata(supabase, otherUserId),
-        };
-      }),
-    ),
+    getOtherUsersMetadata(supabase, otherUserIds),
   ]);
+  const chats = chatRooms.map((room) => {
+    const otherUserId = otherUserIdOf(room);
+    if (!otherUserId) return null;
+    return { room, userData: metadataById.get(otherUserId) ?? null };
+  });
 
   const rows = chats.flatMap((chat) => {
     if (!chat) return [];

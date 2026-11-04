@@ -33,13 +33,21 @@ import { RoomRow, RoomRowSkeleton } from "./room-row";
 
 const SKELETON_ROWS = 6;
 
+type LastMessage = { content: string | null; created_at: string | null };
+
+/** embed של יחס יחיד חוזר כאובייקט (או כמערך, לפי הגרסה) */
+function firstEmbedded(value: unknown): LastMessage | null {
+  const item = Array.isArray(value) ? value[0] : value;
+  return item && typeof item === "object" ? (item as LastMessage) : null;
+}
+
 type RoomChangePayload = {
   room_id?: string;
   last_message_id?: string | null;
 };
 
 export function RoomList() {
-  const supabase = createClient();
+  const supabase = React.useMemo(() => createClient(), []);
   const pathname = usePathname();
   // אותו מקור כמו התג בניווט — ערוץ realtime אחד לשניהם
   const { unreadRoomIds } = useUnreadChats();
@@ -79,7 +87,10 @@ export function RoomList() {
 
         const { data: roomsData, error: roomsError } = await supabase
           .from("chat_rooms")
-          .select("*")
+          // ההודעה האחרונה מגיעה עם החדר (במקום שאילתה לכל שיחה)
+          .select(
+            "*, last_message:chat_messages!chat_rooms_last_message_fk(content, created_at)",
+          )
           .in("room_id", roomIds)
           .order("last_message_at", { ascending: false, nullsFirst: false });
 
@@ -89,46 +100,41 @@ export function RoomList() {
           return;
         }
 
-        const roomsWithDetails: Room[] = await Promise.all(
-          (roomsData || []).map(async (room) => {
-            const otherUserId = room.user_a === uid ? room.user_b : room.user_a;
-
-            // Fetch user metadata and last message in parallel
-            const [userMetaResult, lastMsgResult] = await Promise.all([
-              Promise.resolve(
-                supabase.rpc("get_user_metadata", {
-                  target_user_id: otherUserId,
-                }),
-              ).catch(() => ({ data: null })),
-              room.last_message_id
-                ? supabase
-                    .from("chat_messages")
-                    .select("content, created_at")
-                    .eq("message_id", room.last_message_id)
-                    .single()
-                : Promise.resolve({ data: null }),
-            ]);
-
-            const userData = userMetaResult.data as UserMetadata;
-            const otherUserName = getDisplayName(userData);
-            const lastMsg = lastMsgResult.data;
-            const context = parseRoomContext(room);
-
-            return {
-              room_id: room.room_id,
-              title: otherUserName,
-              lastMessage: lastMsg?.content ?? null,
-              lastAt: lastMsg?.created_at ?? null,
-              avatarUrl: getAvatarUrl(userData),
-              other_user_id: otherUserId,
-              other_user_name: otherUserName,
-              contextKind: context.kind,
-              studentId: context.studentId,
-              shidduchId: context.shidduchId,
-              contextLabel: context.label,
-            };
-          }),
+        const rows = roomsData ?? [];
+        const otherUserIds = rows.map((room) =>
+          room.user_a === uid ? room.user_b : room.user_a,
         );
+        // שם הצד השני בכל השיחות בקריאה אחת (במקום קריאה לכל שיחה)
+        const { data: metadataRows } = await supabase.rpc(
+          "get_users_metadata",
+          { target_user_ids: otherUserIds },
+        );
+        const metadataById = new Map<string, UserMetadata>(
+          ((metadataRows ?? []) as { user_id: string; metadata: UserMetadata }[])
+            .map((row) => [row.user_id, row.metadata]),
+        );
+
+        const roomsWithDetails: Room[] = rows.map((room) => {
+          const otherUserId = room.user_a === uid ? room.user_b : room.user_a;
+          const userData = metadataById.get(otherUserId) ?? null;
+          const otherUserName = getDisplayName(userData);
+          const lastMsg = firstEmbedded(room.last_message);
+          const context = parseRoomContext(room);
+
+          return {
+            room_id: room.room_id,
+            title: otherUserName,
+            lastMessage: lastMsg?.content ?? null,
+            lastAt: lastMsg?.created_at ?? null,
+            avatarUrl: getAvatarUrl(userData),
+            other_user_id: otherUserId,
+            other_user_name: otherUserName,
+            contextKind: context.kind,
+            studentId: context.studentId,
+            shidduchId: context.shidduchId,
+            contextLabel: context.label,
+          };
+        });
 
         if (isMounted) setRooms(roomsWithDetails);
       } finally {
@@ -142,12 +148,17 @@ export function RoomList() {
     };
   }, [supabase]);
 
-  // Realtime room updates
+  // מזהי השיחות לסינון האירועים. ref ולא תלות של ה-effect: העדכון של כל
+  // אירוע משנה את rooms, ותלות בו פתחה את הערוץ מחדש אחרי כל הודעה.
+  const roomIdsRef = React.useRef<ReadonlySet<string>>(new Set());
   React.useEffect(() => {
-    if (!currentUserId || !rooms.length) return;
+    roomIdsRef.current = new Set(rooms.map((r) => r.room_id));
+  }, [rooms]);
+  const hasRooms = rooms.length > 0;
 
-    // O(1) lookup instead of .some() scan on every realtime event
-    const roomIdSet = new Set(rooms.map((r) => r.room_id));
+  // Realtime room updates - ערוץ אחד לכל משך השהות בדף
+  React.useEffect(() => {
+    if (!currentUserId || !hasRooms) return;
 
     const channel = supabase
       .channel(`rooms:${currentUserId}`)
@@ -156,7 +167,9 @@ export function RoomList() {
         { event: "*", schema: "public", table: "chat_rooms" },
         async (payload) => {
           const updated = payload.new as RoomChangePayload;
-          if (!updated?.room_id || !roomIdSet.has(updated.room_id)) return;
+          if (!updated?.room_id || !roomIdsRef.current.has(updated.room_id)) {
+            return;
+          }
 
           let lastMessage: string | null = null;
           let lastAt: string | null = null;
@@ -195,7 +208,7 @@ export function RoomList() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentUserId, supabase, rooms]);
+  }, [currentUserId, supabase, hasRooms]);
 
   const [query, setQuery] = React.useState("");
   const [filter, setFilter] = React.useState<RoomFilter>("all");

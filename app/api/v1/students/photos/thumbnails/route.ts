@@ -89,11 +89,7 @@ export async function POST(req: NextRequest) {
   );
 
   try {
-    const viewableIds = await resolveViewablePhotoIds(
-      supabase,
-      user.id,
-      withPhotos,
-    );
+    const viewableIds = await resolveViewablePhotoIds(supabase, withPhotos);
     const urls = await loadPrimaryPhotoUrls([...viewableIds]);
     const response: StudentThumbnailsResponse = {
       thumbnails: Object.fromEntries(

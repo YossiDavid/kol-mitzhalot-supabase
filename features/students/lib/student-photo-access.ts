@@ -13,9 +13,6 @@ import { describeSupabaseError } from "@/lib/supabase/describe-error";
 
 export type PhotoAccessSubject = { id: string; gender?: string | null };
 
-/** כמה בדיקות הרשאה רצות במקביל מול המסד ברשימה ארוכה */
-const ACCESS_CHECK_CONCURRENCY = 10;
-
 /**
  * המזהים (מתוך הרשימה) של בחורים שתמונותיהם מוסתרות מהצופה המחובר: הוא הגיע
  * אליהם רק דרך הצעה, ואף הצעה שמקשרת אותו אליהם אינה משתפת תמונה
@@ -73,41 +70,39 @@ export async function canViewStudentPhoto(
   return data === true;
 }
 
-/** המזהים מתוך students שהצופה רשאי לראות את תמונותיהם */
+/**
+ * המזהים מתוך students שהצופה רשאי לראות את תמונותיהם. קריאה אחת לכל
+ * הרשימה (viewable_student_photo_ids, אותו כלל כמו can_view_student_photo).
+ * כשל = אין תמונות (סגור כברירת מחדל).
+ */
 export async function resolveViewablePhotoIds(
   supabase: SupabaseClient,
-  viewerId: string,
   students: readonly PhotoAccessSubject[],
 ): Promise<ReadonlySet<string>> {
-  const chunks = Array.from(
-    { length: Math.ceil(students.length / ACCESS_CHECK_CONCURRENCY) },
-    (_, index) =>
-      students.slice(
-        index * ACCESS_CHECK_CONCURRENCY,
-        (index + 1) * ACCESS_CHECK_CONCURRENCY,
-      ),
-  );
+  if (students.length === 0) return new Set();
 
-  const withheldGrooms = await loadWithheldGroomIds(
-    supabase,
-    students.filter((student) => student.gender === "male").map(({ id }) => id),
-  );
-
-  let viewable: string[] = [];
-  for (const chunk of chunks) {
-    const results = await Promise.all(
-      chunk.map((student) => canViewStudentPhoto(supabase, viewerId, student)),
+  const [withheldGrooms, viewable] = await Promise.all([
+    loadWithheldGroomIds(
+      supabase,
+      students.filter((student) => student.gender === "male").map(({ id }) => id),
+    ),
+    supabase.rpc("viewable_student_photo_ids", {
+      p_student_ids: students.map(({ id }) => id),
+    }),
+  ]);
+  if (viewable.error) {
+    console.error(
+      "[students/photos] viewable_student_photo_ids failed",
+      describeSupabaseError(viewable.error),
     );
-    viewable = [
-      ...viewable,
-      ...chunk
-        .filter(
-          (student, index) => results[index] && !withheldGrooms.has(student.id),
-        )
-        .map(({ id }) => id),
-    ];
+    return new Set();
   }
-  return new Set(viewable);
+  const allowed = new Set((viewable.data ?? []) as string[]);
+  return new Set(
+    students
+      .filter(({ id }) => allowed.has(id) && !withheldGrooms.has(id))
+      .map(({ id }) => id),
+  );
 }
 
 /**
