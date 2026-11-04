@@ -16,7 +16,10 @@ import {
 import { STUDENT_TABLE_COLUMNS } from "../../../features/dashboard/lib/student-table-rows";
 import { DESK_STUDENT_SELECT } from "../../../features/shidduchim/lib/desk-student-select";
 import { BASIC_STUDENT_SELECT } from "../../../features/students/lib/student-card-data";
-import { buildStudentsPageQuery } from "../../../features/students/lib/students-list-query";
+import {
+  buildStudentsPageQuery,
+  toStudentTableRow,
+} from "../../../features/students/lib/students-list-query";
 import { STUDENT_CARDS_VIEW } from "../../../features/students/lib/third-party-card";
 import {
   SEEDED,
@@ -555,7 +558,18 @@ test.describe("שער הכרטיס המוגבל (מסד)", () => {
     expect(list.error, list.error?.message).toBeNull();
     expect(list.count).toBe(1);
     for (const [label, result] of [
-      ["רשימה", list],
+      // הרשימה שולפת רק את שמות ההורים, והאפליקציה מרכיבה מהם parents_info
+      [
+        "רשימה",
+        {
+          ...list,
+          data: (list.data ?? []).map((row) =>
+            toStudentTableRow(
+              row as unknown as Parameters<typeof toStudentTableRow>[0],
+            ),
+          ),
+        },
+      ],
       ["מועדפים", dashboard],
       ["לוח", desk],
     ] as const) {

@@ -1,5 +1,6 @@
 import type { DataTableSort } from "@/components/data-table";
 import type { createClient } from "@/lib/supabase/client";
+import type { StudentTableRow } from "@/features/students/components/students-table";
 import { buildCommunityFilterExpression } from "@/features/students/lib/community-filter";
 import { isOutOfShidduchimStatus } from "@/features/students/lib/student-status";
 import type { StudentQuery } from "@/features/students/lib/student-query-context";
@@ -33,7 +34,10 @@ const STUDENT_ROW_COLUMNS = [
   "first_name",
   "last_name",
   "nickname",
-  "parents_info",
+  // רק השמות (self) של האב והאם - בלי הטלפון והאימייל שיושבים ברמת ההורה.
+  // toStudentTableRow מרכיב מהם את parents_info שהטבלה מצפה לו.
+  "father_self:parents_info->father->self",
+  "mother_self:parents_info->mother->self",
   "city",
   "community",
   "birth_date",
@@ -296,4 +300,27 @@ export function buildStudentsPoolCountQuery(
   return listedSince
     ? visible.gte(CARD_LISTED_AT_COLUMN, listedSince)
     : visible;
+}
+
+type RawStudentRow = Omit<StudentTableRow, "parents_info"> & {
+  father_self?: unknown;
+  mother_self?: unknown;
+};
+
+/** שורת ה-select (שמות ההורים בלבד) בצורה שהטבלה מצפה לה */
+export function toStudentTableRow(raw: RawStudentRow): StudentTableRow {
+  const { father_self, mother_self, ...rest } = raw;
+  const asName = (value: unknown) =>
+    value && typeof value === "object"
+      ? (value as NonNullable<
+          NonNullable<StudentTableRow["parents_info"]>["father"]
+        >["self"])
+      : null;
+  return {
+    ...rest,
+    parents_info: {
+      father: { self: asName(father_self) },
+      mother: { self: asName(mother_self) },
+    },
+  };
 }

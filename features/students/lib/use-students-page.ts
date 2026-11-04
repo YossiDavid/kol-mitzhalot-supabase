@@ -10,6 +10,7 @@ import type { StudentQuery } from "@/features/students/lib/student-query-context
 import { withMatchmakingHold } from "@/features/students/lib/card-matchmaking-hold";
 import {
   buildStudentsPageQuery,
+  toStudentTableRow,
   pageCount,
 } from "@/features/students/lib/students-list-query";
 
@@ -139,7 +140,9 @@ export function useStudentsPage(
         // select דינמי (עם join לפי הסינון) מבלבל את הסקת הטיפוסים של supabase-js
         const students = await withMatchmakingHold(
           supabaseRef.current,
-          (rows ?? []) as unknown as StudentTableRow[],
+          (
+            (rows ?? []) as unknown as Parameters<typeof toStudentTableRow>[0][]
+          ).map(toStudentTableRow),
         );
         if (controller.signal.aborted) return;
         setData({ students, total, status: "ready" });
