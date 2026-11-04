@@ -51,6 +51,7 @@ import {
 import { CardApprovalBanner } from "@/features/students/components/card/card-approval-banner";
 import { CardApprovalControls } from "@/features/admin/components/card-approval-controls";
 import { recordStudentCardView } from "@/features/students/lib/record-card-view";
+import { canOpenPublicShare } from "@/features/students/lib/public-share-gate";
 import {
   loadAdminDisplayName,
   loadCardOwnerInfo,
@@ -171,7 +172,13 @@ async function StudentPageContent({
   // כרטיס שהנהלת המערכת עוד לא אישרה (ממתין או נדחה) גלוי לבעליו ולמנהלים
   // בלבד. למשתמש מחובר זה נאכף במסד (רמת הגישה למטה חוזרת "none"); קישור
   // השיתוף הציבורי נקרא ב-service role, ולכן נעצר כאן, לפני כל שליפה.
-  if (isAnonymous && approval && !isCardApproved(approval)) {
+  // ובנוסף: כרטיס בלעדי / מושהה / מחוץ לשידוכים / מאורס / בהקפאה אינו
+  // נפתח בקישור הציבורי (public-share-gate.ts)
+  if (
+    isAnonymous &&
+    approval &&
+    (!isCardApproved(approval) || !(await canOpenPublicShare(id)))
+  ) {
     return (
       <CardNotice
         title="הכרטיס אינו זמין"
