@@ -54,11 +54,11 @@ let adminUser: SupabaseClient;
 let ownerId = "";
 const cardByExposure = new Map<Exposure, string>();
 
-async function seedCard(exposure: Exposure): Promise<string> {
+async function seedCard(exposure: Exposure | null): Promise<string> {
   const id = await createCard(svc, {
     userId: ownerId,
     gender: "male",
-    firstName: exposure,
+    firstName: exposure ?? "ללא-רמה",
     lastName: LAST,
   });
   const { error } = await svc.from("medical_records").insert({
@@ -170,6 +170,28 @@ test.describe("הצהרה רפואית לפי רמת החשיפה", () => {
     expect(JSON.stringify(record)).toContain(SECRET.contactPhone);
     expect(JSON.stringify(record)).not.toContain(SECRET.details);
     expect(JSON.stringify(record)).not.toContain(SECRET.document);
+  });
+
+  test("רמה שלא נבחרה: כמו חשיפה בסיסית", async () => {
+    // Arrange
+    const id = await seedCard(null);
+    try {
+      // Act
+      const { data, error } = await matchmaker.rpc(
+        "get_student_medical_record",
+        { p_student_id: id },
+      );
+
+      // Assert
+      expect(error, error?.message).toBeNull();
+      const record = data as JsonRecord | null;
+      expect(record?.status).toBe("hugeProblem");
+      expect(record?.details ?? null).toBeNull();
+      expect(record?.documents ?? null).toBeNull();
+      expect(JSON.stringify(record)).toContain(SECRET.contactPhone);
+    } finally {
+      await deleteCards(svc, [id]);
+    }
   });
 
   test("חשיפה מלאה: הכול; הסתרת קיום הבעיה: כלום", async () => {
