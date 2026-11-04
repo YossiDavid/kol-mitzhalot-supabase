@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, type DragEvent } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type DragEvent,
+} from "react";
 import { ImagePlus, Lock, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -31,6 +38,14 @@ type PhotoGalleryFieldProps = {
 
 const ACCEPT_ATTRIBUTE = ACCEPTED_PHOTO_TYPES.join(",");
 
+/**
+ * מחיקת תמונה שמורה: בעל הכרטיס ומנהל בלבד (גם set_student_photos אוכפת).
+ * שדכן מוסיף ומסדר, וכפתור ההסרה לא מוצג לו על תמונה שכבר נשמרה.
+ */
+const CanRemoveSavedPhotosContext = createContext(true);
+export const CanRemoveSavedPhotosProvider =
+  CanRemoveSavedPhotosContext.Provider;
+
 function itemKey(item: StudentPhotoItem): string {
   return item.kind === "existing" ? item.path : item.id;
 }
@@ -47,6 +62,7 @@ export function PhotoGalleryField({
   "aria-describedby": ariaDescribedBy,
 }: PhotoGalleryFieldProps) {
   const isInvalid = ariaInvalid === true || ariaInvalid === "true";
+  const canRemoveSaved = useContext(CanRemoveSavedPhotosContext);
   const items = value ?? [];
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -143,18 +159,20 @@ export function PhotoGalleryField({
                   <Star />
                 </Button>
               )}
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label="הסרה"
-                title="הסרה"
-                className="text-destructive hover:text-destructive"
-                disabled={isProcessing}
-                onClick={() => remove(itemKey(item))}
-              >
-                <Trash2 />
-              </Button>
+              {(canRemoveSaved || item.kind !== "existing") && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="הסרה"
+                  title="הסרה"
+                  className="text-destructive hover:text-destructive"
+                  disabled={isProcessing}
+                  onClick={() => remove(itemKey(item))}
+                >
+                  <Trash2 />
+                </Button>
+              )}
             </div>
           )}
         </li>

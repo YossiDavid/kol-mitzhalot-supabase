@@ -397,25 +397,27 @@ test.describe("שדכן מחובר", () => {
 test.describe("צופה לא מחובר (קישור שיתוף)", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test("רואה את פידבק הצוות ולא רואה הערות שדכן", async ({ page }) => {
-    // Arrange + Act
-    await openCard(page);
+  test("אינו רואה פידבק צוות ואינו רואה הערות שדכן", async ({ page }) => {
+    // Arrange + Act: הכרטיס הציבורי נטען (הכפתור "שיתוף" / שם המשפחה)
+    await page.goto(`/app/students/${fixtures.groomFirst}`);
+    await expect(page.locator("h1").first()).toBeVisible({ timeout: 15_000 });
 
-    // Assert
-    await expect(page.getByText(STAFF_FEEDBACK)).toBeVisible();
-    await expect(page.getByText(STAFF_AUTHOR_NAME)).toBeVisible();
+    // Assert - הערות הצוות אינן מוצגות בקישור הציבורי (החלטה 4.11.2026)
+    await expect(page.getByText(STAFF_FEEDBACK)).toHaveCount(0);
+    await expect(page.getByText(STAFF_AUTHOR_NAME)).toHaveCount(0);
+    await expect(page.getByText("מחמאות צוות")).toHaveCount(0);
     await expect(page.getByText(OTHER_SHADCHAN_NOTE)).toHaveCount(0);
     await expect(page.getByText("הערות שדכן")).toHaveCount(0);
   });
 
-  test("ה-RLS וה-RPC אינם מחזירים הערות שדכן לאנונימי", async () => {
+  test("ה-RLS וה-RPC אינם מחזירים הערות שדכן ופידבק צוות לאנונימי", async () => {
     // Arrange + Act
     const seen = await readNotesAs(anonymousClient());
 
     // Assert
     expect(seen.directBodies).toEqual([]);
     expect(seen.shadchanNoteBodies).toEqual([]);
-    expect(seen.staffFeedbackBodies).toContain(STAFF_FEEDBACK);
+    expect(seen.staffFeedbackBodies).toEqual([]);
   });
 });
 

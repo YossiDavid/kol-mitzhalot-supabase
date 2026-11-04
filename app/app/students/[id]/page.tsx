@@ -210,7 +210,8 @@ async function StudentPageContent({
       isBasicOnly,
       proposal: isProposalView && access ? access : null,
     }),
-    loadStaffFeedback(supabase, id),
+    // הערות הצוות אינן מוצגות בקישור הציבורי (גם המסד חוסם את anon)
+    isAnonymous ? Promise.resolve([]) : loadStaffFeedback(supabase, id),
   ]);
 
   if (loaded.status === "error") {
@@ -240,8 +241,8 @@ async function StudentPageContent({
     isAdmin,
   });
 
-  // מחמאות צוות (staffFeedback, נשלף למעלה) גלויות לכל צופה בכרטיס -
-  // גם בענף הציבורי (קישור השיתוף)
+  // מחמאות צוות (staffFeedback, נשלף למעלה) גלויות למשתמש מחובר בלבד -
+  // בענף הציבורי (קישור השיתוף) הרשימה ריקה
 
   // --- ענף ציבורי (משתמש לא מחובר) --------------------------------------
   if (shaped.audience === "anonymous") {

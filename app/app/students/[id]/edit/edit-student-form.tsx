@@ -1,5 +1,7 @@
 "use client";
 
+import { CanRemoveSavedPhotosProvider } from "@/features/students/components/create-form/fields/photo-gallery-field";
+
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -48,6 +50,8 @@ export type EditStudentFormProps = {
   existingMedicalDocuments: string[];
   /** מדיניות האחסון מתירה העלאת קבצים לבעל הכרטיס בלבד */
   isCardOwner: boolean;
+  /** מחיקת תמונה שמורה: בעל הכרטיס או מנהל */
+  canRemoveSavedPhotos: boolean;
 };
 
 /**
@@ -103,6 +107,7 @@ export default function EditStudentForm({
   existingCvUrl,
   existingMedicalDocuments,
   isCardOwner,
+  canRemoveSavedPhotos,
 }: EditStudentFormProps) {
   const router = useRouter();
   const [isRefreshingSavedValues, startRefreshSavedValues] = useTransition();
@@ -204,14 +209,16 @@ export default function EditStudentForm({
   };
 
   return (
-    <StudentFormWizard
-      heading="עריכת קו״ח"
-      submitLabel="שמירת השינויים"
-      submittingLabel="שומר..."
-      initialValues={initialValues}
-      onSubmit={handleSubmit}
-      onSaveProgress={handleSaveProgress}
-      isRefreshingSavedValues={isRefreshingSavedValues}
-    />
+    <CanRemoveSavedPhotosProvider value={canRemoveSavedPhotos}>
+      <StudentFormWizard
+        heading="עריכת קו״ח"
+        submitLabel="שמירת השינויים"
+        submittingLabel="שומר..."
+        initialValues={initialValues}
+        onSubmit={handleSubmit}
+        onSaveProgress={handleSaveProgress}
+        isRefreshingSavedValues={isRefreshingSavedValues}
+      />
+    </CanRemoveSavedPhotosProvider>
   );
 }

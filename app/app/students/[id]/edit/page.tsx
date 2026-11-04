@@ -260,6 +260,9 @@ async function EditStudentPageContent({
       existingCvUrl={typeof student.cv_url === "string" ? student.cv_url : null}
       existingMedicalDocuments={existingMedicalDocuments(student)}
       isCardOwner={student.user_id === user.id}
+      canRemoveSavedPhotos={
+        student.user_id === user.id || hasRole(user, "admin")
+      }
     />
   );
 }
