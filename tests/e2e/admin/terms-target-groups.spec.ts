@@ -55,13 +55,32 @@ async function acceptInDialog(page: Page) {
 test.describe.serial("תקנון מעודכן לקבוצות משתמשים", () => {
   const created: SessionUser[] = [];
 
+  // הבדיקות מפרסמות גרסאות תקנון לשדכנים בלבד. שורות ה-terms_versions
+  // שלהן נמחקות בסוף: גרסה ממוקדת שנשארת גורמת לגרסה הנדרשת של משתמש רגיל
+  // להיות נמוכה מהנוכחית, ו-terms-gate.spec נשבר. (את מספר הגרסה עצמו
+  // ב-system_content אי אפשר להוריד - guard_system_content_version - וזה בסדר:
+  // גרסה בלי שורה ב-terms_versions חלה על כולם. התוכן והכותרת משוחזרים.)
+  let termsSnapshot: Record<string, unknown> | null = null;
+
   test.beforeAll(async () => {
     await setTermsGateEnabled(true);
+    const { data } = await serviceClient()
+      .from("system_content")
+      .select("*")
+      .eq("key", "terms-of-service")
+      .single();
+    termsSnapshot = data;
   });
 
   test.afterAll(async () => {
     await setTermsGateEnabled(false);
     await deleteSessionUsers(created);
+    const version = termsSnapshot?.version;
+    if (typeof version !== "number") return;
+    const svc = serviceClient();
+    await svc.from("terms_acceptances").delete().gt("version", version);
+    await svc.from("terms_versions").delete().gt("version", version);
+    await svc.from("system_content").upsert(termsSnapshot!);
   });
 
   test("גרסה לשדכנים בלבד חוסמת שדכן ולא משתמש רגיל", async ({

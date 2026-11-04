@@ -13,7 +13,11 @@ import {
   deleteSessionUsers,
   type SessionUser,
 } from "../helpers/session-user";
-import { ADULT_BIRTH_DATE, TINY_PNG } from "../helpers/shadchan-form";
+import {
+  ADULT_BIRTH_DATE,
+  COMPLETE_IDENTITY_COLUMNS,
+  TINY_PNG,
+} from "../helpers/shadchan-form";
 
 const BUCKET = "shadchan-avatars";
 const INCOMPLETE = "shadchan_application_incomplete";
@@ -24,6 +28,11 @@ const pendingApplication = (userId: string) => ({
   community: "בעלזא",
   synagogue_rabbi: "הרב בדיקה",
   birth_date: ADULT_BIRTH_DATE,
+  // שדות חובה שנוספו לבקשה (20261101200000): בלעדיהם הבקשה נדחית כחסרה
+  // לפני שבדיקת התיקייה של avatar_path בכלל רצה
+  location: COMPLETE_IDENTITY_COLUMNS.location,
+  match_types: [...COMPLETE_IDENTITY_COLUMNS.match_types],
+  rabbi_phone: COMPLETE_IDENTITY_COLUMNS.rabbi_phone,
 });
 
 test.describe.serial("תמונות שדכנים - הרשאות ושדות חובה", () => {

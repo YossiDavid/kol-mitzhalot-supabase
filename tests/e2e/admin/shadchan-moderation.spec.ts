@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { COMPLETE_IDENTITY_COLUMNS } from "../helpers/shadchan-form";
 import {
@@ -50,13 +50,31 @@ async function seedApprovedShadchan(): Promise<void> {
 }
 
 async function rowOf(page: Page) {
-  await page.goto("/app/admin/shadchanim", {
-    waitUntil: "domcontentloaded",
-    ...LOAD,
-  });
+  // חיפוש לפי האימייל: הרשימה מוצגת בעמודים, ושדכנים שנשארו מריצות קודמות
+  // יכולים לדחוף את השדכן של הבדיקה מהעמוד הראשון
+  await page.goto(
+    `/app/admin/shadchanim?group=all&q=${encodeURIComponent(shadchan.email)}`,
+    {
+      waitUntil: "domcontentloaded",
+      ...LOAD,
+    },
+  );
   const row = page.getByRole("row").filter({ hasText: shadchan.email });
   await expect(row).toBeVisible(LOAD);
   return row;
+}
+
+/**
+ * לחיצה שפותחת דיאלוג. לחיצה לפני שהדף סיים hydration לא פותחת אותו, ולכן
+ * חוזרים עליה עד שהדיאלוג נפתח.
+ */
+async function openDialog(page: Page, button: Locator) {
+  const dialog = page.getByRole("dialog");
+  await expect(async () => {
+    await button.click();
+    await expect(dialog).toBeVisible({ timeout: 2_000 });
+  }).toPass(LOAD);
+  return dialog;
 }
 
 /** מצב התחלתי ידוע לכל בדיקה (גם בניסיון חוזר) */
@@ -101,8 +119,10 @@ test.describe("רשימת השדכנים - הקפאה והסרת הרשאות", 
     const row = await rowOf(page);
 
     // Act
-    await row.getByRole("button", { name: `הקפאה: ${shadchanName}` }).click();
-    const dialog = page.getByRole("dialog");
+    const dialog = await openDialog(
+      page,
+      row.getByRole("button", { name: `הקפאה: ${shadchanName}` }),
+    );
     await dialog.getByRole("textbox").fill(FREEZE_REASON);
     await dialog.getByRole("button", { name: "הקפא" }).click();
     await expect(page.getByText("השדכן הוקפא")).toBeVisible(LOAD);
@@ -208,13 +228,11 @@ test.describe("רשימת השדכנים - הקפאה והסרת הרשאות", 
     const row = await rowOf(page);
 
     // Act
-    await row
-      .getByRole("button", { name: `ביטול הקפאה: ${shadchanName}` })
-      .click();
-    await page
-      .getByRole("dialog")
-      .getByRole("button", { name: "ביטול הקפאה" })
-      .click();
+    const dialog = await openDialog(
+      page,
+      row.getByRole("button", { name: `ביטול הקפאה: ${shadchanName}` }),
+    );
+    await dialog.getByRole("button", { name: "ביטול הקפאה" }).click();
     await expect(page.getByText("ההקפאה בוטלה")).toBeVisible(LOAD);
 
     // Assert
@@ -233,10 +251,10 @@ test.describe("רשימת השדכנים - הקפאה והסרת הרשאות", 
     const row = await rowOf(page);
 
     // Act
-    await row
-      .getByRole("button", { name: `הסרת הרשאות: ${shadchanName}` })
-      .click();
-    const dialog = page.getByRole("dialog");
+    const dialog = await openDialog(
+      page,
+      row.getByRole("button", { name: `הסרת הרשאות: ${shadchanName}` }),
+    );
     await expect(
       dialog.getByRole("button", { name: "הסר הרשאות" }),
     ).toBeDisabled();
