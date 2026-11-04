@@ -32,5 +32,9 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // תמיד גם תחת /app, גם בנתיב שמסתיים בסיומת של תמונה (/app/x/y.png
+    // מתאים לנתיבי [id]): ה-proxy דורס את x-pathname, וה-layouts סומכים עליו.
+    // בלי זה, x-pathname מזויף מהלקוח היה מדלג על שער ההתחברות.
+    "/app/:path*",
   ],
 };
