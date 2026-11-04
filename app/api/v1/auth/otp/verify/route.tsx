@@ -8,6 +8,11 @@ import { isPhoneVerified } from "@/lib/phone-verification";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { unstable_noStore as noStore } from "next/cache";
 
+const VERIFY_FAILURE_MESSAGES: Record<string, string> = {
+  WRONG_CODE: "הקוד שגוי. נסו שוב.",
+  MAX_SENT: "יותר מדי ניסיונות. נסו שוב מאוחר יותר.",
+};
+
 const VERIFY_WINDOW_MS = 15 * 60 * 1000;
 const MAX_VERIFY_ATTEMPTS_PER_WINDOW = 10;
 const verifyAttemptsPerUser = createRateLimiter({
@@ -81,7 +86,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           status: otpResult.status,
-          message: otpResult.errorMessage || "OTP validation failed",
+          message:
+            VERIFY_FAILURE_MESSAGES[otpResult.status] ??
+            "האימות נכשל. נסו שוב.",
         },
         { status: statusMap[otpResult.status] ?? 500 },
       );

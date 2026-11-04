@@ -138,8 +138,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
           {
             status: "ERROR",
-            message:
-              result.errorMessage || "שירות השליחה לא זמין. נסה שוב בעוד דקה.",
+            message: "שירות השליחה לא זמין. נסה שוב בעוד דקה.",
           },
           { status: 503 },
         );
