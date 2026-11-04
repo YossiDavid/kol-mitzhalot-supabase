@@ -124,6 +124,7 @@ export async function getStaffApplicationStatus(
 }
 
 const SHIDDUCH_SIDE_COLUMNS = `
+  id,
   first_name,
   last_name,
   birth_date,

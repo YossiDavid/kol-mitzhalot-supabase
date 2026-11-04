@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 // בעריכה: קובץ שכבר שמור בכרטיס (למשל קו״ח). הכתובת היא הקישור החתום שנשמר
 // ב-cv_url; השמירה לא משתנה - בלי קובץ חדש נשלחת בחזרה אותה כתובת.
 
-const STORAGE_TIMESTAMP_PREFIX = /^\d+-/;
+// "<ts>-" מההעלאה, ואחרי scripts/rotate-student-documents.mjs גם "r-<8 תווים>-"
+const STORAGE_TIMESTAMP_PREFIX = /^(?:r-[0-9a-f]{8}-)?\d+-/;
 const URL_BASE_FOR_RELATIVE_PATHS = "https://stored-file.local";
 
 type StoredFileNoticeProps = {
@@ -22,8 +23,14 @@ type StoredFileNoticeProps = {
 /** "…/students/<id>/1712345-cv.pdf?token=…" → "cv.pdf" */
 export function getStoredFileName(url: string): string {
   try {
-    const { pathname } = new URL(url, URL_BASE_FOR_RELATIVE_PATHS);
-    const lastSegment = decodeURIComponent(pathname.split("/").pop() ?? "");
+    const { pathname, searchParams } = new URL(
+      url,
+      URL_BASE_FOR_RELATIVE_PATHS,
+    );
+    // קישור דרך /api/v1/students/[id]/files: שם הקובץ השמור עובר ב-?name=
+    const lastSegment =
+      searchParams.get("name") ??
+      decodeURIComponent(pathname.split("/").pop() ?? "");
     return lastSegment.replace(STORAGE_TIMESTAMP_PREFIX, "");
   } catch {
     return "";

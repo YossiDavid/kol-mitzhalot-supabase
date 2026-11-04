@@ -16,12 +16,14 @@ import ShadchanProposalCard, {
 import { parseShadchanProposalRows } from "@/features/shidduchim/components/shadchan-proposals-data";
 import { SectionLoadFailed } from "../section-load-failed";
 import { employmentCategoryToHebrew } from "@/features/students/lib/profile-labels";
+import { studentFileHref } from "@/features/students/lib/student-files";
 
 /**
  * הפרטים הנוספים שהדשבורד שולף לכל מיועד, מעבר לשדות הכרטיס. הם
  * מאומתים בנפרד כי parents_info הוא JSON חופשי.
  */
 const detailsPersonSchema = z.object({
+  id: z.string().nullish(),
   cv_url: z.string().nullish(),
   parents_info: z
     .object({
@@ -89,7 +91,11 @@ function toExtras(
     occupation(person, side === "groom" ? "male" : "female"),
   ].filter((item): item is string => Boolean(item));
 
-  return { details, cvUrl: person.cv_url ?? null };
+  return {
+    details,
+    cvUrl:
+      person.cv_url && person.id ? studentFileHref(person.id, "cv") : null,
+  };
 }
 
 function extrasById(

@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { test, expect } from "@playwright/test";
 
 import { createServiceClient, getTestUserId } from "../shidduchim/fixtures";
@@ -18,7 +19,9 @@ const TINY_PNG = Buffer.from(
 const NAME = { prefix: "", name: "בדיקה", suffix: "" };
 
 /** נתיב קו״ח שכבר שמור בכרטיס. הקובץ עצמו לא נדרש לבדיקה */
-const EXISTING_CV_URL = "playwright/cv/existing.pdf";
+/** מזהה הכרטיס נקבע מראש: הקו״ח השמור הוא נתיב בתיקיית הכרטיס */
+const CARD_ID = randomUUID();
+const EXISTING_CV_URL = `${CARD_ID}/existing.pdf`;
 
 /** זהה ל-MAX_STUDENT_PHOTO_BYTES */
 const MAX_STORED_BYTES = 1024 * 1024;
@@ -37,6 +40,7 @@ test.describe("גלריית תמונות בעריכת כרטיס", () => {
       .from("students")
       .insert(
         approvedCard({
+          id: CARD_ID,
           user_id: userId,
           first_name: "גלריה",
           last_name: `בדיקה${Date.now()}`,

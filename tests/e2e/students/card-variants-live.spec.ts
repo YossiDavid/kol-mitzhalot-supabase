@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -31,11 +32,15 @@ const LEGACY_LAST = `ישן${T}`;
 const OTHER_LAST = `שלישי${T}`;
 
 /** ערכים רגישים של החתן: אסור שיופיעו אצל מי שלא נפתחו לו */
+const GROOM_CARD_ID = randomUUID();
+const GROOM_CV_HREF = `/api/v1/students/${GROOM_CARD_ID}/files/cv`;
+
 const GROOM = {
   phone: "0501234001",
   street: "רחוב-חבוי-4471",
   house: "917",
-  cv: `https://example.test/cv-groom-${T}.pdf`,
+  // נתיב בתיקיית הכרטיס (המזהה נקבע מראש); בממשק הקישור הוא /files/cv
+  cv: `${GROOM_CARD_ID}/cv-groom-${T}.pdf`,
   fatherPhone: "0502222001",
   fatherEmail: `father-${T}@example.test`,
   motherPhone: "0503333001",
@@ -182,6 +187,7 @@ test.describe("וריאנטי הכרטיס מול המסד", () => {
 
     // החתן: עשיר, כל העמודות מלאות, אמא שנפטרה
     groomId = await insertCard({
+      id: GROOM_CARD_ID,
       user_id: managerId,
       card_for: "child",
       first_name: "חתן",
@@ -454,7 +460,7 @@ test.describe("וריאנטי הכרטיס מול המסד", () => {
     await expect(page.getByText(GROOM.eduName).first()).toBeVisible();
     await expect(page.getByText(GROOM.refRabbiName)).toBeVisible();
     expectNone(html, [...GROOM_CONTACT, GROOM.cv, GROOM.medical]);
-    await expect(page.locator(`a[href="${GROOM.cv}"]`)).toHaveCount(0);
+    await expect(page.locator(`a[href="${GROOM_CV_HREF}"]`)).toHaveCount(0);
     await page.context().close();
   });
 
@@ -468,7 +474,9 @@ test.describe("וריאנטי הכרטיס מול המסד", () => {
       `/app/students/${groomId}`,
     );
     const html = await expectCardRendered(page, GROOM_LAST);
-    await expect(page.locator(`a[href="${GROOM.cv}"]`).first()).toBeVisible();
+    await expect(
+      page.locator(`a[href="${GROOM_CV_HREF}"]`).first(),
+    ).toBeVisible();
     await expect(page.getByText(GROOM.refFriendName)).toBeVisible();
     expectNone(html, [...GROOM_CONTACT, GROOM.medical]);
     await page.context().close();
@@ -484,7 +492,9 @@ test.describe("וריאנטי הכרטיס מול המסד", () => {
       `/app/students/${groomId}`,
     );
     const html = await expectCardRendered(page, GROOM_LAST);
-    await expect(page.locator(`a[href="${GROOM.cv}"]`).first()).toBeVisible();
+    await expect(
+      page.locator(`a[href="${GROOM_CV_HREF}"]`).first(),
+    ).toBeVisible();
     expectNone(html, [...GROOM_CONTACT, GROOM.medical]);
     await page.context().close();
   });
@@ -520,7 +530,9 @@ test.describe("וריאנטי הכרטיס מול המסד", () => {
     );
     const html = await expectCardRendered(page, GROOM_LAST);
     await expect(page.getByText(GROOM.medical)).toBeVisible();
-    await expect(page.locator(`a[href="${GROOM.cv}"]`).first()).toBeVisible();
+    await expect(
+      page.locator(`a[href="${GROOM_CV_HREF}"]`).first(),
+    ).toBeVisible();
     expectNone(html, GROOM_CONTACT);
     await page.context().close();
   });

@@ -6,6 +6,7 @@ import {
   relatedIssuePreferenceToHebrew,
 } from "@/features/students/lib/profile-labels";
 import { cn } from "@/lib/utils";
+import { studentFileHref } from "@/features/students/lib/student-files";
 
 import { CardSection } from "./card-section";
 
@@ -67,7 +68,13 @@ function isManagementOnlyMasked(medical: MedicalRecords): boolean {
  * "הצהרה רפואית". המקטע מוצג תמיד למשתמש מחובר - גם כשאין רשומה רפואית,
  * ואז מוצגת שורת "תקין". בענף הציבורי הטבלה לא נשלפת כלל.
  */
-export function MedicalSection({ medical }: { medical: MedicalRecords }) {
+export function MedicalSection({
+  studentId,
+  medical,
+}: {
+  studentId: string;
+  medical: MedicalRecords;
+}) {
   if (isManagementOnlyMasked(medical)) {
     return (
       <CardSection title="הצהרה רפואית" icon={Stethoscope}>
@@ -146,10 +153,10 @@ export function MedicalSection({ medical }: { medical: MedicalRecords }) {
                   מסמכים רפואיים:
                 </p>
                 <div className="space-y-1">
-                  {medical!.documents.map((doc, idx) => (
+                  {medical!.documents.map((_doc, idx) => (
                     <a
                       key={idx}
-                      href={doc}
+                      href={studentFileHref(studentId, "medical", idx)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="block text-caption text-primary hover:underline"

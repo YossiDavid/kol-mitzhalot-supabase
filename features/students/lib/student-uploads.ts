@@ -12,8 +12,6 @@ type BrowserSupabaseClient = ReturnType<typeof createClient>;
 
 export type StudentFileKind = "cv" | "medical";
 
-/** תוקף ה-signed URL של קו״ח ומסמכים: שנה. Public URL אינו אפשרי כי ה-bucket פרטי. */
-export const SIGNED_URL_TTL_SECONDS = 31536000;
 const MAX_FILE_NAME_LENGTH = 100;
 const DEFAULT_CV_EXTENSION = "pdf";
 const DEFAULT_PHOTO_EXTENSION = "jpg";
@@ -82,7 +80,8 @@ async function uploadToStudentsBucket(
 }
 
 /**
- * מעלה קו״ח או מסמך רפואי ומחזיר signed URL, או null אם ההעלאה נכשלה.
+ * מעלה קו״ח או מסמך רפואי ומחזיר את הנתיב שלו ב-bucket (לא קישור - הקישור
+ * נחתם לכמה דקות בכל צפייה, ראו student-files.ts), או null אם ההעלאה נכשלה.
  * כישלון אינו זורק: כרטיס עם קובץ חסר עדיף על שמירה שנפלה כולה.
  */
 export async function uploadStudentFile(
@@ -92,18 +91,7 @@ export async function uploadStudentFile(
   kind: StudentFileKind,
 ): Promise<string | null> {
   const path = buildStoragePath(studentId, file, kind);
-  if (!(await uploadToStudentsBucket(supabase, path, file))) return null;
-
-  const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-    .from(STUDENT_PHOTOS_BUCKET)
-    .createSignedUrl(path, SIGNED_URL_TTL_SECONDS);
-
-  if (signedUrlError || !signedUrlData) {
-    console.error("Error signing student file URL:", kind, signedUrlError);
-    return null;
-  }
-
-  return signedUrlData.signedUrl;
+  return (await uploadToStudentsBucket(supabase, path, file)) ? path : null;
 }
 
 /** מעלה את כל המסמכים הרפואיים ומחזיר את הכתובות שהצליחו. */

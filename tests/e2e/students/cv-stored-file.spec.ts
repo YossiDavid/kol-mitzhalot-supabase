@@ -12,8 +12,10 @@ import { insertCompleteCard } from "../helpers/complete-card";
  * (הקישור החתום שב-cv_url) ודרך ברורה להחליף אותו.
  */
 
-const STORED_CV_URL =
-  "https://example.test/storage/v1/object/sign/students/playwright/1712345678901-cv.pdf?token=abc";
+/** במסד נשמר נתיב בתיקיית הכרטיס; הקישור בממשק עובר דרך /files/cv */
+const storedCvPath = (id: string) => `${id}/1712345678901-cv.pdf`;
+const cvHref = (id: string) =>
+  `/api/v1/students/${id}/files/cv?name=1712345678901-cv.pdf`;
 
 test.describe("קו״ח שמור בעריכת כרטיס", () => {
   const admin = createServiceClient();
@@ -24,8 +26,11 @@ test.describe("קו״ח שמור בעריכת כרטיס", () => {
       userId: await getTestUserId(admin),
       firstName: "קו״ח",
       lastName: `שמור${Date.now()}`,
-      extra: { cv_url: STORED_CV_URL },
     });
+    await admin
+      .from("students")
+      .update({ cv_url: storedCvPath(studentId) })
+      .eq("id", studentId);
   });
 
   test.afterAll(async () => {
@@ -45,7 +50,7 @@ test.describe("קו״ח שמור בעריכת כרטיס", () => {
     await expect(cvCell.getByText("קובץ קו״ח קיים")).toBeVisible();
     await expect(cvCell.getByText("cv.pdf", { exact: true })).toBeVisible();
     const openLink = cvCell.getByRole("link", { name: "פתיחת הקובץ" });
-    await expect(openLink).toHaveAttribute("href", STORED_CV_URL);
+    await expect(openLink).toHaveAttribute("href", cvHref(studentId));
     await expect(openLink).toHaveAttribute("target", "_blank");
     await expect(cvCell.getByText("החלפת הקובץ")).toBeVisible();
 
@@ -67,7 +72,7 @@ test.describe("קו״ח שמור בעריכת כרטיס", () => {
     // Arrange
     await admin
       .from("students")
-      .update({ cv_url: STORED_CV_URL })
+      .update({ cv_url: storedCvPath(studentId) })
       .eq("id", studentId);
     await page.goto(`/app/students/${studentId}/edit`);
     await page
@@ -104,8 +109,11 @@ test.describe("קו״ח שמור בעריכת כרטיס", () => {
       userId: managerId,
       firstName: "קו״ח",
       lastName: `שדכן${Date.now()}`,
-      extra: { cv_url: STORED_CV_URL },
     });
+    await admin
+      .from("students")
+      .update({ cv_url: storedCvPath(otherCardId) })
+      .eq("id", otherCardId);
 
     try {
       await page.goto(`/app/students/${otherCardId}/edit`);
@@ -134,7 +142,7 @@ test.describe("קו״ח שמור בעריכת כרטיס", () => {
         .select("cv_url")
         .eq("id", otherCardId)
         .single();
-      expect(data?.cv_url).toContain(`/students/${otherCardId}/`);
+      expect(data?.cv_url).toMatch(new RegExp(`^${otherCardId}/`));
       expect(data?.cv_url).toMatch(/\/\d+-cv\.pdf/);
     } finally {
       await admin.storage

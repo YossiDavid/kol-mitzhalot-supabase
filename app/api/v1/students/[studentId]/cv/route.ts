@@ -3,10 +3,7 @@ import { z } from "zod";
 
 import { validateCvFile } from "@/features/students/lib/cv-file-rules";
 import { STUDENT_PHOTOS_BUCKET } from "@/features/students/lib/student-photo-rules";
-import {
-  SIGNED_URL_TTL_SECONDS,
-  buildStoragePath,
-} from "@/features/students/lib/student-uploads";
+import { buildStoragePath } from "@/features/students/lib/student-uploads";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { isActiveShadchan } from "@/features/shadchanim/lib/shadchan-access";
@@ -89,19 +86,10 @@ export async function POST(
     return NextResponse.json({ error: "העלאת הקובץ נכשלה" }, { status: 500 });
   }
 
-  const { data: signed, error: signError } = await storage.createSignedUrl(
-    path,
-    SIGNED_URL_TTL_SECONDS,
-  );
-  if (signError || !signed) {
-    console.error("[students/cv] signing failed:", signError);
-    await storage.remove([path]);
-    return NextResponse.json({ error: "העלאת הקובץ נכשלה" }, { status: 500 });
-  }
-
   const { error: updateError } = await admin
     .from("students")
-    .update({ cv_url: signed.signedUrl })
+    // נתיב בלבד: הקישור נחתם לכמה דקות בכל צפייה (student-file-access.ts)
+    .update({ cv_url: path })
     .eq("id", studentId);
   if (updateError) {
     console.error("[students/cv] cv_url update failed:", updateError);
@@ -110,5 +98,5 @@ export async function POST(
     return NextResponse.json({ error: "שמירת הקובץ נכשלה" }, { status: 500 });
   }
 
-  return NextResponse.json({ cvUrl: signed.signedUrl });
+  return NextResponse.json({ cvUrl: path });
 }

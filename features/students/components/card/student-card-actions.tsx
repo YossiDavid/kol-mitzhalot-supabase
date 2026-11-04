@@ -34,6 +34,7 @@ import { shareStudentCard } from "@/features/students/lib/share-student-card";
 import type { CardAdminFocus } from "@/features/students/lib/card-admin-focus";
 
 import { StudentStatusMenu, type PersonalStatus } from "./student-status-menu";
+import { studentFileHref } from "@/features/students/lib/student-files";
 
 type OpenDialog =
   | "delete"
@@ -130,7 +131,11 @@ export function StudentCardActions({
 
       {cvUrl && (
         <Button asChild variant="outline" size="sm">
-          <a href={cvUrl} target="_blank" rel="noopener noreferrer">
+          <a
+            href={studentFileHref(studentId, "cv")}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <FileText className="h-4 w-4" />
             קובץ קו״ח
           </a>

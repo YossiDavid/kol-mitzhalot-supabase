@@ -104,7 +104,8 @@ test("הוספת קו״ח פותחת דיאלוג, מעלה קובץ ומעדכ�
     .select("cv_url")
     .eq("id", studentId)
     .single();
-  expect(data?.cv_url).toContain(`/students/${studentId}/`);
+  // נשמר נתיב בתיקיית הכרטיס, לא קישור חתום (נחתם לכמה דקות בכל צפייה)
+  expect(data?.cv_url).toMatch(new RegExp(`^${studentId}/`));
 });
 
 test("השרת דוחה קובץ שאינו PDF או תמונה", async ({ page }) => {

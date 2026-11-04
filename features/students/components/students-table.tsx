@@ -49,6 +49,7 @@ import type { CardFor } from "@/features/students/lib/own-cards-heading";
 import { summarizeChildren } from "@/features/students/lib/children-summary";
 import calculateAge from "@/lib/calculateAge";
 import { cn } from "@/lib/utils";
+import { studentFileHref } from "@/features/students/lib/student-files";
 
 type ParentName = {
   prefix?: string | null;
@@ -424,7 +425,11 @@ function ActionsCell({
     <div className="flex w-full gap-2">
       {student.cv_url ? (
         <Button asChild variant="outline" size="sm" className="flex-1">
-          <a href={student.cv_url} target="_blank" rel="noopener noreferrer">
+          <a
+            href={studentFileHref(student.id, "cv")}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             קובץ קו״ח
           </a>
         </Button>

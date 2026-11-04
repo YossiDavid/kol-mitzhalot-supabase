@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { test, expect, type Page } from "@playwright/test";
 
 import {
@@ -14,7 +15,9 @@ import { approvedCard } from "../helpers/approved-card";
 const ACTIONS_BAR = '[data-slot="student-card-actions"]';
 // חזרה, קו״ח, עריכה, צ'אט ו"עוד פעולות" (קו״ח מוצג רק כשקיים)
 const MAX_HEADER_CONTROLS = 5;
-const CV_URL = "https://example.com/cv-test.pdf";
+/** מזהה הכרטיס נקבע מראש: הקו״ח הוא נתיב בתיקיית הכרטיס */
+const CARD_ID = randomUUID();
+const CV_PATH = `${CARD_ID}/cv-test.pdf`;
 
 async function openActionsMenu(page: Page) {
   await page.getByRole("button", { name: "עוד פעולות" }).click();
@@ -33,6 +36,7 @@ test.describe("הדר כרטיס המיועד — שדכן", () => {
       .from("students")
       .insert(
         approvedCard({
+          id: CARD_ID,
           user_id: ownerId,
           first_name: "בדיקת",
           last_name: lastName,
@@ -42,7 +46,7 @@ test.describe("הדר כרטיס המיועד — שדכן", () => {
           country: "ישראל",
           city: "בני ברק",
           in_shidduchim: true,
-          cv_url: CV_URL,
+          cv_url: CV_PATH,
         }),
       )
       .select("id")
@@ -151,7 +155,11 @@ test.describe("הדר כרטיס המיועד — שדכן", () => {
       name: "קובץ קו״ח",
     });
     await expect(cvLink).toBeVisible();
-    await expect(cvLink).toHaveAttribute("href", CV_URL);
+    // הקישור נחתם בכל לחיצה דרך /files/cv (לא הנתיב השמור עצמו)
+    await expect(cvLink).toHaveAttribute(
+      "href",
+      `/api/v1/students/${studentId}/files/cv`,
+    );
 
     // Act + Assert - אין כפילות בתפריט
     await openActionsMenu(page);

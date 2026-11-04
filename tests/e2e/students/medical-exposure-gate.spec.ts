@@ -27,7 +27,8 @@ const LAST = `רפואי${T}`;
 
 const SECRET = {
   details: `פירוט-חסוי-${T}`,
-  document: `https://example.test/medical-${T}.pdf`,
+  // שם הקובץ (ייחודי); במסד נשמר כנתיב בתיקיית הכרטיס: <id>/<שם>
+  document: `medical-${T}.pdf`,
   contactPhone: `0507${T.slice(-6)}`,
 } as const;
 
@@ -65,7 +66,7 @@ async function seedCard(exposure: Exposure): Promise<string> {
     status: "hugeProblem",
     exposure_level: exposure,
     details: SECRET.details,
-    documents: [SECRET.document],
+    documents: [`${id}/${SECRET.document}`],
     contact_info: {
       type: "other",
       contacts: [{ name: "איש-קשר", phone: SECRET.contactPhone }],
@@ -178,7 +179,8 @@ test.describe("הצהרה רפואית לפי רמת החשיפה", () => {
 
     // Assert
     expect(full?.details).toBe(SECRET.details);
-    expect(full?.documents).toEqual([SECRET.document]);
+    expect(full?.documents).toHaveLength(1);
+    expect((full?.documents as string[] | undefined)?.[0]).toMatch(new RegExp(`/${SECRET.document}$`));
     expect(hidden).toBeNull();
   });
 
@@ -193,9 +195,13 @@ test.describe("הצהרה רפואית לפי רמת החשיפה", () => {
 
         // Assert
         expect(record?.details, `${label} ${exposure}`).toBe(SECRET.details);
-        expect(record?.documents, `${label} ${exposure}`).toEqual([
-          SECRET.document,
-        ]);
+        expect(record?.documents, `${label} ${exposure}`).toHaveLength(1);
+        expect(
+          (record?.documents as string[] | undefined)?.[0],
+          `${label} ${exposure}`,
+        ).toMatch(
+          new RegExp(`/${SECRET.document}$`),
+        );
       }
     }
     const direct = await owner

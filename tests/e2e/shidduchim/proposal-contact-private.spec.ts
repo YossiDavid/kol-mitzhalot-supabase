@@ -25,7 +25,8 @@ const T = `${Date.now()}`.slice(-8);
 const GROOM_LAST = `קשר${T}`;
 const GROOM_PHONE = `058${T}8`;
 const GROOM_STREET = `רחוב-קשר-${T}`;
-const GROOM_CV = `https://example.test/cv-private-${T}.pdf`;
+/** הקו״ח הוא נתיב בתיקיית הכרטיס (נקבע אחרי יצירת הכרטיס) */
+const groomCvPath = (id: string) => `${id}/cv-private-${T}.pdf`;
 const LOAD_TIMEOUT = 20_000;
 
 let admin: SupabaseClient;
@@ -78,7 +79,7 @@ test.describe("פרטי התקשרות אינם נפתחים לצד השני", (
       .update({
         phone: GROOM_PHONE,
         street: GROOM_STREET,
-        cv_url: GROOM_CV,
+        cv_url: groomCvPath(groomId),
         parents_info: {
           father: { self: { name: "אב-קשר" }, phone: GROOM_PHONE },
         },
@@ -188,7 +189,9 @@ test.describe("פרטי התקשרות אינם נפתחים לצד השני", (
     await expect(
       parent.getByRole("heading", { level: 1, name: new RegExp(GROOM_LAST) }),
     ).toBeVisible({ timeout: LOAD_TIMEOUT });
-    await expect(parent.locator(`a[href="${GROOM_CV}"]`).first()).toBeVisible();
+    await expect(
+      parent.locator(`a[href="/api/v1/students/${groomId}/files/cv"]`).first(),
+    ).toBeVisible();
     await expect(parent.getByText(/פרטי ההתקשרות/)).toBeVisible();
     await expect(parent.locator('a[href^="tel:"]')).toHaveCount(0);
     const html = await (await parent.request.get(parent.url())).text();

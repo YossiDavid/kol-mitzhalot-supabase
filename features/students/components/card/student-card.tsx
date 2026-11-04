@@ -206,7 +206,10 @@ export function StudentCard({
             />
           )}
           {showMedical && !isBasicOnly && (
-            <MedicalSection medical={student.medical_records} />
+            <MedicalSection
+              studentId={student.id}
+              medical={student.medical_records}
+            />
           )}
           <AuthorInfoCard
             authorInfo={student.author_info}

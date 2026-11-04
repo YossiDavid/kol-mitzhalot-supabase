@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { expect, test } from "@playwright/test";
 
@@ -38,13 +39,15 @@ const SECOND_PARENT_EMAIL = "playwright-second-parent@kol-mitzhalot.test";
 const ADMIN_EMAIL =
   process.env.TEST_ADMIN_EMAIL ?? "playwright-admin@kol-mitzhalot.test";
 const T = `${Date.now()}`.slice(-8);
+/** מזהה החתן נקבע מראש: הקו״ח הוא נתיב בתיקיית הכרטיס */
+const GROOM_CARD_ID = randomUUID();
 
 /** ערכים מובחנים של החתן: מחפשים אותם בתשובות כדי לוודא שלא דלפו */
 const CONTACT = {
   phone: `050${T}1`,
   street: `רחוב-שער-${T}`,
   house: `9${T}`,
-  cv: `https://example.test/cv-gate-${T}.pdf`,
+  cv: `${GROOM_CARD_ID}/cv-gate-${T}.pdf`,
   fatherPhone: `052${T}2`,
   fatherEmail: `father-gate-${T}@example.test`,
   authorPhone: `053${T}3`,
@@ -270,6 +273,7 @@ test.describe("שער הכרטיס בהצעה (מסד)", () => {
       .from("students")
       .insert(
         approvedCard({
+          id: GROOM_CARD_ID,
           user_id: managerId,
           card_for: "child",
           first_name: "חתן",

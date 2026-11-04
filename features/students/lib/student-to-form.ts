@@ -1,4 +1,5 @@
 import type { StudentFormValues } from "@/features/students/components/create-form/schema";
+import { studentFileHref } from "@/features/students/lib/student-files";
 import {
   readAuthorInfo,
   toAuthorFormValues,
@@ -285,8 +286,18 @@ export function studentToFormValues(
     planForLife: text(student.plan_for_life),
     headCoverType: text(student.head_cover_type),
     about: text(student.about),
-    // הקובץ עצמו לא חוזר כ-File; הכתובת השמורה מסמנת שהשדה כבר מולא
-    cv: { file: null, existingUrl: text(student.cv_url) || null },
+    // הקובץ עצמו לא חוזר כ-File. existingUrl מסמן שהשדה כבר מולא, והוא
+    // הקישור לפתיחה (נחתם בכל לחיצה) - הנתיב השמור עובר לשמירה בנפרד
+    // (existingCvUrl בטופס העריכה)
+    cv: {
+      file: null,
+      existingUrl:
+        text(student.cv_url) && typeof student.id === "string"
+          ? `${studentFileHref(student.id, "cv")}?name=${encodeURIComponent(
+              text(student.cv_url).split("/").pop() ?? "",
+            )}`
+          : null,
+    },
 
     father: {
       self: nameParts(father.self),

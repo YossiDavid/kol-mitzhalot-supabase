@@ -223,7 +223,7 @@ test.describe.serial("שמירת שינויים מכל שלב בעריכת כר�
     ).toHaveCount(0);
     expect(await listStoredCvFiles()).toHaveLength(1);
     const firstCvUrl = (await readStudent()).cv_url;
-    expect(firstCvUrl).toMatch(new RegExp(`/${studentId}/\\d+-cv\\.pdf\\?`));
+    expect(firstCvUrl).toMatch(new RegExp(`^${studentId}/\\d+-cv\\.pdf$`));
 
     // Act - שינוי אחר ושמירה שנייה
     await page.locator("#street").fill("סוקולוב");
