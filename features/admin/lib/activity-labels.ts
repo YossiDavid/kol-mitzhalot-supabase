@@ -31,6 +31,7 @@ export const ACTIVITY_ACTION_LABELS: Record<string, string> = {
   "shidduch.scope": "הצעה נשלחה לצד נוסף",
   "shadchan_application.status": "בקשת שדכן",
   "user.roles": "תפקידים עודכנו",
+  "user.impersonate": "מנהל נכנס כמשתמש",
   "announcement.shadchanim": "הודעה נשלחה לכל השדכנים",
 };
 
